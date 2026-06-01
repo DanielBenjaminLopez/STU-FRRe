@@ -1,5 +1,5 @@
 # STU-FRRe
-Sistema de Tótems Universitarios para la Facultad Resistencia Regional - Práctica supervisada de alumnos de la Universidad Tecnológica Nacional 
+Sistema de Tótems Universitarios para la Facultad Resistencia Regional - Práctica supervisada de alumnos de la Universidad Tecnológica Nacional
 
 # Inicio del Proyecto
 
@@ -31,7 +31,7 @@ Este tema universitario derecerá una interfaz interactiva que permite a la comu
 
 # Modalidad de Ejecución
 
-El sistema operará dentro de un navegador web, el cual está configurado en **Modo Kiosco**. 
+El sistema operará dentro de un navegador web, el cual está configurado en **Modo Kiosco**.
 Esta configuración tiene como objetivo restringir o bloquear el acceso directo al sistema operativo.
 
 La aplicación a desarrollar tender la orientación arquitectura de software:
@@ -46,11 +46,61 @@ La aplicación a desarrollar tender la orientación arquitectura de software:
 - Desarrollar una arquitectura que permite la administración remota y configuraciones personalizadas para múltiples unidades.
 - Diseñar una interfaz intuitiva que gestiona la actividad e inactividad de forma eficiente, apta para todo tipo de usuarios.
 
+# Inicio rápido con Docker
 
-# Objetivos principales del proyecto
+## Requisitos
 
-- Mejorar la experiencia del usuario y la accesibilidad a la información dentro de la facultad mediante la implementación de un sistema de información.
-- Optimizar la gestión y difusión de la información académica a viajes de la automatización de las publicaciones a la comunidad.
-- Garantizar la operatividad y confiabilidad del sistema aseguro su estabilidad, disponibilidad y complemento constante.
-- Desarrollar una arquitectura que permite la administración remota y configuraciones personalizadas para múltiples unidades.
-- Diseñar una interfaz intuitiva que gestiona la actividad e inactividad de forma eficiente, apta para todo tipo de usuarios.
+- [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/) instalados.
+
+## Configuración de variables de entorno
+
+1. Copiar el archivo de ejemplo:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Editar `.env` según sea necesario. Las variables disponibles son:
+
+   | Variable | Descripción |
+   |---|---|
+   | `DB_NAME` | Nombre de la base de datos PostgreSQL |
+   | `DB_USER` | Usuario de PostgreSQL |
+   | `DB_PASSWORD` | Contraseña de PostgreSQL |
+   | `DB_HOST` | Host de la base de datos (servicio Docker) |
+   | `DB_PORT` | Puerto de PostgreSQL |
+   | `SECRET_KEY` | Clave secreta de Django |
+   | `DEBUG` | Modo debug de Django |
+   | `PYTHONDONTWRITEBYTECODE` | Evita archivos `.pyc` |
+   | `VITE_API_URL` | URL base de la API para el frontend |
+
+## Levantar los servicios
+
+```bash
+# Construir e iniciar todos los servicios
+docker compose up --build
+
+# En segundo plano (detached)
+docker compose up -d --build
+
+# Ver logs de un servicio específico
+docker compose logs -f backend
+
+# Ejecutar comandos en el backend (ej: crear superusuario)
+docker compose exec backend python manage.py createsuperuser
+
+# Detener servicios
+docker compose down
+
+# Detener y eliminar volúmenes (borra la base de datos)
+docker compose down -v
+```
+
+## Acceso a los servicios
+
+| Servicio | URL |
+|---|---|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8000/api/ |
+| Admin Django | http://localhost:8000/admin/ |
+
+> El frontend utiliza un proxy de Vite: las llamadas a `/api/*` se redirigen automáticamente al backend. No es necesario configurar CORS para desarrollo.

@@ -10,4 +10,17 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
   ],
+  server: {
+    host: true,
+    port: 5173,
+    watch: {
+      usePolling: true,
+    },
+    proxy: {
+      "/api": {
+        target: "http://backend:8000",
+        changeOrigin: true,
+      },
+    },
+  },
 });
