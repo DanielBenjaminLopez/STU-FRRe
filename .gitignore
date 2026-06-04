@@ -42,3 +42,7 @@ back/media/
 
 # Base de Datos (Docker)
 .postgres_data/
+
+# Storybook
+*storybook.log
+storybook-static
