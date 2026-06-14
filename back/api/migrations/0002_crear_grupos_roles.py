@@ -18,6 +18,8 @@ def crear_grupos(apps, schema_editor):
                 'add_noticias', 'change_noticias', 'delete_noticias', 'view_noticias',
                 'add_actividadextra', 'change_actividadextra', 'delete_actividadextra', 'view_actividadextra',
                 'add_suspension', 'change_suspension', 'delete_suspension', 'view_suspension',
+                'add_espacio', 'change_espacio', 'delete_espacio', 'view_espacio',
+                'add_totem', 'change_totem', 'delete_totem', 'view_totem',
             ],
         ),
         'totem': Permission.objects.filter(
