@@ -42,3 +42,45 @@ El movimiento de las tareas en el tablero está automatizado por las acciones en
 El código fusionado en `develop` y marcado como "Listo para Producción" en Jira se encuentra en un entorno de preparación. No está en Producción.
 
 Los despliegues a producción se realizan únicamente después de confirmar que el despliegue fue exitoso y el servidor es estable, en las reuniones semanales se moverán manualmente las tarjetas desde "Listo para Producción" hacia **Finalizado** en el tablero de Jira, cerrando oficialmente el ciclo de la tarea.
+
+## Problemas comunes al configurar el entorno Docker
+
+### Error de dependencias APT en back/Dockerfile
+
+**Sintoma:** El build del backend falla con:
+```
+libssl-dev: Depends: libssl3t64 (= 3.5.6-1~deb13u1) but 3.5.6-1~deb13u2 is to be installed
+```
+
+**Causa:** La imagen base `python:3.12-slim` (Debian Trixie) incluye `libssl3t64` version `u2` de los repositorios `trixie-updates`/`trixie-security`, pero el paquete `libpq-dev` requiere la version `u1` del repositorio principal.
+
+**Solucion:** En `back/Dockerfile`, eliminar los sources duplicados y forzar la version correcta antes de instalar las dependencias:
+```dockerfile
+RUN rm -f /etc/apt/sources.list.d/debian.sources && \
+    echo "deb http://deb.debian.org/debian trixie main" > /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends --allow-downgrades \
+    libssl3t64=3.5.6-1~deb13u1 libssl-dev=3.5.6-1~deb13u1 && \
+    apt-get install -y --no-install-recommends \
+    gcc libpq-dev netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
+```
+
+### Error "exec /app/entrypoint.sh: no such file or directory"
+
+**Sintoma:** El contenedor del backend se reinicia constantemente con el error:
+```
+exec /app/entrypoint.sh: no such file or directory
+```
+
+**Causa:** El archivo `back/entrypoint.sh` tiene saltos de linea Windows (CRLF). Linux no puede interpretar el shebang `#!/bin/bash` con retorno de carro.
+
+**Solucion:** Convertir el archivo a formato Unix (LF):
+```powershell
+(Get-Content back/entrypoint.sh) -join "`n" | Set-Content -NoNewLine -Force back/entrypoint.sh
+```
+O usando Git:
+```bash
+git config core.autocrlf input
+```
+Luego reiniciar el contenedor: `docker compose restart backend`.
