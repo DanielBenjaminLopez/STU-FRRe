@@ -3,8 +3,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Carrera, CarreraMateria, Materia
-from .serializers import CarreraMateriaSerializer, CarreraSerializer, MateriaSerializer
+from .models import Carrera, CarreraMateria, HorarioCursado, Materia
+from .serializers import (
+    CarreraMateriaSerializer,
+    CarreraSerializer,
+    HorarioCursadoSerializer,
+    MateriaSerializer,
+)
 
 
 class MeView(APIView):
@@ -32,3 +37,8 @@ class MateriaViewSet(viewsets.ModelViewSet):
 class CarreraMateriaViewSet(viewsets.ModelViewSet):
     queryset = CarreraMateria.objects.select_related('carrera', 'materia').all()
     serializer_class = CarreraMateriaSerializer
+
+
+class HorarioCursadoViewSet(viewsets.ModelViewSet):
+    queryset = HorarioCursado.objects.select_related('materia', 'espacio').all()
+    serializer_class = HorarioCursadoSerializer
