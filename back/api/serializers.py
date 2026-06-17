@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Carrera, CarreraMateria, HorarioCursado, MesaExamen, Materia
+from .models import ActividadExtra, Carrera, CarreraMateria, HorarioCursado, MesaExamen, Materia, Noticias, Suspension
 
 
 class CarreraSerializer(serializers.ModelSerializer):
@@ -35,3 +35,23 @@ class MesaExamenSerializer(serializers.ModelSerializer):
     class Meta:
         model = MesaExamen
         fields = ['id', 'materia', 'espacio', 'fecha_hora', 'turno', 'llamado', 'tribunal', 'activo']
+
+
+class ActividadExtraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ActividadExtra
+        fields = ['id', 'titulo', 'tipo', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'espacio']
+
+
+class SuspensionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Suspension
+        fields = ['id', 'horario_cursado', 'actividad_extra', 'fecha', 'motivo', 'tipo', 'creado_en']
+        read_only_fields = ['creado_en']
+
+
+class NoticiasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Noticias
+        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
