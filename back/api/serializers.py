@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Carrera, CarreraMateria, HorarioCursado, Materia
+from .models import Carrera, CarreraMateria, HorarioCursado, MesaExamen, Materia
 
 
 class CarreraSerializer(serializers.ModelSerializer):
@@ -29,3 +29,9 @@ class HorarioCursadoSerializer(serializers.ModelSerializer):
             'hora_inicio', 'hora_fin', 'fecha_inicio_vigencia',
             'fecha_fin_vigencia', 'activo',
         ]
+
+
+class MesaExamenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MesaExamen
+        fields = ['id', 'materia', 'espacio', 'fecha_hora', 'turno', 'llamado', 'tribunal', 'activo']
