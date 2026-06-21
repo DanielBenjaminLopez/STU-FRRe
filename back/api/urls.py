@@ -3,13 +3,29 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
+    ActividadExtraViewSet,
+    CarreraMateriaViewSet,
+    CarreraViewSet,
     EspacioListView,
+    HorarioCursadoViewSet,
+    MateriaViewSet,
     MeView,
+    MesaExamenViewSet,
+    NoticiasViewSet,
+    SuspensionViewSet,
     TotemNewView,
     VincularTotemView,
 )
 
 router = DefaultRouter()
+router.register('carreras', CarreraViewSet)
+router.register('materias', MateriaViewSet)
+router.register('carrerasmaterias', CarreraMateriaViewSet)
+router.register('horarios', HorarioCursadoViewSet)
+router.register('mesas-examen', MesaExamenViewSet)
+router.register('eventos', ActividadExtraViewSet)
+router.register('avisos', SuspensionViewSet)
+router.register('noticias', NoticiasViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

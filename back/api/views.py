@@ -1,15 +1,33 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .authentication import TotemToken
-from .models import Espacio
+from .models import (
+    ActividadExtra,
+    Carrera,
+    CarreraMateria,
+    Espacio,
+    HorarioCursado,
+    Materia,
+    MesaExamen,
+    Noticias,
+    Suspension,
+)
 from .permissions import IsAdminOrSecretaria
 from .serializers import (
+    ActividadExtraSerializer,
+    CarreraMateriaSerializer,
+    CarreraSerializer,
     EspacioSerializer,
+    HorarioCursadoSerializer,
+    MateriaSerializer,
+    MesaExamenSerializer,
+    NoticiasSerializer,
+    SuspensionSerializer,
     TotemNuevoSerializer,
     TotemSerializer,
     VincularTotemSerializer,
@@ -28,6 +46,46 @@ class MeView(APIView):
                 "groups": list(request.user.groups.values_list("name", flat=True)),
             }
         )
+
+
+class CarreraViewSet(viewsets.ModelViewSet):
+    queryset = Carrera.objects.all()
+    serializer_class = CarreraSerializer
+
+
+class MateriaViewSet(viewsets.ModelViewSet):
+    queryset = Materia.objects.all()
+    serializer_class = MateriaSerializer
+
+
+class CarreraMateriaViewSet(viewsets.ModelViewSet):
+    queryset = CarreraMateria.objects.select_related('carrera', 'materia').all()
+    serializer_class = CarreraMateriaSerializer
+
+
+class HorarioCursadoViewSet(viewsets.ModelViewSet):
+    queryset = HorarioCursado.objects.select_related('materia', 'espacio').all()
+    serializer_class = HorarioCursadoSerializer
+
+
+class MesaExamenViewSet(viewsets.ModelViewSet):
+    queryset = MesaExamen.objects.select_related('materia', 'espacio').all()
+    serializer_class = MesaExamenSerializer
+
+
+class ActividadExtraViewSet(viewsets.ModelViewSet):
+    queryset = ActividadExtra.objects.select_related('espacio').all()
+    serializer_class = ActividadExtraSerializer
+
+
+class SuspensionViewSet(viewsets.ModelViewSet):
+    queryset = Suspension.objects.select_related('horario_cursado', 'actividad_extra').all()
+    serializer_class = SuspensionSerializer
+
+
+class NoticiasViewSet(viewsets.ModelViewSet):
+    queryset = Noticias.objects.all()
+    serializer_class = NoticiasSerializer
 
 
 class TotemNewView(APIView):
