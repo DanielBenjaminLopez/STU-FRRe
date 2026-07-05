@@ -12,3 +12,16 @@
 body {
   font-family: "Inter", sans-serif;
 }
+
+@theme {
+  --color-gray-100: #f5f5f7;
+  --color-gray-200: #f3f3f3;
+  --color-cyan-100: #c0eef0;
+  --color-cyan-200: #a2dcde;
+  --color-brown-100: #f0d7c0;
+  --color-brown-200: #dfc5ae;
+  --color-pink-100: #f0c0de;
+  --color-pink-200: #deaecc;
+  --color-green-100: #c0f0d4;
+  --color-green-200: #aae4c2;
+}
