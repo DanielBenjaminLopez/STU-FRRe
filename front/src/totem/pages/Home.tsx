@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Encabezado from "../../shared/components/widgets/Encabezado";
+import Horarios from "../../shared/components/widgets/Horarios";
 
 const AUTH_TOKEN_KEY = "auth_token";
 
@@ -25,9 +26,7 @@ export default function Home() {
 
       <div className="flex flex-col grow">
         <div className="grid grid-cols-4 gap-4 grid-rows-6 w-full h-full">
-          {Array.from({ length: 24 }).map((_, index) => (
-            <div key={index} className="bg-gray-100 rounded-4xl" />
-          ))}
+          <Horarios />
         </div>
       </div>
     </div>
