@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Encabezado from "../../shared/components/widgets/Encabezado";
 import Horarios from "../../shared/components/widgets/Horarios";
+import Examenes from "../../shared/components/widgets/Examenes";
 
 const AUTH_TOKEN_KEY = "auth_token";
 
@@ -26,6 +27,7 @@ export default function Home() {
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="grid grid-cols-4 gap-4 grid-rows-6 w-full h-full">
           <Horarios />
+          <Examenes />
         </div>
       </div>
     </div>
