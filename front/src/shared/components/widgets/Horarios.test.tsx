@@ -17,6 +17,7 @@ const mockClaseAhora: Clase = {
   hora_inicio: "08:00",
   hora_fin: "10:00",
   dia_semana: "lunes",
+  aula: "1.1",
 };
 
 const mockClaseSiguiente: Clase = {
@@ -27,6 +28,7 @@ const mockClaseSiguiente: Clase = {
   hora_inicio: "10:00",
   hora_fin: "12:00",
   dia_semana: "lunes",
+  aula: "1.2",
 };
 
 describe("Horarios", () => {
@@ -77,7 +79,7 @@ describe("Horarios", () => {
     });
     render(<Horarios />);
     expect(screen.getByText("ISI")).toBeInTheDocument();
-    expect(screen.getByText("K2.1")).toBeInTheDocument();
+    expect(screen.getByText(/\[K2\.1\]/)).toBeInTheDocument();
     expect(
       screen.getByText("Algoritmos y Estructuras de Datos"),
     ).toBeInTheDocument();
@@ -93,7 +95,7 @@ describe("Horarios", () => {
     });
     render(<Horarios />);
     expect(screen.getByText("IEM")).toBeInTheDocument();
-    expect(screen.getByText("M1.1")).toBeInTheDocument();
+    expect(screen.getByText(/\[M1\.1\]/)).toBeInTheDocument();
     expect(screen.getByText("Física II")).toBeInTheDocument();
     expect(screen.getByText("10:00")).toBeInTheDocument();
   });
