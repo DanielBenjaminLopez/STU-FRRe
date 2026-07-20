@@ -21,10 +21,9 @@ export default function Home() {
   if (checking) return null;
 
   return (
-    <div className="flex flex-col max-w-270 h-480 mx-auto border-x border-gray-200 p-16 gap-16">
+    <div className="flex flex-col max-w-270 max-h-480 h-480 mx-auto border-x border-gray-200 p-16 gap-16 overflow-hidden">
       <Encabezado />
-
-      <div className="flex flex-col grow">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <div className="grid grid-cols-4 gap-4 grid-rows-6 w-full h-full">
           <Horarios />
         </div>

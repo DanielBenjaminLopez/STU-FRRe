@@ -54,7 +54,7 @@ export default function Onboarding() {
     if (lastMessage?.type === "vinculado") {
       clearCode();
       if (lastMessage.access) {
-        localStorage.setItem(AUTH_TOKEN_KEY, lastMessage.access);
+        localStorage.setItem(AUTH_TOKEN_KEY, lastMessage.access as string);
       }
       navigate("/", { replace: true });
     }

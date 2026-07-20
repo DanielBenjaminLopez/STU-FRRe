@@ -21,7 +21,7 @@ function getMinutes(time: string): number {
 }
 
 export function useHorarios() {
-  const [clases, setClases] = useState<Clase[]>([]);
+  const [todas, setTodas] = useState<Clase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
@@ -35,9 +35,7 @@ export function useHorarios() {
         setError(null);
         const data = await fetchHorarios();
         if (!mounted) return;
-
-        const today = getTodayDayName();
-        setClases(data.filter((c) => c.dia_semana === today));
+        setTodas(data);
       } catch (e) {
         if (mounted) {
           setError(e instanceof Error ? e.message : "Error al cargar horarios");
@@ -61,20 +59,23 @@ export function useHorarios() {
     return () => clearInterval(interval);
   }, []);
 
+  const today = getTodayDayName();
+  const clasesHoy = todas.filter((c) => c.dia_semana === today);
+
   const now = getMinutes(
     `${new Date().getHours().toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
   );
 
-  const ahora = clases.filter((c) => {
+  const ahora = clasesHoy.filter((c) => {
     const start = getMinutes(c.hora_inicio);
     const end = getMinutes(c.hora_fin);
     return now >= start && now < end;
   });
 
-  const siguiente = clases.filter((c) => {
+  const siguiente = clasesHoy.filter((c) => {
     const start = getMinutes(c.hora_inicio);
     return now < start;
   });
 
-  return { ahora, siguiente, loading, error };
+  return { ahora, siguiente, todas, loading, error };
 }

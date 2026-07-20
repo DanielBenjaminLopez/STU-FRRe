@@ -15,11 +15,13 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@fullcalendar/react": "^7.0.1",
     "@tailwindcss/vite": "^4.3.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router": "^7.15.1",
-    "tailwindcss": "^4.3.0"
+    "tailwindcss": "^4.3.0",
+    "temporal-polyfill": "^1.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
