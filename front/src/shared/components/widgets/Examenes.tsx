@@ -117,7 +117,7 @@ export default function Examenes() {
           <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
             <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8 overflow-hidden">
               <span className="w-full text-base font-semibold flex flex-col">
-                Examinando ahora
+                Rindiendo ahora
               </span>
               <ExamenList
                 examenes={ahora}
