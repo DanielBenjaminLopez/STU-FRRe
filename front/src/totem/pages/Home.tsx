@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import Encabezado from "../../shared/components/widgets/Encabezado";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
+import Calendar from "../../shared/components/widgets/Calendar";
 
 const AUTH_TOKEN_KEY = "auth_token";
 
@@ -28,6 +29,7 @@ export default function Home() {
         <div className="grid grid-cols-4 gap-4 grid-rows-6 w-full h-full">
           <Horarios />
           <Examenes />
+          <Calendar />
         </div>
       </div>
     </div>
