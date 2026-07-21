@@ -56,10 +56,7 @@ function ClaseList({
   return (
     <div className="w-full h-full flex flex-col gap-1 overflow-auto">
       {clases.map((clase) => (
-        <>
-          <ClaseRow key={clase.id} clase={clase} />
-          <ClaseRow key={clase.id} clase={clase} />
-        </>
+        <ClaseRow key={clase.id} clase={clase} />
       ))}
     </div>
   );
@@ -118,7 +115,7 @@ export default function Horarios() {
             <span className="text-2xl font-normal">Lista de clases</span>
           </div>
           <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
-            <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8 overflow-hidden">
+            <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8 h-full overflow-hidden">
               <span className="w-full text-base font-semibold flex flex-col">
                 Cursando ahora
               </span>
@@ -127,7 +124,7 @@ export default function Horarios() {
                 emptyMessage="No hay clases en este momento"
               />
             </div>
-            <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8">
+            <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8 overflow-hidden">
               <span className="w-full text-base font-semibold flex flex-col">
                 A continuación
               </span>

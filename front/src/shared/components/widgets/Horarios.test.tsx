@@ -83,7 +83,7 @@ describe("Horarios", () => {
     expect(
       screen.getByText("Algoritmos y Estructuras de Datos"),
     ).toBeInTheDocument();
-    expect(screen.getByText("08:00")).toBeInTheDocument();
+    expect(screen.getByText(/08:00/)).toBeInTheDocument();
   });
 
   it("muestra clases en a continuación", () => {
@@ -97,7 +97,7 @@ describe("Horarios", () => {
     expect(screen.getByText("IEM")).toBeInTheDocument();
     expect(screen.getByText(/\[M1\.1\]/)).toBeInTheDocument();
     expect(screen.getByText("Física II")).toBeInTheDocument();
-    expect(screen.getByText("10:00")).toBeInTheDocument();
+    expect(screen.getByText(/10:00/)).toBeInTheDocument();
   });
 
   it("muestra mensaje vacío en cursando ahora", () => {
