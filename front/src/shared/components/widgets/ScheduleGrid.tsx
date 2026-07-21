@@ -101,7 +101,6 @@ function formatDateShort(date: Date): string {
 function formatDateTitle(date: Date, view: ViewMode): string {
   if (view === "day") {
     return date.toLocaleDateString("es-ES", {
-      weekday: "long",
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -117,6 +116,7 @@ function formatDateTitle(date: Date, view: ViewMode): string {
     weekday: "long",
     day: "numeric",
     month: "long",
+    year: "numeric",
   });
 }
 
@@ -221,12 +221,12 @@ function TimeGrid({
 
   return (
     <div className="flex flex-col h-full overflow-hidden mx-8">
-      <div className="flex border-b border-gray-200 shrink-0">
+      <div className="flex border-b border-gray-200 shrink-0 overflow-hidden">
         <div className="w-16 shrink-0" />
         {dayColumns.map((col) => (
           <div
             key={col.label + col.date.toISOString()}
-            className="flex-1 py-3 text-center text-sm font-semibold text-gray-600 border-l border-gray-200"
+            className="flex-1 min-w-0 py-3 text-center text-sm font-semibold text-gray-600 border-l border-gray-200"
           >
             <div>{col.label}</div>
             <div className="text-xs font-normal text-gray-400">
@@ -236,7 +236,7 @@ function TimeGrid({
         ))}
       </div>
 
-      <div className="flex flex-1 overflow-auto">
+      <div className="flex flex-1 overflow-y-auto overflow-x-hidden">
         <div className="w-16 shrink-0 relative" style={{ height: totalHeight }}>
           {hours.map((h) => (
             <div
@@ -244,7 +244,7 @@ function TimeGrid({
               className="absolute left-0 right-0 flex items-start justify-end pr-2"
               style={{ top: (h - HOURS_START) * HOUR_HEIGHT }}
             >
-              <span className="text-xs text-gray-400 -mt-2">
+              <span className="text-xs text-gray-400 mt-1">
                 {String(h).padStart(2, "0")}:00
               </span>
             </div>
@@ -256,7 +256,7 @@ function TimeGrid({
           return (
             <div
               key={col.label + col.date.toISOString()}
-              className="flex-1 relative border-l border-gray-200"
+              className="flex-1 min-w-0 relative border-l border-gray-200"
               style={{ height: totalHeight }}
             >
               {hours.map((h) => (
@@ -272,7 +272,7 @@ function TimeGrid({
                 return (
                   <div
                     key={evt.item.id}
-                    className={`absolute rounded-lg border px-2 py-1 overflow-hidden cursor-default ${colors.bg} ${colors.border}`}
+                    className={`absolute rounded-2xl border px-2 py-1 overflow-hidden cursor-default ${colors.bg} ${colors.border}`}
                     style={{
                       top: evt.top + 1,
                       height: evt.height - 2,
@@ -338,7 +338,7 @@ function ListView({ items }: { items: ScheduleItem[] }) {
               return (
                 <div
                   key={item.id}
-                  className={`flex items-start gap-3 p-3 rounded-xl border ${colors.border} ${colors.bg}`}
+                  className={`flex items-start gap-3 p-3 rounded-2xl border ${colors.border} ${colors.bg}`}
                 >
                   <div className="shrink-0 text-xs font-semibold text-gray-500 mt-0.5 min-w-20">
                     {item.hora_inicio} - {item.hora_fin}
@@ -372,10 +372,36 @@ export default function ScheduleGrid({
   onClose,
   loadingText = "Cargando...",
 }: ScheduleGridProps) {
-  const [view, setView] = useState<ViewMode>("day");
+  const [view] = useState<ViewMode>("list");
   const [date, setDate] = useState(() => new Date());
+  const [selectedCarrera, setSelectedCarrera] = useState("");
+  const [selectedComision, setSelectedComision] = useState("");
 
   const dateTitle = useMemo(() => formatDateTitle(date, view), [date, view]);
+
+  const uniqueCarreras = useMemo(
+    () => [...new Set(items.map((i) => i.carrera_codigo))].sort(),
+    [items],
+  );
+
+  const uniqueComisionesForCarrera = useMemo(() => {
+    if (!selectedCarrera) return [];
+    return [
+      ...new Set(
+        items
+          .filter((i) => i.carrera_codigo === selectedCarrera)
+          .map((i) => i.comision),
+      ),
+    ].sort();
+  }, [items, selectedCarrera]);
+
+  const filteredItems = useMemo(() => {
+    return items.filter((i) => {
+      if (selectedCarrera && i.carrera_codigo !== selectedCarrera) return false;
+      if (selectedComision && i.comision !== selectedComision) return false;
+      return true;
+    });
+  }, [items, selectedCarrera, selectedComision]);
 
   function navigateToday() {
     setDate(new Date());
@@ -411,40 +437,40 @@ export default function ScheduleGrid({
         <div className="flex items-center justify-between p-8 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">{title}</h1>
-            <div className="flex items-center bg-gray-100 rounded-xl p-1">
-              <button
+            <div className="flex items-center bg-gray-100 rounded-2xl p-1">
+              {/* <button
                 type="button"
                 onClick={() => setView("day")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-1.5 text-sm font-medium rounded-2xl transition-colors ${
                   view === "day"
-                    ? "bg-white shadow-sm text-gray-900"
+                    ? "bg-white text-gray-900"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                Día
+                Diario
               </button>
               <button
                 type="button"
                 onClick={() => setView("week")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-1.5 text-sm font-medium rounded-2xl transition-colors ${
                   view === "week"
-                    ? "bg-white shadow-sm text-gray-900"
+                    ? "bg-white text-gray-900"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                Semana
+                Semanal
               </button>
               <button
                 type="button"
                 onClick={() => setView("list")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-1.5 text-sm font-medium rounded-2xl transition-colors ${
                   view === "list"
-                    ? "bg-white shadow-sm text-gray-900"
+                    ? "bg-white text-gray-900"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
                 Lista
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -454,7 +480,7 @@ export default function ScheduleGrid({
                 <button
                   type="button"
                   onClick={navigatePrev}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-2xl transition-colors"
                 >
                   <svg
                     className="w-4 h-4"
@@ -473,14 +499,14 @@ export default function ScheduleGrid({
                 <button
                   type="button"
                   onClick={navigateToday}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
                 >
                   Hoy
                 </button>
                 <button
                   type="button"
                   onClick={navigateNext}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-2xl transition-colors"
                 >
                   <svg
                     className="w-4 h-4"
@@ -513,6 +539,60 @@ export default function ScheduleGrid({
           </div>
         </div>
 
+        {!loading && !error && items.length > 0 && (
+          <div className="flex items-center gap-4 px-8 h-12 border-b border-gray-100">
+            {uniqueCarreras.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                  Carrera
+                </span>
+                <div className="flex gap-1">
+                  {uniqueCarreras.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCarrera((prev) => (prev === c ? "" : c));
+                        setSelectedComision("");
+                      }}
+                      className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-colors ${
+                        selectedCarrera === c
+                          ? `${(CARRERA_COLORS[c] ?? DEFAULT_COLORS).bg} ${(CARRERA_COLORS[c] ?? DEFAULT_COLORS).border} ${(CARRERA_COLORS[c] ?? DEFAULT_COLORS).text}`
+                          : "bg-white border-gray-200 text-gray-400"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedCarrera && uniqueComisionesForCarrera.length > 0 && (
+              <>
+                <div className="w-px h-5 bg-gray-200 shrink-0" />
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Comisión
+                  </span>
+                  <select
+                    value={selectedComision}
+                    onChange={(e) => setSelectedComision(e.target.value)}
+                    className="px-3 py-1 h-full text-sm font-medium border border-gray-200 rounded-2xl bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-colors cursor-pointer"
+                  >
+                    <option value="">Todas</option>
+                    {uniqueComisionesForCarrera.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 overflow-hidden">
           {loading && (
             <div className="flex items-center justify-center h-full">
@@ -527,14 +607,16 @@ export default function ScheduleGrid({
           )}
 
           {!loading && !error && view === "day" && (
-            <TimeGrid items={items} date={date} isWeek={false} />
+            <TimeGrid items={filteredItems} date={date} isWeek={false} />
           )}
 
           {!loading && !error && view === "week" && (
-            <TimeGrid items={items} date={date} isWeek={true} />
+            <TimeGrid items={filteredItems} date={date} isWeek={true} />
           )}
 
-          {!loading && !error && view === "list" && <ListView items={items} />}
+          {!loading && !error && view === "list" && (
+            <ListView items={filteredItems} />
+          )}
         </div>
       </div>
     </div>

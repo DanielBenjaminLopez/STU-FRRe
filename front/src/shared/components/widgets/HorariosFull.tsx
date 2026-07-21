@@ -6,7 +6,7 @@ export default function HorariosFull({ onClose }: { onClose: () => void }) {
 
   return (
     <ScheduleGrid
-      title="Horario completo"
+      title="Horario"
       items={todas}
       loading={loading}
       error={error}

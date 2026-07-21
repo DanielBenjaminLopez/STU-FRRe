@@ -6,7 +6,7 @@ export default function ExamenesFull({ onClose }: { onClose: () => void }) {
 
   return (
     <ScheduleGrid
-      title="Horario completo de exámenes"
+      title="Exámenes"
       items={todas}
       loading={loading}
       error={error}
