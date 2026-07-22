@@ -1,10 +1,45 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import svgRaw from "../../assets/mapas/planta_baja.svg?raw";
+import svgPlantaBaja from "../../assets/mapas/planta_baja.svg?raw";
 import plantaBajaData from "../../assets/mapas/planta_baja_data.json";
+import svgPrimerPiso from "../../assets/mapas/primer_piso.svg?raw";
+import primerPisoData from "../../assets/mapas/primer_piso_data.json";
+import svgSegundoPiso from "../../assets/mapas/segundo_piso.svg?raw";
+import segundoPisoData from "../../assets/mapas/segundo_piso_data.json";
 
 const DEFAULT_FILL = "#C0EEF0";
 const HIGHLIGHT_FILL = "#a2dcde";
+
+type FloorKey = "baja" | "primer" | "segundo";
+
+const FLOORS: Record<
+  FloorKey,
+  {
+    label: string;
+    svg: string;
+    data: Record<string, { nombre: string }>;
+    viewBox: string;
+  }
+> = {
+  baja: {
+    label: "Planta Baja",
+    svg: svgPlantaBaja,
+    data: plantaBajaData,
+    viewBox: "0 0 903 851",
+  },
+  primer: {
+    label: "Primer Piso",
+    svg: svgPrimerPiso,
+    data: primerPisoData,
+    viewBox: "0 0 895 862",
+  },
+  segundo: {
+    label: "Segundo Piso",
+    svg: svgSegundoPiso,
+    data: segundoPisoData,
+    viewBox: "0 0 873 621",
+  },
+};
 
 interface PolygonData {
   id: string;
@@ -36,16 +71,21 @@ function parsePolygons(svg: string): PolygonData[] {
   }));
 }
 
-const POLYGONS = parsePolygons(svgRaw);
-
 export default function CampusMap() {
   const navigate = useNavigate();
+  const [floor, setFloor] = useState<FloorKey>("baja");
   const [selected, setSelected] = useState<number | null>(null);
+
+  const floorConfig = FLOORS[floor];
+  const svgContent = floorConfig.svg;
+  const polygons = useMemo(() => parsePolygons(svgContent), [svgContent]);
 
   return (
     <div className="flex flex-col max-w-270 max-h-480 h-480 mx-auto border-x border-gray-200 p-16 gap-8 overflow-hidden">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Planta Baja</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          {floorConfig.label}
+        </h1>
         <button
           onClick={() => navigate("/")}
           className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
@@ -53,14 +93,34 @@ export default function CampusMap() {
           Volver
         </button>
       </div>
-      <div className="flex-1 min-h-0 overflow-auto">
+      <div className="flex gap-2">
+        {(
+          Object.entries(FLOORS) as [FloorKey, (typeof FLOORS)[FloorKey]][]
+        ).map(([key, config]) => (
+          <button
+            key={key}
+            onClick={() => {
+              setFloor(key);
+              setSelected(null);
+            }}
+            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+              floor === key
+                ? "bg-cyan-200 text-cyan-900"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {config.label}
+          </button>
+        ))}
+      </div>
+      <div className="min-h-0 overflow-auto">
         <svg
-          viewBox="0 0 903 851"
+          viewBox={floorConfig.viewBox}
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           className="w-full h-full"
         >
-          {POLYGONS.map((polygon, i) => {
+          {polygons.map((polygon, i) => {
             const center = getPolygonCenter(polygon.points);
             return (
               <g key={polygon.id}>
@@ -83,7 +143,7 @@ export default function CampusMap() {
                   pointerEvents="none"
                   className="select-none"
                 >
-                  {plantaBajaData[polygon.id as keyof typeof plantaBajaData]
+                  {floorConfig.data[polygon.id as keyof typeof floorConfig.data]
                     ?.nombre ?? polygon.id}
                 </text>
               </g>

@@ -15,7 +15,7 @@
 <polygon id="19" fill="#cecece" points=" 283.5,700.5 232,700.5 232,653.5 283.5,653.5 283.5,700.5"></polygon>
 <polygon id="18" fill="#cecece" points=" 232,700.5 232,726.5 187.5,726.5 187.5,700.5 232,700.5"></polygon>
 <polygon id="escaleras1" fill="#cecece" points=" 156,726.5 127.5,726.5 127.5,682 187.5,682 187.5,653.5 232,653.5 232,700.5 187.5,700.5 187.5,726.5 156,726.5"></polygon>
-<polygon id="puertas1" fill="#cecece" points=" 61.5,649.5 61.5,585.5 95,585.5 95,649.5 61.5,649.5"></polygon>
+<polygon id="entrada1" fill="#cecece" points=" 61.5,649.5 61.5,585.5 95,585.5 95,649.5 61.5,649.5"></polygon>
 <polygon id="22" fill="#cecece" points=" 95,585.5 61.5,585.5 61.5,439 145,439 145,536 145,585.5 95,585.5"></polygon>
 <polygon id="21" fill="#cecece" points=" 145,585.5 145,536 232,536 232,585.5 145,585.5"></polygon>
 <polygon id="23" fill="#cecece" points=" 145,536 145,439 145,392 232,392 232,536 145,536"></polygon>

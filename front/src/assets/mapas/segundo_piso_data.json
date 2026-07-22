@@ -1,0 +1,62 @@
+{
+  "57": {
+    "nombre": "Aula 2.1",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "58": {
+    "nombre": "Aula 2.2",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "59": {
+    "nombre": "Departamento de Obras y Proyectos",
+    "tipo": "departamento",
+    "piso": "segundo"
+  },
+  "60": {
+    "nombre": "Aula 2.3",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "61": {
+    "nombre": "Aula 2.4",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "62": {
+    "nombre": "Aula 2.5",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "63": {
+    "nombre": "Aula 2.6",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "64": {
+    "nombre": "Aula 2.9",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "65": {
+    "nombre": "Aula 2.11",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "66": {
+    "nombre": "Aula 2.10",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "67": {
+    "nombre": "Aula 2.8",
+    "tipo": "aula",
+    "piso": "segundo"
+  },
+  "68": {
+    "nombre": "Fotocopiadora",
+    "tipo": "servicio",
+    "piso": "segundo"
+  }
+}
