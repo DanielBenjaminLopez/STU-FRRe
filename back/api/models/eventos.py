@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -65,12 +64,6 @@ class Suspension(models.Model):
 
     def __str__(self):
         return f'{self.tipo} - {self.fecha}'
-
-    def clean(self):
-        if not self.horario_cursado and not self.actividad_extra:
-            raise ValidationError(
-                'Debe referenciar un horario de cursado o una actividad extra.'
-            )
 
 
 class Noticias(models.Model):

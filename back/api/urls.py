@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
     ActividadExtraViewSet,
+    AvisosActivosView,
     CarreraMateriaViewSet,
     CarreraViewSet,
     EspacioListView,
@@ -14,6 +15,7 @@ from .views import (
     NoticiasViewSet,
     SuspensionViewSet,
     TotemNewView,
+    TotemViewSet,
     VincularTotemView,
 )
 
@@ -26,6 +28,7 @@ router.register('mesas-examen', MesaExamenViewSet)
 router.register('eventos', ActividadExtraViewSet)
 router.register('avisos', SuspensionViewSet)
 router.register('noticias', NoticiasViewSet)
+router.register('totems', TotemViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -35,4 +38,5 @@ urlpatterns = [
     path('totems/new/', TotemNewView.as_view(), name='totem_new'),
     path('totems/vincular/', VincularTotemView.as_view(), name='totem_vincular'),
     path('espacios/', EspacioListView.as_view(), name='espacios_list'),
+    path('avisos-activos/', AvisosActivosView.as_view(), name='avisos_activos'),
 ]
