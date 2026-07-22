@@ -16,7 +16,7 @@ export default function Sidebar() {
   const { logout } = useAuth();
 
   return (
-    <aside className="flex flex-col w-64 h-screen bg-white border-r border-gray-200 shrink-0">
+    <aside className="flex flex-col w-48 h-full bg-white border-r border-gray-200 shrink-0">
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="flex flex-col gap-1">
           {navItems.map((item) => (

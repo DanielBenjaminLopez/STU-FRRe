@@ -13,7 +13,7 @@ export default function Home() {
         <TotemPreview />
       </div>
 
-      <div className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-4">
+      <div className="w-56 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-4">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-1">
           Otros tótems
         </h3>

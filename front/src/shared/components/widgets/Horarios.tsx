@@ -56,10 +56,7 @@ function ClaseList({
   return (
     <div className="w-full h-full flex flex-col gap-1 overflow-auto">
       {clases.map((clase) => (
-        <>
-          <ClaseRow key={clase.id} clase={clase} />
-          <ClaseRow key={clase.id} clase={clase} />
-        </>
+        <ClaseRow key={clase.id} clase={clase} />
       ))}
     </div>
   );
