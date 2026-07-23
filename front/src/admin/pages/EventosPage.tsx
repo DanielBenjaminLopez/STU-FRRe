@@ -13,6 +13,14 @@ import type { Column } from "../components/DataTable";
 const columns: Column<Record<string, unknown>>[] = [
   { key: "titulo", label: "Título", sortable: true },
   { key: "tipo", label: "Tipo", sortable: true },
+  {
+    key: "descripcion",
+    label: "Descripción",
+    render: (val) => {
+      const text = String(val ?? "");
+      return text.length > 50 ? text.slice(0, 50) + "..." : text || "-";
+    },
+  },
   { key: "espacio_nombre", label: "Espacio" },
   {
     key: "fecha_hora_inicio",

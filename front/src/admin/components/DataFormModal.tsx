@@ -16,6 +16,9 @@ export interface FormField {
   options?: { value: string | number; label: string }[];
   placeholder?: string;
   readOnly?: boolean;
+  defaultValue?: unknown;
+  min?: number;
+  max?: number;
 }
 
 interface DataFormModalProps {
@@ -34,7 +37,14 @@ export default function DataFormModal({
   onClose,
 }: DataFormModalProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>(
-    () => initialData ?? {},
+    () =>
+      initialData ??
+      Object.fromEntries(
+        fields.map((f) => [
+          f.name,
+          f.defaultValue ?? (f.type === "checkbox" ? false : ""),
+        ]),
+      ),
   );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -150,6 +160,8 @@ export default function DataFormModal({
                   required={field.required}
                   placeholder={field.placeholder}
                   readOnly={field.readOnly}
+                  min={field.min}
+                  max={field.max}
                   className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
                 />
               )}

@@ -94,6 +94,7 @@ export default function MesasExamenPage() {
       label: "Llamado",
       type: "number" as const,
       required: true,
+      min: 0,
     },
     {
       name: "tribunal",
@@ -107,6 +108,7 @@ export default function MesasExamenPage() {
       type: "checkbox" as const,
       required: false,
       placeholder: "Sí",
+      defaultValue: true,
     },
   ];
 
@@ -116,7 +118,14 @@ export default function MesasExamenPage() {
     entityName: "mesa de examen",
     columns,
     formFields,
-    fetchList: fetchMesasExamen,
+    fetchList: async () => {
+      const data = await fetchMesasExamen();
+      const now = Date.now();
+      return data.map((mesa) => ({
+        ...mesa,
+        activo: new Date(mesa.fecha_hora).getTime() > now && mesa.activo,
+      }));
+    },
     create: createMesaExamen,
     update: updateMesaExamen,
     remove: deleteMesaExamen,

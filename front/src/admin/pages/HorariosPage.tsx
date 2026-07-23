@@ -61,6 +61,7 @@ const baseFormFields = [
     label: "Activo",
     type: "checkbox" as const,
     required: false,
+    defaultValue: true,
     placeholder: "Sí",
   },
 ];
@@ -104,7 +105,13 @@ export default function HorariosPage() {
     ...baseFormFields,
   ];
 
-  const fetchList = useCallback(() => fetchHorarios(), []);
+  const fetchList = useCallback(async () => {
+    const horarios = await fetchHorarios();
+    const hoy = new Date().toISOString().slice(0, 10);
+    return horarios.map((h) =>
+      h.fecha_fin_vigencia < hoy ? { ...h, activo: false } : h,
+    );
+  }, []);
 
   const config = {
     title: "Horarios de cursado",

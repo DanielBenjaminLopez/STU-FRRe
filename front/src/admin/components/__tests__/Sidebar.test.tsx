@@ -45,6 +45,7 @@ describe("Sidebar", () => {
     expect(screen.getByText("Noticias")).toBeInTheDocument();
     expect(screen.getByText("Eventos")).toBeInTheDocument();
     expect(screen.getByText("Avisos")).toBeInTheDocument();
+    expect(screen.getByText("Plantillas")).toBeInTheDocument();
   });
 
   it("renderiza el botón de cerrar sesión", () => {
@@ -58,10 +59,10 @@ describe("Sidebar", () => {
     expect(mockLogout).toHaveBeenCalled();
   });
 
-  it("tiene 8 items de navegación", () => {
+  it("tiene 9 items de navegación", () => {
     render(<Sidebar />);
     const links = screen.getAllByRole("link");
-    expect(links.length).toBe(8);
+    expect(links.length).toBe(9);
   });
 
   it("tiene clase w-48 en el aside", () => {
