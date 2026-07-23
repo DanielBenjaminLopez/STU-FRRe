@@ -10,7 +10,6 @@ const navItems = [
   { to: "/admin/noticias", label: "Noticias" },
   { to: "/admin/eventos", label: "Eventos" },
   { to: "/admin/avisos", label: "Avisos" },
-  { to: "/admin/plantillas", label: "Plantillas" },
 ];
 
 export default function Sidebar() {
@@ -28,8 +27,8 @@ export default function Sidebar() {
                 className={({ isActive }) =>
                   `block px-4 py-2.5 text-sm font-medium rounded-2xl transition-colors ${
                     isActive
-                      ? "bg-gray-100 text-gray-900"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-black text-white"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                   }`
                 }
               >
