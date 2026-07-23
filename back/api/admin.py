@@ -5,74 +5,81 @@ from .models import (
     Espacio,
     Carrera,
     Materia,
-    CarreraMateria,
+    PlanMateria,
+    Comision,
     HorarioCursado,
     MesaExamen,
-    ActividadExtra,
-    Suspension,
+    Evento,
+    Aviso,
     Noticias,
 )
 
 
 @admin.register(Totem)
 class TotemAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'espacio', 'activo', 'creado_en']
-    list_filter = ['activo']
+    list_display = ['nombre', 'espacio', 'creado_en']
     search_fields = ['nombre']
 
 
 @admin.register(Espacio)
 class EspacioAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'tipo', 'piso', 'capacidad']
+    list_display = ['nombre', 'tipo', 'piso']
     list_filter = ['tipo', 'piso']
     search_fields = ['nombre']
 
 
 @admin.register(Carrera)
 class CarreraAdmin(admin.ModelAdmin):
-    list_display = ['codigo', 'nombre']
-    search_fields = ['codigo', 'nombre']
+    list_display = ['nombre']
+    search_fields = ['nombre']
 
 
 @admin.register(Materia)
 class MateriaAdmin(admin.ModelAdmin):
-    list_display = ['codigo', 'nombre', 'profesores']
-    search_fields = ['codigo', 'nombre']
+    list_display = ['nombre']
+    search_fields = ['nombre']
 
 
-@admin.register(CarreraMateria)
-class CarreraMateriaAdmin(admin.ModelAdmin):
-    list_display = ['carrera', 'materia', 'anio_plan', 'cuatrimestre']
-    list_filter = ['carrera', 'anio_plan']
+@admin.register(PlanMateria)
+class PlanMateriaAdmin(admin.ModelAdmin):
+    list_display = ['carrera', 'materia', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
+    list_filter = ['carrera', 'nivel', 'modalidad', 'plan_estudio']
+
+
+@admin.register(Comision)
+class ComisionAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'plan_materia']
+    list_filter = ['plan_materia__carrera']
+    search_fields = ['nombre', 'plan_materia__materia__nombre']
 
 
 @admin.register(HorarioCursado)
 class HorarioCursadoAdmin(admin.ModelAdmin):
     list_display = [
-        'materia', 'espacio', 'dia_semana', 'comision',
+        'comision', 'espacio', 'dia_semana',
         'hora_inicio', 'hora_fin', 'activo',
     ]
     list_filter = ['dia_semana', 'activo']
-    search_fields = ['materia__nombre', 'comision']
+    search_fields = ['comision__nombre', 'comision__plan_materia__materia__nombre']
 
 
 @admin.register(MesaExamen)
 class MesaExamenAdmin(admin.ModelAdmin):
-    list_display = ['materia', 'espacio', 'fecha_hora', 'turno', 'llamado', 'activo']
-    list_filter = ['turno', 'activo']
-    search_fields = ['materia__nombre']
+    list_display = ['plan_materia', 'espacio', 'fecha', 'hora', 'turno', 'activo']
+    list_filter = ['turno', 'activo', 'plan_materia__carrera']
+    search_fields = ['plan_materia__materia__nombre']
 
 
-@admin.register(ActividadExtra)
-class ActividadExtraAdmin(admin.ModelAdmin):
+@admin.register(Evento)
+class EventoAdmin(admin.ModelAdmin):
     list_display = ['titulo', 'tipo', 'fecha_hora_inicio', 'fecha_hora_fin', 'espacio']
     list_filter = ['tipo']
     search_fields = ['titulo']
 
 
-@admin.register(Suspension)
-class SuspensionAdmin(admin.ModelAdmin):
-    list_display = ['horario_cursado', 'actividad_extra', 'fecha', 'motivo', 'tipo']
+@admin.register(Aviso)
+class AvisoAdmin(admin.ModelAdmin):
+    list_display = ['horario_cursado', 'evento', 'fecha', 'motivo', 'tipo']
     list_filter = ['tipo']
     search_fields = ['motivo']
 
