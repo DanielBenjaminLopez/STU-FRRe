@@ -10,6 +10,7 @@ import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
 import EventosPage from "./pages/EventosPage";
 import AvisosPage from "./pages/AvisosPage";
+import PlantillasPage from "./pages/PlantillasPage";
 
 export default function AdminRoutes() {
   return (
@@ -84,6 +85,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AvisosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/plantillas"
+        element={
+          <ProtectedRoute>
+            <PlantillasPage />
           </ProtectedRoute>
         }
       />
