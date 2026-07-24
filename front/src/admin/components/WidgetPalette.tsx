@@ -1,0 +1,62 @@
+import type { ComponentType } from "react";
+import { useDraggable } from "@dnd-kit/core";
+import type { WidgetType, WidgetDefinition } from "../pages/plantillas/types";
+
+interface WidgetCardProps {
+  widget: WidgetDefinition;
+  component: ComponentType;
+}
+
+function WidgetCard({ widget, component: Component }: WidgetCardProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette-${widget.type}`,
+    data: { type: widget.type },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={`rounded-2xl border border-gray-200 bg-white cursor-grab active:cursor-grabbing select-none transition-all hover:shadow-md hover:border-gray-300 ${
+        isDragging ? "opacity-40 shadow-none" : ""
+      }`}
+    >
+      <div className="w-full h-48 overflow-hidden relative">
+        <div
+          className="absolute top-0 left-0 origin-top-left pointer-events-none"
+          style={{ width: "333%", height: "333%", transform: "scale(0.3)" }}
+        >
+          <Component />
+        </div>
+      </div>
+      <div className="px-4 py-2 border-t border-gray-100">
+        <span className="text-xs font-medium text-gray-500">
+          {widget.label} ({widget.colSpan}&times;{widget.rowSpan})
+        </span>
+      </div>
+    </div>
+  );
+}
+
+interface WidgetPaletteProps {
+  widgets: WidgetDefinition[];
+  components: Record<WidgetType, ComponentType>;
+}
+
+export default function WidgetPalette({ widgets, components }: WidgetPaletteProps) {
+  return (
+    <div className="w-72 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
+      <div className="px-5 py-4 border-b border-gray-200">
+        <h2 className="text-sm font-semibold text-gray-900">Agregar elementos</h2>
+      </div>
+      <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex flex-col gap-4">
+          {widgets.map((w) => (
+            <WidgetCard key={w.type} widget={w} component={components[w.type]} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

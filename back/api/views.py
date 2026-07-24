@@ -1,6 +1,8 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.utils import timezone
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +19,7 @@ from .models import (
     Materia,
     MesaExamen,
     Noticias,
+    Totem,
 )
 from .permissions import IsAdminOrSecretaria
 from .serializers import (
@@ -103,6 +106,29 @@ class AvisoViewSet(viewsets.ModelViewSet):
 class NoticiasViewSet(viewsets.ModelViewSet):
     queryset = Noticias.objects.all()
     serializer_class = NoticiasSerializer
+
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest(self, request):
+        noticia = Noticias.objects.order_by('-fecha_publicacion').first()
+        if not noticia:
+            return Response(None)
+        return Response(NoticiasSerializer(noticia).data)
+
+
+class AvisosActivosView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        hoy = timezone.now().date()
+        avisos = Suspension.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
+        serializer = SuspensionSerializer(avisos, many=True)
+        return Response(serializer.data)
+
+
+class TotemViewSet(viewsets.ModelViewSet):
+    queryset = Totem.objects.select_related('espacio').all()
+    serializer_class = TotemSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
 
 
 class TotemNewView(APIView):

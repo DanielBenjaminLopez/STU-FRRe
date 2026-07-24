@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { redirect } from "react-router";
+import { useNavigate } from "react-router";
 import { useAuth } from "../../shared/context/AuthContext";
 import Logo from "../../assets/logo_negro.webp";
 
 export default function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -14,7 +15,7 @@ export default function Login() {
     setError("");
     try {
       await login(username, password);
-      redirect("/admin/");
+      navigate("/admin/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
     }
