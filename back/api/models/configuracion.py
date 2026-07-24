@@ -19,7 +19,6 @@ class Totem(models.Model):
         max_length=10, unique=True, null=True, blank=True
     )
     vinculado = models.BooleanField(default=False)
-    activo = models.BooleanField(default=True)
     config_pantalla = models.JSONField(default=dict)
     creado_en = models.DateTimeField(auto_now_add=True)
     codigo_creado_en = models.DateTimeField(null=True, blank=True)
