@@ -28,6 +28,27 @@ vi.mock("../../../shared/components/widgets/Examenes", () => ({
   default: () => <div data-testid="mock-examenes">Examenes widget</div>,
 }));
 
+vi.mock("../../../shared/components/widgets/Encabezado", () => ({
+  default: () => <div data-testid="mock-encabezado">Encabezado</div>,
+}));
+
+vi.mock("../../../shared/hooks/useTotemScale", () => ({
+  useTotemScale: () => ({
+    containerRef: { current: null },
+    scale: 1,
+  }),
+  TOTEM_WIDTH: 1080,
+  TOTEM_HEIGHT: 1920,
+}));
+
+vi.mock("../../../shared/context/TotemContext", () => ({
+  useTotem: () => ({
+    selectedId: "1",
+    totems: [],
+    setSelectedId: vi.fn(),
+  }),
+}));
+
 describe("PlantillasPage", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -48,9 +69,9 @@ describe("PlantillasPage", () => {
     expect(screen.getByDisplayValue("Nueva plantilla")).toBeInTheDocument();
   });
 
-  it("renderiza el botón de guardar", () => {
+  it("renderiza el botón de cargar en tótem", () => {
     render(<PlantillasPage />);
-    expect(screen.getByText("Guardar")).toBeInTheDocument();
+    expect(screen.getByText("Cargar en tótem")).toBeInTheDocument();
   });
 
   it("permite cambiar el nombre de la plantilla", () => {

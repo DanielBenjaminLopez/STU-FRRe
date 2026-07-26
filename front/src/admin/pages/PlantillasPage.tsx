@@ -6,12 +6,14 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import WidgetPalette from "../components/WidgetPalette";
 import TemplateCanvas from "../components/TemplateCanvas";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
+import { useTotem } from "../../shared/context/TotemContext";
 import {
   WIDGET_REGISTRY,
   GRID_COLS,
@@ -22,7 +24,13 @@ import {
   type Plantilla,
 } from "./plantillas/types";
 
+const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
+  horarios: Horarios,
+  examenes: Examenes,
+};
+
 const STORAGE_KEY = "plantillas";
+const ACTIVAS_KEY = "plantillas_activas";
 
 function createEmptyPlantilla(): Plantilla {
   return {
@@ -46,17 +54,80 @@ function savePlantillas(plantillas: Plantilla[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(plantillas));
 }
 
+function loadActiveMapping(): Record<string, string> {
+  try {
+    const saved = localStorage.getItem(ACTIVAS_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function saveActiveMapping(mapping: Record<string, string>) {
+  localStorage.setItem(ACTIVAS_KEY, JSON.stringify(mapping));
+}
+
+function getCellFromEvent(
+  event: DragOverEvent,
+): { col: number; row: number } | null {
+  const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
+  if (!gridEl) return null;
+
+  const rect = gridEl.getBoundingClientRect();
+  const cellW = rect.width / GRID_COLS;
+  const cellH = rect.height / GRID_ROWS;
+
+  const pointer = event.activatorEvent instanceof PointerEvent
+    ? event.activatorEvent
+    : null;
+  if (!pointer) return null;
+
+  const x = pointer.clientX - rect.left + (event.delta?.x ?? 0);
+  const y = pointer.clientY - rect.top + (event.delta?.y ?? 0);
+
+  const col = Math.floor(x / cellW);
+  const row = Math.floor(y / cellH);
+
+  if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return null;
+  return { col, row };
+}
+
+function getGhostDimensions(scale: number): { width: number; height: number } | null {
+  const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
+  if (!gridEl) return null;
+
+  const rect = gridEl.getBoundingClientRect();
+  const gap = 16; // gap-4 = 16px
+  const layoutW = rect.width / scale;
+  const layoutH = rect.height / scale;
+  const cellW = (layoutW - (GRID_COLS - 1) * gap) / GRID_COLS;
+  const cellH = (layoutH - (GRID_ROWS - 1) * gap) / GRID_ROWS;
+
+  // Widget spans 4 cols, 2 rows
+  const width = 4 * cellW + 3 * gap;
+  const height = 2 * cellH + gap;
+
+  return { width, height };
+}
+
 export default function PlantillasPage() {
+  const { selectedId: totemId } = useTotem();
   const [plantillas, setPlantillas] = useState<Plantilla[]>(loadPlantillas);
   const [selectedId, setSelectedId] = useState<string>(() => plantillas[0]?.id ?? "");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<WidgetType | null>(null);
+  const [hoverCell, setHoverCell] = useState<{ col: number; row: number } | null>(null);
+  const [canvasScale, setCanvasScale] = useState(1);
+  const [toast, setToast] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
   const selected = plantillas.find((p) => p.id === selectedId);
+  const activeMapping = loadActiveMapping();
+  const activePlantillaId = totemId ? activeMapping[totemId] ?? null : null;
 
   useEffect(() => {
     savePlantillas(plantillas);
@@ -67,6 +138,12 @@ export default function PlantillasPage() {
       setSelectedId(plantillas[0].id);
     }
   }, [selectedId, plantillas]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const handleNombreChange = useCallback(
     (nombre: string) => {
@@ -90,61 +167,83 @@ export default function PlantillasPage() {
     [selectedId],
   );
 
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      setHoverCell(getCellFromEvent(event));
+    },
+    [],
+  );
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       setActiveType(null);
+      setHoverCell(null);
       const { over, active } = event;
       if (!over || over.id !== "canvas") return;
 
-      const widgetType = active.data.current?.type as WidgetType | undefined;
+      const cell = getCellFromEvent(event);
+      if (!cell) return;
+
+      const moveWidgetId = active.data.current?.widgetId as string | undefined;
+      const widgetType = (moveWidgetId
+        ? active.data.current?.widgetType
+        : active.data.current?.type) as WidgetType | undefined;
       if (!widgetType) return;
 
       const def = WIDGET_REGISTRY[widgetType];
       if (!def) return;
 
-      const canvasEl = document.querySelector<HTMLDivElement>("[data-canvas]");
-      if (!canvasEl) return;
-
-      const rect = canvasEl.getBoundingClientRect();
-      const cellW = rect.width / GRID_COLS;
-      const cellH = rect.height / GRID_ROWS;
-
-      const pointer = event.activatorEvent instanceof PointerEvent
-        ? event.activatorEvent
-        : null;
-      if (!pointer) return;
-
-      const x = pointer.clientX - rect.left + (event.delta?.x ?? 0);
-      const y = pointer.clientY - rect.top + (event.delta?.y ?? 0);
-
-      let col = Math.floor(x / cellW);
-      let row = Math.floor(y / cellH);
-
-      col = Math.max(0, Math.min(col, GRID_COLS - def.colSpan));
-      row = Math.max(0, Math.min(row, GRID_ROWS - def.rowSpan));
+      let col = Math.max(0, Math.min(cell.col, GRID_COLS - def.colSpan));
+      let row = Math.max(0, Math.min(cell.row, GRID_ROWS - def.rowSpan));
 
       const currentWidgets =
         plantillas.find((p) => p.id === selectedId)?.widgets ?? [];
-      if (checkCollision(currentWidgets, col, row, def.colSpan, def.rowSpan)) return;
 
-      const newWidget: WidgetPlacement = {
-        id: crypto.randomUUID(),
-        type: widgetType,
-        col,
-        row,
-      };
+      const widgetsToCheck = moveWidgetId
+        ? currentWidgets.filter((w) => w.id !== moveWidgetId)
+        : currentWidgets;
 
-      setPlantillas((prev) =>
-        prev.map((p) =>
-          p.id === selectedId ? { ...p, widgets: [...p.widgets, newWidget] } : p,
-        ),
-      );
+      if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan)) return;
+
+      if (moveWidgetId) {
+        setPlantillas((prev) =>
+          prev.map((p) =>
+            p.id === selectedId
+              ? {
+                  ...p,
+                  widgets: p.widgets.map((w) =>
+                    w.id === moveWidgetId ? { ...w, col, row } : w,
+                  ),
+                }
+              : p,
+          ),
+        );
+      } else {
+        const newWidget: WidgetPlacement = {
+          id: crypto.randomUUID(),
+          type: widgetType,
+          col,
+          row,
+        };
+        setPlantillas((prev) =>
+          prev.map((p) =>
+            p.id === selectedId ? { ...p, widgets: [...p.widgets, newWidget] } : p,
+          ),
+        );
+      }
     },
     [selectedId, plantillas],
   );
 
   const handleDragStart = useCallback((event: { active: { data: { current: unknown } } }) => {
-    setActiveType((event.active.data.current as { type?: WidgetType })?.type ?? null);
+    const data = event.active.data.current as Record<string, unknown> | undefined;
+    const type = (data?.widgetType ?? data?.type) as WidgetType | undefined;
+    setActiveType(type ?? null);
+  }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveType(null);
+    setHoverCell(null);
   }, []);
 
   const handleCreatePlantilla = useCallback(() => {
@@ -170,11 +269,20 @@ export default function PlantillasPage() {
     setDeletingId(null);
   }, [deletingId, selectedId]);
 
+  const handleLoadOnTotem = useCallback(() => {
+    if (!totemId || !selectedId) return;
+    const mapping = loadActiveMapping();
+    saveActiveMapping({ ...mapping, [totemId]: selectedId });
+    setToast("Plantilla cargada en el tótem correctamente");
+  }, [totemId, selectedId]);
+
   return (
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className="flex flex-col h-full">
         <div className="flex flex-1 overflow-hidden">
@@ -188,6 +296,9 @@ export default function PlantillasPage() {
               nombre={selected?.nombre ?? ""}
               onNombreChange={handleNombreChange}
               onRemoveWidget={handleRemoveWidget}
+              onScaleChange={setCanvasScale}
+              hoverCell={hoverCell}
+              activeType={activeType}
             />
           </div>
         </div>
@@ -199,13 +310,18 @@ export default function PlantillasPage() {
                 key={p.id}
                 type="button"
                 onClick={() => setSelectedId(p.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 ${
                   p.id === selectedId
                     ? "bg-gray-900 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {p.nombre}
+                {p.id === activePlantillaId && (
+                  <span className={`text-[10px] ${p.id === selectedId ? "text-green-400" : "text-green-600"}`}>
+                    ✓
+                  </span>
+                )}
               </button>
             ))}
             <button
@@ -232,20 +348,35 @@ export default function PlantillasPage() {
             )}
             <button
               type="button"
+              onClick={handleLoadOnTotem}
               className="px-5 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
             >
-              Guardar
+              Cargar en tótem
             </button>
           </div>
         </div>
       </div>
 
-      <DragOverlay>
-        {activeType && (
-          <div className="px-4 py-3 rounded-2xl border border-gray-200 bg-white shadow-lg text-sm font-medium text-gray-700 opacity-90">
-            {WIDGET_REGISTRY[activeType].label}
-          </div>
-        )}
+      <DragOverlay dropAnimation={null}>
+        {activeType && (() => {
+          const Ghost = WIDGET_COMPONENTS[activeType];
+          const dims = getGhostDimensions(canvasScale);
+          if (!Ghost || !dims) return null;
+          return (
+            <div
+              className="pointer-events-none"
+              style={{
+                width: dims.width,
+                height: dims.height,
+                transform: `scale(${canvasScale})`,
+                transformOrigin: "top left",
+                overflow: "hidden",
+              }}
+            >
+              <Ghost />
+            </div>
+          );
+        })()}
       </DragOverlay>
 
       {deletingId && (
@@ -255,6 +386,12 @@ export default function PlantillasPage() {
           onConfirm={handleDeletePlantilla}
           onClose={() => setDeletingId(null)}
         />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-2xl shadow-lg">
+          {toast}
+        </div>
       )}
     </DndContext>
   );
