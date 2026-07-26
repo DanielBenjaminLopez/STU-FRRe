@@ -2,8 +2,7 @@ from django.db import models
 
 
 class Carrera(models.Model):
-    nombre = models.CharField(max_length=200)
-    codigo = models.CharField(max_length=20, unique=True)
+    nombre = models.CharField(max_length=200, unique=True)
 
     class Meta:
         ordering = ['nombre']
@@ -11,13 +10,11 @@ class Carrera(models.Model):
         verbose_name_plural = 'Carreras'
 
     def __str__(self):
-        return f'{self.codigo} - {self.nombre}'
+        return self.nombre
 
 
 class Materia(models.Model):
-    nombre = models.CharField(max_length=200)
-    codigo = models.CharField(max_length=20, unique=True)
-    profesores = models.TextField(blank=True)
+    nombre = models.CharField(max_length=200, unique=True)
 
     class Meta:
         ordering = ['nombre']
@@ -25,10 +22,33 @@ class Materia(models.Model):
         verbose_name_plural = 'Materias'
 
     def __str__(self):
-        return f'{self.codigo} - {self.nombre}'
+        return self.nombre
 
 
-class CarreraMateria(models.Model):
+class PlanMateria(models.Model):
+    NIVEL = [
+        ('primero', 'Primer año'),
+        ('segundo', 'Segundo año'),
+        ('tercero', 'Tercer año'),
+        ('cuarto', 'Cuarto año'),
+        ('quinto', 'Quinto año'),
+    ]
+
+    MODALIDAD = [
+        ('anual', 'Anual'),
+        ('cuatrimestral', 'Cuatrimestral'),
+    ]
+
+    CUATRIMESTRE = [
+        ('primero', 'Primero'),
+        ('segundo', 'Segundo'),
+    ]
+
+    PLAN_ESTUDIO = [
+        ('2023', 'Plan 2023'),
+        ('2008', 'Plan 2008'),
+    ]
+
     carrera = models.ForeignKey(
         Carrera,
         on_delete=models.PROTECT,
@@ -39,19 +59,60 @@ class CarreraMateria(models.Model):
         on_delete=models.PROTECT,
         related_name='carreras',
     )
-    anio_plan = models.PositiveSmallIntegerField()
-    cuatrimestre = models.PositiveSmallIntegerField()
+    nivel = models.CharField(max_length=10, choices=NIVEL, default='primero')
+    modalidad = models.CharField(max_length=15, choices=MODALIDAD, default='cuatrimestral')
+    cuatrimestre = models.CharField(
+        max_length=10,
+        choices=CUATRIMESTRE,
+        null=True,
+        blank=True,
+        help_text='Completar solo si la modalidad es Cuatrimestral.',
+    )
+    plan_estudio = models.CharField(max_length=4, choices=PLAN_ESTUDIO, default='2023')
 
     class Meta:
-        ordering = ['carrera', 'anio_plan', 'cuatrimestre']
+        ordering = ['carrera', 'nivel', 'cuatrimestre']
         unique_together = [
-            ['carrera', 'materia', 'anio_plan', 'cuatrimestre'],
+            ['carrera', 'materia', 'nivel', 'plan_estudio'],
         ]
-        verbose_name = 'Carrera - Materia'
-        verbose_name_plural = 'Carreras - Materias'
+        verbose_name = 'Plan - Materia'
+        verbose_name_plural = 'Plan - Materias'
 
     def __str__(self):
-        return f'{self.carrera.codigo} - {self.materia.codigo} (Año {self.anio_plan}, Cuat {self.cuatrimestre})'
+        cuatrimestre_str = f', {self.get_cuatrimestre_display()} cuatrimestre' if self.cuatrimestre else ''
+        return (
+            f'{self.carrera.nombre} — {self.materia.nombre} '
+            f'({self.get_nivel_display()}{cuatrimestre_str}, Plan {self.plan_estudio})'
+        )
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.modalidad == 'cuatrimestral' and not self.cuatrimestre:
+            raise ValidationError(
+                {'cuatrimestre': 'Debe indicar el cuatrimestre cuando la modalidad es Cuatrimestral.'}
+            )
+        if self.modalidad == 'anual' and self.cuatrimestre:
+            raise ValidationError(
+                {'cuatrimestre': 'Las materias anuales no tienen cuatrimestre.'}
+            )
+
+
+class Comision(models.Model):
+    plan_materia = models.ForeignKey(
+        PlanMateria,
+        on_delete=models.CASCADE,
+        related_name='comisiones',
+    )
+    nombre = models.CharField(max_length=50, help_text='Ej: K1, K2, Única')
+
+    class Meta:
+        ordering = ['plan_materia', 'nombre']
+        unique_together = [['plan_materia', 'nombre']]
+        verbose_name = 'Comisión'
+        verbose_name_plural = 'Comisiones'
+
+    def __str__(self):
+        return f'{self.plan_materia.materia.nombre} — {self.nombre} ({self.plan_materia.carrera.nombre})'
 
 
 class HorarioCursado(models.Model):
@@ -64,10 +125,12 @@ class HorarioCursado(models.Model):
         ('sabado', 'Sábado'),
     ]
 
-    materia = models.ForeignKey(
-        Materia,
+    comision = models.ForeignKey(
+        Comision,
         on_delete=models.CASCADE,
         related_name='horarios',
+        null=True,
+        blank=True,
     )
     espacio = models.ForeignKey(
         'Espacio',
@@ -75,49 +138,75 @@ class HorarioCursado(models.Model):
         related_name='horarios',
     )
     dia_semana = models.CharField(max_length=15, choices=DIA_SEMANA)
-    comision = models.CharField(max_length=50)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
-    fecha_inicio_vigencia = models.DateField()
-    fecha_fin_vigencia = models.DateField()
     activo = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['materia', 'dia_semana', 'hora_inicio']
+        ordering = ['comision', 'dia_semana', 'hora_inicio']
         verbose_name = 'Horario de cursado'
         verbose_name_plural = 'Horarios de cursado'
 
     def __str__(self):
-        return f'{self.materia.codigo} - {self.dia_semana} {self.hora_inicio}-{self.hora_fin} ({self.comision})'
+        materia = self.comision.plan_materia.materia.nombre
+        return f'{materia} ({self.comision.nombre}) - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
 
 
 class MesaExamen(models.Model):
     TURNO = [
         ('febrero', 'Febrero'),
-        ('julio', 'Julio'),
+        ('marzo', 'Marzo'),
+        ('abril', 'Abril'),
+        ('junio', 'Junio'),
+        ('agosto', 'Agosto'),
+        ('septiembre', 'Septiembre'),
+        ('octubre', 'Octubre'),
         ('diciembre', 'Diciembre'),
     ]
 
-    materia = models.ForeignKey(
-        Materia,
+    LLAMADO_POR_TURNO = {
+        'febrero': 1,
+        'marzo': 2,
+        'abril': 3,
+        'junio': 4,
+        'agosto': 5,
+        'septiembre': 6,
+        'octubre': 7,
+        'diciembre': 8,
+    }
+
+    plan_materia = models.ForeignKey(
+        PlanMateria,
         on_delete=models.CASCADE,
         related_name='mesas_examen',
+        null=True,
+        blank=True,
     )
     espacio = models.ForeignKey(
         'Espacio',
         on_delete=models.CASCADE,
         related_name='mesas_examen',
     )
-    fecha_hora = models.DateTimeField()
-    turno = models.CharField(max_length=15, choices=TURNO)
-    llamado = models.PositiveSmallIntegerField()
-    tribunal = models.TextField(blank=True)
+    fecha = models.DateField(default='2025-01-01')
+    hora = models.TimeField(default='00:00')
+    turno = models.CharField(max_length=15, choices=TURNO, default='febrero')
     activo = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['fecha_hora']
+        ordering = ['fecha', 'hora']
         verbose_name = 'Mesa de examen'
-        verbose_name_plural = 'Mesas de examen'
+        verbose_name_plural = 'Mesas de exámen'
 
     def __str__(self):
-        return f'{self.materia.codigo} - {self.turno} Llamado {self.llamado}'
+        materia = self.plan_materia.materia.nombre
+        return f'{materia} - {self.get_turno_display()} ({self.llamado}° llamado)'
+
+    @property
+    def llamado(self):
+        return self.LLAMADO_POR_TURNO.get(self.turno)
+
+    @property
+    def dia_semana(self):
+        dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+        return dias[self.fecha.weekday()]
+
