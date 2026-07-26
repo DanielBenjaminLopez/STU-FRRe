@@ -1,4 +1,4 @@
-from .configuracion import Totem
+from .configuracion import Totem, Widget, Plantilla, PlantillaWidget
 from .ubicaciones import Espacio
 from .academico import (
     Carrera,
