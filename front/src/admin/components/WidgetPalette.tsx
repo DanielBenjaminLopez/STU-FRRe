@@ -22,10 +22,10 @@ function WidgetCard({ widget, component: Component }: WidgetCardProps) {
         isDragging ? "opacity-40 shadow-none" : ""
       }`}
     >
-      <div className="w-full h-48 overflow-hidden relative">
+      <div className="relative h-36 overflow-hidden">
         <div
           className="absolute top-0 left-0 origin-top-left pointer-events-none"
-          style={{ width: "333%", height: "333%", transform: "scale(0.3)" }}
+          style={{ width: "250%", height: "250%", transform: "scale(0.4)" }}
         >
           <Component />
         </div>

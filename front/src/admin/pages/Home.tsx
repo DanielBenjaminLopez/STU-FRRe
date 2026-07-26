@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <div className="flex h-full">
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 h-full overflow-hidden">
         <TotemPreview />
       </div>
 
