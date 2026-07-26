@@ -21,7 +21,7 @@
   },
   "40": {
     "nombre": "Centro de Estudiantes (CET)",
-    "tipo": "centro",
+    "tipo": "oficina",
     "piso": "primero"
   },
   "41": {
@@ -86,7 +86,7 @@
   },
   "53": {
     "nombre": "Espacio Progresar",
-    "tipo": "sala",
+    "tipo": "aula",
     "piso": "primero"
   },
   "54": {

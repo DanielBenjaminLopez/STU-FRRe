@@ -11,7 +11,7 @@
   },
   "3": {
     "nombre": "Sala de Consejo Directivo",
-    "tipo": "sala",
+    "tipo": "oficina",
     "piso": "baja"
   },
   "4": {
@@ -101,7 +101,7 @@
   },
   "21": {
     "nombre": "Seminario Universitario",
-    "tipo": "sala",
+    "tipo": "oficina",
     "piso": "baja"
   },
   "22": {
@@ -156,7 +156,7 @@
   },
   "32": {
     "nombre": "Biblioteca",
-    "tipo": "biblioteca",
+    "tipo": "servicio",
     "piso": "baja"
   },
   "33": {
@@ -166,52 +166,52 @@
   },
   "34": {
     "nombre": "Sala de Profesores",
-    "tipo": "sala",
+    "tipo": "oficina",
     "piso": "baja"
   },
   "35": {
     "nombre": "Playon deportivo",
-    "tipo": "",
+    "tipo": "servicio",
     "piso": "baja"
   },
   "36": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "37": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "38": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "39": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "40": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "41": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "42": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   },
   "43": {
     "nombre": "Sin nombre",
-    "tipo": "",
+    "tipo": "otro",
     "piso": "baja"
   }
 }

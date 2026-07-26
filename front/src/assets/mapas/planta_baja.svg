@@ -32,7 +32,7 @@
 <polygon id="escaleras2" fill="#cecece" points=" 384,99 384,200 355,200 355,99 384,99"></polygon>
 <polygon id="34" fill="#cecece" points=" 384,2 384,99 355,99 289,99 289,2 384,2"></polygon>
 <polygon id="32" fill="#cecece" points=" 289,2 289,99 289,126 210.5,126 210.5,168.5 210.5,209 210.5,261.5 210.5,377.5 210.5,502 69.5,502 69.5,374 2,374 2,126 74,2 289,2"></polygon>
-<polygon id="sn2" fill="#cecece" points=" 210.5,126 289,126 289,168.5 210.5,168.5 210.5,126"></polygon>
+<polygon id="baño1" fill="#cecece" points=" 210.5,126 289,126 289,168.5 210.5,168.5 210.5,126"></polygon>
 <polygon id="sn3" fill="#cecece" points=" 210.5,209 210.5,168.5 289,168.5 289,209 210.5,209"></polygon>
 <polygon id="sn4" fill="#cecece" points=" 210.5,261.5 210.5,209 289,209 289,261.5 210.5,261.5"></polygon>
 <polygon id="33" fill="#cecece" points=" 210.5,377.5 210.5,261.5 289,261.5 289,377.5 210.5,377.5"></polygon>
@@ -40,7 +40,7 @@
 <polygon id="28" fill="#cecece" points=" 65.5,530.5 116.5,530.5 116.5,676 65.5,676 65.5,530.5"></polygon>
 <polygon id="29" fill="#cecece" points=" 116.5,676 116.5,530.5 164.5,530.5 164.5,676 147,676 116.5,676"></polygon>
 <polygon id="30" fill="#cecece" points=" 164.5,676 164.5,530.5 210.5,530.5 210.5,676 164.5,676"></polygon>
-<polygon id="sn5" fill="#cecece" points=" 233,715 233,841 175,841 175,800 175,696 202.5,696 202.5,715 233,715"></polygon>
+<polygon id="baño2" fill="#cecece" points=" 233,715 233,841 175,841 175,800 175,696 202.5,696 202.5,715 233,715"></polygon>
 <polygon id="26" fill="#cecece" points=" 175,800 175,841 65.5,841 65.5,740 147,740 147,800 175,800"></polygon>
 <polygon id="27" fill="#cecece" points=" 65.5,676 116.5,676 147,676 147,740 65.5,740 65.5,676"></polygon>
 </svg>
