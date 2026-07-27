@@ -12,7 +12,10 @@ from .models import (
     MesaExamen,
     Noticias,
     PlanMateria,
+    Plantilla,
+    PlantillaWidget,
     Totem,
+    Widget,
 )
 from .resources import (
     AvisoResource,
@@ -29,11 +32,38 @@ from .resources import (
 )
 
 
+@admin.register(Widget)
+class WidgetAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'tipo', 'col_tam_default', 'fila_tam_default', 'activo', 'creado_en']
+    list_filter = ['activo']
+    search_fields = ['nombre', 'tipo']
+
+
+class PlantillaWidgetInline(admin.TabularInline):
+    model = PlantillaWidget
+    extra = 1
+
+
+@admin.register(Plantilla)
+class PlantillaAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'activa', 'creado_en']
+    list_filter = ['activa']
+    search_fields = ['nombre']
+    inlines = [PlantillaWidgetInline]
+
+
+@admin.register(PlantillaWidget)
+class PlantillaWidgetAdmin(admin.ModelAdmin):
+    list_display = ['plantilla', 'widget', 'col_pos', 'fila_pos', 'col_tam', 'fila_tam']
+    list_filter = ['plantilla', 'widget']
+
+
 @admin.register(Totem)
 class TotemAdmin(ImportExportModelAdmin):
     resource_class = TotemResource
-    list_display = ['nombre', 'espacio', 'creado_en']
+    list_display = ['nombre', 'espacio', 'plantilla', 'creado_en']
     search_fields = ['nombre']
+
 
 
 @admin.register(Espacio)

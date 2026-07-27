@@ -15,9 +15,12 @@ from .views import (
     MeView,
     MesaExamenViewSet,
     NoticiasViewSet,
+    PlantillaViewSet,
+    PlantillaWidgetViewSet,
     TotemNewView,
     TotemViewSet,
     VincularTotemView,
+    WidgetViewSet,
 )
 
 router = DefaultRouter()
@@ -31,6 +34,10 @@ router.register('eventos', EventoViewSet)
 router.register('avisos', AvisoViewSet)
 router.register('noticias', NoticiasViewSet)
 router.register('totems', TotemViewSet)
+router.register('widgets', WidgetViewSet)
+router.register('plantillas', PlantillaViewSet)
+router.register('plantilla-widgets', PlantillaWidgetViewSet)
+
 
 urlpatterns = [
     path('', include(router.urls)),

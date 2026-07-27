@@ -19,7 +19,10 @@ from .models import (
     Materia,
     MesaExamen,
     Noticias,
+    Plantilla,
+    PlantillaWidget,
     Totem,
+    Widget,
 )
 from .permissions import IsAdminOrSecretaria
 from .serializers import (
@@ -33,10 +36,49 @@ from .serializers import (
     MateriaSerializer,
     MesaExamenSerializer,
     NoticiasSerializer,
+    PlantillaSerializer,
+    PlantillaWidgetSerializer,
     TotemNuevoSerializer,
     TotemSerializer,
     VincularTotemSerializer,
+    WidgetSerializer,
 )
+
+
+class WidgetViewSet(viewsets.ModelViewSet):
+    queryset = Widget.objects.all()
+    serializer_class = WidgetSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.plantillas_posiciones.exists():
+            return Response(
+                {
+                    "detail": (
+                        f"No se puede eliminar el widget '{instance.nombre}' "
+                        "porque está siendo utilizado en una o más plantillas. "
+                        "Desactívelo en su lugar."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
+
+class PlantillaViewSet(viewsets.ModelViewSet):
+    queryset = Plantilla.objects.prefetch_related('widgets_posiciones__widget').all()
+    serializer_class = PlantillaSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+
+class PlantillaWidgetViewSet(viewsets.ModelViewSet):
+    queryset = PlantillaWidget.objects.select_related('plantilla', 'widget').all()
+    serializer_class = PlantillaWidgetSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+
 
 
 class MeView(APIView):
