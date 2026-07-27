@@ -4,6 +4,7 @@ import Encabezado from "../../shared/components/widgets/Encabezado";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
+import Mapa from "../../shared/components/widgets/Mapa";
 import { useTotemScale, TOTEM_WIDTH, TOTEM_HEIGHT } from "../../shared/hooks/useTotemScale";
 
 const AUTH_TOKEN_KEY = "auth_token";
@@ -40,6 +41,7 @@ export default function Home() {
             <Horarios />
             <Examenes />
             <Calendar />
+            <Mapa />
           </div>
         </div>
       </div>
