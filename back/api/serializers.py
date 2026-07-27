@@ -32,6 +32,26 @@ class WidgetSerializer(serializers.ModelSerializer):
             'creado_en',
         ]
 
+    def validate_tipo(self, value):
+        tipo_normalizado = value.strip().lower()
+        if not tipo_normalizado.replace('_', '').replace('-', '').isalnum():
+            raise serializers.ValidationError("El tipo solo debe contener letras, números, guiones o guiones bajos.")
+        return tipo_normalizado
+
+    def validate_col_tam_default(self, value):
+        if value < 1 or value > 4:
+            raise serializers.ValidationError("El ancho por defecto debe estar entre 1 y 4 columnas.")
+        return value
+
+    def validate_fila_tam_default(self, value):
+        if value < 1:
+            raise serializers.ValidationError("El alto por defecto debe ser de al menos 1 fila.")
+        return value
+
+
+
+GRID_COLS = 4
+
 
 class PlantillaWidgetSerializer(serializers.ModelSerializer):
     widget_nombre = serializers.CharField(source='widget.nombre', read_only=True)
@@ -41,6 +61,7 @@ class PlantillaWidgetSerializer(serializers.ModelSerializer):
         model = PlantillaWidget
         fields = [
             'id',
+            'plantilla',
             'widget',
             'widget_nombre',
             'widget_tipo',
@@ -49,6 +70,42 @@ class PlantillaWidgetSerializer(serializers.ModelSerializer):
             'col_tam',
             'fila_tam',
         ]
+
+    def validate(self, data):
+        col_pos = data.get('col_pos', getattr(self.instance, 'col_pos', 0))
+        fila_pos = data.get('fila_pos', getattr(self.instance, 'fila_pos', 0))
+        col_tam = data.get('col_tam', getattr(self.instance, 'col_tam', 1))
+        fila_tam = data.get('fila_tam', getattr(self.instance, 'fila_tam', 1))
+        plantilla = data.get('plantilla', getattr(self.instance, 'plantilla', None))
+
+        if col_tam < 1:
+            raise serializers.ValidationError({"col_tam": "El ancho del widget debe ser de al menos 1 columna."})
+        if fila_tam < 1:
+            raise serializers.ValidationError({"fila_tam": "El alto del widget debe ser de al menos 1 fila."})
+
+        if col_pos < 0 or col_pos >= GRID_COLS:
+            raise serializers.ValidationError({"col_pos": f"La posición de la columna debe estar entre 0 y {GRID_COLS - 1}."})
+
+        if col_pos + col_tam > GRID_COLS:
+            raise serializers.ValidationError(
+                {"col_tam": f"El widget sobrepasa el límite de {GRID_COLS} columnas de la grilla (col_pos: {col_pos} + col_tam: {col_tam})."}
+            )
+
+        if plantilla:
+            existentes = PlantillaWidget.objects.filter(plantilla=plantilla)
+            if self.instance and self.instance.pk:
+                existentes = existentes.exclude(pk=self.instance.pk)
+
+            for w in existentes:
+                colide_x = col_pos < (w.col_pos + w.col_tam) and (col_pos + col_tam) > w.col_pos
+                colide_y = fila_pos < (w.fila_pos + w.fila_tam) and (fila_pos + fila_tam) > w.fila_pos
+                if colide_x and colide_y:
+                    raise serializers.ValidationError(
+                        f"El widget se superpone con el widget '{w.widget.nombre}' en la posición ({w.col_pos}, {w.fila_pos})."
+                    )
+
+        return data
+
 
 
 class PlantillaSerializer(serializers.ModelSerializer):

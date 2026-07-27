@@ -50,6 +50,22 @@ class WidgetViewSet(viewsets.ModelViewSet):
     serializer_class = WidgetSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.plantillas_posiciones.exists():
+            return Response(
+                {
+                    "detail": (
+                        f"No se puede eliminar el widget '{instance.nombre}' "
+                        "porque está siendo utilizado en una o más plantillas. "
+                        "Desactívelo en su lugar."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
 
 class PlantillaViewSet(viewsets.ModelViewSet):
     queryset = Plantilla.objects.prefetch_related('widgets_posiciones__widget').all()
