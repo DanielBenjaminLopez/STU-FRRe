@@ -6,7 +6,7 @@ export default function TotemRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/onboarding" element={<Onboarding />} />\
+      <Route path="/onboarding" element={<Onboarding />} />
     </Routes>
   );
 }
