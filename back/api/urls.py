@@ -3,29 +3,34 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
-    ActividadExtraViewSet,
-    CarreraMateriaViewSet,
+    AvisoViewSet,
+    PlanMateriaViewSet,
+    AvisosActivosView,
     CarreraViewSet,
+    ComisionViewSet,
     EspacioListView,
+    EventoViewSet,
     HorarioCursadoViewSet,
     MateriaViewSet,
     MeView,
     MesaExamenViewSet,
     NoticiasViewSet,
-    SuspensionViewSet,
     TotemNewView,
+    TotemViewSet,
     VincularTotemView,
 )
 
 router = DefaultRouter()
 router.register('carreras', CarreraViewSet)
 router.register('materias', MateriaViewSet)
-router.register('carrerasmaterias', CarreraMateriaViewSet)
+router.register('plan-materias', PlanMateriaViewSet)
+router.register('comisiones', ComisionViewSet)
 router.register('horarios', HorarioCursadoViewSet)
 router.register('mesas-examen', MesaExamenViewSet)
-router.register('eventos', ActividadExtraViewSet)
-router.register('avisos', SuspensionViewSet)
+router.register('eventos', EventoViewSet)
+router.register('avisos', AvisoViewSet)
 router.register('noticias', NoticiasViewSet)
+router.register('totems', TotemViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -35,4 +40,5 @@ urlpatterns = [
     path('totems/new/', TotemNewView.as_view(), name='totem_new'),
     path('totems/vincular/', VincularTotemView.as_view(), name='totem_vincular'),
     path('espacios/', EspacioListView.as_view(), name='espacios_list'),
+    path('avisos-activos/', AvisosActivosView.as_view(), name='avisos_activos'),
 ]

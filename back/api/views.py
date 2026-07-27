@@ -1,33 +1,38 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.utils import timezone
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .authentication import TotemToken
 from .models import (
-    ActividadExtra,
+    Aviso,
     Carrera,
-    CarreraMateria,
+    PlanMateria,
+    Comision,
     Espacio,
+    Evento,
     HorarioCursado,
     Materia,
     MesaExamen,
     Noticias,
-    Suspension,
+    Totem,
 )
 from .permissions import IsAdminOrSecretaria
 from .serializers import (
-    ActividadExtraSerializer,
-    CarreraMateriaSerializer,
+    AvisoSerializer,
+    PlanMateriaSerializer,
     CarreraSerializer,
+    ComisionSerializer,
     EspacioSerializer,
+    EventoSerializer,
     HorarioCursadoSerializer,
     MateriaSerializer,
     MesaExamenSerializer,
     NoticiasSerializer,
-    SuspensionSerializer,
     TotemNuevoSerializer,
     TotemSerializer,
     VincularTotemSerializer,
@@ -58,34 +63,72 @@ class MateriaViewSet(viewsets.ModelViewSet):
     serializer_class = MateriaSerializer
 
 
-class CarreraMateriaViewSet(viewsets.ModelViewSet):
-    queryset = CarreraMateria.objects.select_related('carrera', 'materia').all()
-    serializer_class = CarreraMateriaSerializer
+class PlanMateriaViewSet(viewsets.ModelViewSet):
+    queryset = PlanMateria.objects.select_related('carrera', 'materia').all()
+    serializer_class = PlanMateriaSerializer
+
+
+class ComisionViewSet(viewsets.ModelViewSet):
+    queryset = Comision.objects.select_related(
+        'plan_materia__carrera', 'plan_materia__materia'
+    ).all()
+    serializer_class = ComisionSerializer
 
 
 class HorarioCursadoViewSet(viewsets.ModelViewSet):
-    queryset = HorarioCursado.objects.select_related('materia', 'espacio').all()
+    queryset = HorarioCursado.objects.select_related(
+        'comision__plan_materia__materia',
+        'comision__plan_materia__carrera',
+        'espacio',
+    ).all()
     serializer_class = HorarioCursadoSerializer
 
 
 class MesaExamenViewSet(viewsets.ModelViewSet):
-    queryset = MesaExamen.objects.select_related('materia', 'espacio').all()
+    queryset = MesaExamen.objects.select_related(
+        'plan_materia__materia',
+        'plan_materia__carrera',
+        'espacio',
+    ).all()
     serializer_class = MesaExamenSerializer
 
 
-class ActividadExtraViewSet(viewsets.ModelViewSet):
-    queryset = ActividadExtra.objects.select_related('espacio').all()
-    serializer_class = ActividadExtraSerializer
+class EventoViewSet(viewsets.ModelViewSet):
+    queryset = Evento.objects.select_related('espacio').all()
+    serializer_class = EventoSerializer
 
 
-class SuspensionViewSet(viewsets.ModelViewSet):
-    queryset = Suspension.objects.select_related('horario_cursado', 'actividad_extra').all()
-    serializer_class = SuspensionSerializer
+class AvisoViewSet(viewsets.ModelViewSet):
+    queryset = Aviso.objects.select_related('horario_cursado', 'evento').all()
+    serializer_class = AvisoSerializer
 
 
 class NoticiasViewSet(viewsets.ModelViewSet):
     queryset = Noticias.objects.all()
     serializer_class = NoticiasSerializer
+
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest(self, request):
+        noticia = Noticias.objects.order_by('-fecha_publicacion').first()
+        if not noticia:
+            return Response(None)
+        return Response(NoticiasSerializer(noticia).data)
+
+
+class AvisosActivosView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        hoy = timezone.now().date()
+        avisos = Suspension.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
+        serializer = SuspensionSerializer(avisos, many=True)
+        return Response(serializer.data)
+
+
+class TotemViewSet(viewsets.ModelViewSet):
+    queryset = Totem.objects.select_related('espacio').all()
+    serializer_class = TotemSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
 
 
 class TotemNewView(APIView):

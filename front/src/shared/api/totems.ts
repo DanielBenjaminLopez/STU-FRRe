@@ -39,6 +39,24 @@ export async function vincularTotem(data: {
   });
 }
 
+export async function fetchTotems(): Promise<Totem[]> {
+  return apiFetch<Totem[]>("/api/totems/");
+}
+
+export async function updateTotem(
+  id: number,
+  data: Partial<Totem>,
+): Promise<Totem> {
+  return apiFetch<Totem>(`/api/totems/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteTotem(id: number): Promise<void> {
+  await apiFetch(`/api/totems/${id}/`, { method: "DELETE" });
+}
+
 export async function fetchEspacios(): Promise<Espacio[]> {
   return apiFetch<Espacio[]>("/api/espacios/");
 }

@@ -3,8 +3,9 @@ from .ubicaciones import Espacio
 from .academico import (
     Carrera,
     Materia,
-    CarreraMateria,
+    PlanMateria,
+    Comision,
     HorarioCursado,
     MesaExamen,
 )
-from .eventos import ActividadExtra, Suspension, Noticias
+from .eventos import Evento, Aviso, Noticias

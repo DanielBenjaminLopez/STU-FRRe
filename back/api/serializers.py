@@ -2,15 +2,16 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import (
-    ActividadExtra,
+    Aviso,
     Carrera,
-    CarreraMateria,
+    PlanMateria,
+    Comision,
     Espacio,
+    Evento,
     HorarioCursado,
     Materia,
     MesaExamen,
     Noticias,
-    Suspension,
     Totem
 )
 
@@ -18,55 +19,84 @@ from .models import (
 class CarreraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Carrera
-        fields = ['id', 'codigo', 'nombre']
+        fields = ['id', 'nombre']
 
 
 class MateriaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Materia
-        fields = ['id', 'codigo', 'nombre', 'profesores']
+        fields = ['id', 'nombre']
 
-
-class CarreraMateriaSerializer(serializers.ModelSerializer):
+        
+class PlanMateriaSerializer(serializers.ModelSerializer):
+    carrera_nombre = serializers.CharField(source='carrera.__str__', read_only=True)
+    materia_nombre = serializers.CharField(source='materia.__str__', read_only=True)
+    
     class Meta:
-        model = CarreraMateria
-        fields = ['id', 'carrera', 'materia', 'anio_plan', 'cuatrimestre']
+        model = PlanMateria
+        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
 
 
+class ComisionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comision
+        fields = ['id', 'plan_materia', 'nombre']
+
+        
 class HorarioCursadoSerializer(serializers.ModelSerializer):
+    materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
+    espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+
     class Meta:
         model = HorarioCursado
         fields = [
-            'id', 'materia', 'espacio', 'dia_semana', 'comision',
-            'hora_inicio', 'hora_fin', 'fecha_inicio_vigencia',
-            'fecha_fin_vigencia', 'activo',
+            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre', 'dia_semana',
+            'hora_inicio', 'hora_fin', 'activo',
         ]
 
 
 class MesaExamenSerializer(serializers.ModelSerializer):
+    llamado = serializers.IntegerField(read_only=True)
+    dia_semana = serializers.CharField(read_only=True)
+    materia_nombre = serializers.CharField(source='plan_materia.materia.__str__', read_only=True)
+    espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+
     class Meta:
         model = MesaExamen
-        fields = ['id', 'materia', 'espacio', 'fecha_hora', 'turno', 'llamado', 'tribunal', 'activo']
+        fields = ['id', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo']
 
 
-class ActividadExtraSerializer(serializers.ModelSerializer):
+class EventoSerializer(serializers.ModelSerializer):
+    espacio_nombre = serializers.SerializerMethodField()
+    
     class Meta:
-        model = ActividadExtra
-        fields = ['id', 'titulo', 'tipo', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'espacio']
+        model = Evento
+        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'espacio', 'espacio_nombre']
+        
+    def get_espacio_nombre(self, obj):
+        return str(obj.espacio) if obj.espacio else None
 
 
-class SuspensionSerializer(serializers.ModelSerializer):
+class AvisoSerializer(serializers.ModelSerializer):
+    horario_cursado_str = serializers.SerializerMethodField()
+    evento_str = serializers.SerializerMethodField()  
+  
     class Meta:
-        model = Suspension
-        fields = ['id', 'horario_cursado', 'actividad_extra', 'fecha', 'motivo', 'tipo', 'creado_en']
+        model = Aviso
+        fields = ['id', 'horario_cursado', 'evento', 'horario_cursado_str', 'evento_str', 'fecha', 'motivo', 'tipo', 'tipo_otro', 'creado_en']
         read_only_fields = ['creado_en']
+
+    def get_horario_cursado_str(self, obj):
+        return str(obj.horario_cursado) if obj.horario_cursado else None
+
+    def get_evento_str(self, obj):
+        return str(obj.evento) if obj.evento else None
 
 
 class NoticiasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Noticias
-        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at']
+        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion']
 
 
 class EspacioSerializer(serializers.ModelSerializer):
@@ -129,9 +159,14 @@ class VincularTotemSerializer(serializers.Serializer):
 
 
 class TotemSerializer(serializers.ModelSerializer):
+    espacio_nombre = serializers.SerializerMethodField()
+
     class Meta:
         model = Totem
         fields = [
-            'id', 'nombre', 'espacio_id', 'activo',
+            'id', 'nombre', 'espacio_id', 'espacio_nombre',
             'config_pantalla', 'vinculado', 'creado_en',
         ]
+
+    def get_espacio_nombre(self, obj):
+        return str(obj.espacio) if obj.espacio else None
