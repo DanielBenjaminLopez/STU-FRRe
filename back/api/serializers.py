@@ -12,11 +12,61 @@ from .models import (
     Materia,
     MesaExamen,
     Noticias,
-    Totem
+    Plantilla,
+    PlantillaWidget,
+    Totem,
+    Widget,
 )
 
 
+class WidgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Widget
+        fields = [
+            'id',
+            'nombre',
+            'tipo',
+            'col_tam_default',
+            'fila_tam_default',
+            'activo',
+            'creado_en',
+        ]
+
+
+class PlantillaWidgetSerializer(serializers.ModelSerializer):
+    widget_nombre = serializers.CharField(source='widget.nombre', read_only=True)
+    widget_tipo = serializers.CharField(source='widget.tipo', read_only=True)
+
+    class Meta:
+        model = PlantillaWidget
+        fields = [
+            'id',
+            'widget',
+            'widget_nombre',
+            'widget_tipo',
+            'col_pos',
+            'fila_pos',
+            'col_tam',
+            'fila_tam',
+        ]
+
+
+class PlantillaSerializer(serializers.ModelSerializer):
+    widgets_posiciones = PlantillaWidgetSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Plantilla
+        fields = [
+            'id',
+            'nombre',
+            'activa',
+            'widgets_posiciones',
+            'creado_en',
+        ]
+
+
 class CarreraSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Carrera
         fields = ['id', 'nombre']
