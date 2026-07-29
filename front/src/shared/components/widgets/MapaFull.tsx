@@ -1,4 +1,5 @@
-import MapaRaw from "./MapaRaw";
+// import MapaRaw from "./MapaRaw";
+import MapaRawExperimental from "./MapaRawExperimental";
 
 export default function MapaFull({ onClose }: { onClose: () => void }) {
   return (
@@ -14,7 +15,8 @@ export default function MapaFull({ onClose }: { onClose: () => void }) {
             Cerrar
           </button>
         </div>
-        <MapaRaw />
+        {/* <MapaRaw /> */}
+        <MapaRawExperimental />
       </div>
     </div>
   );
