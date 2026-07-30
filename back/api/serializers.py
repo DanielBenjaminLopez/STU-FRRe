@@ -178,7 +178,7 @@ class EventoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Evento
-        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'espacio', 'espacio_nombre']
+        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre']
         
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
@@ -203,7 +203,7 @@ class AvisoSerializer(serializers.ModelSerializer):
 class NoticiasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Noticias
-        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion']
+        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion', 'imagen_url', 'enlace', 'origen']
 
 
 class EspacioSerializer(serializers.ModelSerializer):

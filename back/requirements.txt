@@ -12,3 +12,6 @@ daphne
 whitenoise
 django-import-export
 openpyxl
+requests
+beautifulsoup4
+lxml
