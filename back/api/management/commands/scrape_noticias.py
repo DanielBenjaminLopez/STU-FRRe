@@ -1,9 +1,35 @@
 import time
+from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
 from api.models import Noticias
 from django.utils import timezone
+
+
+MESES_ES = {
+    'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+    'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+    'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
+}
+
+
+def parsear_fecha_spanish(texto):
+    """Parsea '17 julio 2026' o '17 de julio de 2026' a datetime."""
+    texto = texto.strip().lower()
+    for separador in (' de ', ' '):
+        partes = texto.split(separador)
+        if len(partes) == 3:
+            try:
+                dia = int(partes[0])
+                mes_nombre = partes[1]
+                anio = int(partes[2])
+                mes = MESES_ES.get(mes_nombre)
+                if mes:
+                    return datetime(anio, mes, dia)
+            except (ValueError, KeyError):
+                continue
+    return None
 
 
 URL = 'https://www.frre.utn.edu.ar/noticias/'
@@ -15,21 +41,33 @@ HEADERS = {
 
 def scrape_contenido_completo(enlace):
     try:
-        resp = requests.get(enlace, headers=HEADERS, verify=False, timeout=30)
+        url = enlace
+        if enlace.startswith('/'):
+            url = 'https://www.frre.utn.edu.ar' + enlace
+
+        resp = requests.get(url, headers=HEADERS, verify=False, timeout=30)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, 'lxml')
 
+        for tag in soup.select('script, style, nav, .share, .social'):
+            tag.decompose()
+
         article = (
-            soup.select_one('article')
+            soup.select_one('div.cuerpo-noticia')
+            or soup.select_one('article')
             or soup.select_one('.entry-content')
             or soup.select_one('.post-content')
             or soup.select_one('.content-inner')
         )
         if article:
-            for tag in article.select('script, style, nav, .share, .social'):
-                tag.decompose()
             texto = article.get_text(separator='\n', strip=True)
             if len(texto) > 50:
+                return texto
+
+        main = soup.select_one('main')
+        if main:
+            texto = main.get_text(separator='\n', strip=True)
+            if len(texto) > 100:
                 return texto
     except Exception:
         pass
@@ -60,13 +98,7 @@ def scrape_noticias():
         fecha_pub = None
         if p_cat:
             texto_fecha = p_cat.get_text(strip=True)
-            from datetime import datetime
-            for fmt in ('%d de %B de %Y', '%d/%m/%Y'):
-                try:
-                    fecha_pub = datetime.strptime(texto_fecha, fmt)
-                    break
-                except ValueError:
-                    continue
+            fecha_pub = parsear_fecha_spanish(texto_fecha)
 
         img = item.select_one('img')
         imagen_url = ''
@@ -82,6 +114,7 @@ def scrape_noticias():
             'titulo': titulo,
             'contenido': contenido_breve,
             'fecha_publicacion': fecha_pub or timezone.now(),
+            'fecha_expiracion': (fecha_pub or timezone.now()) + timedelta(days=365),
             'imagen_url': imagen_url,
             'enlace': enlace,
         })
@@ -133,6 +166,7 @@ class Command(BaseCommand):
                     'titulo': n['titulo'],
                     'contenido': n['contenido'],
                     'fecha_publicacion': n['fecha_publicacion'],
+                    'fecha_expiracion': n['fecha_expiracion'],
                     'imagen_url': n['imagen_url'],
                     'origen': 'scraping',
                 },

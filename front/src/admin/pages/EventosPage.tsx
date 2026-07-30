@@ -23,12 +23,32 @@ const columns: Column<Record<string, unknown>>[] = [
   },
   { key: "espacio_nombre", label: "Espacio" },
   {
+    key: "imagen_url",
+    label: "Imagen",
+    render: (val) => {
+      if (!val) return "-";
+      return (
+        <img
+          src={String(val)}
+          alt="Miniatura"
+          className="w-10 h-10 rounded-lg object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+      );
+    },
+  },
+  {
     key: "fecha_hora_inicio",
     label: "Inicio",
     sortable: true,
     render: (val) => {
       const d = new Date(String(val));
-      return d.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" });
+      return d.toLocaleString("es-ES", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
     },
   },
   {
@@ -36,10 +56,17 @@ const columns: Column<Record<string, unknown>>[] = [
     label: "Fin",
     render: (val) => {
       const d = new Date(String(val));
-      return d.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" });
+      return d.toLocaleString("es-ES", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
     },
   },
 ];
+
+const now = new Date();
+const oneHourLater = new Date(now);
+oneHourLater.setHours(oneHourLater.getHours() + 1);
 
 export default function EventosPage() {
   const [espacios, setEspacios] = useState<{ value: number; label: string }[]>(
@@ -70,16 +97,25 @@ export default function EventosPage() {
       required: false,
     },
     {
+      name: "imagen_url",
+      label: "URL de imagen (opcional)",
+      type: "text" as const,
+      required: false,
+      placeholder: "https://ejemplo.com/imagen.jpg",
+    },
+    {
       name: "fecha_hora_inicio",
       label: "Fecha y hora inicio",
       type: "datetime-local" as const,
       required: true,
+      defaultValue: now.toISOString().slice(0, 16),
     },
     {
       name: "fecha_hora_fin",
       label: "Fecha y hora fin",
       type: "datetime-local" as const,
       required: true,
+      defaultValue: oneHourLater.toISOString().slice(0, 16),
     },
     {
       name: "espacio",

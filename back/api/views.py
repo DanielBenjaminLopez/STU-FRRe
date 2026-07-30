@@ -178,6 +178,7 @@ class NoticiasViewSet(viewsets.ModelViewSet):
                     'titulo': n['titulo'],
                     'contenido': n['contenido'],
                     'fecha_publicacion': n['fecha_publicacion'],
+                    'fecha_expiracion': n['fecha_expiracion'],
                     'imagen_url': n['imagen_url'],
                     'origen': 'scraping',
                 },

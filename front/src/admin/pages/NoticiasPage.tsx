@@ -4,46 +4,52 @@ import DataFormModal from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import NoticiasCarousel from "../components/NoticiasCarousel";
 import {
-  fetchNoticias,
+  fetchFeed,
   createNoticia,
   updateNoticia,
   deleteNoticia,
   syncNoticias,
-  type Noticia,
+  type ContenidoFeed,
 } from "../../shared/api/noticias";
 
 const columns: Column<Record<string, unknown>>[] = [
   { key: "titulo", label: "Título", sortable: true },
   {
-    key: "origen",
-    label: "Origen",
+    key: "tipo",
+    label: "Tipo",
     sortable: true,
-    render: (val) => (
-      <span
-        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-          val === "scraping"
-            ? "bg-blue-50 text-blue-600"
-            : "bg-gray-100 text-gray-600"
-        }`}
-      >
-        {val === "scraping" ? "Scraping" : "Manual"}
-      </span>
-    ),
-  },
-  {
-    key: "fecha_publicacion",
-    label: "Publicación",
-    sortable: true,
-    render: (val) => {
-      const d = new Date(String(val));
-      return d.toLocaleDateString("es-ES");
+    render: (val, row) => {
+      if (val === "evento") {
+        const tipoEvento = row.tipo_evento as string | undefined;
+        const espacio = row.espacio_nombre as string | undefined;
+        const label = ["Evento", tipoEvento, espacio]
+          .filter(Boolean)
+          .join(" · ");
+        return (
+          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
+            {label}
+          </span>
+        );
+      }
+      const origen = row.origen as string | undefined;
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+            origen === "scraping"
+              ? "bg-blue-50 text-blue-600"
+              : "bg-gray-100 text-gray-600"
+          }`}
+        >
+          {origen === "scraping" ? "Scraping" : "Manual"}
+        </span>
+      );
     },
   },
   {
-    key: "fecha_expiracion",
-    label: "Expiración",
+    key: "fecha",
+    label: "Fecha",
+    sortable: true,
     render: (val) => {
-      if (!val) return "-";
       const d = new Date(String(val));
       return d.toLocaleDateString("es-ES");
     },
@@ -110,12 +116,12 @@ const formFields = [
 ];
 
 export default function NoticiasPage() {
-  const [data, setData] = useState<Noticia[]>([]);
+  const [feed, setFeed] = useState<ContenidoFeed[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingRow, setEditingRow] = useState<Noticia | null>(null);
-  const [deletingRow, setDeletingRow] = useState<Noticia | null>(null);
+  const [editingRow, setEditingRow] = useState<ContenidoFeed | null>(null);
+  const [deletingRow, setDeletingRow] = useState<ContenidoFeed | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
 
@@ -123,8 +129,8 @@ export default function NoticiasPage() {
     try {
       setLoading(true);
       setError("");
-      const result = await fetchNoticias();
-      setData(result);
+      const feedResult = await fetchFeed();
+      setFeed(feedResult);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error al cargar los datos",
@@ -166,7 +172,7 @@ export default function NoticiasPage() {
   }
 
   async function handleSubmit(formData: Record<string, unknown>) {
-    if (editingRow) {
+    if (editingRow && editingRow.tipo === "noticia") {
       await updateNoticia(editingRow.id as number, formData);
     } else {
       await createNoticia(formData as Parameters<typeof createNoticia>[0]);
@@ -175,19 +181,22 @@ export default function NoticiasPage() {
   }
 
   async function handleConfirmDelete() {
-    if (deletingRow) {
+    if (deletingRow && deletingRow.tipo === "noticia") {
       await deleteNoticia(deletingRow.id as number);
       await load();
     }
   }
 
+  const canEdit = editingRow?.tipo === "noticia";
+  const canDelete = deletingRow?.tipo === "noticia";
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Noticias</h1>
+          <h1 className="text-2xl font-semibold">Noticias y Eventos</h1>
           <span className="text-sm text-gray-500">
-            Gestión de noticias y publicaciones
+            Feed unificado de noticias y eventos
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -224,30 +233,40 @@ export default function NoticiasPage() {
         </div>
       )}
 
-      {!loading && data.length > 0 && (
+      {!loading && feed.length > 0 && (
         <div className="mb-6">
-          <NoticiasCarousel noticias={data} />
+          <NoticiasCarousel noticias={feed} />
         </div>
       )}
 
       <DataTable
-        data={data}
+        data={feed}
         columns={columns}
         onEdit={(row) => {
-          setEditingRow(row as Noticia);
+          setEditingRow(row as ContenidoFeed);
           setShowForm(true);
         }}
-        onDelete={(row) => setDeletingRow(row as Noticia)}
+        onDelete={(row) => setDeletingRow(row as ContenidoFeed)}
         isLoading={loading}
-        searchPlaceholder="Buscar noticia..."
+        searchPlaceholder="Buscar noticia o evento..."
         label="noticias"
       />
 
-      {showForm && (
+      {showForm && canEdit && (
         <DataFormModal
           title={editingRow ? "Editar noticia" : "Crear noticia"}
           fields={formFields}
-          initialData={editingRow ?? undefined}
+          initialData={
+            editingRow
+              ? {
+                  titulo: editingRow.titulo,
+                  contenido: editingRow.contenido,
+                  imagen_url: editingRow.imagen_url,
+                  enlace: editingRow.enlace ?? "",
+                  fecha_publicacion: editingRow.fecha?.slice(0, 16) ?? "",
+                }
+              : undefined
+          }
           onSubmit={handleSubmit}
           onClose={() => {
             setShowForm(false);
@@ -256,13 +275,62 @@ export default function NoticiasPage() {
         />
       )}
 
-      {deletingRow && (
+      {showForm && !canEdit && editingRow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold">Detalle del evento</h2>
+            </div>
+            <div className="px-6 py-4 space-y-3">
+              <p className="text-sm text-gray-500">
+                Los eventos se gestionan desde la sección{" "}
+                <strong>Eventos</strong>. No se pueden editar ni eliminar desde
+                aquí.
+              </p>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingRow(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deletingRow && canDelete && (
         <ConfirmDeleteModal
           title="Eliminar noticia"
           itemName={String(deletingRow.titulo ?? "")}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeletingRow(null)}
         />
+      )}
+
+      {deletingRow && !canDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <p className="text-sm text-gray-600 mb-4">
+              Los eventos no se pueden eliminar desde aquí. Usá la sección{" "}
+              <strong>Eventos</strong> del menú.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setDeletingRow(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

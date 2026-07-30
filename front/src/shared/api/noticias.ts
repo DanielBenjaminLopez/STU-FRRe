@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { fetchEventos, type Evento } from "./eventos";
 
 export interface Noticia {
   id: number;
@@ -9,6 +10,61 @@ export interface Noticia {
   imagen_url: string;
   enlace: string;
   origen: "manual" | "scraping";
+}
+
+export interface ContenidoFeed {
+  id: number;
+  titulo: string;
+  contenido: string;
+  fecha: string;
+  imagen_url: string;
+  tipo: "noticia" | "evento";
+  tipo_evento?: string;
+  espacio_nombre?: string;
+  origen?: string;
+  enlace?: string;
+}
+
+function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
+  return {
+    id: n.id,
+    titulo: n.titulo,
+    contenido: n.contenido,
+    fecha: n.fecha_publicacion,
+    imagen_url: n.imagen_url,
+    tipo: "noticia",
+    origen: n.origen,
+    enlace: n.enlace,
+  };
+}
+
+function mapEventoToFeed(e: Evento): ContenidoFeed {
+  const tipoLabel = e.tipo === "otro" && e.tipo_otro ? e.tipo_otro : e.tipo;
+  return {
+    id: e.id,
+    titulo: e.titulo,
+    contenido: e.descripcion || "",
+    fecha: e.fecha_hora_inicio,
+    imagen_url: e.imagen_url || "",
+    tipo: "evento",
+    tipo_evento: tipoLabel,
+    espacio_nombre: e.espacio_nombre || undefined,
+  };
+}
+
+export async function fetchFeed(): Promise<ContenidoFeed[]> {
+  const [noticias, eventos] = await Promise.all([
+    fetchNoticias(),
+    fetchEventos(),
+  ]);
+  const feed = [
+    ...noticias.map(mapNoticiaToFeed),
+    ...eventos.map(mapEventoToFeed),
+  ];
+  feed.sort(
+    (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+  );
+  return feed;
 }
 
 export async function fetchNoticias(): Promise<Noticia[]> {
