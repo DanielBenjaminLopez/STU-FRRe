@@ -6,6 +6,9 @@ export interface Noticia {
   contenido: string;
   fecha_publicacion: string;
   fecha_expiracion: string | null;
+  imagen_url: string;
+  enlace: string;
+  origen: "manual" | "scraping";
 }
 
 export async function fetchNoticias(): Promise<Noticia[]> {
@@ -37,4 +40,17 @@ export async function updateNoticia(
 
 export async function deleteNoticia(id: number): Promise<void> {
   await apiFetch(`/api/noticias/${id}/`, { method: "DELETE" });
+}
+
+export interface SyncResult {
+  detail: string;
+  nuevas: number;
+  actualizadas: number;
+  total: number;
+}
+
+export async function syncNoticias(): Promise<SyncResult> {
+  return apiFetch<SyncResult>("/api/noticias/sync/", {
+    method: "POST",
+  });
 }

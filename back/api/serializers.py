@@ -203,7 +203,7 @@ class AvisoSerializer(serializers.ModelSerializer):
 class NoticiasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Noticias
-        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion']
+        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion', 'imagen_url', 'enlace', 'origen']
 
 
 class EspacioSerializer(serializers.ModelSerializer):

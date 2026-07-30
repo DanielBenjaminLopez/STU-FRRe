@@ -148,6 +148,7 @@ class AvisoViewSet(viewsets.ModelViewSet):
 class NoticiasViewSet(viewsets.ModelViewSet):
     queryset = Noticias.objects.all()
     serializer_class = NoticiasSerializer
+    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['get'], url_path='latest')
     def latest(self, request):
@@ -155,6 +156,43 @@ class NoticiasViewSet(viewsets.ModelViewSet):
         if not noticia:
             return Response(None)
         return Response(NoticiasSerializer(noticia).data)
+
+    @action(detail=False, methods=['post'], url_path='sync')
+    def sync(self, request):
+        from api.management.commands.scrape_noticias import scrape_noticias as do_scrape
+
+        try:
+            noticias_scrapeadas = do_scrape()
+        except Exception as e:
+            return Response(
+                {'detail': f'Error al scrapeear: {e}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        nuevas = 0
+        actualizadas = 0
+        for n in noticias_scrapeadas:
+            obj, created = Noticias.objects.update_or_create(
+                enlace=n['enlace'],
+                defaults={
+                    'titulo': n['titulo'],
+                    'contenido': n['contenido'],
+                    'fecha_publicacion': n['fecha_publicacion'],
+                    'imagen_url': n['imagen_url'],
+                    'origen': 'scraping',
+                },
+            )
+            if created:
+                nuevas += 1
+            else:
+                actualizadas += 1
+
+        return Response({
+            'detail': f'Sincronización completa: {nuevas} nuevas, {actualizadas} actualizadas',
+            'nuevas': nuevas,
+            'actualizadas': actualizadas,
+            'total': len(noticias_scrapeadas),
+        })
 
 
 class AvisosActivosView(APIView):
