@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from api.models import Carrera, Materia, CarreraMateria, Espacio, HorarioCursado, MesaExamen, ActividadExtra, Suspension, Noticias
+from api.models import Carrera, Materia, CarreraMateria, Espacio, HorarioCursado, MesaExamen, ActividadExtra, Suspension, Noticias, Widget
 from datetime import time, date, datetime, timedelta
 from django.utils import timezone
 
@@ -148,9 +148,22 @@ class Command(BaseCommand):
             fecha_expiracion=None,
         )
 
+        widgets_data = [
+            ("Horarios", "horarios", 4, 2),
+            ("Exámenes", "examenes", 4, 2),
+            ("Calendario", "calendario", 4, 2),
+            ("Mapa", "mapa", 4, 2),
+        ]
+        for nombre, tipo, col_tam, fila_tam in widgets_data:
+            Widget.objects.get_or_create(
+                tipo=tipo,
+                defaults={"nombre": nombre, "col_tam_default": col_tam, "fila_tam_default": fila_tam, "activo": True},
+            )
+
         self.stdout.write(self.style.SUCCESS(
             f"Datos cargados: {Carrera.objects.count()} carreras, {Materia.objects.count()} materias, "
             f"{Espacio.objects.count()} espacios, {HorarioCursado.objects.count()} horarios, "
             f"{MesaExamen.objects.count()} mesas de examen, {ActividadExtra.objects.count()} eventos, "
-            f"{Suspension.objects.count()} suspensiones, {Noticias.objects.count()} noticias"
+            f"{Suspension.objects.count()} suspensiones, {Noticias.objects.count()} noticias, "
+            f"{Widget.objects.count()} widgets"
         ))

@@ -13,6 +13,8 @@ import TemplateCanvas from "../components/TemplateCanvas";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
+import Calendar from "../../shared/components/widgets/Calendar";
+import Mapa from "../../shared/components/widgets/Mapa";
 import { useTotem } from "../../shared/context/TotemContext";
 import {
   WIDGET_REGISTRY,
@@ -27,6 +29,8 @@ import {
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
   examenes: Examenes,
+  calendario: Calendar,
+  mapa: Mapa,
 };
 
 const STORAGE_KEY = "plantillas";
@@ -78,9 +82,8 @@ function getCellFromEvent(
   const cellW = rect.width / GRID_COLS;
   const cellH = rect.height / GRID_ROWS;
 
-  const pointer = event.activatorEvent instanceof PointerEvent
-    ? event.activatorEvent
-    : null;
+  const pointer =
+    event.activatorEvent instanceof PointerEvent ? event.activatorEvent : null;
   if (!pointer) return null;
 
   const x = pointer.clientX - rect.left + (event.delta?.x ?? 0);
@@ -93,7 +96,9 @@ function getCellFromEvent(
   return { col, row };
 }
 
-function getGhostDimensions(scale: number): { width: number; height: number } | null {
+function getGhostDimensions(
+  scale: number,
+): { width: number; height: number } | null {
   const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
   if (!gridEl) return null;
 
@@ -114,10 +119,15 @@ function getGhostDimensions(scale: number): { width: number; height: number } | 
 export default function PlantillasPage() {
   const { selectedId: totemId } = useTotem();
   const [plantillas, setPlantillas] = useState<Plantilla[]>(loadPlantillas);
-  const [selectedId, setSelectedId] = useState<string>(() => plantillas[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState<string>(
+    () => plantillas[0]?.id ?? "",
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<WidgetType | null>(null);
-  const [hoverCell, setHoverCell] = useState<{ col: number; row: number } | null>(null);
+  const [hoverCell, setHoverCell] = useState<{
+    col: number;
+    row: number;
+  } | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -127,17 +137,11 @@ export default function PlantillasPage() {
 
   const selected = plantillas.find((p) => p.id === selectedId);
   const activeMapping = loadActiveMapping();
-  const activePlantillaId = totemId ? activeMapping[totemId] ?? null : null;
+  const activePlantillaId = totemId ? (activeMapping[totemId] ?? null) : null;
 
   useEffect(() => {
     savePlantillas(plantillas);
   }, [plantillas]);
-
-  useEffect(() => {
-    if (!selectedId && plantillas.length > 0) {
-      setSelectedId(plantillas[0].id);
-    }
-  }, [selectedId, plantillas]);
 
   useEffect(() => {
     if (!toast) return;
@@ -167,12 +171,9 @@ export default function PlantillasPage() {
     [selectedId],
   );
 
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
-      setHoverCell(getCellFromEvent(event));
-    },
-    [],
-  );
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    setHoverCell(getCellFromEvent(event));
+  }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -185,16 +186,18 @@ export default function PlantillasPage() {
       if (!cell) return;
 
       const moveWidgetId = active.data.current?.widgetId as string | undefined;
-      const widgetType = (moveWidgetId
-        ? active.data.current?.widgetType
-        : active.data.current?.type) as WidgetType | undefined;
+      const widgetType = (
+        moveWidgetId
+          ? active.data.current?.widgetType
+          : active.data.current?.type
+      ) as WidgetType | undefined;
       if (!widgetType) return;
 
       const def = WIDGET_REGISTRY[widgetType];
       if (!def) return;
 
-      let col = Math.max(0, Math.min(cell.col, GRID_COLS - def.colSpan));
-      let row = Math.max(0, Math.min(cell.row, GRID_ROWS - def.rowSpan));
+      const col = Math.max(0, Math.min(cell.col, GRID_COLS - def.colSpan));
+      const row = Math.max(0, Math.min(cell.row, GRID_ROWS - def.rowSpan));
 
       const currentWidgets =
         plantillas.find((p) => p.id === selectedId)?.widgets ?? [];
@@ -203,7 +206,8 @@ export default function PlantillasPage() {
         ? currentWidgets.filter((w) => w.id !== moveWidgetId)
         : currentWidgets;
 
-      if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan)) return;
+      if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan))
+        return;
 
       if (moveWidgetId) {
         setPlantillas((prev) =>
@@ -227,7 +231,9 @@ export default function PlantillasPage() {
         };
         setPlantillas((prev) =>
           prev.map((p) =>
-            p.id === selectedId ? { ...p, widgets: [...p.widgets, newWidget] } : p,
+            p.id === selectedId
+              ? { ...p, widgets: [...p.widgets, newWidget] }
+              : p,
           ),
         );
       }
@@ -235,11 +241,16 @@ export default function PlantillasPage() {
     [selectedId, plantillas],
   );
 
-  const handleDragStart = useCallback((event: { active: { data: { current: unknown } } }) => {
-    const data = event.active.data.current as Record<string, unknown> | undefined;
-    const type = (data?.widgetType ?? data?.type) as WidgetType | undefined;
-    setActiveType(type ?? null);
-  }, []);
+  const handleDragStart = useCallback(
+    (event: { active: { data: { current: unknown } } }) => {
+      const data = event.active.data.current as
+        | Record<string, unknown>
+        | undefined;
+      const type = (data?.widgetType ?? data?.type) as WidgetType | undefined;
+      setActiveType(type ?? null);
+    },
+    [],
+  );
 
   const handleDragCancel = useCallback(() => {
     setActiveType(null);
@@ -288,7 +299,12 @@ export default function PlantillasPage() {
         <div className="flex flex-1 overflow-hidden">
           <WidgetPalette
             widgets={Object.values(WIDGET_REGISTRY)}
-            components={{ horarios: Horarios, examenes: Examenes }}
+            components={{
+              horarios: Horarios,
+              examenes: Examenes,
+              calendario: Calendar,
+              mapa: Mapa,
+            }}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
             <TemplateCanvas
@@ -318,7 +334,9 @@ export default function PlantillasPage() {
               >
                 {p.nombre}
                 {p.id === activePlantillaId && (
-                  <span className={`text-[10px] ${p.id === selectedId ? "text-green-400" : "text-green-600"}`}>
+                  <span
+                    className={`text-[10px] ${p.id === selectedId ? "text-green-400" : "text-green-600"}`}
+                  >
                     ✓
                   </span>
                 )}
@@ -341,8 +359,18 @@ export default function PlantillasPage() {
                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                 title="Eliminar plantilla"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
               </button>
             )}
@@ -358,31 +386,34 @@ export default function PlantillasPage() {
       </div>
 
       <DragOverlay dropAnimation={null}>
-        {activeType && (() => {
-          const Ghost = WIDGET_COMPONENTS[activeType];
-          const dims = getGhostDimensions(canvasScale);
-          if (!Ghost || !dims) return null;
-          return (
-            <div
-              className="pointer-events-none"
-              style={{
-                width: dims.width,
-                height: dims.height,
-                transform: `scale(${canvasScale})`,
-                transformOrigin: "top left",
-                overflow: "hidden",
-              }}
-            >
-              <Ghost />
-            </div>
-          );
-        })()}
+        {activeType &&
+          (() => {
+            const Ghost = WIDGET_COMPONENTS[activeType];
+            const dims = getGhostDimensions(canvasScale);
+            if (!Ghost || !dims) return null;
+            return (
+              <div
+                className="pointer-events-none"
+                style={{
+                  width: dims.width,
+                  height: dims.height,
+                  transform: `scale(${canvasScale})`,
+                  transformOrigin: "top left",
+                  overflow: "hidden",
+                }}
+              >
+                <Ghost />
+              </div>
+            );
+          })()}
       </DragOverlay>
 
       {deletingId && (
         <ConfirmDeleteModal
           title="Eliminar plantilla"
-          itemName={plantillas.find((p) => p.id === deletingId)?.nombre ?? "plantilla"}
+          itemName={
+            plantillas.find((p) => p.id === deletingId)?.nombre ?? "plantilla"
+          }
           onConfirm={handleDeletePlantilla}
           onClose={() => setDeletingId(null)}
         />
