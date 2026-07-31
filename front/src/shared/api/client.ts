@@ -16,6 +16,21 @@ export async function apiFetch<T>(
   url: string,
   options: RequestInit = {},
 ): Promise<T> {
+  return request<T>(url, options, "Bearer");
+}
+
+export async function totemFetch<T>(
+  url: string,
+  options: RequestInit = {},
+): Promise<T> {
+  return request<T>(url, options, "Totem");
+}
+
+async function request<T>(
+  url: string,
+  options: RequestInit,
+  scheme: "Bearer" | "Totem",
+): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -23,7 +38,7 @@ export async function apiFetch<T>(
   };
 
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers["Authorization"] = `${scheme} ${token}`;
   }
 
   const response = await fetch(url, { ...options, headers });
