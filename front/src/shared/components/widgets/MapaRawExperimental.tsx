@@ -374,7 +374,7 @@ export default function MapaRawExperimental({
       const colors =
         TYPE_COLORS[(m.userData as { tipo: string }).tipo] ?? DEFAULT_COLOR;
       (m.material as THREE.MeshStandardMaterial).color.set(
-        key === id ? colors.highlight : colors.base,
+        key === id ? colors.highlight : id ? "#cccccc" : colors.base,
       );
     });
   }, []);

@@ -28,8 +28,9 @@
 <polygon id="9" fill="#cecece" points=" 384,299 436,299 436,382.5 359.5,382.5 359.5,299 384,299"></polygon>
 <polygon id="11" fill="#cecece" points=" 484,500.5 484,595.5 436,595.5 436,500.5 484,500.5"></polygon>
 <polygon id="10" fill="#cecece" points=" 436,446 436,500.5 436,595.5 321,595.5 321,566.5 287.5,566.5 287.5,446 436,446"></polygon>
+<polygon id="escaleras2" fill="#cecece" points="287.500 471.250, 287.500 566.750, 287.500 571.750, 258.500 571.750, 258.500 471.250, 287.500 471.250"></polygon>
 <polygon id="ascensor1" fill="#cecece" points=" 321,566.5 321,595.5 287.5,595.5 287.5,566.5 321,566.5"></polygon>
-<polygon id="escaleras2" fill="#cecece" points=" 384,99 384,200 355,200 355,99 384,99"></polygon>
+<polygon id="escaleras4" fill="#cecece" points=" 384,99 384,200 355,200 355,99 384,99"></polygon>
 <polygon id="34" fill="#cecece" points=" 384,2 384,99 355,99 289,99 289,2 384,2"></polygon>
 <polygon id="32" fill="#cecece" points=" 289,2 289,99 289,126 210.5,126 210.5,168.5 210.5,209 210.5,261.5 210.5,377.5 210.5,502 69.5,502 69.5,374 2,374 2,126 74,2 289,2"></polygon>
 <polygon id="baño1" fill="#cecece" points=" 210.5,126 289,126 289,168.5 210.5,168.5 210.5,126"></polygon>
