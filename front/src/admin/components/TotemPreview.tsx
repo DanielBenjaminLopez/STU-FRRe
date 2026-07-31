@@ -11,8 +11,8 @@ import {
 import { useTotem } from "../../shared/context/TotemContext";
 import {
   WIDGET_REGISTRY,
+  plantillaDTOToLocal,
   type WidgetType,
-  type Plantilla,
 } from "../pages/plantillas/types";
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
@@ -22,38 +22,12 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   mapa: Mapa,
 };
 
-const STORAGE_KEY = "plantillas";
-const ACTIVAS_KEY = "plantillas_activas";
-
-function loadPlantillas(): Plantilla[] {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return [];
-    return JSON.parse(saved);
-  } catch {
-    return [];
-  }
-}
-
-function loadActivePlantillaId(totemId: string): string | null {
-  try {
-    const saved = localStorage.getItem(ACTIVAS_KEY);
-    if (!saved) return null;
-    const mapping: Record<string, string> = JSON.parse(saved);
-    return mapping[totemId] ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export default function TotemPreview() {
   const { containerRef, scale } = useTotemScale();
-  const { selectedId } = useTotem();
+  const { selectedTotem } = useTotem();
 
-  const activeId = selectedId ? loadActivePlantillaId(selectedId) : null;
-  const plantillas = loadPlantillas();
-  const plantilla = activeId
-    ? (plantillas.find((p) => p.id === activeId) ?? null)
+  const plantilla = selectedTotem?.plantilla
+    ? plantillaDTOToLocal(selectedTotem.plantilla)
     : null;
 
   return (

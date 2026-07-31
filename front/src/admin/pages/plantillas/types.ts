@@ -1,3 +1,8 @@
+import type {
+  PlantillaDTO,
+  WidgetPosicionInput,
+} from "../../../shared/api/plantillas";
+
 export type WidgetType = "horarios" | "examenes" | "calendario" | "mapa";
 
 export interface WidgetDefinition {
@@ -53,6 +58,40 @@ export interface Plantilla {
   id: string;
   nombre: string;
   widgets: WidgetPlacement[];
+  isNew?: boolean;
+}
+
+export function plantillaDTOToLocal(dto: PlantillaDTO): Plantilla {
+  return {
+    id: String(dto.id),
+    nombre: dto.nombre,
+    widgets: (dto.widgets_posiciones ?? []).map((pos) => ({
+      id: `w${pos.id}`,
+      type: pos.widget_tipo as WidgetType,
+      col: pos.col_pos,
+      row: pos.fila_pos,
+    })),
+  };
+}
+
+export function plantillaToWidgetPositions(
+  plantilla: Plantilla,
+  widgetIdByTipo: Partial<Record<WidgetType, number>>,
+): WidgetPosicionInput[] {
+  return plantilla.widgets.flatMap((w) => {
+    const def = WIDGET_REGISTRY[w.type];
+    const widgetId = widgetIdByTipo[w.type];
+    if (!def || widgetId == null) return [];
+    return [
+      {
+        widget: widgetId,
+        col_pos: w.col,
+        fila_pos: w.row,
+        col_tam: def.colSpan,
+        fila_tam: def.rowSpan,
+      },
+    ];
+  });
 }
 
 export function checkCollision(
