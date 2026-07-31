@@ -17,6 +17,7 @@ export interface ContenidoFeed {
   titulo: string;
   contenido: string;
   fecha: string;
+  fecha_expiracion?: string | null;
   imagen_url: string;
   tipo: "noticia" | "evento";
   tipo_evento?: string;
@@ -31,6 +32,7 @@ function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
     titulo: n.titulo,
     contenido: n.contenido,
     fecha: n.fecha_publicacion,
+    fecha_expiracion: n.fecha_expiracion,
     imagen_url: n.imagen_url,
     tipo: "noticia",
     origen: n.origen,

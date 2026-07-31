@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -150,9 +151,20 @@ class NoticiasViewSet(viewsets.ModelViewSet):
     serializer_class = NoticiasSerializer
     permission_classes = [AllowAny]
 
+    def get_queryset(self):
+        if self.action in ('update', 'partial_update', 'destroy'):
+            return Noticias.objects.all()
+        now = timezone.now()
+        return Noticias.objects.filter(
+            Q(fecha_expiracion__isnull=True) | Q(fecha_expiracion__gte=now)
+        )
+
     @action(detail=False, methods=['get'], url_path='latest')
     def latest(self, request):
-        noticia = Noticias.objects.order_by('-fecha_publicacion').first()
+        now = timezone.now()
+        noticia = Noticias.objects.filter(
+            Q(fecha_expiracion__isnull=True) | Q(fecha_expiracion__gte=now)
+        ).order_by('-fecha_publicacion').first()
         if not noticia:
             return Response(None)
         return Response(NoticiasSerializer(noticia).data)

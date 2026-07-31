@@ -201,9 +201,20 @@ class AvisoSerializer(serializers.ModelSerializer):
 
 
 class NoticiasSerializer(serializers.ModelSerializer):
+    enlace = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = Noticias
         fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion', 'imagen_url', 'enlace', 'origen']
+
+    def to_internal_value(self, data):
+        if data.get('fecha_expiracion') == '':
+            data = {**data, 'fecha_expiracion': None}
+        if data.get('imagen_url') == '':
+            data = {**data, 'imagen_url': ''}
+        if data.get('enlace') == '':
+            data = {**data, 'enlace': ''}
+        return super().to_internal_value(data)
 
 
 class EspacioSerializer(serializers.ModelSerializer):
