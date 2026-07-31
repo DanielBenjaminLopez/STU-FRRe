@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import Encabezado from "../../shared/components/widgets/Encabezado";
 import Horarios from "../../shared/components/widgets/Horarios";
@@ -12,14 +12,14 @@ import {
 } from "../../shared/hooks/useTotemScale";
 import {
   WIDGET_REGISTRY,
+  plantillaDTOToLocal,
   type WidgetType,
   type Plantilla,
 } from "../../admin/pages/plantillas/types";
+import { fetchTotemMe, type Totem } from "../../shared/api/totems";
 
 const AUTH_TOKEN_KEY = "auth_token";
-const STORAGE_KEY = "plantillas";
-const ACTIVAS_KEY = "plantillas_activas";
-const TOTEM_ID_KEY = "selected_totem_id";
+const POLLING_MS = 30_000;
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
@@ -28,58 +28,82 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   mapa: Mapa,
 };
 
-function loadPlantillas(): Plantilla[] {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return [];
-    return JSON.parse(saved);
-  } catch {
-    return [];
-  }
-}
-
-function loadActivePlantillaId(totemId: string): string | null {
-  try {
-    const saved = localStorage.getItem(ACTIVAS_KEY);
-    if (!saved) return null;
-    const mapping: Record<string, string> = JSON.parse(saved);
-    return mapping[totemId] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function loadTotemId(): string | null {
-  try {
-    return localStorage.getItem(TOTEM_ID_KEY);
-  } catch {
-    return null;
-  }
-}
-
 export default function Home() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
+  const [totem, setTotem] = useState<Totem | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const [blockedMessage, setBlockedMessage] = useState("");
+  const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
+
+  const load = useCallback(async () => {
+    try {
+      const me = await fetchTotemMe();
+      totemRef.current = me;
+      setTotem(me);
+      setBlocked(false);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error de conexión";
+      if (message === "Tótem desactivado") {
+        setBlocked(true);
+        setBlockedMessage(message);
+      } else if (!totemRef.current) {
+        setBlocked(true);
+        setBlockedMessage("Sin conexión con el servidor");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!localStorage.getItem(AUTH_TOKEN_KEY)) {
       navigate("/onboarding", { replace: true });
-    } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setChecking(false);
+      return;
     }
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+    const timer = setInterval(load, POLLING_MS);
+    return () => clearInterval(timer);
+  }, [navigate, load]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setChecking(false);
+  }, []);
 
   if (checking) return null;
 
-  const totemId = loadTotemId();
-  const activeId = totemId ? loadActivePlantillaId(totemId) : null;
-  const plantillas = loadPlantillas();
-  const plantilla = activeId
-    ? (plantillas.find((p) => p.id === activeId) ?? null)
-    : null;
+  if (blocked) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-black text-white p-8">
+        <svg
+          className="w-16 h-16 text-gray-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p className="text-2xl font-semibold text-gray-300">
+          Tótem fuera de servicio
+        </p>
+        <p className="text-sm text-gray-500">
+          {blockedMessage === "Tótem desactivado"
+            ? "Este tótem fue desactivado. Contactá a administración."
+            : "No se pudo conectar con el servidor. Se reintentará automáticamente."}
+        </p>
+      </div>
+    );
+  }
 
+  const plantilla: Plantilla | null = totem?.plantilla
+    ? plantillaDTOToLocal(totem.plantilla)
+    : null;
   const hasWidgets = plantilla && plantilla.widgets.length > 0;
 
   return (

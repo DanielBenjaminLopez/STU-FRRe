@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, totemFetch } from "./client";
 import type { PlantillaDTO } from "./plantillas";
 
 export interface Espacio {
@@ -63,4 +63,8 @@ export async function deleteTotem(id: number): Promise<void> {
 
 export async function fetchEspacios(): Promise<Espacio[]> {
   return apiFetch<Espacio[]>("/api/espacios/");
+}
+
+export async function fetchTotemMe(): Promise<Totem> {
+  return totemFetch<Totem>("/api/totems/me/");
 }
