@@ -75,6 +75,12 @@ const HEIGHT_OVERRIDES: Record<string, number> = {
   entrada1: 0.2,
 };
 
+// === Indicador "Ud. está aquí" ===
+const USTED_AQUI_SVG_X = 617.5;
+const USTED_AQUI_SVG_Y = 100.25;
+const USTED_AQUI_ENABLED = true;
+const USTED_AQUI_PIN_COLOR = 0xef4444;
+
 interface PolygonData {
   id: string;
   points: string;
@@ -188,6 +194,76 @@ function buildMeshes(
   return meshes;
 }
 
+function buildYouAreHerePin(
+  bounds: { cx: number; cy: number },
+  buildingGroup: THREE.Group,
+): THREE.Group {
+  const group = new THREE.Group();
+
+  const x = (USTED_AQUI_SVG_X - bounds.cx) * SCALE;
+  const z = -(USTED_AQUI_SVG_Y - bounds.cy) * SCALE;
+
+  const shaftGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.2, 16);
+  const shaftMat = new THREE.MeshStandardMaterial({
+    color: USTED_AQUI_PIN_COLOR,
+    metalness: 0.2,
+    roughness: 0.6,
+  });
+  const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+  shaft.position.y = 0.6;
+  group.add(shaft);
+
+  const headGeo = new THREE.SphereGeometry(0.15, 16, 16);
+  const headMat = new THREE.MeshStandardMaterial({
+    color: USTED_AQUI_PIN_COLOR,
+    metalness: 0.3,
+    roughness: 0.5,
+  });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 1.35;
+  group.add(head);
+
+  const shadowGeo = new THREE.CircleGeometry(0.18, 16);
+  const shadowMat = new THREE.MeshStandardMaterial({
+    color: 0x000000,
+    transparent: true,
+    opacity: 0.15,
+  });
+  const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.01;
+  group.add(shadow);
+
+  const labelCanvas = document.createElement("canvas");
+  labelCanvas.width = 2000;
+  labelCanvas.height = 400;
+  const ctx = labelCanvas.getContext("2d")!;
+  ctx.fillStyle = "#ef4444";
+  ctx.font = "bold 320px Inter";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Ud. está aquí", 1000, 200);
+
+  const labelTexture = new THREE.CanvasTexture(labelCanvas);
+  labelTexture.anisotropy = 4;
+  labelTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  labelTexture.magFilter = THREE.LinearFilter;
+  const labelMat = new THREE.SpriteMaterial({
+    map: labelTexture,
+    transparent: true,
+    color: USTED_AQUI_PIN_COLOR,
+  });
+  const label = new THREE.Sprite(labelMat);
+  label.scale.set(2.5, 0.5, 1);
+  label.position.y = 1.75;
+  label.position.z = -0.5;
+  group.add(label);
+
+  group.position.set(x, 0, z);
+  buildingGroup.add(group);
+  return group;
+}
+
 export default function MapaRawExperimental({
   initialFloor = "baja",
   compact = false,
@@ -211,6 +287,7 @@ export default function MapaRawExperimental({
   const meshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
   const buildingGroupRef = useRef<THREE.Group | null>(null);
   const hoveredRef = useRef<THREE.Mesh | null>(null);
+  const youAreHereRef = useRef<THREE.Group | null>(null);
 
   const floorConfig = FLOORS[floor];
   const polygons = useMemo(
@@ -367,7 +444,13 @@ export default function MapaRawExperimental({
     buildingGroupRef.current = group;
 
     meshesRef.current = buildMeshes(polygons, bounds, group);
-  }, [polygons, bounds]);
+
+    if (USTED_AQUI_ENABLED && floor === "baja") {
+      youAreHereRef.current = buildYouAreHerePin(bounds, group);
+    } else {
+      youAreHereRef.current = null;
+    }
+  }, [polygons, bounds, floor]);
 
   const highlightMesh = useCallback((id: string | null) => {
     meshesRef.current.forEach((m, key) => {
