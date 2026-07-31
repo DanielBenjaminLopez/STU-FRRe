@@ -18,6 +18,7 @@ from .views import (
     PlantillaViewSet,
     PlantillaWidgetViewSet,
     TotemNewView,
+    TotemMeView,
     TotemViewSet,
     VincularTotemView,
     WidgetViewSet,
@@ -40,12 +41,13 @@ router.register('plantilla-widgets', PlantillaWidgetViewSet)
 
 
 urlpatterns = [
+    path('totems/me/', TotemMeView.as_view(), name='totem_me'),
+    path('totems/new/', TotemNewView.as_view(), name='totem_new'),
+    path('totems/vincular/', VincularTotemView.as_view(), name='totem_vincular'),
     path('', include(router.urls)),
     path('auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', MeView.as_view(), name='auth_me'),
-    path('totems/new/', TotemNewView.as_view(), name='totem_new'),
-    path('totems/vincular/', VincularTotemView.as_view(), name='totem_vincular'),
     path('espacios/', EspacioListView.as_view(), name='espacios_list'),
     path('avisos-activos/', AvisosActivosView.as_view(), name='avisos_activos'),
 ]

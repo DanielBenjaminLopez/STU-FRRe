@@ -10,3 +10,12 @@ class IsAdminOrSecretaria(BasePermission):
         return request.user.groups.filter(
             name__in=['admin', 'secretaria']
         ).exists()
+
+
+class IsTotem(BasePermission):
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and getattr(request.user, 'totem', None)
+        )

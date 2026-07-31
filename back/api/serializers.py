@@ -53,6 +53,36 @@ class WidgetSerializer(serializers.ModelSerializer):
 GRID_COLS = 4
 
 
+def _validar_rango_posicion(col_pos, fila_pos, col_tam, fila_tam):
+    if col_tam < 1:
+        raise serializers.ValidationError({"col_tam": "El ancho del widget debe ser de al menos 1 columna."})
+    if fila_tam < 1:
+        raise serializers.ValidationError({"fila_tam": "El alto del widget debe ser de al menos 1 fila."})
+
+    if col_pos < 0 or col_pos >= GRID_COLS:
+        raise serializers.ValidationError({"col_pos": f"La posición de la columna debe estar entre 0 y {GRID_COLS - 1}."})
+
+    if col_pos + col_tam > GRID_COLS:
+        raise serializers.ValidationError(
+            {"col_tam": f"El widget sobrepasa el límite de {GRID_COLS} columnas de la grilla (col_pos: {col_pos} + col_tam: {col_tam})."}
+        )
+
+
+class PlantillaWidgetPosicionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlantillaWidget
+        fields = ['widget', 'col_pos', 'fila_pos', 'col_tam', 'fila_tam']
+
+    def validate(self, data):
+        _validar_rango_posicion(
+            data.get('col_pos', 0),
+            data.get('fila_pos', 0),
+            data.get('col_tam', 1),
+            data.get('fila_tam', 1),
+        )
+        return data
+
+
 class PlantillaWidgetSerializer(serializers.ModelSerializer):
     widget_nombre = serializers.CharField(source='widget.nombre', read_only=True)
     widget_tipo = serializers.CharField(source='widget.tipo', read_only=True)
@@ -78,18 +108,7 @@ class PlantillaWidgetSerializer(serializers.ModelSerializer):
         fila_tam = data.get('fila_tam', getattr(self.instance, 'fila_tam', 1))
         plantilla = data.get('plantilla', getattr(self.instance, 'plantilla', None))
 
-        if col_tam < 1:
-            raise serializers.ValidationError({"col_tam": "El ancho del widget debe ser de al menos 1 columna."})
-        if fila_tam < 1:
-            raise serializers.ValidationError({"fila_tam": "El alto del widget debe ser de al menos 1 fila."})
-
-        if col_pos < 0 or col_pos >= GRID_COLS:
-            raise serializers.ValidationError({"col_pos": f"La posición de la columna debe estar entre 0 y {GRID_COLS - 1}."})
-
-        if col_pos + col_tam > GRID_COLS:
-            raise serializers.ValidationError(
-                {"col_tam": f"El widget sobrepasa el límite de {GRID_COLS} columnas de la grilla (col_pos: {col_pos} + col_tam: {col_tam})."}
-            )
+        _validar_rango_posicion(col_pos, fila_pos, col_tam, fila_tam)
 
         if plantilla:
             existentes = PlantillaWidget.objects.filter(plantilla=plantilla)
@@ -105,6 +124,26 @@ class PlantillaWidgetSerializer(serializers.ModelSerializer):
                     )
 
         return data
+
+
+def validar_solapamiento_payload(items):
+    for i, item in enumerate(items):
+        for j in range(i):
+            prev = items[j]
+            colide_x = (
+                item['col_pos'] < prev['col_pos'] + prev['col_tam']
+                and item['col_pos'] + item['col_tam'] > prev['col_pos']
+            )
+            colide_y = (
+                item['fila_pos'] < prev['fila_pos'] + prev['fila_tam']
+                and item['fila_pos'] + item['fila_tam'] > prev['fila_pos']
+            )
+            if colide_x and colide_y:
+                raise serializers.ValidationError(
+                    f"El widget '{item['widget'].nombre}' se superpone con el "
+                    f"widget '{prev['widget'].nombre}' en la posición "
+                    f"({item['col_pos']}, {item['fila_pos']})."
+                )
 
 
 
@@ -278,12 +317,14 @@ class VincularTotemSerializer(serializers.Serializer):
 
 class TotemSerializer(serializers.ModelSerializer):
     espacio_nombre = serializers.SerializerMethodField()
+    plantilla = PlantillaSerializer(read_only=True)
 
     class Meta:
         model = Totem
         fields = [
             'id', 'nombre', 'espacio_id', 'espacio_nombre',
-            'config_pantalla', 'vinculado', 'creado_en',
+            'config_pantalla', 'vinculado', 'activo',
+            'plantilla_id', 'plantilla', 'creado_en',
         ]
 
     def get_espacio_nombre(self, obj):

@@ -62,4 +62,7 @@ class TotemAuthentication(BaseAuthentication):
         except Totem.DoesNotExist:
             raise AuthenticationFailed("Tótem no encontrado o no vinculado")
 
+        if not totem.activo:
+            raise AuthenticationFailed("Tótem desactivado")
+
         return (TotemUser(totem), token_str)
