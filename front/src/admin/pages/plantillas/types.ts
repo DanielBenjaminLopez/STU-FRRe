@@ -64,6 +64,7 @@ export function checkCollision(
 ): boolean {
   return widgets.some((w) => {
     const def = WIDGET_REGISTRY[w.type];
+    if (!def) return false;
     return (
       newCol < w.col + def.colSpan &&
       newCol + newColSpan > w.col &&

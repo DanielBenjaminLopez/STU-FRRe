@@ -21,6 +21,8 @@ export default function Mapa() {
             src={svgPlantaBaja}
             alt="Planta Baja"
             className="w-3/4 opacity-75"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
           />
         </div>
         <button

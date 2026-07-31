@@ -71,8 +71,8 @@ describe("WidgetPalette", () => {
         components={mockComponents}
       />,
     );
-    const sizes = screen.getAllByText(/4×2/);
-    expect(sizes.length).toBe(4);
+    expect(screen.getAllByText(/4×2/)).toHaveLength(2);
+    expect(screen.getAllByText(/2×2/)).toHaveLength(2);
   });
 
   it("renderiza los componentes reales dentro de cada card", () => {
