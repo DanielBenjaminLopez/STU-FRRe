@@ -98,9 +98,13 @@ function getCellFromEvent(
 
 function getGhostDimensions(
   scale: number,
+  activeType: WidgetType | null,
 ): { width: number; height: number } | null {
   const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
-  if (!gridEl) return null;
+  if (!gridEl || !activeType) return null;
+
+  const def = WIDGET_REGISTRY[activeType];
+  if (!def) return null;
 
   const rect = gridEl.getBoundingClientRect();
   const gap = 16; // gap-4 = 16px
@@ -109,9 +113,8 @@ function getGhostDimensions(
   const cellW = (layoutW - (GRID_COLS - 1) * gap) / GRID_COLS;
   const cellH = (layoutH - (GRID_ROWS - 1) * gap) / GRID_ROWS;
 
-  // Widget spans 4 cols, 2 rows
-  const width = 4 * cellW + 3 * gap;
-  const height = 2 * cellH + gap;
+  const width = def.colSpan * cellW + (def.colSpan - 1) * gap;
+  const height = def.rowSpan * cellH + (def.rowSpan - 1) * gap;
 
   return { width, height };
 }
@@ -389,7 +392,7 @@ export default function PlantillasPage() {
         {activeType &&
           (() => {
             const Ghost = WIDGET_COMPONENTS[activeType];
-            const dims = getGhostDimensions(canvasScale);
+            const dims = getGhostDimensions(canvasScale, activeType);
             if (!Ghost || !dims) return null;
             return (
               <div
