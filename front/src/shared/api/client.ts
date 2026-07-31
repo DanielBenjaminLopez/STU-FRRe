@@ -26,6 +26,42 @@ export async function totemFetch<T>(
   return request<T>(url, options, "Totem");
 }
 
+function firstMessage(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const msg = firstMessage(item);
+      if (msg) return msg;
+    }
+    return null;
+  }
+  if (value && typeof value === "object") {
+    for (const item of Object.values(value)) {
+      const msg = firstMessage(item);
+      if (msg) return msg;
+    }
+  }
+  return null;
+}
+
+function extractErrorMessage(body: unknown, status: number): string {
+  if (body && typeof body === "object") {
+    const error = body as Record<string, unknown>;
+
+    const detail = firstMessage(error.detail);
+    if (detail) return detail;
+
+    const message = firstMessage(error.message);
+    if (message) return message;
+
+    for (const value of Object.values(error)) {
+      const msg = firstMessage(value);
+      if (msg) return msg;
+    }
+  }
+  return `Error ${status}`;
+}
+
 async function request<T>(
   url: string,
   options: RequestInit,
@@ -44,10 +80,8 @@ async function request<T>(
   const response = await fetch(url, { ...options, headers });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      error.detail || error.message || `Error ${response.status}`,
-    );
+    const body = await response.json().catch(() => ({}));
+    throw new Error(extractErrorMessage(body, response.status));
   }
 
   if (response.status === 204) return undefined as T;
