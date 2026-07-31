@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { redirect } from "react-router";
+import { useNavigate } from "react-router";
+import { useTotem } from "../../shared/context/TotemContext";
 import {
   fetchEspacios,
   vincularTotem,
@@ -7,6 +8,8 @@ import {
 } from "../../shared/api/totems";
 
 export default function VincularTotem() {
+  const navigate = useNavigate();
+  const { refreshTotems } = useTotem();
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
@@ -34,7 +37,8 @@ export default function VincularTotem() {
         espacio_id: Number(espacioId),
       });
       setSuccess("Tótem vinculado exitosamente");
-      setTimeout(() => redirect("/admin/"), 2000);
+      refreshTotems().catch(() => {});
+      setTimeout(() => navigate("/admin/", { replace: true }), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al vincular tótem");
     } finally {
