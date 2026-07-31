@@ -149,8 +149,8 @@ class Command(BaseCommand):
         )
 
         widgets_data = [
-            ("Horarios", "horarios", 2, 2),
-            ("Exámenes", "examenes", 2, 2),
+            ("Horarios", "horarios", 4, 2),
+            ("Exámenes", "examenes", 4, 2),
             ("Calendario", "calendario", 2, 2),
             ("Mapa", "mapa", 2, 2),
         ]
@@ -165,20 +165,20 @@ class Command(BaseCommand):
                 nombre="Plantilla por defecto",
             )
             disposicion = [
-                ("horarios", 0, 0),
-                ("examenes", 2, 0),
-                ("calendario", 0, 2),
-                ("mapa", 2, 2),
+                ("horarios", 0, 0, 4, 2),
+                ("examenes", 0, 2, 4, 2),
+                ("calendario", 0, 4, 2, 2),
+                ("mapa", 2, 4, 2, 2),
             ]
-            for tipo, col_pos, fila_pos in disposicion:
+            for tipo, col_pos, fila_pos, col_tam, fila_tam in disposicion:
                 widget = Widget.objects.get(tipo=tipo)
                 PlantillaWidget.objects.create(
                     plantilla=plantilla,
                     widget=widget,
                     col_pos=col_pos,
                     fila_pos=fila_pos,
-                    col_tam=2,
-                    fila_tam=2,
+                    col_tam=col_tam,
+                    fila_tam=fila_tam,
                 )
 
         self.stdout.write(self.style.SUCCESS(

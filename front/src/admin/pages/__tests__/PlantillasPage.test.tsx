@@ -1,10 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import PlantillasPage from "../PlantillasPage";
+import {
+  fetchPlantillas,
+  createPlantilla,
+  updatePlantilla,
+  deletePlantilla,
+  replacePlantillaWidgets,
+} from "../../../shared/api/plantillas";
+import { fetchWidgets } from "../../../shared/api/widgets";
+import type {
+  PlantillaDTO,
+  WidgetPosicionDTO,
+} from "../../../shared/api/plantillas";
 
 vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DragOverlay: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  DndContext: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DragOverlay: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   PointerSensor: class {},
   useSensor: vi.fn(),
   useSensors: vi.fn(() => ({})),
@@ -41,58 +63,203 @@ vi.mock("../../../shared/hooks/useTotemScale", () => ({
   TOTEM_HEIGHT: 1920,
 }));
 
-vi.mock("../../../shared/context/TotemContext", () => ({
-  useTotem: () => ({
-    selectedId: "1",
-    totems: [],
-    setSelectedId: vi.fn(),
-  }),
+vi.mock("../../../shared/api/plantillas", () => ({
+  fetchPlantillas: vi.fn(),
+  createPlantilla: vi.fn(),
+  updatePlantilla: vi.fn(),
+  deletePlantilla: vi.fn(),
+  replacePlantillaWidgets: vi.fn(),
 }));
+
+vi.mock("../../../shared/api/widgets", () => ({
+  fetchWidgets: vi.fn(),
+}));
+
+const mockFetchPlantillas = vi.mocked(fetchPlantillas);
+const mockCreatePlantilla = vi.mocked(createPlantilla);
+const mockUpdatePlantilla = vi.mocked(updatePlantilla);
+const mockDeletePlantilla = vi.mocked(deletePlantilla);
+const mockReplacePlantillaWidgets = vi.mocked(replacePlantillaWidgets);
+const mockFetchWidgets = vi.mocked(fetchWidgets);
+
+const WIDGETS = [
+  {
+    id: 1,
+    nombre: "Horarios",
+    tipo: "horarios",
+    col_tam_default: 4,
+    fila_tam_default: 2,
+    activo: true,
+    creado_en: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: 2,
+    nombre: "Exámenes",
+    tipo: "examenes",
+    col_tam_default: 4,
+    fila_tam_default: 2,
+    activo: true,
+    creado_en: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: 3,
+    nombre: "Calendario",
+    tipo: "calendario",
+    col_tam_default: 2,
+    fila_tam_default: 2,
+    activo: true,
+    creado_en: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: 4,
+    nombre: "Mapa",
+    tipo: "mapa",
+    col_tam_default: 2,
+    fila_tam_default: 2,
+    activo: true,
+    creado_en: "2026-01-01T00:00:00Z",
+  },
+];
+
+const HORARIO_POS = {
+  id: 11,
+  plantilla: 1,
+  widget: 1,
+  widget_nombre: "Horarios",
+  widget_tipo: "horarios",
+  col_pos: 0,
+  fila_pos: 0,
+  col_tam: 4,
+  fila_tam: 2,
+};
+
+function plantillaDTO(
+  id: number,
+  nombre: string,
+  widgetsPosiciones: WidgetPosicionDTO[] = [],
+): PlantillaDTO {
+  return {
+    id,
+    nombre,
+    activa: false,
+    widgets_posiciones: widgetsPosiciones,
+    creado_en: "2026-01-01T00:00:00Z",
+  };
+}
 
 describe("PlantillasPage", () => {
   beforeEach(() => {
-    localStorage.clear();
     vi.clearAllMocks();
+    mockFetchWidgets.mockResolvedValue(WIDGETS);
+    mockFetchPlantillas.mockResolvedValue([
+      plantillaDTO(1, "Plantilla por defecto", [HORARIO_POS]),
+    ]);
+    mockCreatePlantilla.mockResolvedValue(plantillaDTO(99, "Nueva plantilla"));
+    mockUpdatePlantilla.mockImplementation(async (id) =>
+      plantillaDTO(id, "Plantilla por defecto", [HORARIO_POS]),
+    );
+    mockReplacePlantillaWidgets.mockImplementation(async (id) =>
+      plantillaDTO(id, "Plantilla por defecto", [HORARIO_POS]),
+    );
+    mockDeletePlantilla.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it("renderiza la paleta de widgets", () => {
+  it("renderiza la paleta de widgets", async () => {
     render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla por defecto");
     expect(screen.getByText("Agregar elementos")).toBeInTheDocument();
   });
 
-  it("renderiza el nombre de la plantilla por defecto", () => {
+  it("carga las plantillas desde la API y muestra su nombre", async () => {
     render(<PlantillasPage />);
-    expect(screen.getByDisplayValue("Nueva plantilla")).toBeInTheDocument();
+    expect(
+      await screen.findByDisplayValue("Plantilla por defecto"),
+    ).toBeInTheDocument();
+    expect(mockFetchPlantillas).toHaveBeenCalled();
+    expect(mockFetchWidgets).toHaveBeenCalled();
   });
 
-  it("renderiza el botón de cargar en tótem", () => {
+  it("renderiza el botón de guardar plantilla", async () => {
     render(<PlantillasPage />);
-    expect(screen.getByText("Cargar en tótem")).toBeInTheDocument();
+    await screen.findByDisplayValue("Plantilla por defecto");
+    expect(screen.getByText("Guardar plantilla")).toBeInTheDocument();
   });
 
-  it("permite cambiar el nombre de la plantilla", () => {
+  it("permite cambiar el nombre de la plantilla", async () => {
     render(<PlantillasPage />);
-    const input = screen.getByDisplayValue("Nueva plantilla");
+    const input = await screen.findByDisplayValue("Plantilla por defecto");
     fireEvent.change(input, { target: { value: "Mi Plantilla" } });
     expect(screen.getByDisplayValue("Mi Plantilla")).toBeInTheDocument();
   });
 
-  it("persiste plantillas en localStorage", () => {
+  it("guarda los cambios de una plantilla existente al hacer click en guardar", async () => {
     render(<PlantillasPage />);
-    const input = screen.getByDisplayValue("Nueva plantilla");
-    fireEvent.change(input, { target: { value: "Persisted" } });
-    const saved = localStorage.getItem("plantillas");
-    expect(saved).toBeTruthy();
-    expect(saved).toContain("Persisted");
+    await screen.findByDisplayValue("Plantilla por defecto");
+    fireEvent.click(screen.getByText("Guardar plantilla"));
+    await waitFor(() => {
+      expect(mockUpdatePlantilla).toHaveBeenCalledWith(1, {
+        nombre: "Plantilla por defecto",
+      });
+    });
+    expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(1, [
+      {
+        widget: 1,
+        col_pos: 0,
+        fila_pos: 0,
+        col_tam: 4,
+        fila_tam: 2,
+      },
+    ]);
+    expect(
+      await screen.findByText("Plantilla guardada correctamente"),
+    ).toBeInTheDocument();
   });
 
-  it("renderiza los componentes de widgets en la paleta", () => {
+  it("crea y guarda una plantilla nueva", async () => {
+    mockCreatePlantilla.mockResolvedValue(plantillaDTO(99, "Nueva plantilla"));
+    mockReplacePlantillaWidgets.mockResolvedValue(
+      plantillaDTO(99, "Nueva plantilla"),
+    );
     render(<PlantillasPage />);
-    expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-examenes")).toBeInTheDocument();
+    await screen.findByDisplayValue("Plantilla por defecto");
+    fireEvent.click(screen.getByText("+"));
+    expect(screen.getByText("Nueva plantilla")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Guardar plantilla"));
+    await waitFor(() => {
+      expect(mockCreatePlantilla).toHaveBeenCalledWith({
+        nombre: "Nueva plantilla",
+        activa: false,
+      });
+    });
+    expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(99, []);
+  });
+
+  it("muestra el error del backend al fallar el guardado", async () => {
+    mockReplacePlantillaWidgets.mockRejectedValue(
+      new Error("El widget se superpone"),
+    );
+    render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla por defecto");
+    fireEvent.click(screen.getByText("Guardar plantilla"));
+    expect(
+      await screen.findByText("El widget se superpone"),
+    ).toBeInTheDocument();
+  });
+
+  it("elimina una plantilla tras confirmar", async () => {
+    render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla por defecto");
+    fireEvent.click(screen.getByTitle("Eliminar plantilla"));
+    expect(
+      screen.getByText(/¿Estás seguro de que deseas eliminar/),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Eliminar"));
+    await waitFor(() => {
+      expect(mockDeletePlantilla).toHaveBeenCalledWith(1);
+    });
   });
 });
