@@ -18,10 +18,23 @@ vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
-    NavLink: ({ to, children, className }: { to: string; children: React.ReactNode; className?: string | ((args: { isActive: boolean }) => string) }) => {
+    NavLink: ({
+      to,
+      children,
+      className,
+    }: {
+      to: string;
+      children: React.ReactNode;
+      className?: string | ((args: { isActive: boolean }) => string);
+    }) => {
       const isActive = to === "/admin";
-      const cls = typeof className === "function" ? className({ isActive }) : className;
-      return <a href={to} className={cls}>{children}</a>;
+      const cls =
+        typeof className === "function" ? className({ isActive }) : className;
+      return (
+        <a href={to} className={cls}>
+          {children}
+        </a>
+      );
     },
   };
 });
@@ -45,6 +58,7 @@ describe("Sidebar", () => {
     expect(screen.getByText("Noticias")).toBeInTheDocument();
     expect(screen.getByText("Eventos")).toBeInTheDocument();
     expect(screen.getByText("Avisos")).toBeInTheDocument();
+    expect(screen.getByText("Tótems")).toBeInTheDocument();
     expect(screen.getByText("Plantillas")).toBeInTheDocument();
   });
 
@@ -59,10 +73,10 @@ describe("Sidebar", () => {
     expect(mockLogout).toHaveBeenCalled();
   });
 
-  it("tiene 9 items de navegación", () => {
+  it("tiene 10 items de navegación", () => {
     render(<Sidebar />);
     const links = screen.getAllByRole("link");
-    expect(links.length).toBe(9);
+    expect(links.length).toBe(10);
   });
 
   it("tiene clase w-48 en el aside", () => {

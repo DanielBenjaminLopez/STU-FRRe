@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -12,6 +13,7 @@ interface TotemState {
   selectedId: string;
   selectedTotem: Totem | undefined;
   setSelectedId: (id: string) => void;
+  refreshTotems: () => Promise<void>;
 }
 
 const TotemContext = createContext<TotemState | null>(null);
@@ -27,11 +29,29 @@ export function TotemProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const refreshTotems = useCallback(async () => {
+    const data = await fetchTotems();
+    setTotems(data);
+    setSelectedId((prev) =>
+      data.some((t) => String(t.id) === prev)
+        ? prev
+        : data.length > 0
+          ? String(data[0].id)
+          : "",
+    );
+  }, []);
+
   const selectedTotem = totems.find((t) => String(t.id) === selectedId);
 
   return (
     <TotemContext.Provider
-      value={{ totems, selectedId, selectedTotem, setSelectedId }}
+      value={{
+        totems,
+        selectedId,
+        selectedTotem,
+        setSelectedId,
+        refreshTotems,
+      }}
     >
       {children}
     </TotemContext.Provider>
