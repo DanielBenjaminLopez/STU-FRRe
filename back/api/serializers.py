@@ -318,6 +318,12 @@ class VincularTotemSerializer(serializers.Serializer):
 class TotemSerializer(serializers.ModelSerializer):
     espacio_nombre = serializers.SerializerMethodField()
     plantilla = PlantillaSerializer(read_only=True)
+    plantilla_id = serializers.PrimaryKeyRelatedField(
+        source='plantilla',
+        queryset=Plantilla.objects.all(),
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = Totem

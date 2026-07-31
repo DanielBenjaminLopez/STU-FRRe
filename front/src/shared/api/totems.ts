@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import type { PlantillaDTO } from "./plantillas";
 
 export interface Espacio {
   id: number;
@@ -11,9 +12,12 @@ export interface Totem {
   id: number;
   nombre: string;
   espacio_id: number | null;
+  espacio_nombre: string | null;
   activo: boolean;
   config_pantalla: Record<string, unknown>;
   vinculado: boolean;
+  plantilla_id: number | null;
+  plantilla: PlantillaDTO | null;
   creado_en: string;
 }
 

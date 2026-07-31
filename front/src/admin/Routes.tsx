@@ -11,6 +11,7 @@ import NoticiasPage from "./pages/NoticiasPage";
 import EventosPage from "./pages/EventosPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
+import TotemsPage from "./pages/TotemsPage";
 
 export default function AdminRoutes() {
   return (
@@ -85,6 +86,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <AvisosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/totems"
+        element={
+          <ProtectedRoute>
+            <TotemsPage />
           </ProtectedRoute>
         }
       />
