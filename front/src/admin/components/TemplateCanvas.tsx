@@ -119,11 +119,7 @@ export default function TemplateCanvas({
       />
 
       <div
-        ref={setNodeRef}
-        data-canvas
-        className={`origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden transition-colors ${
-          isOver ? "border-cyan-300 bg-cyan-50/30" : "border-gray-200"
-        }`}
+        className="origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden transition-colors border-gray-200"
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
@@ -133,8 +129,12 @@ export default function TemplateCanvas({
         <div className="flex flex-col w-full h-full p-16 gap-16">
           <Encabezado />
           <div
+            ref={setNodeRef}
+            data-canvas
             data-grid
-            className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4"
+            className={`flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4 rounded-2xl transition-colors ${
+              isOver ? "ring-2 ring-cyan-300 bg-cyan-50/30" : ""
+            }`}
           >
             {Array.from({ length: GRID_COLS * GRID_ROWS }).map((_, i) => (
               <div key={`cell-${i}`} className="bg-gray-50/50 rounded-xl" />

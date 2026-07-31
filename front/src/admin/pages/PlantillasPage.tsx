@@ -36,9 +36,16 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
 const STORAGE_KEY = "plantillas";
 const ACTIVAS_KEY = "plantillas_activas";
 
+function makeId(): string {
+  return (
+    crypto.randomUUID?.() ??
+    `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  );
+}
+
 function createEmptyPlantilla(): Plantilla {
   return {
-    id: crypto.randomUUID(),
+    id: makeId(),
     nombre: "Nueva plantilla",
     widgets: [],
   };
@@ -79,8 +86,10 @@ function getCellFromEvent(
   if (!gridEl) return null;
 
   const rect = gridEl.getBoundingClientRect();
-  const cellW = rect.width / GRID_COLS;
-  const cellH = rect.height / GRID_ROWS;
+  const scale = rect.width / (gridEl.offsetWidth || 1);
+  const gap = 16 * scale; // gap-4 = 16px, escalado con el canvas
+  const cellW = (rect.width - (GRID_COLS - 1) * gap) / GRID_COLS;
+  const cellH = (rect.height - (GRID_ROWS - 1) * gap) / GRID_ROWS;
 
   const pointer =
     event.activatorEvent instanceof PointerEvent ? event.activatorEvent : null;
@@ -98,9 +107,13 @@ function getCellFromEvent(
 
 function getGhostDimensions(
   scale: number,
+  activeType: WidgetType | null,
 ): { width: number; height: number } | null {
   const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
-  if (!gridEl) return null;
+  if (!gridEl || !activeType) return null;
+
+  const def = WIDGET_REGISTRY[activeType];
+  if (!def) return null;
 
   const rect = gridEl.getBoundingClientRect();
   const gap = 16; // gap-4 = 16px
@@ -109,9 +122,8 @@ function getGhostDimensions(
   const cellW = (layoutW - (GRID_COLS - 1) * gap) / GRID_COLS;
   const cellH = (layoutH - (GRID_ROWS - 1) * gap) / GRID_ROWS;
 
-  // Widget spans 4 cols, 2 rows
-  const width = 4 * cellW + 3 * gap;
-  const height = 2 * cellH + gap;
+  const width = def.colSpan * cellW + (def.colSpan - 1) * gap;
+  const height = def.rowSpan * cellH + (def.rowSpan - 1) * gap;
 
   return { width, height };
 }
@@ -179,12 +191,8 @@ export default function PlantillasPage() {
     (event: DragEndEvent) => {
       setActiveType(null);
       setHoverCell(null);
-      const { over, active } = event;
-      if (!over || over.id !== "canvas") return;
 
-      const cell = getCellFromEvent(event);
-      if (!cell) return;
-
+      const { active } = event;
       const moveWidgetId = active.data.current?.widgetId as string | undefined;
       const widgetType = (
         moveWidgetId
@@ -196,6 +204,12 @@ export default function PlantillasPage() {
       const def = WIDGET_REGISTRY[widgetType];
       if (!def) return;
 
+      const cell = getCellFromEvent(event);
+      if (!cell) {
+        setToast("Soltá el widget dentro de la grilla de la plantilla");
+        return;
+      }
+
       const col = Math.max(0, Math.min(cell.col, GRID_COLS - def.colSpan));
       const row = Math.max(0, Math.min(cell.row, GRID_ROWS - def.rowSpan));
 
@@ -206,8 +220,10 @@ export default function PlantillasPage() {
         ? currentWidgets.filter((w) => w.id !== moveWidgetId)
         : currentWidgets;
 
-      if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan))
+      if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan)) {
+        setToast("No hay espacio disponible en esa posición");
         return;
+      }
 
       if (moveWidgetId) {
         setPlantillas((prev) =>
@@ -224,7 +240,7 @@ export default function PlantillasPage() {
         );
       } else {
         const newWidget: WidgetPlacement = {
-          id: crypto.randomUUID(),
+          id: makeId(),
           type: widgetType,
           col,
           row,
@@ -263,7 +279,7 @@ export default function PlantillasPage() {
     setSelectedId(newP.id);
   }, []);
 
-  const handleDeletePlantilla = useCallback(() => {
+  const handleDeletePlantilla = useCallback(async () => {
     if (!deletingId) return;
     setPlantillas((prev) => {
       const next = prev.filter((p) => p.id !== deletingId);
@@ -292,6 +308,7 @@ export default function PlantillasPage() {
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
+      onDragMove={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
@@ -389,7 +406,7 @@ export default function PlantillasPage() {
         {activeType &&
           (() => {
             const Ghost = WIDGET_COMPONENTS[activeType];
-            const dims = getGhostDimensions(canvasScale);
+            const dims = getGhostDimensions(canvasScale, activeType);
             if (!Ghost || !dims) return null;
             return (
               <div

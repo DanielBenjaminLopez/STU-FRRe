@@ -18,6 +18,7 @@ interface CrudConfig {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   remove?: (...args: any[]) => Promise<any>;
   getRowLabel?: (row: Record<string, unknown>) => string;
+  validate?: (data: Record<string, unknown>) => string | null;
 }
 
 interface CrudAdminPageProps {
@@ -36,6 +37,7 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
     update,
     remove,
     getRowLabel,
+    validate,
   } = config;
 
   const [data, setData] = useState<Record<string, unknown>[]>([]);
@@ -43,13 +45,14 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
   const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
-  const [editingRow, setEditingRow] = useState<
-    Record<string, unknown> | null
-  >(null);
+  const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(
+    null,
+  );
 
-  const [deletingRow, setDeletingRow] = useState<
-    Record<string, unknown> | null
-  >(null);
+  const [deletingRow, setDeletingRow] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -67,7 +70,14 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
   }, [fetchList]);
 
   useEffect(() => {
-    load();
+    let active = true;
+    async function init() {
+      if (active) await load();
+    }
+    init();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   function handleCreate() {
@@ -85,23 +95,42 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
   }
 
   async function handleSubmit(formData: Record<string, unknown>) {
-    if (editingRow && update) {
-      await update(editingRow.id as number, formData);
-    } else if (create) {
-      await create(formData);
+    if (validate) {
+      const error = validate(formData);
+      if (error) {
+        setError(error);
+        return;
+      }
     }
-    await load();
+    try {
+      if (editingRow && update) {
+        await update(editingRow.id as number, formData);
+      } else if (create) {
+        await create(formData);
+      }
+      setShowForm(false);
+      setEditingRow(null);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al guardar");
+    }
   }
 
   async function handleConfirmDelete() {
-    if (deletingRow && remove) {
-      await remove(deletingRow.id as number);
-      await load();
+    try {
+      if (deletingRow && remove) {
+        await remove(deletingRow.id as number);
+        await load();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al eliminar");
     }
   }
 
   const labelFn =
-    getRowLabel ?? ((row: Record<string, unknown>) => String(row.nombre ?? row.titulo ?? row.id));
+    getRowLabel ??
+    ((row: Record<string, unknown>) =>
+      String(row.nombre ?? row.titulo ?? row.id));
 
   return (
     <div className="p-8">

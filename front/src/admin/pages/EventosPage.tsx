@@ -126,6 +126,24 @@ export default function EventosPage() {
     },
   ];
 
+  function validateEvento(data: Record<string, unknown>): string | null {
+    const inicio = data.fecha_hora_inicio as string | undefined;
+    const fin = data.fecha_hora_fin as string | undefined;
+    if (inicio && fin) {
+      const dInicio = new Date(inicio);
+      const dFin = new Date(fin);
+      if (dFin <= dInicio) {
+        return "La fecha de fin debe ser posterior a la fecha de inicio";
+      }
+      const diffMs = dFin.getTime() - dInicio.getTime();
+      const diffDias = diffMs / (1000 * 60 * 60 * 24);
+      if (diffDias < 1) {
+        return "El evento debe tener una duración mínima de 1 día";
+      }
+    }
+    return null;
+  }
+
   const config = {
     title: "Eventos",
     subtitle: "Gestión de actividades extra y eventos",
@@ -137,6 +155,7 @@ export default function EventosPage() {
     update: updateEvento,
     remove: deleteEvento,
     getRowLabel: (row: Record<string, unknown>) => String(row.titulo ?? ""),
+    validate: validateEvento,
   };
 
   return <CrudAdminPage config={config} />;

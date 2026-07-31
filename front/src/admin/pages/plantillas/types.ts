@@ -26,14 +26,14 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
   calendario: {
     type: "calendario",
     label: "Calendario",
-    colSpan: 4,
+    colSpan: 2,
     rowSpan: 2,
     color: "from-blue-100 to-blue-200",
   },
   mapa: {
     type: "mapa",
     label: "Mapa",
-    colSpan: 4,
+    colSpan: 2,
     rowSpan: 2,
     color: "from-orange-100 to-orange-200",
   },
@@ -64,6 +64,7 @@ export function checkCollision(
 ): boolean {
   return widgets.some((w) => {
     const def = WIDGET_REGISTRY[w.type];
+    if (!def) return false;
     return (
       newCol < w.col + def.colSpan &&
       newCol + newColSpan > w.col &&

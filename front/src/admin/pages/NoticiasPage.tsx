@@ -171,23 +171,46 @@ export default function NoticiasPage() {
     }
   }
 
+  function validateNoticia(data: Record<string, unknown>): string | null {
+    const pub = data.fecha_publicacion as string | undefined;
+    const exp = data.fecha_expiracion as string | undefined;
+    if (pub && exp) {
+      if (new Date(exp) <= new Date(pub)) {
+        return "La fecha de expiración debe ser posterior a la fecha de publicación";
+      }
+    }
+    return null;
+  }
+
   async function handleSubmit(formData: Record<string, unknown>) {
+    const validationError = validateNoticia(formData);
+    if (validationError) {
+      throw new Error(validationError);
+    }
     if (editingRow && editingRow.tipo === "noticia") {
       await updateNoticia(editingRow.id as number, formData);
     } else {
       await createNoticia(formData as Parameters<typeof createNoticia>[0]);
     }
+    setShowForm(false);
+    setEditingRow(null);
     await load();
   }
 
   async function handleConfirmDelete() {
-    if (deletingRow && deletingRow.tipo === "noticia") {
-      await deleteNoticia(deletingRow.id as number);
-      await load();
+    try {
+      if (deletingRow && deletingRow.tipo === "noticia") {
+        await deleteNoticia(deletingRow.id as number);
+        await load();
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Error al eliminar la noticia",
+      );
     }
   }
 
-  const canEdit = editingRow?.tipo === "noticia";
+  const canEdit = !editingRow || editingRow.tipo === "noticia";
   const canDelete = deletingRow?.tipo === "noticia";
 
   return (
@@ -264,6 +287,8 @@ export default function NoticiasPage() {
                   imagen_url: editingRow.imagen_url,
                   enlace: editingRow.enlace ?? "",
                   fecha_publicacion: editingRow.fecha?.slice(0, 16) ?? "",
+                  fecha_expiracion:
+                    editingRow.fecha_expiracion?.slice(0, 16) ?? null,
                 }
               : undefined
           }
