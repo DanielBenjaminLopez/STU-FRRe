@@ -1,11 +1,31 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import Home from "../Home";
 
-const { mockTotems, mockSelectedId, mockSetSelectedId } = vi.hoisted(() => ({
+const {
+  mockTotems,
+  mockSelectedId,
+  mockSetSelectedId,
+  mockRefresh,
+  mockFetchEspacios,
+  mockFetchPlantillas,
+  mockUpdateTotem,
+  mockDeleteTotem,
+} = vi.hoisted(() => ({
   mockTotems: vi.fn(),
   mockSelectedId: vi.fn(),
   mockSetSelectedId: vi.fn(),
+  mockRefresh: vi.fn(),
+  mockFetchEspacios: vi.fn(),
+  mockFetchPlantillas: vi.fn(),
+  mockUpdateTotem: vi.fn(),
+  mockDeleteTotem: vi.fn(),
 }));
 
 vi.mock("../../../shared/context/TotemContext", () => ({
@@ -14,6 +34,7 @@ vi.mock("../../../shared/context/TotemContext", () => ({
     selectedId: mockSelectedId(),
     setSelectedId: mockSetSelectedId,
     selectedTotem: undefined,
+    refreshTotems: mockRefresh,
   }),
 }));
 
@@ -21,19 +42,80 @@ vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
-    Link: ({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) => (
-      <a href={to} className={className}>{children}</a>
+    Link: ({
+      to,
+      children,
+      className,
+    }: {
+      to: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => (
+      <a href={to} className={className}>
+        {children}
+      </a>
     ),
   };
 });
+
+vi.mock("../../../shared/api/totems", () => ({
+  fetchEspacios: mockFetchEspacios,
+  updateTotem: mockUpdateTotem,
+  deleteTotem: mockDeleteTotem,
+}));
+
+vi.mock("../../../shared/api/plantillas", () => ({
+  fetchPlantillas: mockFetchPlantillas,
+}));
 
 vi.mock("../../components/TotemPreview", () => ({
   default: () => <div data-testid="totem-preview">TotemPreview</div>,
 }));
 
+const plantilla = {
+  id: 10,
+  nombre: "Plantilla Principal",
+  activa: true,
+  widgets_posiciones: [],
+  creado_en: "",
+};
+
+const vinculado = {
+  id: 1,
+  nombre: "Tótem A",
+  espacio_id: 1,
+  espacio_nombre: "Aula 1A",
+  activo: true,
+  config_pantalla: {},
+  vinculado: true,
+  plantilla_id: 10,
+  plantilla,
+  creado_en: "",
+};
+
+const sinVincular = {
+  id: 2,
+  nombre: "",
+  espacio_id: null,
+  espacio_nombre: null,
+  activo: false,
+  config_pantalla: {},
+  vinculado: false,
+  plantilla_id: null,
+  plantilla: null,
+  creado_en: "",
+};
+
 describe("Home", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRefresh.mockResolvedValue(undefined);
+    mockFetchEspacios.mockResolvedValue([
+      { id: 1, nombre: "Hall Central", tipo: "hall", piso: 0 },
+    ]);
+    mockFetchPlantillas.mockResolvedValue([plantilla]);
+    mockUpdateTotem.mockResolvedValue({});
+    mockDeleteTotem.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -47,55 +129,56 @@ describe("Home", () => {
     expect(screen.getByTestId("totem-preview")).toBeInTheDocument();
   });
 
-  it("muestra la sección de otros tótems", () => {
+  it("muestra la sección de tótems", () => {
     mockTotems.mockReturnValue([]);
     mockSelectedId.mockReturnValue("");
     render(<Home />);
-    expect(screen.getByText("Otros tótems")).toBeInTheDocument();
+    expect(screen.getByText("Tótems")).toBeInTheDocument();
   });
 
-  it("muestra otros tótems excluyendo el seleccionado", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Tótem A", activo: true, vinculado: true, espacio_nombre: "Aula 1A" },
-      { id: 2, nombre: "Tótem B", activo: false, vinculado: false, espacio_nombre: "Hall" },
-    ]);
+  it("muestra todos los tótems incluyendo el seleccionado", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
-    expect(screen.queryByText("Tótem A")).not.toBeInTheDocument();
-    expect(screen.getByText("Tótem B")).toBeInTheDocument();
+    expect(screen.getByText("Tótem A")).toBeInTheDocument();
+    expect(screen.getByText("Tótem #2")).toBeInTheDocument();
   });
 
-  it("muestra 'No hay otros tótems' cuando solo hay uno seleccionado", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Único", activo: true, vinculado: true },
-    ]);
+  it("marca el tótem seleccionado como Actual", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
-    expect(screen.getByText("No hay otros tótems")).toBeInTheDocument();
+    expect(screen.getByText("Actual")).toBeInTheDocument();
   });
 
-  it("muestra el badge de activo/inactivo en otros tótems", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Seleccionado", activo: true, vinculado: true },
-      { id: 2, nombre: "Tótem B", activo: true, vinculado: true },
-      { id: 3, nombre: "Tótem C", activo: false, vinculado: true },
-    ]);
+  it("muestra 'No hay tótems' cuando no hay tótems", () => {
+    mockTotems.mockReturnValue([]);
+    mockSelectedId.mockReturnValue("");
+    render(<Home />);
+    expect(screen.getByText("No hay tótems")).toBeInTheDocument();
+  });
+
+  it("muestra el badge de activo/inactivo", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
     expect(screen.getByText("Activo")).toBeInTheDocument();
-    expect(screen.getByText("Inactivo")).toBeInTheDocument();
   });
 
-  it("muestra el badge de vinculado/sin vincular en otros tótems", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Seleccionado", activo: true, vinculado: true },
-      { id: 2, nombre: "Tótem B", activo: true, vinculado: true },
-      { id: 3, nombre: "Tótem C", activo: true, vinculado: false },
-    ]);
+  it("muestra el badge de vinculado/sin vincular", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
     expect(screen.getByText("Vinculado")).toBeInTheDocument();
     expect(screen.getByText("Sin vincular")).toBeInTheDocument();
+  });
+
+  it("muestra la plantilla asignada del tótem", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
+    mockSelectedId.mockReturnValue("1");
+    render(<Home />);
+    expect(screen.getByText("Plantilla Principal")).toBeInTheDocument();
+    expect(screen.getByText("Sin plantilla")).toBeInTheDocument();
   });
 
   it("muestra el enlace a vincular nuevo tótem", () => {
@@ -103,37 +186,77 @@ describe("Home", () => {
     mockSelectedId.mockReturnValue("");
     render(<Home />);
     expect(screen.getByText("Vincular nuevo tótem")).toBeInTheDocument();
-    expect(screen.getByText("Vincular nuevo tótem").closest("a")).toHaveAttribute("href", "/admin/vincular");
+    expect(
+      screen.getByText("Vincular nuevo tótem").closest("a"),
+    ).toHaveAttribute("href", "/admin/vincular");
   });
 
-  it("llama a setSelectedId al hacer click en un otro tótem", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Tótem A", activo: true, vinculado: true },
-      { id: 2, nombre: "Tótem B", activo: true, vinculado: true },
-    ]);
+  it("llama a setSelectedId al hacer click en un tótem", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
-    fireEvent.click(screen.getByText("Tótem B"));
+    fireEvent.click(screen.getByText("Tótem #2"));
     expect(mockSetSelectedId).toHaveBeenCalledWith("2");
   });
 
-  it("muestra la ubicación del totem", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Tótem A", activo: true, vinculado: true, espacio_nombre: "Aula 1A" },
-      { id: 2, nombre: "Tótem B", activo: true, vinculado: true, espacio_nombre: "Hall Central" },
-    ]);
+  it("muestra la ubicación del tótem", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
-    expect(screen.getByText("Hall Central")).toBeInTheDocument();
+    expect(screen.getByText("Aula 1A")).toBeInTheDocument();
   });
 
   it("muestra 'Sin ubicación' cuando no hay espacio_nombre", () => {
-    mockTotems.mockReturnValue([
-      { id: 1, nombre: "Seleccionado", activo: true, vinculado: true, espacio_nombre: "Aula" },
-      { id: 2, nombre: "Tótem B", activo: true, vinculado: true, espacio_nombre: null },
-    ]);
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
     expect(screen.getByText("Sin ubicación")).toBeInTheDocument();
+  });
+
+  it("no muestra acciones de editar/eliminar para tótems sin vincular", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
+    mockSelectedId.mockReturnValue("1");
+    render(<Home />);
+    expect(screen.getAllByTitle("Editar")).toHaveLength(1);
+    expect(screen.getAllByTitle("Eliminar")).toHaveLength(1);
+  });
+
+  it("abre el modal de edición con selector de plantilla", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
+    mockSelectedId.mockReturnValue("1");
+    render(<Home />);
+    fireEvent.click(screen.getByTitle("Editar"));
+    expect(screen.getByText("Editar tótem")).toBeInTheDocument();
+    expect(screen.getByLabelText("Plantilla asignada")).toBeInTheDocument();
+    expect(screen.getByLabelText("Tótem activo")).toBeInTheDocument();
+  });
+
+  it("abre el modal de confirmación al eliminar", () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
+    mockSelectedId.mockReturnValue("1");
+    render(<Home />);
+    fireEvent.click(screen.getByTitle("Eliminar"));
+    expect(screen.getByText("Eliminar tótem")).toBeInTheDocument();
+  });
+
+  it("actualiza el tótem y refresca la lista", async () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
+    mockSelectedId.mockReturnValue("1");
+    render(<Home />);
+    fireEvent.click(screen.getByTitle("Editar"));
+    fireEvent.click(screen.getByText("Guardar"));
+    await waitFor(() => expect(mockUpdateTotem).toHaveBeenCalled());
+    expect(mockRefresh).toHaveBeenCalled();
+  });
+
+  it("elimina el tótem al confirmar y refresca la lista", async () => {
+    mockTotems.mockReturnValue([vinculado, sinVincular]);
+    mockSelectedId.mockReturnValue("1");
+    render(<Home />);
+    fireEvent.click(screen.getByTitle("Eliminar"));
+    const confirmButton = screen.getAllByText("Eliminar").at(-1) as HTMLElement;
+    fireEvent.click(confirmButton);
+    await waitFor(() => expect(mockDeleteTotem).toHaveBeenCalledWith(1));
+    expect(mockRefresh).toHaveBeenCalled();
   });
 });

@@ -10,7 +10,6 @@ const navItems = [
   { to: "/admin/noticias", label: "Noticias" },
   { to: "/admin/eventos", label: "Eventos" },
   { to: "/admin/avisos", label: "Avisos" },
-  { to: "/admin/totems", label: "Tótems" },
   { to: "/admin/plantillas", label: "Plantillas" },
 ];
 
