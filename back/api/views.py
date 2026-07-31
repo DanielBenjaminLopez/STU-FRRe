@@ -1,5 +1,6 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -25,7 +26,7 @@ from .models import (
     Totem,
     Widget,
 )
-from .permissions import IsAdminOrSecretaria
+from .permissions import IsAdminOrSecretaria, IsTotem
 from .serializers import (
     AvisoSerializer,
     PlanMateriaSerializer,
@@ -38,11 +39,13 @@ from .serializers import (
     MesaExamenSerializer,
     NoticiasSerializer,
     PlantillaSerializer,
+    PlantillaWidgetPosicionSerializer,
     PlantillaWidgetSerializer,
     TotemNuevoSerializer,
     TotemSerializer,
     VincularTotemSerializer,
     WidgetSerializer,
+    validar_solapamiento_payload,
 )
 
 
@@ -72,6 +75,54 @@ class PlantillaViewSet(viewsets.ModelViewSet):
     queryset = Plantilla.objects.prefetch_related('widgets_posiciones__widget').all()
     serializer_class = PlantillaSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.totems.exists():
+            return Response(
+                {
+                    "detail": (
+                        f"No se puede eliminar la plantilla '{instance.nombre}' "
+                        "porque está asignada a uno o más tótems. "
+                        "Desasígnala de los tótems antes de eliminarla."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], url_path='reemplazar-widgets')
+    def reemplazar_widgets(self, request, pk=None):
+        plantilla = self.get_object()
+
+        items = request.data
+        if not isinstance(items, list):
+            return Response(
+                {"detail": "Se esperaba una lista de widgets."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        posiciones = []
+        for item in items:
+            serializer = PlantillaWidgetPosicionSerializer(data=item)
+            serializer.is_valid(raise_exception=True)
+            posiciones.append(serializer.validated_data)
+
+        validar_solapamiento_payload(posiciones)
+
+        with transaction.atomic():
+            plantilla.widgets_posiciones.all().delete()
+            PlantillaWidget.objects.bulk_create(
+                [
+                    PlantillaWidget(plantilla=plantilla, **datos)
+                    for datos in posiciones
+                ]
+            )
+
+        plantilla_actualizada = Plantilla.objects.prefetch_related(
+            'widgets_posiciones__widget'
+        ).get(pk=plantilla.pk)
+        return Response(PlantillaSerializer(plantilla_actualizada).data)
 
 
 class PlantillaWidgetViewSet(viewsets.ModelViewSet):
@@ -219,9 +270,23 @@ class AvisosActivosView(APIView):
 
 
 class TotemViewSet(viewsets.ModelViewSet):
-    queryset = Totem.objects.select_related('espacio').all()
+    queryset = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
+        'plantilla__widgets_posiciones__widget'
+    ).all()
     serializer_class = TotemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+
+class TotemMeView(APIView):
+    permission_classes = [IsTotem]
+
+    def get(self, request):
+        totem = Totem.objects.select_related(
+            'espacio', 'plantilla'
+        ).prefetch_related(
+            'plantilla__widgets_posiciones__widget'
+        ).get(pk=request.user.totem.id)
+        return Response(TotemSerializer(totem).data)
 
 
 class TotemNewView(APIView):

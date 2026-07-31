@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from api.models import Carrera, Materia, CarreraMateria, Espacio, HorarioCursado, MesaExamen, ActividadExtra, Suspension, Noticias, Widget
+from api.models import Carrera, Materia, CarreraMateria, Espacio, HorarioCursado, MesaExamen, ActividadExtra, Suspension, Noticias, Widget, Plantilla, PlantillaWidget
 from datetime import time, date, datetime, timedelta
 from django.utils import timezone
 
@@ -149,10 +149,10 @@ class Command(BaseCommand):
         )
 
         widgets_data = [
-            ("Horarios", "horarios", 4, 2),
-            ("Exámenes", "examenes", 4, 2),
-            ("Calendario", "calendario", 4, 2),
-            ("Mapa", "mapa", 4, 2),
+            ("Horarios", "horarios", 2, 2),
+            ("Exámenes", "examenes", 2, 2),
+            ("Calendario", "calendario", 2, 2),
+            ("Mapa", "mapa", 2, 2),
         ]
         for nombre, tipo, col_tam, fila_tam in widgets_data:
             Widget.objects.get_or_create(
@@ -160,10 +160,31 @@ class Command(BaseCommand):
                 defaults={"nombre": nombre, "col_tam_default": col_tam, "fila_tam_default": fila_tam, "activo": True},
             )
 
+        if not Plantilla.objects.exists():
+            plantilla = Plantilla.objects.create(
+                nombre="Plantilla por defecto",
+            )
+            disposicion = [
+                ("horarios", 0, 0),
+                ("examenes", 2, 0),
+                ("calendario", 0, 2),
+                ("mapa", 2, 2),
+            ]
+            for tipo, col_pos, fila_pos in disposicion:
+                widget = Widget.objects.get(tipo=tipo)
+                PlantillaWidget.objects.create(
+                    plantilla=plantilla,
+                    widget=widget,
+                    col_pos=col_pos,
+                    fila_pos=fila_pos,
+                    col_tam=2,
+                    fila_tam=2,
+                )
+
         self.stdout.write(self.style.SUCCESS(
             f"Datos cargados: {Carrera.objects.count()} carreras, {Materia.objects.count()} materias, "
             f"{Espacio.objects.count()} espacios, {HorarioCursado.objects.count()} horarios, "
             f"{MesaExamen.objects.count()} mesas de examen, {ActividadExtra.objects.count()} eventos, "
             f"{Suspension.objects.count()} suspensiones, {Noticias.objects.count()} noticias, "
-            f"{Widget.objects.count()} widgets"
+            f"{Widget.objects.count()} widgets, {Plantilla.objects.count()} plantillas"
         ))
