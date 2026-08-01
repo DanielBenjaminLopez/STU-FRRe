@@ -7,22 +7,28 @@ import svgPrimerPiso from "../../../assets/mapas/primer_piso.svg?raw";
 import primerPisoData from "../../../assets/mapas/primer_piso_data.json";
 import svgSegundoPiso from "../../../assets/mapas/segundo_piso.svg?raw";
 import segundoPisoData from "../../../assets/mapas/segundo_piso_data.json";
+import escalerasUrl from "../../../assets/escaleras.svg?url";
+import ascensorUrl from "../../../assets/ascensor.svg?url";
+import wcUrl from "../../../assets/wc.svg?url";
 
 const TYPE_COLORS: Record<
   string,
   { base: string; highlight: string; label: string }
 > = {
-  aula: { base: "#a0c4ff", highlight: "#3b82f6", label: "Aula" },
-  oficina: { base: "#bdb2ff", highlight: "#6d5dc7", label: "Oficina" },
+  aula: { base: "#93c5fd", highlight: "#2563eb", label: "Aula" },
+  oficina: { base: "#c4b5fd", highlight: "#7c3aed", label: "Oficina" },
   departamento: {
-    base: "#ffc6ff",
-    highlight: "#f15bb5",
+    base: "#5eead4",
+    highlight: "#0d9488",
     label: "Departamento",
   },
-  secretaria: { base: "#ffadad", highlight: "#ef476f", label: "Secretaría" },
-  laboratorio: { base: "#caffbf", highlight: "#06d6a0", label: "Laboratorio" },
-  servicio: { base: "#ffd6a5", highlight: "#ffbe0b", label: "Servicio" },
-  otro: { base: "#cccccc", highlight: "#9ca3af", label: "Otro" },
+  secretaria: { base: "#fda4af", highlight: "#e11d48", label: "Secretaría" },
+  laboratorio: { base: "#86efac", highlight: "#16a34a", label: "Laboratorio" },
+  servicio: { base: "#fdba74", highlight: "#ea580c", label: "Servicio" },
+  escaleras: { base: "#a8a29e", highlight: "#57534e", label: "Escaleras" },
+  ascensor: { base: "#d6b370", highlight: "#b8860b", label: "Ascensor" },
+  baños: { base: "#67e8f9", highlight: "#0891b2", label: "Baños" },
+  otro: { base: "#d1d5db", highlight: "#6b7280", label: "Otro" },
 };
 
 const DEFAULT_COLOR = { base: "#6b7280", highlight: "#9ca3af", label: "Otro" };
@@ -67,9 +73,11 @@ const FLOORS: Record<
 const SCALE = 1 / 32;
 const DEFAULT_HEIGHT = 0.6;
 const HEIGHT_OVERRIDES: Record<string, number> = {
-  escaleras1: 0.8,
-  escaleras2: 0.8,
-  ascensor1: 0.8,
+  escaleras1: 1.5,
+  escaleras2: 1.5,
+  escaleras3: 1.5,
+  escaleras4: 1.5,
+  ascensor1: 1.5,
   baño1: 0.6,
   baño2: 0.6,
   entrada1: 0.2,
@@ -80,6 +88,9 @@ const USTED_AQUI_SVG_X = 617.5;
 const USTED_AQUI_SVG_Y = 100.25;
 const USTED_AQUI_ENABLED = true;
 const USTED_AQUI_PIN_COLOR = 0xef4444;
+
+// === Marcador de ID por polígono ===
+const ID_MARKER_RADIUS = 14 * SCALE;
 
 interface PolygonData {
   id: string;
@@ -111,6 +122,187 @@ function parsePoints(pointsStr: string): number[] {
     .map(Number);
 }
 
+function getPolygonCenter(pointsStr: string): { x: number; y: number } {
+  const coords = parsePoints(pointsStr);
+  const n = coords.length / 2;
+  if (n < 3) {
+    let sumX = 0;
+    let sumY = 0;
+    for (let i = 0; i < coords.length; i += 2) {
+      sumX += coords[i];
+      sumY += coords[i + 1];
+    }
+    return { x: sumX / n, y: sumY / n };
+  }
+  let area = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const xi = coords[i * 2];
+    const yi = coords[i * 2 + 1];
+    const xj = coords[j * 2];
+    const yj = coords[j * 2 + 1];
+    const cross = xi * yj - xj * yi;
+    area += cross;
+    cx += (xi + xj) * cross;
+    cy += (yi + yj) * cross;
+  }
+  area *= 0.5;
+  if (area === 0) {
+    let sumX = 0;
+    let sumY = 0;
+    for (let i = 0; i < coords.length; i += 2) {
+      sumX += coords[i];
+      sumY += coords[i + 1];
+    }
+    return { x: sumX / n, y: sumY / n };
+  }
+  cx /= 6 * area;
+  cy /= 6 * area;
+  return { x: cx, y: cy };
+}
+
+function isStairId(id: string): boolean {
+  return id.toLowerCase().includes("escalera");
+}
+
+function getSpecialIconUrl(id: string): string | null {
+  const lowerId = id.toLowerCase();
+  if (lowerId.includes("escalera")) return escalerasUrl;
+  if (lowerId.includes("baño") || lowerId.includes("bano")) return wcUrl;
+  if (lowerId.includes("ascensor") || lowerId.includes("elevador"))
+    return ascensorUrl;
+  return null;
+}
+
+function pointInPolygon(x: number, y: number, pts: number[]): boolean {
+  let inside = false;
+  for (let i = 0, j = pts.length - 2; i < pts.length; j = i, i += 2) {
+    const xi = pts[i];
+    const yi = pts[i + 1];
+    const xj = pts[j];
+    const yj = pts[j + 1];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+const STAIR_TREAD = 0.3;
+const STAIR_RISE = 0.15;
+const STAIR_MIN_STEPS = 3;
+const STAIR_MAX_STEPS = 20;
+
+function computeStairSteps(pts: number[]): number {
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
+  for (let i = 0; i < pts.length; i += 2) {
+    minX = Math.min(minX, pts[i]);
+    maxX = Math.max(maxX, pts[i]);
+    minY = Math.min(minY, pts[i + 1]);
+    maxY = Math.max(maxY, pts[i + 1]);
+  }
+  const alongX = maxX - minX >= maxY - minY;
+  const svgLength = alongX ? maxX - minX : maxY - minY;
+  return Math.min(
+    STAIR_MAX_STEPS,
+    Math.max(STAIR_MIN_STEPS, Math.round((svgLength * SCALE) / STAIR_TREAD)),
+  );
+}
+
+function stairCrossExtent(
+  pts: number[],
+  alongX: boolean,
+  slice: number,
+  crossMin: number,
+  crossMax: number,
+): { min: number; max: number } | null {
+  let mn = Infinity;
+  let mx = -Infinity;
+  const step = 0.5;
+  for (let c = crossMin; c <= crossMax; c += step) {
+    const x = alongX ? slice : c;
+    const y = alongX ? c : slice;
+    if (pointInPolygon(x, y, pts)) {
+      if (c < mn) mn = c;
+      if (c > mx) mx = c;
+    }
+  }
+  return mn === Infinity ? null : { min: mn, max: mx };
+}
+
+function buildStaircase(
+  polygon: PolygonData,
+  bounds: { cx: number; cy: number },
+  buildingGroup: THREE.Group,
+): THREE.Mesh[] {
+  const pts = parsePoints(polygon.points);
+
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
+  for (let i = 0; i < pts.length; i += 2) {
+    minX = Math.min(minX, pts[i]);
+    maxX = Math.max(maxX, pts[i]);
+    minY = Math.min(minY, pts[i + 1]);
+    maxY = Math.max(maxY, pts[i + 1]);
+  }
+
+  const alongX = maxX - minX >= maxY - minY;
+  const svgLength = alongX ? maxX - minX : maxY - minY;
+  const n = computeStairSteps(pts);
+  const tread = svgLength / n;
+  const rise = STAIR_RISE;
+
+  const crossMin = alongX ? minY : minX;
+  const crossMax = alongX ? maxY : maxX;
+
+  const colors = TYPE_COLORS[polygon.tipo] ?? DEFAULT_COLOR;
+  const material = new THREE.MeshPhongMaterial({
+    color: new THREE.Color(colors.base),
+    side: THREE.DoubleSide,
+  });
+
+  const group = new THREE.Group();
+  group.rotation.x = -Math.PI / 2;
+  buildingGroup.add(group);
+
+  const meshes: THREE.Mesh[] = [];
+  for (let i = 0; i < n; i++) {
+    const t = alongX ? i : n - 1 - i;
+    const slice = (alongX ? minX : minY) + (t + 0.5) * tread;
+    const extent = stairCrossExtent(pts, alongX, slice, crossMin, crossMax);
+    if (!extent) continue;
+
+    const height = (i + 1) * rise;
+    const cross = (extent.max - extent.min) * SCALE;
+    const x = alongX
+      ? (slice - bounds.cx) * SCALE
+      : ((extent.min + extent.max) / 2 - bounds.cx) * SCALE;
+    const y = alongX
+      ? -((extent.min + extent.max) / 2 - bounds.cy) * SCALE
+      : -((slice - bounds.cy) * SCALE);
+
+    const geometry = new THREE.BoxGeometry(
+      alongX ? tread * SCALE : cross,
+      alongX ? cross : tread * SCALE,
+      height,
+    );
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, height / 2);
+    mesh.userData = { id: polygon.id, tipo: polygon.tipo };
+    group.add(mesh);
+    meshes.push(mesh);
+  }
+
+  return meshes;
+}
+
 function computeBounds(polygons: PolygonData[]) {
   let minX = Infinity,
     maxX = -Infinity,
@@ -137,15 +329,187 @@ function computeBounds(polygons: PolygonData[]) {
   };
 }
 
+function buildIdMarker(
+  bounds: { cx: number; cy: number },
+  id: string,
+  center: { x: number; y: number },
+  topHeight: number,
+  buildingGroup: THREE.Group,
+) {
+  const dx = id === "25" ? -25 : 0;
+  const dy = id === "25" ? -10 : 0;
+  const x = (center.x + dx - bounds.cx) * SCALE;
+  const z = (center.y + dy - bounds.cy) * SCALE;
+  const y = topHeight + 0.4;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d")!;
+
+  const texture = new THREE.CanvasTexture(canvas);
+
+  ctx.beginPath();
+  ctx.arc(128, 128, 122, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(10, 10, 10, 1)";
+  ctx.fill();
+
+  const iconUrl = getSpecialIconUrl(id);
+  if (iconUrl) {
+    const img = new Image();
+    img.onload = () => {
+      const iconSize = 150;
+      ctx.drawImage(
+        img,
+        128 - iconSize / 2,
+        128 - iconSize / 2,
+        iconSize,
+        iconSize,
+      );
+      texture.needsUpdate = true;
+    };
+    img.src = iconUrl;
+  } else {
+    let fontSize = 120;
+    ctx.font = `bold ${fontSize}px Inter`;
+    const maxTextWidth = 200;
+    const textWidth = ctx.measureText(id).width;
+    if (textWidth > maxTextWidth) {
+      fontSize = Math.max(
+        20,
+        Math.floor((fontSize * maxTextWidth) / textWidth),
+      );
+      ctx.font = `bold ${fontSize}px Inter`;
+    }
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(id, 128, 128);
+  }
+
+  texture.anisotropy = 4;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  const marker = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: texture, transparent: true }),
+  );
+  const diameter = ID_MARKER_RADIUS * 2;
+  marker.scale.set(diameter, diameter, 1);
+  marker.position.set(x, y, z);
+  buildingGroup.add(marker);
+}
+
+function convexHull(
+  points: { x: number; y: number }[],
+): { x: number; y: number }[] {
+  const pts = points.slice().sort((a, b) => a.x - b.x || a.y - b.y);
+  if (pts.length <= 1) return pts;
+
+  const cross = (
+    o: { x: number; y: number },
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+  ) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+
+  const lower: { x: number; y: number }[] = [];
+  for (const p of pts) {
+    while (
+      lower.length >= 2 &&
+      cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+    ) {
+      lower.pop();
+    }
+    lower.push(p);
+  }
+
+  const upper: { x: number; y: number }[] = [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const p = pts[i];
+    while (
+      upper.length >= 2 &&
+      cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+    ) {
+      upper.pop();
+    }
+    upper.push(p);
+  }
+
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
+function buildFloorPlane(
+  polygons: PolygonData[],
+  bounds: {
+    maxX: number;
+    minX: number;
+    maxY: number;
+    minY: number;
+    cx: number;
+    cy: number;
+  },
+  buildingGroup: THREE.Group,
+) {
+  const allPoints: { x: number; y: number }[] = [];
+  for (const p of polygons) {
+    const pts = parsePoints(p.points);
+    for (let i = 0; i < pts.length; i += 2) {
+      allPoints.push({ x: pts[i], y: pts[i + 1] });
+    }
+  }
+  if (allPoints.length === 0) return;
+
+  const hull = convexHull(allPoints);
+  const padding = 40;
+  const shape = new THREE.Shape();
+  for (let i = 0; i < hull.length; i++) {
+    const hx =
+      (hull[i].x - bounds.cx) *
+      SCALE *
+      (1 + padding / (bounds.maxX - bounds.minX || 1));
+    const hy =
+      -(hull[i].y - bounds.cy) *
+      SCALE *
+      (1 + padding / (bounds.maxY - bounds.minY || 1));
+    if (i === 0) shape.moveTo(hx, hy);
+    else shape.lineTo(hx, hy);
+  }
+  shape.closePath();
+
+  const geometry = new THREE.ShapeGeometry(shape);
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xeeeeee,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.y = -0.01;
+  buildingGroup.add(mesh);
+}
+
 function buildMeshes(
   polygons: PolygonData[],
   bounds: { cx: number; cy: number },
   buildingGroup: THREE.Group,
-): Map<string, THREE.Mesh> {
-  const meshes = new Map<string, THREE.Mesh>();
+): Map<string, THREE.Mesh[]> {
+  const meshes = new Map<string, THREE.Mesh[]>();
 
   polygons.forEach((polygon) => {
     if (!polygon.points) return;
+
+    if (isStairId(polygon.id)) {
+      meshes.set(polygon.id, buildStaircase(polygon, bounds, buildingGroup));
+      const top = computeStairSteps(parsePoints(polygon.points)) * STAIR_RISE;
+      buildIdMarker(
+        bounds,
+        polygon.id,
+        getPolygonCenter(polygon.points),
+        top,
+        buildingGroup,
+      );
+      return;
+    }
 
     const pts = parsePoints(polygon.points);
     const shape = new THREE.Shape();
@@ -165,10 +529,8 @@ function buildMeshes(
     });
 
     const colors = TYPE_COLORS[polygon.tipo] ?? DEFAULT_COLOR;
-    const material = new THREE.MeshStandardMaterial({
+    const material = new THREE.MeshPhongMaterial({
       color: new THREE.Color(colors.base),
-      metalness: 0,
-      roughness: 1,
       side: THREE.DoubleSide,
     });
 
@@ -176,19 +538,27 @@ function buildMeshes(
     mesh.rotation.x = -Math.PI / 2;
     mesh.userData = { id: polygon.id, tipo: polygon.tipo };
     buildingGroup.add(mesh);
-    meshes.set(polygon.id, mesh);
+    meshes.set(polygon.id, [mesh]);
 
     const edges = new THREE.EdgesGeometry(geometry, 20);
     const line = new THREE.LineSegments(
       edges,
       new THREE.LineBasicMaterial({
-        color: 0x1a1a1a,
+        color: 0xdddddd,
         transparent: true,
         opacity: 0.35,
       }),
     );
     line.rotation.x = -Math.PI / 2;
     buildingGroup.add(line);
+
+    buildIdMarker(
+      bounds,
+      polygon.id,
+      getPolygonCenter(polygon.points),
+      depth,
+      buildingGroup,
+    );
   });
 
   return meshes;
@@ -204,27 +574,23 @@ function buildYouAreHerePin(
   const z = -(USTED_AQUI_SVG_Y - bounds.cy) * SCALE;
 
   const shaftGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.2, 16);
-  const shaftMat = new THREE.MeshStandardMaterial({
+  const shaftMat = new THREE.MeshPhongMaterial({
     color: USTED_AQUI_PIN_COLOR,
-    metalness: 0.2,
-    roughness: 0.6,
   });
   const shaft = new THREE.Mesh(shaftGeo, shaftMat);
   shaft.position.y = 0.6;
   group.add(shaft);
 
   const headGeo = new THREE.SphereGeometry(0.15, 16, 16);
-  const headMat = new THREE.MeshStandardMaterial({
+  const headMat = new THREE.MeshPhongMaterial({
     color: USTED_AQUI_PIN_COLOR,
-    metalness: 0.3,
-    roughness: 0.5,
   });
   const head = new THREE.Mesh(headGeo, headMat);
   head.position.y = 1.35;
   group.add(head);
 
   const shadowGeo = new THREE.CircleGeometry(0.18, 16);
-  const shadowMat = new THREE.MeshStandardMaterial({
+  const shadowMat = new THREE.MeshPhongMaterial({
     color: 0x000000,
     transparent: true,
     opacity: 0.15,
@@ -284,7 +650,7 @@ export default function MapaRawExperimental({
   const controlsRef = useRef<OrbitControls | null>(null);
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
-  const meshesRef = useRef<Map<string, THREE.Mesh>>(new Map());
+  const meshesRef = useRef<Map<string, THREE.Mesh[]>>(new Map());
   const buildingGroupRef = useRef<THREE.Group | null>(null);
   const hoveredRef = useRef<THREE.Mesh | null>(null);
   const youAreHereRef = useRef<THREE.Group | null>(null);
@@ -317,8 +683,10 @@ export default function MapaRawExperimental({
   }, []);
 
   const availableTypes = useMemo(() => {
+    const excludedTypes = new Set(["escaleras", "ascensor"]);
     const typeSet = new Map<string, string>();
     for (const room of allRooms) {
+      if (excludedTypes.has(room.data.tipo)) continue;
       const color = TYPE_COLORS[room.data.tipo];
       if (color && !typeSet.has(room.data.tipo)) {
         typeSet.set(room.data.tipo, color.label);
@@ -382,9 +750,8 @@ export default function MapaRawExperimental({
       buildingSize * 1.3,
       buildingSize * 1.3,
     );
-    const floorPlaneMat = new THREE.MeshStandardMaterial({
+    const floorPlaneMat = new THREE.MeshPhongMaterial({
       color: 0xf0f0f0,
-      roughness: 1,
     });
     const floorPlane = new THREE.Mesh(floorPlaneGeo, floorPlaneMat);
     floorPlane.rotation.x = -Math.PI / 2;
@@ -436,6 +803,11 @@ export default function MapaRawExperimental({
           child.geometry.dispose();
           (child.material as THREE.Material).dispose();
         }
+        if (child instanceof THREE.Sprite) {
+          const mat = child.material as THREE.SpriteMaterial;
+          mat.map?.dispose();
+          mat.dispose();
+        }
       });
     }
 
@@ -443,6 +815,7 @@ export default function MapaRawExperimental({
     scene.add(group);
     buildingGroupRef.current = group;
 
+    buildFloorPlane(polygons, bounds, group);
     meshesRef.current = buildMeshes(polygons, bounds, group);
 
     if (USTED_AQUI_ENABLED && floor === "baja") {
@@ -453,14 +826,26 @@ export default function MapaRawExperimental({
   }, [polygons, bounds, floor]);
 
   const highlightMesh = useCallback((id: string | null) => {
-    meshesRef.current.forEach((m, key) => {
-      const colors =
-        TYPE_COLORS[(m.userData as { tipo: string }).tipo] ?? DEFAULT_COLOR;
-      (m.material as THREE.MeshStandardMaterial).color.set(
-        key === id ? colors.highlight : id ? "#cccccc" : colors.base,
-      );
+    meshesRef.current.forEach((meshes) => {
+      for (const m of meshes) {
+        const colors =
+          TYPE_COLORS[(m.userData as { tipo: string }).tipo] ?? DEFAULT_COLOR;
+        (m.material as THREE.MeshPhongMaterial).color.set(
+          m.userData.id === id
+            ? colors.highlight
+            : id
+              ? "#cccccc"
+              : colors.base,
+        );
+      }
     });
   }, []);
+
+  useEffect(() => {
+    if (selectedRoom) {
+      highlightMesh(selectedRoom.id);
+    }
+  }, [selectedRoom, polygons, bounds, floor, highlightMesh]);
 
   const handleSearchSelect = useCallback(
     (r: { id: string; data: RoomData; floor: FloorKey }) => {
@@ -471,15 +856,19 @@ export default function MapaRawExperimental({
       const poly = polys.find((p) => p.id === r.id);
       if (poly) {
         setSelectedRoom({ id: r.id, data: r.data });
-        highlightMesh(r.id);
       }
     },
-    [highlightMesh],
+    [],
   );
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>) => {
       if (!canvasRef.current || !cameraRef.current) return;
+
+      if (selectedRoom) {
+        hoveredRef.current = null;
+        return;
+      }
 
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
@@ -488,30 +877,22 @@ export default function MapaRawExperimental({
 
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
       const intersects = raycasterRef.current.intersectObjects(
-        Array.from(meshesRef.current.values()),
+        Array.from(meshesRef.current.values()).flat(),
       );
 
       if (hoveredRef.current) {
         const prevTipo = hoveredRef.current.userData.tipo as string;
         const prevColors = TYPE_COLORS[prevTipo] ?? DEFAULT_COLOR;
-        const prevId = hoveredRef.current.userData.id as string;
-        if (prevId !== selectedRoom?.id) {
-          (hoveredRef.current.material as THREE.MeshStandardMaterial).color.set(
-            prevColors.base,
-          );
-        }
+        (hoveredRef.current.material as THREE.MeshPhongMaterial).color.set(
+          prevColors.base,
+        );
         hoveredRef.current = null;
       }
 
       if (intersects.length > 0) {
         const mesh = intersects[0].object as THREE.Mesh;
         hoveredRef.current = mesh;
-        (mesh.material as THREE.MeshStandardMaterial).color.set(
-          mesh.userData.id === selectedRoom?.id
-            ? (TYPE_COLORS[mesh.userData.tipo as string] ?? DEFAULT_COLOR)
-                .highlight
-            : 0xdddddd,
-        );
+        (mesh.material as THREE.MeshPhongMaterial).color.set(0xdddddd);
       }
     },
     [selectedRoom],
@@ -528,7 +909,7 @@ export default function MapaRawExperimental({
 
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
       const intersects = raycasterRef.current.intersectObjects(
-        Array.from(meshesRef.current.values()),
+        Array.from(meshesRef.current.values()).flat(),
       );
 
       if (intersects.length > 0) {
@@ -605,11 +986,11 @@ export default function MapaRawExperimental({
               </span>
               {searchType ? (
                 <div className="flex flex-col gap-2 overflow-auto">
-                  {filteredPlaces.map((r) => {
+                  {filteredPlaces.map((r, i) => {
                     const colors = TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
                     return (
                       <button
-                        key={r.id}
+                        key={`${i}`}
                         onClick={() => handleSearchSelect(r)}
                         className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
                           searchPlaceId === r.id
