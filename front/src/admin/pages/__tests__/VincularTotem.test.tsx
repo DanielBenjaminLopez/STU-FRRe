@@ -8,13 +8,19 @@ import {
 } from "@testing-library/react";
 import VincularTotem from "../VincularTotem";
 
-const { mockFetchEspacios, mockVincularTotem, mockNavigate, mockRefresh } =
-  vi.hoisted(() => ({
-    mockFetchEspacios: vi.fn(),
-    mockVincularTotem: vi.fn(),
-    mockNavigate: vi.fn(),
-    mockRefresh: vi.fn(),
-  }));
+const {
+  mockFetchEspacios,
+  mockVincularTotem,
+  mockNavigate,
+  mockRefresh,
+  mockSetSelectedId,
+} = vi.hoisted(() => ({
+  mockFetchEspacios: vi.fn(),
+  mockVincularTotem: vi.fn(),
+  mockNavigate: vi.fn(),
+  mockRefresh: vi.fn(),
+  mockSetSelectedId: vi.fn(),
+}));
 
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
@@ -24,7 +30,7 @@ vi.mock("../../../shared/context/TotemContext", () => ({
   useTotem: () => ({
     totems: [],
     selectedId: "",
-    setSelectedId: vi.fn(),
+    setSelectedId: mockSetSelectedId,
     selectedTotem: undefined,
     refreshTotems: mockRefresh,
   }),
@@ -55,7 +61,7 @@ describe("VincularTotem", () => {
     expect(screen.getByLabelText("Espacio")).toBeInTheDocument();
   });
 
-  it("vincula el tótem, refresca la lista y navega al admin", async () => {
+  it("vincula el tótem, navega a plantillas con recienVinculado y setSelectedId", async () => {
     mockVincularTotem.mockResolvedValue({ id: 3 });
     mockRefresh.mockResolvedValue(undefined);
 
@@ -82,11 +88,15 @@ describe("VincularTotem", () => {
       nombre: "Tótem Hall",
       espacio_id: 1,
     });
+    expect(mockSetSelectedId).toHaveBeenCalledWith("3");
     expect(mockRefresh).toHaveBeenCalled();
 
     await waitFor(
       () =>
-        expect(mockNavigate).toHaveBeenCalledWith("/admin/", { replace: true }),
+        expect(mockNavigate).toHaveBeenCalledWith("/admin/plantillas", {
+          replace: true,
+          state: { recienVinculado: true },
+        }),
       { timeout: 3000 },
     );
   });

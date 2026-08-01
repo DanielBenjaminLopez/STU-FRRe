@@ -9,7 +9,7 @@ import {
 
 export default function VincularTotem() {
   const navigate = useNavigate();
-  const { refreshTotems } = useTotem();
+  const { refreshTotems, setSelectedId } = useTotem();
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
@@ -31,14 +31,22 @@ export default function VincularTotem() {
     setLoading(true);
 
     try {
-      await vincularTotem({
+      const nuevo = await vincularTotem({
         codigo_vinculacion: codigo,
         nombre,
         espacio_id: Number(espacioId),
       });
       setSuccess("Tótem vinculado exitosamente");
+      setSelectedId(String(nuevo.id));
       refreshTotems().catch(() => {});
-      setTimeout(() => navigate("/admin/", { replace: true }), 2000);
+      setTimeout(
+        () =>
+          navigate("/admin/plantillas", {
+            replace: true,
+            state: { recienVinculado: true },
+          }),
+        2000,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al vincular tótem");
     } finally {
