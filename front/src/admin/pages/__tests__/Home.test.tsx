@@ -165,12 +165,12 @@ describe("Home", () => {
     expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
-  it("muestra el badge de vinculado/sin vincular", () => {
+  it("muestra el badge de vinculado/pendiente", () => {
     mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
     expect(screen.getByText("Vinculado")).toBeInTheDocument();
-    expect(screen.getByText("Sin vincular")).toBeInTheDocument();
+    expect(screen.getByText("Pendiente de vinculación")).toBeInTheDocument();
   });
 
   it("muestra la plantilla asignada del tótem", () => {
@@ -213,12 +213,12 @@ describe("Home", () => {
     expect(screen.getByText("Sin ubicación")).toBeInTheDocument();
   });
 
-  it("no muestra acciones de editar/eliminar para tótems sin vincular", () => {
+  it("muestra Eliminar para todos y Editar solo para vinculados", () => {
     mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
     expect(screen.getAllByTitle("Editar")).toHaveLength(1);
-    expect(screen.getAllByTitle("Eliminar")).toHaveLength(1);
+    expect(screen.getAllByTitle("Eliminar")).toHaveLength(2);
   });
 
   it("abre el modal de edición con selector de plantilla", () => {
@@ -235,7 +235,7 @@ describe("Home", () => {
     mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
-    fireEvent.click(screen.getByTitle("Eliminar"));
+    fireEvent.click(screen.getAllByTitle("Eliminar")[0]);
     expect(screen.getByText("Eliminar tótem")).toBeInTheDocument();
   });
 
@@ -253,7 +253,7 @@ describe("Home", () => {
     mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
-    fireEvent.click(screen.getByTitle("Eliminar"));
+    fireEvent.click(screen.getAllByTitle("Eliminar")[0]);
     const confirmButton = screen.getAllByText("Eliminar").at(-1) as HTMLElement;
     fireEvent.click(confirmButton);
     await waitFor(() => expect(mockDeleteTotem).toHaveBeenCalledWith(1));

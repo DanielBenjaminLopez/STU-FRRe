@@ -174,13 +174,13 @@ export default function Home() {
                           : "bg-gray-100 text-gray-500"
                       }`}
                     >
-                      {t.vinculado ? "Vinculado" : "Sin vincular"}
+                      {t.vinculado ? "Vinculado" : "Pendiente de vinculación"}
                     </span>
                   </div>
                 </button>
 
-                {t.vinculado && (
-                  <div className="flex gap-2 mt-1">
+                <div className="flex gap-2 mt-1">
+                  {t.vinculado && (
                     <button
                       type="button"
                       title="Editar"
@@ -189,19 +189,19 @@ export default function Home() {
                     >
                       Editar
                     </button>
-                    <button
-                      type="button"
-                      title="Eliminar"
-                      onClick={() => {
-                        setError("");
-                        setDeleting(t);
-                      }}
-                      className="flex-1 text-xs font-medium text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 rounded-xl py-1.5 transition-colors"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                )}
+                  )}
+                  <button
+                    type="button"
+                    title="Eliminar"
+                    onClick={() => {
+                      setError("");
+                      setDeleting(t);
+                    }}
+                    className="flex-1 text-xs font-medium text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 rounded-xl py-1.5 transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             );
           })}
