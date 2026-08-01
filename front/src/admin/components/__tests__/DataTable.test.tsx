@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import DataTable, { type Column } from "../DataTable";
 
@@ -73,7 +73,9 @@ describe("DataTable", () => {
         label="carreras"
       />,
     );
-    expect(screen.getByPlaceholderText("Buscar carreras...")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Buscar carreras..."),
+    ).toBeInTheDocument();
     expect(screen.getByText("0 carreras")).toBeInTheDocument();
   });
 
@@ -83,9 +85,7 @@ describe("DataTable", () => {
     );
     const skeletons = container.querySelectorAll("tr[class*='skeleton']");
     expect(skeletons.length).toBe(0);
-    const skeletonDivs = container.querySelectorAll(
-      ".animate-pulse",
-    );
+    const skeletonDivs = container.querySelectorAll(".animate-pulse");
     expect(skeletonDivs.length).toBeGreaterThan(0);
   });
 

@@ -11,6 +11,8 @@ export interface MesaExamen {
   llamado: number;
   tribunal: string;
   activo: boolean;
+  materia_nombre?: string;
+  espacio_nombre?: string;
 }
 
 export const TURNOS = [

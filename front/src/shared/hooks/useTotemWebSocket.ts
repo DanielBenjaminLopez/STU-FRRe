@@ -12,7 +12,7 @@ export function useTotemWebSocket(codigo: string | null) {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [rejected, setRejected] = useState(false);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectCountRef = useRef(0);
 
   useEffect(() => {

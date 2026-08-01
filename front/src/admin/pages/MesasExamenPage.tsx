@@ -8,10 +8,11 @@ import {
   fetchMateriasForSelect,
   fetchEspaciosForSelect,
   TURNOS,
+  type MesaExamen,
 } from "../../shared/api/mesasExamen";
 import type { Column } from "../components/DataTable";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<MesaExamen>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },
   { key: "espacio_nombre", label: "Espacio" },
   {
@@ -20,7 +21,10 @@ const columns: Column<Record<string, unknown>>[] = [
     sortable: true,
     render: (val) => {
       const d = new Date(String(val));
-      return d.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" });
+      return d.toLocaleString("es-ES", {
+        dateStyle: "short",
+        timeStyle: "short",
+      });
     },
   },
   { key: "turno", label: "Turno", sortable: true },
@@ -51,7 +55,12 @@ export default function MesasExamenPage() {
   useEffect(() => {
     fetchMateriasForSelect()
       .then((m) =>
-        setMaterias(m.map((mat) => ({ value: mat.id, label: `${mat.codigo} - ${mat.nombre}` }))),
+        setMaterias(
+          m.map((mat) => ({
+            value: mat.id,
+            label: `${mat.codigo} - ${mat.nombre}`,
+          })),
+        ),
       )
       .catch(() => {});
     fetchEspaciosForSelect()
@@ -129,7 +138,7 @@ export default function MesasExamenPage() {
     create: createMesaExamen,
     update: updateMesaExamen,
     remove: deleteMesaExamen,
-    getRowLabel: (row: Record<string, unknown>) =>
+    getRowLabel: (row: MesaExamen) =>
       `${row.materia_nombre} - ${row.turno} Llamado ${row.llamado}`,
   };
 

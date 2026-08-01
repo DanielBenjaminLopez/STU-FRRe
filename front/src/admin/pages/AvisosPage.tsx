@@ -5,10 +5,11 @@ import {
   updateAviso,
   deleteAviso,
   TIPOS_AVISO,
+  type Aviso,
 } from "../../shared/api/avisos";
 import type { Column } from "../components/DataTable";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<Aviso>[] = [
   { key: "tipo", label: "Tipo", sortable: true },
   { key: "motivo", label: "Motivo" },
   { key: "fecha", label: "Fecha", sortable: true },
@@ -41,8 +42,7 @@ const config = {
   create: createAviso,
   update: updateAviso,
   remove: deleteAviso,
-  getRowLabel: (row: Record<string, unknown>) =>
-    `${row.tipo} - ${row.motivo}`,
+  getRowLabel: (row: Aviso) => `${row.tipo} - ${row.motivo}`,
 };
 
 export default function AvisosPage() {

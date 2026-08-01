@@ -7,10 +7,11 @@ import {
   deleteEvento,
   fetchEspaciosForSelect,
   TIPOS_EVENTO,
+  type Evento,
 } from "../../shared/api/eventos";
 import type { Column } from "../components/DataTable";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<Evento>[] = [
   { key: "titulo", label: "Título", sortable: true },
   { key: "tipo", label: "Tipo", sortable: true },
   {
@@ -154,7 +155,7 @@ export default function EventosPage() {
     create: createEvento,
     update: updateEvento,
     remove: deleteEvento,
-    getRowLabel: (row: Record<string, unknown>) => String(row.titulo ?? ""),
+    getRowLabel: (row: Evento) => String(row.titulo ?? ""),
     validate: validateEvento,
   };
 

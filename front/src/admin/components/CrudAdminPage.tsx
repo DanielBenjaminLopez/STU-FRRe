@@ -4,28 +4,30 @@ import DataFormModal, { type FormField } from "./DataFormModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import PageHeader from "./PageHeader";
 
-interface CrudConfig {
+interface CrudConfig<T extends { id: number }> {
   title: string;
   subtitle?: string;
   entityName: string;
-  columns: Column<Record<string, unknown>>[];
+  columns: Column<T>[];
   formFields: FormField[];
-  fetchList: () => Promise<Record<string, unknown>[]>;
+  fetchList: () => Promise<T[]>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   create?: (...args: any[]) => Promise<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   update?: (...args: any[]) => Promise<any>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   remove?: (...args: any[]) => Promise<any>;
-  getRowLabel?: (row: Record<string, unknown>) => string;
+  getRowLabel?: (row: T) => string;
   validate?: (data: Record<string, unknown>) => string | null;
 }
 
-interface CrudAdminPageProps {
-  config: CrudConfig;
+interface CrudAdminPageProps<T extends { id: number }> {
+  config: CrudConfig<T>;
 }
 
-export default function CrudAdminPage({ config }: CrudAdminPageProps) {
+export default function CrudAdminPage<T extends { id: number }>({
+  config,
+}: CrudAdminPageProps<T>) {
   const {
     title,
     subtitle,
@@ -40,19 +42,14 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
     validate,
   } = config;
 
-  const [data, setData] = useState<Record<string, unknown>[]>([]);
+  const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
-  const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(
-    null,
-  );
+  const [editingRow, setEditingRow] = useState<T | null>(null);
 
-  const [deletingRow, setDeletingRow] = useState<Record<
-    string,
-    unknown
-  > | null>(null);
+  const [deletingRow, setDeletingRow] = useState<T | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -85,12 +82,12 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
     setShowForm(true);
   }
 
-  function handleEdit(row: Record<string, unknown>) {
+  function handleEdit(row: T) {
     setEditingRow(row);
     setShowForm(true);
   }
 
-  function handleDelete(row: Record<string, unknown>) {
+  function handleDelete(row: T) {
     setDeletingRow(row);
   }
 
@@ -129,8 +126,12 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
 
   const labelFn =
     getRowLabel ??
-    ((row: Record<string, unknown>) =>
-      String(row.nombre ?? row.titulo ?? row.id));
+    ((row: T) =>
+      String(
+        (row as unknown as Record<string, unknown>).nombre ??
+          (row as unknown as Record<string, unknown>).titulo ??
+          row.id,
+      ));
 
   return (
     <div className="p-8">
@@ -161,7 +162,9 @@ export default function CrudAdminPage({ config }: CrudAdminPageProps) {
         <DataFormModal
           title={editingRow ? `Editar ${entityName}` : `Crear ${entityName}`}
           fields={formFields}
-          initialData={editingRow ?? undefined}
+          initialData={
+            (editingRow as unknown as Record<string, unknown>) ?? undefined
+          }
           onSubmit={handleSubmit}
           onClose={() => {
             setShowForm(false);
