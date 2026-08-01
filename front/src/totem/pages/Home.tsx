@@ -147,12 +147,12 @@ export default function Home() {
                 );
               })
             ) : (
-              <>
-                <Horarios />
-                <Examenes />
-                <Calendar />
-                <Mapa />
-              </>
+              <div className="col-span-4 row-span-6 flex items-center justify-center p-8">
+                <p className="text-gray-400 text-center text-lg leading-relaxed">
+                  Próximamente encontrarás aquí los horarios de cursada y
+                  novedades del campus.
+                </p>
+              </div>
             )}
           </div>
         </div>

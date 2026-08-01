@@ -114,15 +114,18 @@ describe("totem Home", () => {
     expect(screen.getByTestId("mock-encabezado")).toBeInTheDocument();
   });
 
-  it("muestra los widgets por defecto si el tótem no tiene plantilla", async () => {
+  it("muestra el placeholder Próximamente cuando el tótem no tiene plantilla", async () => {
     mockFetchTotemMe.mockResolvedValue(makeTotem());
     render(<Home />);
     await waitFor(() => {
-      expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Próximamente encontrarás aquí/),
+      ).toBeInTheDocument();
     });
-    expect(screen.getByTestId("mock-examenes")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-calendario")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-mapa")).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-horarios")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-examenes")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-calendario")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-mapa")).not.toBeInTheDocument();
   });
 
   it("muestra la pantalla de standby cuando el tótem está desactivado", async () => {
