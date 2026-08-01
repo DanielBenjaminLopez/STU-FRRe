@@ -232,6 +232,18 @@ export default function PlantillasPage() {
     [updateSelectedPlantilla],
   );
 
+  const handleResizeWidget = useCallback(
+    (widgetId: string, colSpan: number, rowSpan: number) => {
+      updateSelectedPlantilla((p) => ({
+        ...p,
+        widgets: p.widgets.map((w) =>
+          w.id === widgetId ? { ...w, colSpan, rowSpan } : w,
+        ),
+      }));
+    },
+    [updateSelectedPlantilla],
+  );
+
   const handleDragOver = useCallback((event: DragOverEvent) => {
     setHoverCell(getCellFromEvent(event));
   }, []);
@@ -438,6 +450,7 @@ export default function PlantillasPage() {
               nombre={selected?.nombre ?? ""}
               onNombreChange={handleNombreChange}
               onRemoveWidget={handleRemoveWidget}
+              onResizeWidget={handleResizeWidget}
               onScaleChange={setCanvasScale}
               hoverCell={hoverCell}
               activeType={activeType}
