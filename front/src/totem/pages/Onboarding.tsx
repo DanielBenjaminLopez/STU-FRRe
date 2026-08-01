@@ -5,11 +5,6 @@ import { setTotemToken } from "../../shared/api/client";
 import { createTotem, fetchTotemMe } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 
-// TODO(SCRUM-70): PENDIENTE — el código guardado puede quedar "fantasma" en el
-// backend (tótem borrado o ya vinculado en otra sesión) y el kiosco lo muestra
-// hasta VIGENCIA_HORAS sin validarlo. Hoy solo se auto-regenera si la conexión
-// WebSocket es rechazada; queda pendiente un botón "Regenerar código" o la
-// validación del código contra el backend antes de mostrarlo.
 const CODIGO_KEY = "totem_codigo_vinculacion";
 const TIMESTAMP_KEY = "totem_codigo_timestamp";
 const VIGENCIA_HORAS = 1;
@@ -155,6 +150,13 @@ export default function Onboarding() {
             </ol>
           </span>
         </div>
+
+        <button
+          onClick={handleReintentar}
+          className="bg-black text-white text-xl font-semibold px-8 py-3 rounded-2xl cursor-pointer"
+        >
+          Regenerar código
+        </button>
       </div>
     </div>
   );
