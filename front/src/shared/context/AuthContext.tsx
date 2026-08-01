@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchMe, login as apiLogin, type UserInfo } from "../api/auth";
-import { getToken, setToken, clearToken } from "../api/client";
+import { getAdminToken, setAdminToken, clearAdminToken } from "../api/client";
 
 interface AuthState {
   user: UserInfo | null;
@@ -20,27 +20,27 @@ const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(() => !!getToken());
+  const [isLoading, setIsLoading] = useState(() => !!getAdminToken());
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAdminToken();
     if (!token) return;
 
     fetchMe()
       .then(setUser)
-      .catch(() => clearToken())
+      .catch(() => clearAdminToken())
       .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (username: string, password: string) => {
     const { access } = await apiLogin(username, password);
-    setToken(access);
+    setAdminToken(access);
     const me = await fetchMe();
     setUser(me);
   };
 
   const logout = () => {
-    clearToken();
+    clearAdminToken();
     setUser(null);
   };
 

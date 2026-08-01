@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Logo from "../../assets/logo_negro.webp";
+import { getTotemToken, setTotemToken } from "../../shared/api/client";
 import { createTotem } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 
@@ -9,7 +10,6 @@ import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 // hasta VIGENCIA_HORAS sin validarlo. Hoy solo se auto-regenera si la conexión
 // WebSocket es rechazada; queda pendiente un botón "Regenerar código" o la
 // validación del código contra el backend antes de mostrarlo.
-const AUTH_TOKEN_KEY = "auth_token";
 const CODIGO_KEY = "totem_codigo_vinculacion";
 const TIMESTAMP_KEY = "totem_codigo_timestamp";
 const VIGENCIA_HORAS = 1;
@@ -47,7 +47,7 @@ export default function Onboarding() {
   const { lastMessage, rejected } = useTotemWebSocket(codigo);
 
   useEffect(() => {
-    if (localStorage.getItem(AUTH_TOKEN_KEY)) {
+    if (getTotemToken()) {
       navigate("/", { replace: true });
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -59,7 +59,7 @@ export default function Onboarding() {
     if (lastMessage?.type === "vinculado") {
       clearCode();
       if (lastMessage.access) {
-        localStorage.setItem(AUTH_TOKEN_KEY, lastMessage.access as string);
+        setTotemToken(lastMessage.access as string);
       }
       navigate("/", { replace: true });
     }

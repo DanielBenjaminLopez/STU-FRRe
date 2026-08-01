@@ -16,9 +16,9 @@ import {
   type WidgetType,
   type Plantilla,
 } from "../../admin/pages/plantillas/types";
+import { getTotemToken } from "../../shared/api/client";
 import { fetchTotemMe, type Totem } from "../../shared/api/totems";
 
-const AUTH_TOKEN_KEY = "auth_token";
 const POLLING_MS = 30_000;
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
@@ -56,7 +56,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem(AUTH_TOKEN_KEY)) {
+    if (!getTotemToken()) {
       navigate("/onboarding", { replace: true });
       return;
     }

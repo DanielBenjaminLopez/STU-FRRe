@@ -1,15 +1,28 @@
-const TOKEN_KEY = "auth_token";
+const ADMIN_TOKEN_KEY = "admin_token";
+const TOTEM_TOKEN_KEY = "auth_token";
 
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+export function getAdminToken(): string | null {
+  return localStorage.getItem(ADMIN_TOKEN_KEY);
 }
 
-export function setToken(token: string): void {
-  localStorage.setItem(TOKEN_KEY, token);
+export function setAdminToken(token: string): void {
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
 }
 
-export function clearToken(): void {
-  localStorage.removeItem(TOKEN_KEY);
+export function clearAdminToken(): void {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+export function getTotemToken(): string | null {
+  return localStorage.getItem(TOTEM_TOKEN_KEY);
+}
+
+export function setTotemToken(token: string): void {
+  localStorage.setItem(TOTEM_TOKEN_KEY, token);
+}
+
+export function clearTotemToken(): void {
+  localStorage.removeItem(TOTEM_TOKEN_KEY);
 }
 
 export async function apiFetch<T>(
@@ -67,7 +80,7 @@ async function request<T>(
   options: RequestInit,
   scheme: "Bearer" | "Totem",
 ): Promise<T> {
-  const token = getToken();
+  const token = scheme === "Totem" ? getTotemToken() : getAdminToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
