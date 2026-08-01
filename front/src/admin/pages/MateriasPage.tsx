@@ -4,10 +4,11 @@ import {
   createMateria,
   updateMateria,
   deleteMateria,
+  type Materia,
 } from "../../shared/api/materias";
 import type { Column } from "../components/DataTable";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<Materia>[] = [
   { key: "codigo", label: "Código", sortable: true },
   { key: "nombre", label: "Nombre", sortable: true },
   { key: "profesores", label: "Profesores" },
@@ -34,8 +35,7 @@ const config = {
   create: createMateria,
   update: updateMateria,
   remove: deleteMateria,
-  getRowLabel: (row: Record<string, unknown>) =>
-    `${row.codigo} - ${row.nombre}`,
+  getRowLabel: (row: Materia) => `${row.codigo} - ${row.nombre}`,
 };
 
 export default function MateriasPage() {

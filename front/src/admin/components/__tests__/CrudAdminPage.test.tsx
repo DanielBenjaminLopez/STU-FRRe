@@ -1,23 +1,34 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import CrudAdminPage from "../CrudAdminPage";
 import type { Column } from "../DataTable";
 import type { FormField } from "../DataFormModal";
 
-const columns: Column<Record<string, unknown>>[] = [
-  { key: "nombre", label: "Nombre" },
-];
+interface TestItem {
+  id: number;
+  nombre: string;
+}
+
+const columns: Column<TestItem>[] = [{ key: "nombre", label: "Nombre" }];
 
 const formFields: FormField[] = [
   { name: "nombre", label: "Nombre", type: "text", required: true },
 ];
 
-const mockData = [
+const mockData: TestItem[] = [
   { id: 1, nombre: "Item A" },
   { id: 2, nombre: "Item B" },
 ];
 
-const createConfig = (overrides?: Partial<Parameters<typeof CrudAdminPage>[0]["config"]>) => ({
+const createConfig = (
+  overrides?: Partial<Parameters<typeof CrudAdminPage<TestItem>>[0]["config"]>,
+) => ({
   title: "Carreras",
   subtitle: "Gestión de carreras",
   entityName: "carrera",
@@ -27,7 +38,7 @@ const createConfig = (overrides?: Partial<Parameters<typeof CrudAdminPage>[0]["c
   create: vi.fn().mockResolvedValue({}),
   update: vi.fn().mockResolvedValue({}),
   remove: vi.fn().mockResolvedValue(undefined),
-  getRowLabel: (row: Record<string, unknown>) => String(row.nombre),
+  getRowLabel: (row: TestItem) => String(row.nombre),
   ...overrides,
 });
 
@@ -83,8 +94,12 @@ describe("CrudAdminPage", () => {
       expect(screen.getByText("Item A")).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole("button", { name: /Crear carrera/ }));
-    expect(screen.getByRole("heading", { name: "Crear carrera" })).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: /nombre/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Crear carrera" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /nombre/i }),
+    ).toBeInTheDocument();
   });
 
   it("abre el modal de editar al hacer click en editar", async () => {

@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
-import type { WidgetPlacement, WidgetType } from "../pages/plantillas/types";
-import {
-  WIDGET_REGISTRY,
-  GRID_COLS,
-  GRID_ROWS,
+import type {
+  WidgetPlacement,
+  WidgetType,
+  WidgetDefinition,
 } from "../pages/plantillas/types";
+import { GRID_COLS, GRID_ROWS } from "../pages/plantillas/types";
 import {
   useTotemScale,
   TOTEM_WIDTH,
@@ -31,11 +31,10 @@ interface PlacedWidgetProps {
 
 function PlacedWidget({ widget, onRemove }: PlacedWidgetProps) {
   const Component = WIDGET_COMPONENTS[widget.type];
-  const def = WIDGET_REGISTRY[widget.type];
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `placed-${widget.id}`,
-    data: { widgetId: widget.id, widgetType: widget.type, type: def.type },
+    data: { widgetId: widget.id, widgetType: widget.type, type: widget.type },
   });
 
   return (
@@ -43,10 +42,10 @@ function PlacedWidget({ widget, onRemove }: PlacedWidgetProps) {
       ref={setNodeRef}
       className={`relative group overflow-hidden w-full grid ${isDragging ? "ring-2 ring-cyan-400 ring-offset-1" : ""}`}
       style={{
-        gridColumn: `${widget.col + 1} / span ${def.colSpan}`,
-        gridRow: `${widget.row + 1} / span ${def.rowSpan}`,
-        gridTemplateColumns: `repeat(${def.colSpan}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${def.rowSpan}, minmax(0, 1fr))`,
+        gridColumn: `${widget.col + 1} / span ${widget.colSpan}`,
+        gridRow: `${widget.row + 1} / span ${widget.rowSpan}`,
+        gridTemplateColumns: `repeat(${widget.colSpan}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${widget.rowSpan}, minmax(0, 1fr))`,
       }}
       {...listeners}
       {...attributes}
@@ -87,6 +86,7 @@ interface TemplateCanvasProps {
   onScaleChange?: (scale: number) => void;
   hoverCell: { col: number; row: number } | null;
   activeType: WidgetType | null;
+  registry: Record<WidgetType, WidgetDefinition>;
 }
 
 export default function TemplateCanvas({
@@ -97,6 +97,7 @@ export default function TemplateCanvas({
   onScaleChange,
   hoverCell,
   activeType,
+  registry,
 }: TemplateCanvasProps) {
   const { containerRef, scale } = useTotemScale();
 
@@ -144,7 +145,7 @@ export default function TemplateCanvas({
               activeType &&
               (() => {
                 const Ghost = WIDGET_COMPONENTS[activeType];
-                const def = WIDGET_REGISTRY[activeType];
+                const def = registry[activeType];
                 return Ghost ? (
                   <div
                     className="overflow-hidden opacity-60 grid"

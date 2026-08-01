@@ -5,10 +5,15 @@ import DataFormModal, { type FormField } from "../DataFormModal";
 const mockFields: FormField[] = [
   { name: "nombre", label: "Nombre", type: "text", required: true },
   { name: "descripcion", label: "Descripción", type: "textarea" },
-  { name: "tipo", label: "Tipo", type: "select", options: [
-    { value: "a", label: "Opción A" },
-    { value: "b", label: "Opción B" },
-  ]},
+  {
+    name: "tipo",
+    label: "Tipo",
+    type: "select",
+    options: [
+      { value: "a", label: "Opción A" },
+      { value: "b", label: "Opción B" },
+    ],
+  },
 ];
 
 describe("DataFormModal", () => {
@@ -152,10 +157,7 @@ describe("DataFormModal", () => {
   });
 
   it("muestra estado de carga durante el envío", async () => {
-    let resolveSubmit: () => void;
-    mockOnSubmit.mockImplementation(
-      () => new Promise<void>((resolve) => { resolveSubmit = resolve; }),
-    );
+    mockOnSubmit.mockImplementation(() => new Promise<void>(() => {}));
     render(
       <DataFormModal
         title="Crear"

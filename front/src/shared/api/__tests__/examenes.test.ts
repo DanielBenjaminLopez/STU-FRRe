@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fetchExamenes, type Examen } from "../examenes";
+import { fetchExamenes } from "../examenes";
 
 describe("fetchExamenes", () => {
   it("retorna un array de exámenes", async () => {

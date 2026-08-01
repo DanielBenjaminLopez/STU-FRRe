@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import PageHeader from "../PageHeader";
 
@@ -36,7 +36,13 @@ describe("PageHeader", () => {
   });
 
   it("usa createLabel personalizado", () => {
-    render(<PageHeader title="Carreras" onCreate={vi.fn()} createLabel="Nueva carrera" />);
+    render(
+      <PageHeader
+        title="Carreras"
+        onCreate={vi.fn()}
+        createLabel="Nueva carrera"
+      />,
+    );
     expect(screen.getByText("Nueva carrera")).toBeInTheDocument();
   });
 

@@ -4,10 +4,11 @@ import {
   createCarrera,
   updateCarrera,
   deleteCarrera,
+  type Carrera,
 } from "../../shared/api/carreras";
 import type { Column } from "../components/DataTable";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<Carrera>[] = [
   { key: "codigo", label: "Código", sortable: true },
   { key: "nombre", label: "Nombre", sortable: true },
 ];
@@ -27,8 +28,7 @@ const config = {
   create: createCarrera,
   update: updateCarrera,
   remove: deleteCarrera,
-  getRowLabel: (row: Record<string, unknown>) =>
-    `${row.codigo} - ${row.nombre}`,
+  getRowLabel: (row: Carrera) => `${row.codigo} - ${row.nombre}`,
 };
 
 export default function CarrerasPage() {

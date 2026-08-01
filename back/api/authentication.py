@@ -11,7 +11,7 @@ from .models import Totem
 
 class TotemToken(Token):
     token_type = "totem"
-    lifetime = timedelta(days=30)
+    lifetime = timedelta(days=3650)
 
     @classmethod
     def for_totem(cls, totem):
@@ -61,5 +61,8 @@ class TotemAuthentication(BaseAuthentication):
             totem = Totem.objects.get(id=totem_id, vinculado=True)
         except Totem.DoesNotExist:
             raise AuthenticationFailed("Tótem no encontrado o no vinculado")
+
+        if not totem.activo:
+            raise AuthenticationFailed("Tótem desactivado")
 
         return (TotemUser(totem), token_str)

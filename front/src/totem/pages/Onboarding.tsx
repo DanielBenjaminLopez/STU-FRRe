@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Logo from "../../assets/logo_negro.webp";
-import { createTotem } from "../../shared/api/totems";
+import { setTotemToken } from "../../shared/api/client";
+import { createTotem, fetchTotemMe } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 
-const AUTH_TOKEN_KEY = "auth_token";
 const CODIGO_KEY = "totem_codigo_vinculacion";
 const TIMESTAMP_KEY = "totem_codigo_timestamp";
 const VIGENCIA_HORAS = 1;
@@ -42,19 +42,27 @@ export default function Onboarding() {
   const { lastMessage, rejected } = useTotemWebSocket(codigo);
 
   useEffect(() => {
-    if (localStorage.getItem(AUTH_TOKEN_KEY)) {
-      navigate("/", { replace: true });
-    } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setChecking(false);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await fetchTotemMe();
+        if (!cancelled) navigate("/", { replace: true });
+      } catch {
+        if (!cancelled) {
+          setChecking(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   useEffect(() => {
     if (lastMessage?.type === "vinculado") {
       clearCode();
       if (lastMessage.access) {
-        localStorage.setItem(AUTH_TOKEN_KEY, lastMessage.access as string);
+        setTotemToken(lastMessage.access as string);
       }
       navigate("/", { replace: true });
     }
@@ -142,6 +150,13 @@ export default function Onboarding() {
             </ol>
           </span>
         </div>
+
+        <button
+          onClick={handleReintentar}
+          className="bg-black text-white text-xl font-semibold px-8 py-3 rounded-2xl cursor-pointer"
+        >
+          Regenerar código
+        </button>
       </div>
     </div>
   );

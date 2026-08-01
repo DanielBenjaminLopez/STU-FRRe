@@ -29,8 +29,8 @@ export const DIAS_SEMANA = [
   { value: "sabado", label: "Sábado" },
 ] as const;
 
-export async function fetchHorarios(): Promise<HorarioCursado[]> {
-  return apiFetch<HorarioCursado[]>("/api/horarios/");
+export async function fetchHorarios(): Promise<HorarioCursadoConNombres[]> {
+  return apiFetch<HorarioCursadoConNombres[]>("/api/horarios/");
 }
 
 export async function createHorario(

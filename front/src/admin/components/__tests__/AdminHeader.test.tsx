@@ -2,12 +2,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import AdminHeader from "../AdminHeader";
 
-const { mockIsAuthenticated, mockUser, mockTotems, mockSelectedId, mockSetSelectedId } = vi.hoisted(() => ({
+const {
+  mockIsAuthenticated,
+  mockUser,
+  mockTotems,
+  mockSelectedId,
+  mockSetSelectedId,
+  mockNavigate,
+} = vi.hoisted(() => ({
   mockIsAuthenticated: vi.fn(),
   mockUser: vi.fn(),
   mockTotems: vi.fn(),
   mockSelectedId: vi.fn(),
   mockSetSelectedId: vi.fn(),
+  mockNavigate: vi.fn(),
+}));
+
+vi.mock("react-router", () => ({
+  useNavigate: () => mockNavigate,
 }));
 
 vi.mock("../../../shared/context/AuthContext", () => ({
@@ -69,8 +81,12 @@ describe("AdminHeader", () => {
       { id: 2, nombre: "Tótem Hall", vinculado: true },
     ]);
     render(<AdminHeader />);
-    expect(screen.getByRole("option", { name: "Tótem Aula 1A" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Tótem Hall" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Tótem Aula 1A" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Tótem Hall" }),
+    ).toBeInTheDocument();
   });
 
   it("muestra 'Sin tótems' cuando no hay totems", () => {
@@ -78,7 +94,9 @@ describe("AdminHeader", () => {
     mockUser.mockReturnValue({ username: "admin", is_superuser: true });
     mockTotems.mockReturnValue([]);
     render(<AdminHeader />);
-    expect(screen.getByRole("option", { name: "Sin tótems" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Sin tótems" }),
+    ).toBeInTheDocument();
   });
 
   it("muestra el nombre del usuario autenticado", () => {
@@ -99,7 +117,7 @@ describe("AdminHeader", () => {
     expect(screen.queryByText("Bienvenido,")).not.toBeInTheDocument();
   });
 
-  it("llama a setSelectedId al cambiar el totem seleccionado", () => {
+  it("llama a setSelectedId y redirige a Inicio al cambiar el totem seleccionado", () => {
     mockIsAuthenticated.mockReturnValue(true);
     mockUser.mockReturnValue({ username: "admin", is_superuser: true });
     mockTotems.mockReturnValue([
@@ -110,6 +128,7 @@ describe("AdminHeader", () => {
     render(<AdminHeader />);
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "2" } });
     expect(mockSetSelectedId).toHaveBeenCalledWith("2");
+    expect(mockNavigate).toHaveBeenCalledWith("/admin");
   });
 
   it("usa nombre del totem como label en el dropdown", () => {
@@ -119,6 +138,8 @@ describe("AdminHeader", () => {
       { id: 1, nombre: "Tótem Hall Central", vinculado: true },
     ]);
     render(<AdminHeader />);
-    expect(screen.getByRole("option", { name: "Tótem Hall Central" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Tótem Hall Central" }),
+    ).toBeInTheDocument();
   });
 });

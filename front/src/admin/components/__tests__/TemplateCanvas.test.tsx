@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import TemplateCanvas from "../TemplateCanvas";
 import type { WidgetPlacement } from "../../pages/plantillas/types";
+import { WIDGET_REGISTRY } from "../../pages/plantillas/types";
 
 vi.mock("@dnd-kit/core", () => ({
   useDroppable: vi.fn(() => ({
@@ -38,7 +39,7 @@ vi.mock("../../../shared/hooks/useTotemScale", () => ({
 }));
 
 const mockWidgets: WidgetPlacement[] = [
-  { id: "w1", type: "horarios", col: 0, row: 0 },
+  { id: "w1", type: "horarios", col: 0, row: 0, colSpan: 4, rowSpan: 2 },
 ];
 
 describe("TemplateCanvas", () => {
@@ -49,6 +50,7 @@ describe("TemplateCanvas", () => {
     onRemoveWidget: vi.fn(),
     hoverCell: null,
     activeType: null,
+    registry: WIDGET_REGISTRY,
   };
 
   beforeEach(() => {
@@ -66,7 +68,9 @@ describe("TemplateCanvas", () => {
 
   it("llama a onNombreChange al editar el nombre", () => {
     const onNombreChange = vi.fn();
-    render(<TemplateCanvas {...defaultProps} onNombreChange={onNombreChange} />);
+    render(
+      <TemplateCanvas {...defaultProps} onNombreChange={onNombreChange} />,
+    );
     const input = screen.getByDisplayValue("Test Plantilla");
     fireEvent.change(input, { target: { value: "Nuevo nombre" } });
     expect(onNombreChange).toHaveBeenCalledWith("Nuevo nombre");
@@ -161,8 +165,8 @@ describe("TemplateCanvas", () => {
 
   it("renderiza múltiples widgets", () => {
     const multiWidgets: WidgetPlacement[] = [
-      { id: "w1", type: "horarios", col: 0, row: 0 },
-      { id: "w2", type: "examenes", col: 0, row: 2 },
+      { id: "w1", type: "horarios", col: 0, row: 0, colSpan: 4, rowSpan: 2 },
+      { id: "w2", type: "examenes", col: 0, row: 2, colSpan: 4, rowSpan: 2 },
     ];
     render(<TemplateCanvas {...defaultProps} widgets={multiWidgets} />);
     expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();

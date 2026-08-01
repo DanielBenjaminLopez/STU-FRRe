@@ -80,7 +80,7 @@ export default function DataFormModal({
         ) {
           cleaned[field.name] = null;
         } else {
-          cleaned[field.name] = val ?? (field.type === "checkbox" ? false : "");
+          cleaned[field.name] = val ?? "";
         }
       }
       await onSubmit(cleaned);

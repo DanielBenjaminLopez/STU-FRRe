@@ -1,3 +1,9 @@
+import type {
+  PlantillaDTO,
+  WidgetPosicionInput,
+} from "../../../shared/api/plantillas";
+import type { WidgetDTO } from "../../../shared/api/widgets";
+
 export type WidgetType = "horarios" | "examenes" | "calendario" | "mapa";
 
 export interface WidgetDefinition {
@@ -47,12 +53,70 @@ export interface WidgetPlacement {
   type: WidgetType;
   col: number;
   row: number;
+  colSpan: number;
+  rowSpan: number;
 }
 
 export interface Plantilla {
   id: string;
   nombre: string;
   widgets: WidgetPlacement[];
+  isNew?: boolean;
+}
+
+export function plantillaDTOToLocal(dto: PlantillaDTO): Plantilla {
+  return {
+    id: String(dto.id),
+    nombre: dto.nombre,
+    widgets: (dto.widgets_posiciones ?? []).map((pos) => {
+      const tipo = pos.widget_tipo as WidgetType;
+      const fallback = WIDGET_REGISTRY[tipo];
+      return {
+        id: `w${pos.id}`,
+        type: tipo,
+        col: pos.col_pos,
+        row: pos.fila_pos,
+        colSpan: pos.col_tam ?? fallback?.colSpan ?? 2,
+        rowSpan: pos.fila_tam ?? fallback?.rowSpan ?? 2,
+      };
+    }),
+  };
+}
+
+export function buildEffectiveRegistry(
+  widgets: WidgetDTO[],
+): Record<WidgetType, WidgetDefinition> {
+  const registry = { ...WIDGET_REGISTRY };
+  for (const w of widgets) {
+    const tipo = w.tipo as WidgetType;
+    if (tipo in registry) {
+      registry[tipo] = {
+        ...registry[tipo],
+        colSpan: w.col_tam_default,
+        rowSpan: w.fila_tam_default,
+      };
+    }
+  }
+  return registry;
+}
+
+export function plantillaToWidgetPositions(
+  plantilla: Plantilla,
+  widgetIdByTipo: Partial<Record<WidgetType, number>>,
+): WidgetPosicionInput[] {
+  return plantilla.widgets.flatMap((w) => {
+    const widgetId = widgetIdByTipo[w.type];
+    if (widgetId == null) return [];
+    return [
+      {
+        widget: widgetId,
+        col_pos: w.col,
+        fila_pos: w.row,
+        col_tam: w.colSpan,
+        fila_tam: w.rowSpan,
+      },
+    ];
+  });
 }
 
 export function checkCollision(
@@ -63,12 +127,10 @@ export function checkCollision(
   newRowSpan: number,
 ): boolean {
   return widgets.some((w) => {
-    const def = WIDGET_REGISTRY[w.type];
-    if (!def) return false;
     return (
-      newCol < w.col + def.colSpan &&
+      newCol < w.col + w.colSpan &&
       newCol + newColSpan > w.col &&
-      newRow < w.row + def.rowSpan &&
+      newRow < w.row + w.rowSpan &&
       newRow + newRowSpan > w.row
     );
   });

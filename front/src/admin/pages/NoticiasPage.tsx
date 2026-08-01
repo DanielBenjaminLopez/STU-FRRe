@@ -12,7 +12,7 @@ import {
   type ContenidoFeed,
 } from "../../shared/api/noticias";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<ContenidoFeed>[] = [
   { key: "titulo", label: "Título", sortable: true },
   {
     key: "tipo",

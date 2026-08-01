@@ -109,7 +109,7 @@ describe("AdminLayout", () => {
   it("oculta header y sidebar en login (no autenticado)", () => {
     mockIsAuthenticated.mockReturnValue(false);
     mockUser.mockReturnValue(null);
-    const { container } = render(
+    render(
       <AdminLayout>
         <div>Login page</div>
       </AdminLayout>,

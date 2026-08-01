@@ -8,10 +8,11 @@ import {
   fetchMateriasForSelect,
   fetchEspaciosForSelect,
   DIAS_SEMANA,
+  type HorarioCursadoConNombres,
 } from "../../shared/api/horariosAdmin";
 import type { Column } from "../components/DataTable";
 
-const columns: Column<Record<string, unknown>>[] = [
+const columns: Column<HorarioCursadoConNombres>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },
   { key: "espacio_nombre", label: "Espacio" },
   { key: "dia_semana", label: "Día", sortable: true },
@@ -41,9 +42,24 @@ const baseFormFields = [
     required: true,
     options: DIAS_SEMANA.map((d) => ({ value: d.value, label: d.label })),
   },
-  { name: "comision", label: "Comisión", type: "text" as const, required: true },
-  { name: "hora_inicio", label: "Hora inicio", type: "time" as const, required: true },
-  { name: "hora_fin", label: "Hora fin", type: "time" as const, required: true },
+  {
+    name: "comision",
+    label: "Comisión",
+    type: "text" as const,
+    required: true,
+  },
+  {
+    name: "hora_inicio",
+    label: "Hora inicio",
+    type: "time" as const,
+    required: true,
+  },
+  {
+    name: "hora_fin",
+    label: "Hora fin",
+    type: "time" as const,
+    required: true,
+  },
   {
     name: "fecha_inicio_vigencia",
     label: "Vigencia desde",
@@ -77,7 +93,12 @@ export default function HorariosPage() {
   useEffect(() => {
     fetchMateriasForSelect()
       .then((m) =>
-        setMaterias(m.map((mat) => ({ value: mat.id, label: `${mat.codigo} - ${mat.nombre}` }))),
+        setMaterias(
+          m.map((mat) => ({
+            value: mat.id,
+            label: `${mat.codigo} - ${mat.nombre}`,
+          })),
+        ),
       )
       .catch(() => {});
     fetchEspaciosForSelect()
@@ -123,7 +144,7 @@ export default function HorariosPage() {
     create: createHorario,
     update: updateHorario,
     remove: deleteHorario,
-    getRowLabel: (row: Record<string, unknown>) =>
+    getRowLabel: (row: HorarioCursadoConNombres) =>
       `${row.materia_nombre} - ${row.dia_semana} ${row.hora_inicio}`,
   };
 
