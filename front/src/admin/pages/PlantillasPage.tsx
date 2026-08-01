@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router";
 import {
   DndContext,
   DragOverlay,
@@ -16,6 +17,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import { fetchWidgets } from "../../shared/api/widgets";
+import { useTotem } from "../../shared/context/TotemContext";
 import {
   createPlantilla,
   deletePlantilla,
@@ -125,6 +127,9 @@ export default function PlantillasPage() {
   >({});
   const [dirtyIds, setDirtyIds] = useState<Record<string, boolean>>({});
 
+  const { selectedTotem } = useTotem();
+  const location = useLocation();
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -164,6 +169,30 @@ export default function PlantillasPage() {
     const timer = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    if (plantillas.length === 0) return;
+    const targetId = selectedTotem?.plantilla_id
+      ? String(selectedTotem.plantilla_id)
+      : "";
+    if (targetId && plantillas.some((p) => p.id === targetId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedId(targetId);
+    }
+  }, [selectedTotem?.plantilla_id, plantillas]);
+
+  useEffect(() => {
+    if (
+      location.state?.recienVinculado &&
+      selectedTotem &&
+      !selectedTotem.plantilla_id
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setToast(
+        "El tótem aún no tiene plantilla asignada. Creá una o seleccioná una y usá 'Cargar al tótem'.",
+      );
+    }
+  }, [location.state, selectedTotem]);
 
   const markDirty = useCallback((id: string) => {
     setDirtyIds((prev) => ({ ...prev, [id]: true }));

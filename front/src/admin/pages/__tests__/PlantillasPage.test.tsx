@@ -75,6 +75,22 @@ vi.mock("../../../shared/api/widgets", () => ({
   fetchWidgets: vi.fn(),
 }));
 
+vi.mock("../../../shared/context/TotemContext", () => ({
+  useTotem: vi.fn(),
+}));
+
+vi.mock("react-router", () => ({
+  useLocation: vi.fn(() => ({
+    state: null,
+    pathname: "/admin/plantillas",
+  })),
+}));
+
+import { useTotem } from "../../../shared/context/TotemContext";
+import { useLocation } from "react-router";
+
+const mockUseTotem = vi.mocked(useTotem);
+const mockUseLocation = vi.mocked(useLocation);
 const mockFetchPlantillas = vi.mocked(fetchPlantillas);
 const mockCreatePlantilla = vi.mocked(createPlantilla);
 const mockUpdatePlantilla = vi.mocked(updatePlantilla);
@@ -150,6 +166,17 @@ function plantillaDTO(
 describe("PlantillasPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseTotem.mockReturnValue({
+      totems: [],
+      selectedId: "",
+      selectedTotem: undefined,
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    mockUseLocation.mockReturnValue({
+      state: null,
+      pathname: "/admin/plantillas",
+    } as ReturnType<typeof useLocation>);
     mockFetchWidgets.mockResolvedValue(WIDGETS);
     mockFetchPlantillas.mockResolvedValue([
       plantillaDTO(1, "Plantilla por defecto", [HORARIO_POS]),
@@ -261,5 +288,181 @@ describe("PlantillasPage", () => {
     await waitFor(() => {
       expect(mockDeletePlantilla).toHaveBeenCalledWith(1);
     });
+  });
+
+  it("selecciona la plantilla asignada al tótem al cargar", async () => {
+    mockFetchPlantillas.mockResolvedValue([
+      plantillaDTO(1, "Plantilla A"),
+      plantillaDTO(2, "Plantilla B"),
+    ]);
+    mockUseTotem.mockReturnValue({
+      totems: [
+        {
+          id: 5,
+          nombre: "Kiosco",
+          espacio_id: null,
+          espacio_nombre: null,
+          activo: true,
+          config_pantalla: {},
+          vinculado: true,
+          plantilla_id: 2,
+          plantilla: null,
+          creado_en: "2026-01-01T00:00:00Z",
+        },
+      ],
+      selectedId: "5",
+      selectedTotem: {
+        id: 5,
+        nombre: "Kiosco",
+        espacio_id: null,
+        espacio_nombre: null,
+        activo: true,
+        config_pantalla: {},
+        vinculado: true,
+        plantilla_id: 2,
+        plantilla: null,
+        creado_en: "2026-01-01T00:00:00Z",
+      },
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    render(<PlantillasPage />);
+    const input = await screen.findByDisplayValue("Plantilla B");
+    expect(input).toBeInTheDocument();
+  });
+
+  it("usa la primera plantilla cuando el tótem no tiene plantilla asignada", async () => {
+    mockFetchPlantillas.mockResolvedValue([
+      plantillaDTO(1, "Plantilla A"),
+      plantillaDTO(2, "Plantilla B"),
+    ]);
+    mockUseTotem.mockReturnValue({
+      totems: [
+        {
+          id: 5,
+          nombre: "Kiosco",
+          espacio_id: null,
+          espacio_nombre: null,
+          activo: true,
+          config_pantalla: {},
+          vinculado: true,
+          plantilla_id: null,
+          plantilla: null,
+          creado_en: "2026-01-01T00:00:00Z",
+        },
+      ],
+      selectedId: "5",
+      selectedTotem: {
+        id: 5,
+        nombre: "Kiosco",
+        espacio_id: null,
+        espacio_nombre: null,
+        activo: true,
+        config_pantalla: {},
+        vinculado: true,
+        plantilla_id: null,
+        plantilla: null,
+        creado_en: "2026-01-01T00:00:00Z",
+      },
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    render(<PlantillasPage />);
+    const input = await screen.findByDisplayValue("Plantilla A");
+    expect(input).toBeInTheDocument();
+  });
+
+  it("selecciona la plantilla del tótem al cambiar la selección en el header", async () => {
+    mockFetchPlantillas.mockResolvedValue([
+      plantillaDTO(1, "Plantilla A"),
+      plantillaDTO(2, "Plantilla B"),
+    ]);
+    const totemA = {
+      id: 5,
+      nombre: "Kiosco",
+      espacio_id: null,
+      espacio_nombre: null,
+      activo: true,
+      config_pantalla: {},
+      vinculado: true,
+      plantilla_id: 1,
+      plantilla: null,
+      creado_en: "2026-01-01T00:00:00Z",
+    };
+    const totemB = {
+      id: 6,
+      nombre: "Oficina",
+      espacio_id: null,
+      espacio_nombre: null,
+      activo: true,
+      config_pantalla: {},
+      vinculado: true,
+      plantilla_id: 2,
+      plantilla: null,
+      creado_en: "2026-01-01T00:00:00Z",
+    };
+    mockUseTotem.mockReturnValue({
+      totems: [totemA, totemB],
+      selectedId: "5",
+      selectedTotem: totemA,
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    const { rerender } = render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla A");
+    mockUseTotem.mockReturnValue({
+      totems: [totemA, totemB],
+      selectedId: "6",
+      selectedTotem: totemB,
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    rerender(<PlantillasPage />);
+    const input = await screen.findByDisplayValue("Plantilla B");
+    expect(input).toBeInTheDocument();
+  });
+
+  it("muestra toast informativo al llegar desde el primer vínculo sin plantilla", async () => {
+    mockFetchPlantillas.mockResolvedValue([plantillaDTO(1, "Plantilla A")]);
+    mockUseTotem.mockReturnValue({
+      totems: [
+        {
+          id: 5,
+          nombre: "Kiosco",
+          espacio_id: null,
+          espacio_nombre: null,
+          activo: true,
+          config_pantalla: {},
+          vinculado: true,
+          plantilla_id: null,
+          plantilla: null,
+          creado_en: "2026-01-01T00:00:00Z",
+        },
+      ],
+      selectedId: "5",
+      selectedTotem: {
+        id: 5,
+        nombre: "Kiosco",
+        espacio_id: null,
+        espacio_nombre: null,
+        activo: true,
+        config_pantalla: {},
+        vinculado: true,
+        plantilla_id: null,
+        plantilla: null,
+        creado_en: "2026-01-01T00:00:00Z",
+      },
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    mockUseLocation.mockReturnValue({
+      state: { recienVinculado: true },
+      pathname: "/admin/plantillas",
+    } as ReturnType<typeof useLocation>);
+    render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla A");
+    expect(
+      screen.getByText(/El tótem aún no tiene plantilla asignada/),
+    ).toBeInTheDocument();
   });
 });
