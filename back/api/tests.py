@@ -139,6 +139,59 @@ class PlantillaColisionTestCase(TestCase):
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_rechaza_fila_pos_negativo(self):
+        url = "/api/plantilla-widgets/"
+        data = {
+            "plantilla": self.plantilla.id,
+            "widget": self.widget2.id,
+            "col_pos": 0,
+            "fila_pos": -1,
+            "col_tam": 2,
+            "fila_tam": 2,
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rechaza_fila_pos_excedido(self):
+        url = "/api/plantilla-widgets/"
+        data = {
+            "plantilla": self.plantilla.id,
+            "widget": self.widget2.id,
+            "col_pos": 0,
+            "fila_pos": 6,
+            "col_tam": 2,
+            "fila_tam": 2,
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rechaza_fila_pos_mas_fila_tam_excede_grid(self):
+        url = "/api/plantilla-widgets/"
+        data = {
+            "plantilla": self.plantilla.id,
+            "widget": self.widget2.id,
+            "col_pos": 0,
+            "fila_pos": 5,
+            "col_tam": 2,
+            "fila_tam": 2,
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_reemplazar_widgets_rechaza_fila_pos_invalida(self):
+        url = f"/api/plantillas/{self.plantilla.id}/reemplazar-widgets/"
+        data = [
+            {
+                "widget": self.widget2.id,
+                "col_pos": 0,
+                "fila_pos": 7,
+                "col_tam": 2,
+                "fila_tam": 1,
+            },
+        ]
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class TotemModelTest(TestCase):
     def test_totem_activo_por_defecto(self):

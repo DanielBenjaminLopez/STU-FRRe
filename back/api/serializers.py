@@ -51,6 +51,7 @@ class WidgetSerializer(serializers.ModelSerializer):
 
 
 GRID_COLS = 4
+GRID_ROWS = 6
 
 
 def _validar_rango_posicion(col_pos, fila_pos, col_tam, fila_tam):
@@ -65,6 +66,14 @@ def _validar_rango_posicion(col_pos, fila_pos, col_tam, fila_tam):
     if col_pos + col_tam > GRID_COLS:
         raise serializers.ValidationError(
             {"col_tam": f"El widget sobrepasa el límite de {GRID_COLS} columnas de la grilla (col_pos: {col_pos} + col_tam: {col_tam})."}
+        )
+
+    if fila_pos < 0 or fila_pos >= GRID_ROWS:
+        raise serializers.ValidationError({"fila_pos": f"La posición de la fila debe estar entre 0 y {GRID_ROWS - 1}."})
+
+    if fila_pos + fila_tam > GRID_ROWS:
+        raise serializers.ValidationError(
+            {"fila_tam": f"El widget sobrepasa el límite de {GRID_ROWS} filas de la grilla (fila_pos: {fila_pos} + fila_tam: {fila_tam})."}
         )
 
 
