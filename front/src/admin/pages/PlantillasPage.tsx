@@ -17,6 +17,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import { fetchWidgets } from "../../shared/api/widgets";
+import { updateTotem } from "../../shared/api/totems";
 import { useTotem } from "../../shared/context/TotemContext";
 import {
   createPlantilla,
@@ -133,7 +134,7 @@ export default function PlantillasPage() {
     Record<WidgetType, WidgetDefinition>
   >({} as Record<WidgetType, WidgetDefinition>);
 
-  const { selectedTotem } = useTotem();
+  const { selectedTotem, refreshTotems } = useTotem();
   const location = useLocation();
 
   const sensors = useSensors(
@@ -389,6 +390,29 @@ export default function PlantillasPage() {
     setDeletingId(null);
   }, [deletingId, plantillas, selectedId]);
 
+  const handleCargarAlTotem = useCallback(async () => {
+    if (!selectedTotem) return;
+    const selected = plantillas.find((p) => p.id === selectedId);
+    if (!selected || selected.isNew) return;
+    if (dirtyIds[selectedId]) {
+      setToast("Guardá la plantilla antes de cargarla al tótem.");
+      return;
+    }
+    try {
+      await updateTotem(selectedTotem.id, {
+        plantilla_id: Number(selectedId),
+      });
+      await refreshTotems();
+      setToast("Plantilla cargada al tótem correctamente");
+    } catch (err) {
+      setToast(
+        err instanceof Error
+          ? err.message
+          : "No se pudo cargar la plantilla al tótem",
+      );
+    }
+  }, [selectedTotem, plantillas, selectedId, dirtyIds, refreshTotems]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
@@ -503,6 +527,14 @@ export default function PlantillasPage() {
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                 />
               </svg>
+            </button>
+            <button
+              type="button"
+              onClick={handleCargarAlTotem}
+              disabled={!selectedTotem || !selected || selected.isNew}
+              className="px-4 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Cargar al tótem
             </button>
             <button
               type="button"

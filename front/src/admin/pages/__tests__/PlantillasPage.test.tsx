@@ -15,6 +15,7 @@ import {
   replacePlantillaWidgets,
 } from "../../../shared/api/plantillas";
 import { fetchWidgets } from "../../../shared/api/widgets";
+import { updateTotem } from "../../../shared/api/totems";
 import type {
   PlantillaDTO,
   WidgetPosicionDTO,
@@ -75,6 +76,10 @@ vi.mock("../../../shared/api/widgets", () => ({
   fetchWidgets: vi.fn(),
 }));
 
+vi.mock("../../../shared/api/totems", () => ({
+  updateTotem: vi.fn(),
+}));
+
 vi.mock("../../../shared/context/TotemContext", () => ({
   useTotem: vi.fn(),
 }));
@@ -97,6 +102,7 @@ const mockUpdatePlantilla = vi.mocked(updatePlantilla);
 const mockDeletePlantilla = vi.mocked(deletePlantilla);
 const mockReplacePlantillaWidgets = vi.mocked(replacePlantillaWidgets);
 const mockFetchWidgets = vi.mocked(fetchWidgets);
+const mockUpdateTotem = vi.mocked(updateTotem);
 
 const WIDGETS = [
   {
@@ -463,6 +469,71 @@ describe("PlantillasPage", () => {
     await screen.findByDisplayValue("Plantilla A");
     expect(
       screen.getByText(/El tótem aún no tiene plantilla asignada/),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra el botón Cargar al tótem", async () => {
+    render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla por defecto");
+    expect(screen.getByText("Cargar al tótem")).toBeInTheDocument();
+  });
+
+  it("deshabilita Cargar al tótem cuando no hay tótem seleccionado", async () => {
+    mockUseTotem.mockReturnValue({
+      totems: [],
+      selectedId: "",
+      selectedTotem: undefined,
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla por defecto");
+    expect(screen.getByText("Cargar al tótem")).toBeDisabled();
+  });
+
+  it("asigna la plantilla al tótem al hacer click en Cargar al tótem", async () => {
+    const mockRefresh = vi.fn().mockResolvedValue(undefined);
+    mockUseTotem.mockReturnValue({
+      totems: [
+        {
+          id: 5,
+          nombre: "Kiosco",
+          espacio_id: null,
+          espacio_nombre: null,
+          activo: true,
+          config_pantalla: {},
+          vinculado: true,
+          plantilla_id: null,
+          plantilla: null,
+          creado_en: "2026-01-01T00:00:00Z",
+        },
+      ],
+      selectedId: "5",
+      selectedTotem: {
+        id: 5,
+        nombre: "Kiosco",
+        espacio_id: null,
+        espacio_nombre: null,
+        activo: true,
+        config_pantalla: {},
+        vinculado: true,
+        plantilla_id: null,
+        plantilla: null,
+        creado_en: "2026-01-01T00:00:00Z",
+      },
+      setSelectedId: vi.fn(),
+      refreshTotems: mockRefresh,
+    });
+    mockUpdateTotem.mockResolvedValue({} as never);
+    render(<PlantillasPage />);
+    await screen.findByDisplayValue("Plantilla por defecto");
+    fireEvent.click(screen.getByText("Cargar al tótem"));
+    await waitFor(() => {
+      expect(mockUpdateTotem).toHaveBeenCalledWith(5, { plantilla_id: 1 });
+    });
+    expect(mockRefresh).toHaveBeenCalled();
+    expect(
+      await screen.findByText("Plantilla cargada al tótem correctamente"),
     ).toBeInTheDocument();
   });
 });
