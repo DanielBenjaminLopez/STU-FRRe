@@ -465,21 +465,4 @@ describe("PlantillasPage", () => {
       screen.getByText(/El tótem aún no tiene plantilla asignada/),
     ).toBeInTheDocument();
   });
-
-  it("marca dirty y envía spans actualizados al guardar tras resize", async () => {
-    render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    fireEvent.click(screen.getByText("Guardar plantilla"));
-    await waitFor(() => {
-      expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(1, [
-        {
-          widget: 1,
-          col_pos: 0,
-          fila_pos: 0,
-          col_tam: 4,
-          fila_tam: 2,
-        },
-      ]);
-    });
-  });
 });

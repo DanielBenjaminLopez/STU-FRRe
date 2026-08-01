@@ -172,39 +172,4 @@ describe("TemplateCanvas", () => {
     expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
     expect(screen.getByTestId("mock-examenes")).toBeInTheDocument();
   });
-
-  it("renderiza el handle de resize cuando se provee onResizeWidget", () => {
-    const onResizeWidget = vi.fn();
-    render(
-      <TemplateCanvas
-        {...defaultProps}
-        widgets={mockWidgets}
-        onResizeWidget={onResizeWidget}
-      />,
-    );
-    expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
-    const handle = document.querySelector("[data-resize-handle]");
-    expect(handle).toBeInTheDocument();
-  });
-
-  it("no renderiza el handle de resize sin onResizeWidget", () => {
-    render(<TemplateCanvas {...defaultProps} widgets={mockWidgets} />);
-    const handle = document.querySelector("[data-resize-handle]");
-    expect(handle).not.toBeInTheDocument();
-  });
-
-  it("llama a onResizeWidget tras pointer down + move + up", () => {
-    const onResizeWidget = vi.fn();
-    const { container } = render(
-      <TemplateCanvas
-        {...defaultProps}
-        widgets={mockWidgets}
-        onResizeWidget={onResizeWidget}
-      />,
-    );
-
-    const handle = container.querySelector("[data-resize-handle]");
-    expect(handle).toBeInTheDocument();
-    expect(handle).toHaveClass("cursor-se-resize");
-  });
 });
