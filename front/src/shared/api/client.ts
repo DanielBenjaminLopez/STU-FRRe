@@ -75,6 +75,14 @@ function extractErrorMessage(body: unknown, status: number): string {
   return `Error ${status}`;
 }
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 async function request<T>(
   url: string,
   options: RequestInit,
@@ -94,7 +102,10 @@ async function request<T>(
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(extractErrorMessage(body, response.status));
+    throw new ApiError(
+      extractErrorMessage(body, response.status),
+      response.status,
+    );
   }
 
   if (response.status === 204) return undefined as T;

@@ -11,7 +11,7 @@ from .models import Totem
 
 class TotemToken(Token):
     token_type = "totem"
-    lifetime = timedelta(days=30)
+    lifetime = timedelta(days=3650)
 
     @classmethod
     def for_totem(cls, totem):

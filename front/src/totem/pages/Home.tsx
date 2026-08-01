@@ -16,7 +16,7 @@ import {
   type WidgetType,
   type Plantilla,
 } from "../../admin/pages/plantillas/types";
-import { getTotemToken } from "../../shared/api/client";
+import { ApiError, getTotemToken } from "../../shared/api/client";
 import { fetchTotemMe, type Totem } from "../../shared/api/totems";
 
 const POLLING_MS = 30_000;
@@ -44,6 +44,10 @@ export default function Home() {
       setTotem(me);
       setBlocked(false);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        navigate("/onboarding", { replace: true });
+        return;
+      }
       const message = err instanceof Error ? err.message : "Error de conexión";
       if (message === "Tótem desactivado") {
         setBlocked(true);

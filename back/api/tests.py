@@ -302,3 +302,17 @@ class TotemKioscoAPITestCase(TestCase):
         self.client.force_authenticate(user=admin_user)
         response = self.client.get("/api/totems/me/")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_token_vida_larga(self):
+        from datetime import datetime, timedelta, timezone
+
+        token = TotemToken.for_totem(self.totem)
+        remaining = datetime.fromtimestamp(
+            token.payload["exp"], tz=timezone.utc
+        ) - token.current_time
+        self.assertGreaterEqual(remaining, timedelta(days=365 * 5))
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Totem {token}")
+        response = self.client.get("/api/totems/me/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.totem.id)

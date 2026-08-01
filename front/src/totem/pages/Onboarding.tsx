@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Logo from "../../assets/logo_negro.webp";
-import { getTotemToken, setTotemToken } from "../../shared/api/client";
-import { createTotem } from "../../shared/api/totems";
+import { setTotemToken } from "../../shared/api/client";
+import { createTotem, fetchTotemMe } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 
 // TODO(SCRUM-70): PENDIENTE — el código guardado puede quedar "fantasma" en el
@@ -47,12 +47,20 @@ export default function Onboarding() {
   const { lastMessage, rejected } = useTotemWebSocket(codigo);
 
   useEffect(() => {
-    if (getTotemToken()) {
-      navigate("/", { replace: true });
-    } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setChecking(false);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await fetchTotemMe();
+        if (!cancelled) navigate("/", { replace: true });
+      } catch {
+        if (!cancelled) {
+          setChecking(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [navigate]);
 
   useEffect(() => {
