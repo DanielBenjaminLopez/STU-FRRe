@@ -27,12 +27,14 @@ import {
 } from "../../shared/api/plantillas";
 import {
   WIDGET_REGISTRY,
+  buildEffectiveRegistry,
   GRID_COLS,
   GRID_ROWS,
   checkCollision,
   plantillaDTOToLocal,
   plantillaToWidgetPositions,
   type WidgetType,
+  type WidgetDefinition,
   type WidgetPlacement,
   type Plantilla,
 } from "./plantillas/types";
@@ -89,11 +91,12 @@ function getCellFromEvent(
 function getGhostDimensions(
   scale: number,
   activeType: WidgetType | null,
+  registry: Record<WidgetType, WidgetDefinition>,
 ): { width: number; height: number } | null {
   const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
   if (!gridEl || !activeType) return null;
 
-  const def = WIDGET_REGISTRY[activeType];
+  const def = registry[activeType];
   if (!def) return null;
 
   const rect = gridEl.getBoundingClientRect();
@@ -126,6 +129,9 @@ export default function PlantillasPage() {
     Partial<Record<WidgetType, number>>
   >({});
   const [dirtyIds, setDirtyIds] = useState<Record<string, boolean>>({});
+  const [effectiveRegistry, setEffectiveRegistry] = useState<
+    Record<WidgetType, WidgetDefinition>
+  >({} as Record<WidgetType, WidgetDefinition>);
 
   const { selectedTotem } = useTotem();
   const location = useLocation();
@@ -153,6 +159,7 @@ export default function PlantillasPage() {
         setWidgetIdByTipo(byTipo);
         setPlantillas(local);
         setSelectedId(local[0]?.id ?? "");
+        setEffectiveRegistry(buildEffectiveRegistry(widgets));
       } catch {
         if (!cancelled) setToast("No se pudieron cargar las plantillas");
       } finally {
@@ -243,7 +250,7 @@ export default function PlantillasPage() {
       ) as WidgetType | undefined;
       if (!widgetType) return;
 
-      const def = WIDGET_REGISTRY[widgetType];
+      const def = effectiveRegistry[widgetType];
       if (!def) return;
 
       const cell = getCellFromEvent(event);
@@ -280,6 +287,8 @@ export default function PlantillasPage() {
           type: widgetType,
           col,
           row,
+          colSpan: def.colSpan,
+          rowSpan: def.rowSpan,
         };
         updateSelectedPlantilla((p) => ({
           ...p,
@@ -287,7 +296,7 @@ export default function PlantillasPage() {
         }));
       }
     },
-    [plantillas, selectedId, updateSelectedPlantilla],
+    [plantillas, selectedId, updateSelectedPlantilla, effectiveRegistry],
   );
 
   const handleDragStart = useCallback(
@@ -415,7 +424,7 @@ export default function PlantillasPage() {
       <div className="flex flex-col h-full">
         <div className="flex flex-1 overflow-hidden">
           <WidgetPalette
-            widgets={Object.values(WIDGET_REGISTRY)}
+            widgets={Object.values(effectiveRegistry)}
             components={{
               horarios: Horarios,
               examenes: Examenes,
@@ -432,6 +441,7 @@ export default function PlantillasPage() {
               onScaleChange={setCanvasScale}
               hoverCell={hoverCell}
               activeType={activeType}
+              registry={effectiveRegistry}
             />
           </div>
         </div>
@@ -510,7 +520,11 @@ export default function PlantillasPage() {
         {activeType &&
           (() => {
             const Ghost = WIDGET_COMPONENTS[activeType];
-            const dims = getGhostDimensions(canvasScale, activeType);
+            const dims = getGhostDimensions(
+              canvasScale,
+              activeType,
+              effectiveRegistry,
+            );
             if (!Ghost || !dims) return null;
             return (
               <div

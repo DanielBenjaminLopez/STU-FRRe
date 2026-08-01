@@ -6,8 +6,24 @@ function makeWidget(
   col: number,
   row: number,
   id = "test",
+  colSpan?: number,
+  rowSpan?: number,
 ): WidgetPlacement {
-  return { id, type, col, row };
+  const defaults = {
+    horarios: [4, 2],
+    examenes: [4, 2],
+    calendario: [2, 2],
+    mapa: [2, 2],
+  };
+  const [dCol, dRow] = defaults[type];
+  return {
+    id,
+    type,
+    col,
+    row,
+    colSpan: colSpan ?? dCol,
+    rowSpan: rowSpan ?? dRow,
+  };
 }
 
 describe("checkCollision", () => {

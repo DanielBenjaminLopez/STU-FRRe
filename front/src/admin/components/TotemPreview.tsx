@@ -10,7 +10,6 @@ import {
 } from "../../shared/hooks/useTotemScale";
 import { useTotem } from "../../shared/context/TotemContext";
 import {
-  WIDGET_REGISTRY,
   plantillaDTOToLocal,
   type WidgetType,
 } from "../pages/plantillas/types";
@@ -49,17 +48,16 @@ export default function TotemPreview() {
             {plantilla && plantilla.widgets.length > 0 ? (
               plantilla.widgets.map((w) => {
                 const Component = WIDGET_COMPONENTS[w.type];
-                const def = WIDGET_REGISTRY[w.type];
-                if (!Component || !def) return null;
+                if (!Component) return null;
                 return (
                   <div
                     key={w.id}
                     className="overflow-hidden grid"
                     style={{
-                      gridColumn: `${w.col + 1} / span ${def.colSpan}`,
-                      gridRow: `${w.row + 1} / span ${def.rowSpan}`,
-                      gridTemplateColumns: `repeat(${def.colSpan}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${def.rowSpan}, minmax(0, 1fr))`,
+                      gridColumn: `${w.col + 1} / span ${w.colSpan}`,
+                      gridRow: `${w.row + 1} / span ${w.rowSpan}`,
+                      gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
+                      gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
                     }}
                   >
                     <Component />
