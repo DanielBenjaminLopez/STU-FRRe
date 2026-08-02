@@ -6,7 +6,6 @@ const navItems = [
   { to: "/admin/carreras", label: "Carreras" },
   { to: "/admin/materias", label: "Materias" },
   { to: "/admin/horarios", label: "Horarios" },
-  { to: "/admin/horarios-pdf", label: "Cargar PDF" },
   { to: "/admin/mesas-examen", label: "Mesas de examen" },
   { to: "/admin/noticias", label: "Noticias" },
   { to: "/admin/eventos", label: "Eventos" },
