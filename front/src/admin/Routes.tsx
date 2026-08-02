@@ -6,6 +6,7 @@ import VincularTotem from "./pages/VincularTotem";
 import CarrerasPage from "./pages/CarrerasPage";
 import MateriasPage from "./pages/MateriasPage";
 import HorariosPage from "./pages/HorariosPage";
+import HorariosPdfPage from "./pages/HorariosPdfPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
 import EventosPage from "./pages/EventosPage";
@@ -53,6 +54,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <HorariosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/horarios-pdf"
+        element={
+          <ProtectedRoute>
+            <HorariosPdfPage />
           </ProtectedRoute>
         }
       />

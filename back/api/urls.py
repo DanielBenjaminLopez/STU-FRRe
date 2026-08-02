@@ -23,6 +23,7 @@ from .views import (
     VincularTotemView,
     WidgetViewSet,
 )
+from .views_pdf import HorarioImportView, HorarioPreviewView, UploadHorarioView
 
 router = DefaultRouter()
 router.register('carreras', CarreraViewSet)
@@ -50,4 +51,7 @@ urlpatterns = [
     path('auth/me/', MeView.as_view(), name='auth_me'),
     path('espacios/', EspacioListView.as_view(), name='espacios_list'),
     path('avisos-activos/', AvisosActivosView.as_view(), name='avisos_activos'),
+    path('upload-horarios/', UploadHorarioView.as_view(), name='upload_horarios'),
+    path('horarios/preview/<str:task_id>/', HorarioPreviewView.as_view(), name='horario_preview'),
+    path('horarios/import/<str:task_id>/', HorarioImportView.as_view(), name='horario_import'),
 ]
