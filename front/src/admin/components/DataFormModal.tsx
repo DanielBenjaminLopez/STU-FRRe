@@ -72,6 +72,15 @@ export default function DataFormModal({
         const val = formData[field.name];
         if (field.type === "number" && val !== "" && val != null) {
           cleaned[field.name] = Number(val);
+        } else if (
+          field.type === "select" &&
+          field.options &&
+          field.options.length > 0 &&
+          typeof field.options[0].value === "number" &&
+          val !== "" &&
+          val != null
+        ) {
+          cleaned[field.name] = Number(val);
         } else if (field.type === "checkbox") {
           cleaned[field.name] = Boolean(val);
         } else if (

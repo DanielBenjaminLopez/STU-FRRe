@@ -193,9 +193,14 @@ class PlanMateriaSerializer(serializers.ModelSerializer):
 
 
 class ComisionSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Comision
-        fields = ['id', 'plan_materia', 'nombre']
+        fields = ['id', 'plan_materia', 'nombre', 'display_name']
+
+    def get_display_name(self, obj):
+        return str(obj)
 
         
 class HorarioCursadoSerializer(serializers.ModelSerializer):

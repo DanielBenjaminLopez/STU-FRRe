@@ -1,17 +1,20 @@
 import { apiFetch } from "./client";
 import type { Espacio } from "./totems";
-import type { Materia } from "./materias";
+
+export interface Comision {
+  id: number;
+  plan_materia: number;
+  nombre: string;
+  display_name: string;
+}
 
 export interface HorarioCursado {
   id: number;
-  materia: number;
+  comision: number | null;
   espacio: number;
   dia_semana: string;
-  comision: string;
   hora_inicio: string;
   hora_fin: string;
-  fecha_inicio_vigencia: string;
-  fecha_fin_vigencia: string;
   activo: boolean;
 }
 
@@ -56,8 +59,8 @@ export async function deleteHorario(id: number): Promise<void> {
   await apiFetch(`/api/horarios/${id}/`, { method: "DELETE" });
 }
 
-export async function fetchMateriasForSelect(): Promise<Materia[]> {
-  return apiFetch<Materia[]>("/api/materias/");
+export async function fetchComisionesForSelect(): Promise<Comision[]> {
+  return apiFetch<Comision[]>("/api/comisiones/");
 }
 
 export async function fetchEspaciosForSelect(): Promise<Espacio[]> {

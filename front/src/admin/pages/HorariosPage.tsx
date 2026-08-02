@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import CrudAdminPage from "../components/CrudAdminPage";
 import {
   fetchHorarios,
   createHorario,
   updateHorario,
   deleteHorario,
-  fetchMateriasForSelect,
+  fetchComisionesForSelect,
   fetchEspaciosForSelect,
-  DIAS_SEMANA,
-  type HorarioCursadoConNombres,
+  type Comision,
 } from "../../shared/api/horariosAdmin";
 import {
   uploadHorarioPdf,
@@ -18,157 +16,352 @@ import {
   type HorarioPreview,
   type ImportResult,
 } from "../../shared/api/horariosPdf";
-import type { Column } from "../components/DataTable";
+import type { Espacio } from "../../shared/api/totems";
 
 type Tab = "manual" | "pdf";
 type PdfStep = "upload" | "preview" | "done";
 
+interface ManualRow {
+  _key: number;
+  id?: number;
+  comision: number | null;
+  espacio: number;
+  dia_semana: string;
+  hora_inicio: string;
+  hora_fin: string;
+  activo: boolean;
+}
+
 const DIA_LABELS: Record<string, string> = {
   lunes: "Lun",
   martes: "Mar",
-  miercoles: "Mié",
+  miercoles: "Mie",
   jueves: "Jue",
   viernes: "Vie",
-  sabado: "Sáb",
+  sabado: "Sab",
 };
 
-const columns: Column<HorarioCursadoConNombres>[] = [
-  { key: "materia_nombre", label: "Materia", sortable: true },
-  { key: "espacio_nombre", label: "Espacio" },
-  { key: "dia_semana", label: "Día", sortable: true },
-  { key: "comision", label: "Comisión" },
-  { key: "hora_inicio", label: "Inicio" },
-  { key: "hora_fin", label: "Fin" },
-  {
-    key: "activo",
-    label: "Activo",
-    render: (val) => (
-      <span
-        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-          val ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-        }`}
-      >
-        {val ? "Si" : "No"}
-      </span>
-    ),
-  },
-];
-
-const baseFormFields = [
-  {
-    name: "dia_semana",
-    label: "Dia de la semana",
-    type: "select" as const,
-    required: true,
-    options: DIAS_SEMANA.map((d) => ({ value: d.value, label: d.label })),
-  },
-  {
-    name: "comision",
-    label: "Comision",
-    type: "text" as const,
-    required: true,
-  },
-  {
-    name: "hora_inicio",
-    label: "Hora inicio",
-    type: "time" as const,
-    required: true,
-  },
-  {
-    name: "hora_fin",
-    label: "Hora fin",
-    type: "time" as const,
-    required: true,
-  },
-  {
-    name: "fecha_inicio_vigencia",
-    label: "Vigencia desde",
-    type: "date" as const,
-    required: true,
-  },
-  {
-    name: "fecha_fin_vigencia",
-    label: "Vigencia hasta",
-    type: "date" as const,
-    required: true,
-  },
-  {
-    name: "activo",
-    label: "Activo",
-    type: "checkbox" as const,
-    required: false,
-    defaultValue: true,
-    placeholder: "Si",
-  },
-];
+let nextKey = 1;
 
 function ManualTab() {
-  const [materias, setMaterias] = useState<{ value: number; label: string }[]>(
-    [],
-  );
-  const [espacios, setEspacios] = useState<{ value: number; label: string }[]>(
-    [],
-  );
+  const [rows, setRows] = useState<ManualRow[]>([]);
+  const [originalIds, setOriginalIds] = useState<Set<number>>(new Set());
+  const [comisiones, setComisiones] = useState<Comision[]>([]);
+  const [espacios, setEspacios] = useState<Espacio[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    fetchMateriasForSelect()
-      .then((m) =>
-        setMaterias(
-          m.map((mat) => ({
-            value: mat.id,
-            label: `${mat.codigo} - ${mat.nombre}`,
-          })),
-        ),
-      )
-      .catch(() => {});
-    fetchEspaciosForSelect()
-      .then((e) =>
-        setEspacios(e.map((esp) => ({ value: esp.id, label: esp.nombre }))),
-      )
-      .catch(() => {});
+    async function load() {
+      try {
+        const [horarios, com, esp] = await Promise.all([
+          fetchHorarios(),
+          fetchComisionesForSelect(),
+          fetchEspaciosForSelect(),
+        ]);
+        setComisiones(com);
+        setEspacios(esp);
+
+        const loaded: ManualRow[] = horarios.map((h) => ({
+          _key: nextKey++,
+          id: h.id,
+          comision: h.comision,
+          espacio: h.espacio,
+          dia_semana: h.dia_semana,
+          hora_inicio: h.hora_inicio,
+          hora_fin: h.hora_fin,
+          activo: h.activo,
+        }));
+        setRows(loaded);
+        setOriginalIds(new Set(loaded.filter((r) => r.id).map((r) => r.id!)));
+      } catch {
+        setError("Error al cargar horarios");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
-  const formFields = [
-    {
-      name: "materia",
-      label: "Materia",
-      type: "select" as const,
-      required: true,
-      options: materias,
-    },
-    {
-      name: "espacio",
-      label: "Espacio",
-      type: "select" as const,
-      required: true,
-      options: espacios,
-    },
-    ...baseFormFields,
-  ];
-
-  const fetchList = useCallback(async () => {
-    const horarios = await fetchHorarios();
-    const hoy = new Date().toISOString().slice(0, 10);
-    return horarios.map((h) =>
-      h.fecha_fin_vigencia < hoy ? { ...h, activo: false } : h,
+  function handleEdit(_key: number, field: keyof ManualRow, value: unknown) {
+    setRows((prev) =>
+      prev.map((r) => (r._key === _key ? { ...r, [field]: value } : r)),
     );
-  }, []);
+  }
 
-  const config = {
-    title: "Horarios de cursado",
-    subtitle: "Gestion de horarios de materias",
-    entityName: "horario",
-    columns,
-    formFields,
-    fetchList,
-    create: createHorario,
-    update: updateHorario,
-    remove: deleteHorario,
-    getRowLabel: (row: HorarioCursadoConNombres) =>
-      `${row.materia_nombre} - ${row.dia_semana} ${row.hora_inicio}`,
-  };
+  function handleAddRow() {
+    setRows((prev) => [
+      ...prev,
+      {
+        _key: nextKey++,
+        comision: null,
+        espacio: espacios[0]?.id ?? 0,
+        dia_semana: "lunes",
+        hora_inicio: "07:45",
+        hora_fin: "08:30",
+        activo: true,
+      },
+    ]);
+  }
 
-  return <CrudAdminPage config={config} />;
+  function handleDeleteRow(_key: number) {
+    setRows((prev) => prev.filter((r) => r._key !== _key));
+  }
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const currentIds = new Set(rows.filter((r) => r.id).map((r) => r.id!));
+      const toDelete = [...originalIds].filter((id) => !currentIds.has(id));
+
+      await Promise.all(toDelete.map((id) => deleteHorario(id)));
+
+      const updatedRows = [...rows];
+
+      for (let i = 0; i < updatedRows.length; i++) {
+        const row = updatedRows[i];
+        const payload = {
+          comision: row.comision,
+          espacio: row.espacio,
+          dia_semana: row.dia_semana,
+          hora_inicio: row.hora_inicio,
+          hora_fin: row.hora_fin,
+          activo: row.activo,
+        };
+
+        if (row.id) {
+          await updateHorario(row.id, payload);
+        } else {
+          const created = await createHorario(payload);
+          updatedRows[i] = { ...row, id: created.id };
+        }
+      }
+
+      setRows(updatedRows);
+      setOriginalIds(
+        new Set(updatedRows.filter((r) => r.id).map((r) => r.id!)),
+      );
+      setSuccess("Cambios guardados correctamente");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al guardar");
+    } finally {
+      setSaving(false);
+    }
+  }, [rows, originalIds]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3 text-sm text-gray-600 py-8">
+        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+        Cargando horarios...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && (
+        <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
+          {success}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          <span className="font-semibold">{rows.length}</span> horarios
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleAddRow}
+            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-2xl hover:bg-gray-50 transition-colors"
+          >
+            + Agregar fila
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-6 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-50"
+          >
+            {saving ? "Guardando..." : "Guardar cambios"}
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                  Materia / Comision
+                </th>
+                <th className="px-3 py-2 text-left font-medium text-gray-600">
+                  Espacio
+                </th>
+                <th className="px-3 py-2 text-center font-medium text-gray-600">
+                  Dia
+                </th>
+                <th className="px-3 py-2 text-center font-medium text-gray-600">
+                  Inicio
+                </th>
+                <th className="px-3 py-2 text-center font-medium text-gray-600">
+                  Fin
+                </th>
+                <th className="px-3 py-2 text-center font-medium text-gray-600">
+                  Activo
+                </th>
+                <th className="px-3 py-2 w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={row._key}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
+                  <td className="px-3 py-2">
+                    <select
+                      value={row.comision ?? ""}
+                      onChange={(e) =>
+                        handleEdit(
+                          row._key,
+                          "comision",
+                          e.target.value ? Number(e.target.value) : null,
+                        )
+                      }
+                      className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs bg-white"
+                    >
+                      <option value="">Sin comision</option>
+                      {comisiones.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.display_name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2">
+                    <select
+                      value={row.espacio}
+                      onChange={(e) =>
+                        handleEdit(row._key, "espacio", Number(e.target.value))
+                      }
+                      className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs bg-white"
+                    >
+                      {espacios.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <select
+                      value={row.dia_semana}
+                      onChange={(e) =>
+                        handleEdit(row._key, "dia_semana", e.target.value)
+                      }
+                      className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs bg-white text-center"
+                    >
+                      {Object.entries(DIA_LABELS).map(([val, label]) => (
+                        <option key={val} value={val}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <input
+                      type="time"
+                      value={row.hora_inicio}
+                      onChange={(e) =>
+                        handleEdit(row._key, "hora_inicio", e.target.value)
+                      }
+                      className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs text-center"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <input
+                      type="time"
+                      value={row.hora_fin}
+                      onChange={(e) =>
+                        handleEdit(row._key, "hora_fin", e.target.value)
+                      }
+                      className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs text-center"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={row.activo}
+                      onChange={(e) =>
+                        handleEdit(row._key, "activo", e.target.checked)
+                      }
+                      className="w-4 h-4 rounded border-gray-300"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteRow(row._key)}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Eliminar fila"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {rows.length === 0 && (
+          <div className="px-4 py-8 text-center text-gray-400 text-sm">
+            No hay horarios cargados. Hace click en "+ Agregar fila" para crear
+            uno.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function PdfTab() {
@@ -320,7 +513,7 @@ function PdfTab() {
           </div>
 
           <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            <PreviewTable
+            <PdfPreviewTable
               horarios={preview.horarios}
               onEdit={handleEdit}
               onAddRow={handleAddRow}
@@ -498,7 +691,7 @@ function UploadZone({
   );
 }
 
-function PreviewTable({
+function PdfPreviewTable({
   horarios,
   onEdit,
   onAddRow,
