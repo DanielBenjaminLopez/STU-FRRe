@@ -58,7 +58,7 @@ export default function MesasExamenPage() {
         setMaterias(
           m.map((mat) => ({
             value: mat.id,
-            label: `${mat.codigo} - ${mat.nombre}`,
+            label: mat.nombre,
           })),
         ),
       )

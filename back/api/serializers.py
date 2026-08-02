@@ -194,10 +194,15 @@ class PlanMateriaSerializer(serializers.ModelSerializer):
 
 class ComisionSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
+    materia_nombre = serializers.CharField(source='plan_materia.materia.nombre', read_only=True)
+    carrera_nombre = serializers.CharField(source='plan_materia.carrera.nombre', read_only=True)
+    nivel = serializers.CharField(source='plan_materia.nivel', read_only=True)
+    modalidad = serializers.CharField(source='plan_materia.modalidad', read_only=True)
 
     class Meta:
         model = Comision
-        fields = ['id', 'plan_materia', 'nombre', 'display_name']
+        fields = ['id', 'plan_materia', 'nombre', 'display_name',
+                  'materia_nombre', 'carrera_nombre', 'nivel', 'modalidad']
 
     def get_display_name(self, obj):
         return str(obj)

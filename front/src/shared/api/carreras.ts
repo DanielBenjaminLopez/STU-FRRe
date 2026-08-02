@@ -2,7 +2,6 @@ import { apiFetch } from "./client";
 
 export interface Carrera {
   id: number;
-  codigo: string;
   nombre: string;
 }
 

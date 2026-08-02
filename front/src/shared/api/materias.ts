@@ -2,9 +2,7 @@ import { apiFetch } from "./client";
 
 export interface Materia {
   id: number;
-  codigo: string;
   nombre: string;
-  profesores: string;
 }
 
 export async function fetchMaterias(): Promise<Materia[]> {

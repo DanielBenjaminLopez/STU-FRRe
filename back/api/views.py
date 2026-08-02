@@ -161,12 +161,32 @@ class PlanMateriaViewSet(viewsets.ModelViewSet):
     queryset = PlanMateria.objects.select_related('carrera', 'materia').all()
     serializer_class = PlanMateriaSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        carrera = self.request.query_params.get('carrera')
+        nivel = self.request.query_params.get('nivel')
+        modalidad = self.request.query_params.get('modalidad')
+        if carrera:
+            qs = qs.filter(carrera_id=carrera)
+        if nivel:
+            qs = qs.filter(nivel=nivel)
+        if modalidad:
+            qs = qs.filter(modalidad=modalidad)
+        return qs
+
 
 class ComisionViewSet(viewsets.ModelViewSet):
     queryset = Comision.objects.select_related(
         'plan_materia__carrera', 'plan_materia__materia'
     ).all()
     serializer_class = ComisionSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        plan_materia = self.request.query_params.get('plan_materia')
+        if plan_materia:
+            qs = qs.filter(plan_materia_id=plan_materia)
+        return qs
 
 
 class HorarioCursadoViewSet(viewsets.ModelViewSet):

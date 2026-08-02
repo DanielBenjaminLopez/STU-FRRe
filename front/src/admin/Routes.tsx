@@ -4,8 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import VincularTotem from "./pages/VincularTotem";
 import CarrerasPage from "./pages/CarrerasPage";
-import MateriasPage from "./pages/MateriasPage";
-import HorariosPage from "./pages/HorariosPage";
+import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
 import EventosPage from "./pages/EventosPage";
@@ -41,18 +40,10 @@ export default function AdminRoutes() {
         }
       />
       <Route
-        path="/materias"
+        path="/materias-horarios"
         element={
           <ProtectedRoute>
-            <MateriasPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/horarios"
-        element={
-          <ProtectedRoute>
-            <HorariosPage />
+            <MateriasHorariosPage />
           </ProtectedRoute>
         }
       />
