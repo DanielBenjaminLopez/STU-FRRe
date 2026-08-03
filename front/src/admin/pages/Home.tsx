@@ -132,60 +132,106 @@ export default function Home() {
             return (
               <div
                 key={t.id}
-                className={`flex flex-col gap-1 p-4 text-left border rounded-2xl transition-all ${
+                className={`flex flex-col rounded-2xl border transition-all ${
                   isSelected
-                    ? "border-gray-900 bg-gray-50"
-                    : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                    ? "border-gray-900 bg-gray-50 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300 hover:shadow-sm bg-white"
                 }`}
               >
                 <button
                   type="button"
                   onClick={() => setSelectedId(String(t.id))}
-                  className="flex flex-col gap-1 text-left w-full"
+                  className="flex flex-col gap-2 p-4 text-left w-full"
                 >
-                  <span className="flex items-center gap-1 text-sm font-semibold text-gray-900 truncate">
-                    {t.nombre || `Tótem #${t.id}`}
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        t.activo ? "bg-green-500" : "bg-gray-300"
+                      }`}
+                    />
+                    <span className="text-sm font-semibold text-gray-900 truncate">
+                      {t.nombre || `Tótem #${t.id}`}
+                    </span>
                     {isSelected && (
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-900 text-white shrink-0">
+                      <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-900 text-white shrink-0">
                         Actual
                       </span>
                     )}
-                  </span>
-                  <span className="text-xs text-gray-400 truncate">
-                    {t.espacio_nombre || "Sin ubicación"}
-                  </span>
-                  <span className="text-xs text-gray-400 truncate">
-                    {t.plantilla?.nombre || "Sin plantilla"}
-                  </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      className="w-3 h-3 text-gray-400 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <span className="text-xs text-gray-500 truncate">
+                      {t.espacio_nombre || "Sin ubicación"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <svg
+                      className="w-3 h-3 text-gray-400 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"
+                      />
+                    </svg>
+                    <span className="text-xs text-gray-500 truncate">
+                      {t.plantilla?.nombre || "Sin plantilla"}
+                    </span>
+                  </div>
+
                   <div className="flex gap-2 mt-1">
                     <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      className={`inline-flex items-center text-[10px] font-medium px-2.5 py-1 rounded-full ${
+                        t.vinculado
+                          ? "bg-blue-50 text-blue-600"
+                          : "bg-gray-100 text-gray-400"
+                      }`}
+                    >
+                      {t.vinculado ? "Vinculado" : "Sin vincular"}
+                    </span>
+                    <span
+                      className={`inline-flex items-center text-[10px] font-medium px-2.5 py-1 rounded-full ${
                         t.activo
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
+                          ? "bg-green-50 text-green-600"
+                          : "bg-gray-100 text-gray-400"
                       }`}
                     >
                       {t.activo ? "Activo" : "Inactivo"}
                     </span>
-                    <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                        t.vinculado
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      {t.vinculado ? "Vinculado" : "Pendiente de vinculación"}
-                    </span>
                   </div>
                 </button>
 
-                <div className="flex gap-2 mt-1">
+                <div className="flex border-t border-gray-100">
                   {t.vinculado && (
                     <button
                       type="button"
                       title="Editar"
                       onClick={() => handleEdit(t)}
-                      className="flex-1 text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl py-1.5 transition-colors"
+                      className="flex-1 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 py-2 transition-colors rounded-bl-2xl"
                     >
                       Editar
                     </button>
@@ -197,7 +243,9 @@ export default function Home() {
                       setError("");
                       setDeleting(t);
                     }}
-                    className="flex-1 text-xs font-medium text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-red-50 rounded-xl py-1.5 transition-colors"
+                    className={`flex-1 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 py-2 transition-colors ${
+                      t.vinculado ? "" : "rounded-bl-2xl"
+                    } rounded-br-2xl`}
                   >
                     Eliminar
                   </button>
