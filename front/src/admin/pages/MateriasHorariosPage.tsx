@@ -60,9 +60,11 @@ function MateriasHorariosPage() {
   const [success, setSuccess] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
+  const [filterTipo, setFilterTipo] = useState<
+    "" | "grado" | "tecnica" | "posgrado" | "diplomatura"
+  >("");
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
-  const [filterSoloAnual, setFilterSoloAnual] = useState(false);
   const [filterSoloCuatri, setFilterSoloCuatri] = useState(false);
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -99,12 +101,7 @@ function MateriasHorariosPage() {
         } = {};
         if (filterCarrera !== "") filters.carrera = filterCarrera;
         if (filterNivel) filters.nivel = filterNivel;
-
-        let modalidadFilter: string | undefined;
-        if (filterSoloAnual && !filterSoloCuatri) modalidadFilter = "anual";
-        else if (filterSoloCuatri && !filterSoloAnual)
-          modalidadFilter = "cuatrimestral";
-        if (modalidadFilter) filters.modalidad = modalidadFilter;
+        if (filterSoloCuatri) filters.modalidad = "cuatrimestral";
 
         const [planMaterias, allComisiones, allHorarios, esp, car] =
           await Promise.all([
@@ -182,18 +179,33 @@ function MateriasHorariosPage() {
     return () => {
       active = false;
     };
-  }, [
-    filterCarrera,
-    filterNivel,
-    filterSoloAnual,
-    filterSoloCuatri,
-    reloadKey,
-  ]);
+  }, [filterCarrera, filterNivel, filterSoloCuatri, reloadKey]);
+
+  const TIPO_OPTIONS = [
+    { value: "", label: "Todos los tipos" },
+    { value: "grado", label: "Grado" },
+    { value: "tecnica", label: "Tecnicatura" },
+    { value: "posgrado", label: "Posgrado" },
+    { value: "diplomatura", label: "Diplomatura" },
+  ] as const;
+
+  const carrerasFiltradas = useMemo(() => {
+    if (!filterTipo) return carreras;
+    return carreras.filter((c) => c.tipo === filterTipo);
+  }, [carreras, filterTipo]);
 
   const nivelesDisponibles = useMemo(() => {
     const niveles = new Set(data.map((pm) => pm.nivel));
     return NIVELES.filter((n) => niveles.has(n.value));
   }, [data]);
+
+  function handleTipoChange(
+    value: "" | "grado" | "tecnica" | "posgrado" | "diplomatura",
+  ) {
+    setFilterTipo(value);
+    setFilterCarrera("");
+    setFilterNivel("");
+  }
 
   function handleCarreraChange(value: number | "") {
     setFilterCarrera(value);
@@ -420,6 +432,27 @@ function MateriasHorariosPage() {
 
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <select
+          value={filterTipo}
+          onChange={(e) =>
+            handleTipoChange(
+              e.target.value as
+                | ""
+                | "grado"
+                | "tecnica"
+                | "posgrado"
+                | "diplomatura",
+            )
+          }
+          className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
+        >
+          {TIPO_OPTIONS.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+
+        <select
           value={filterCarrera}
           onChange={(e) =>
             handleCarreraChange(e.target.value ? Number(e.target.value) : "")
@@ -427,7 +460,7 @@ function MateriasHorariosPage() {
           className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
         >
           <option value="">Todas las carreras</option>
-          {carreras.map((c) => (
+          {carrerasFiltradas.map((c) => (
             <option key={c.id} value={c.id}>
               {c.nombre}
             </option>
@@ -450,45 +483,15 @@ function MateriasHorariosPage() {
           ))}
         </select>
 
-        <div className="flex items-center gap-2 text-sm">
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filterSoloAnual}
-              onChange={(e) => setFilterSoloAnual(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            <span className="text-gray-600">Anuales</span>
-          </label>
-          <label className="flex items-center gap-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={filterSoloCuatri}
-              onChange={(e) => setFilterSoloCuatri(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            <span className="text-gray-600">Cuatrimestrales</span>
-          </label>
-        </div>
-
-        <div className="flex-1" />
-
-        {filterCarrera !== "" && (
-          <div className="flex items-center gap-2">
-            {(() => {
-              const carrera = carreras.find((c) => c.id === filterCarrera);
-              if (!carrera) return null;
-              return (
-                <>
-                  <span className="text-sm text-gray-500">
-                    {carrera.nombre}
-                  </span>
-                  <TipoCarreraBadge tipo={carrera.tipo} />
-                </>
-              );
-            })()}
-          </div>
-        )}
+        <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={filterSoloCuatri}
+            onChange={(e) => setFilterSoloCuatri(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          <span className="text-gray-600">Solo cuatrimestrales</span>
+        </label>
       </div>
 
       <div className="space-y-3">

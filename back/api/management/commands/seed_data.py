@@ -68,74 +68,92 @@ class Command(BaseCommand):
         c_eig = carreras["Especializacion en Ingenieria Gerencial"]
         c_dtie = carreras["Diplomatura en Tecnologias Inclusivas en Educacion"]
 
-        # ── Materias (3 por carrera) ──
+        # ── Materias ──
         def mat(nombre):
-            return Materia.objects.create(nombre=nombre)
+            materia, _ = Materia.objects.get_or_create(nombre=nombre)
+            return materia
 
+        # ISI - 5 materias (1 por nivel)
         materias_isi = [
             mat("Analisis Matematico I"),
-            mat("Programacion I"),
+            mat("Analisis Matematico II"),
             mat("Algebra y Geometria Analitica"),
+            mat("Programacion I"),
+            mat("Programacion II"),
         ]
+        # IQ - 5 materias
         materias_iq = [
             mat("Quimica General"),
             mat("Analisis Matematico I para IQ"),
             mat("Fisica I para IQ"),
+            mat("Quimica Organica"),
+            mat("Termodinamica Quimica"),
         ]
+        # IEM - 5 materias
         materias_iem = [
             mat("Circuitos Electricos"),
             mat("Termodinamica"),
             mat("Resistencia de Materiales"),
+            mat("Electrotecnia"),
+            mat("Automatica I"),
         ]
+        # LAR - 5 materias
         materias_lar = [
             mat("Administracion de Empresas"),
             mat("Economia Rural"),
             mat("Contabilidad Basica"),
+            mat("Gestion de Recursos Humanos"),
+            mat("Marketing Rural"),
         ]
+        # TUP - 3 materias (1 por nivel)
         materias_tup = [
             mat("Introduccion a la Programacion"),
             mat("Logica de Programacion"),
             mat("Base de Datos"),
         ]
+        # TUM - 3 materias
         materias_tum = [
             mat("Mecatronica I"),
             mat("Automatica I"),
             mat("Robotica Basica"),
         ]
+        # TUOMRE - 3 materias
         materias_tuomre = [
             mat("Redes Electricas I"),
             mat("Mantenimiento Industrial"),
             mat("Seguridad Electrica"),
         ]
+        # TUL - 3 materias
         materias_tul = [
             mat("Gestion de Cadena de Suministro"),
             mat("Logistica y Transporte"),
             mat("Almacenamiento y Distribucion"),
         ]
+        # TUPaD - 3 materias
         materias_tupad = [
             mat("Programacion Web I"),
             mat("Programacion Web II"),
             mat("Desarrollo Movil"),
         ]
+        # DI - 2 materias
         materias_di = [
             mat("Investigacion en Informatica"),
-            mat("Metodologias de Investigacion"),
             mat("Seminario de Doctorado"),
         ]
+        # EHYST - 2 materias
         materias_ehyst = [
             mat("Seguridad e Higiene Industrial"),
             mat("Legislacion Laboral"),
-            mat("Ergonomia"),
         ]
+        # EIG - 2 materias
         materias_eig = [
             mat("Gestion de Proyectos"),
             mat("Liderazgo Organizacional"),
-            mat("Finanzas para Ingenieros"),
         ]
+        # DTIE - 2 materias
         materias_dtie = [
             mat("Tecnologias Asistivas"),
             mat("Educacion Inclusiva"),
-            mat("Diseno Universal"),
         ]
 
         # ── PlanMaterias + Comisiones + Horarios ──
@@ -147,7 +165,7 @@ class Command(BaseCommand):
             ("viernes", time(10, 15), time(12, 15)),
         ]
 
-        def crear_plan_con_horario(carrera, materia, nivel, modalidad, plan, comisiones_data):
+        def crear_plan(carrera, materia, nivel, modalidad, plan, comisiones_data):
             pm = PlanMateria.objects.create(
                 carrera=carrera,
                 materia=materia,
@@ -169,187 +187,117 @@ class Command(BaseCommand):
                     )
             return pm
 
-        # ISI - 3 materias anuales
-        crear_plan_con_horario(
-            c_isi, materias_isi[0], "primero", "anual", "2023",
-            [("K1", [horarios_data[0], horarios_data[2]]), ("K2", [horarios_data[1], horarios_data[3]])],
-        )
-        crear_plan_con_horario(
-            c_isi, materias_isi[1], "primero", "anual", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_isi, materias_isi[2], "primero", "anual", "2023",
-            [("K1", [horarios_data[0], horarios_data[3]])],
-        )
+        # ── ISI (5 niveles, anual) ──
+        crear_plan(c_isi, materias_isi[0], "primero", "anual", "2023",
+                   [("K1", [horarios_data[0], horarios_data[2]]), ("K2", [horarios_data[1], horarios_data[3]])])
+        crear_plan(c_isi, materias_isi[1], "segundo", "anual", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_isi, materias_isi[2], "tercero", "anual", "2023",
+                   [("K1", [horarios_data[0], horarios_data[3]])])
+        crear_plan(c_isi, materias_isi[3], "cuarto", "anual", "2023",
+                   [("Unica", [horarios_data[2], horarios_data[4]])])
+        crear_plan(c_isi, materias_isi[4], "quinto", "anual", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[1]])])
 
-        # IQ
-        crear_plan_con_horario(
-            c_iq, materias_iq[0], "primero", "anual", "2023",
-            [("Unica", [horarios_data[0], horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_iq, materias_iq[1], "primero", "anual", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_iq, materias_iq[2], "primero", "anual", "2023",
-            [("Unica", [horarios_data[3]])],
-        )
+        # ── IQ (5 niveles, anual) ──
+        crear_plan(c_iq, materias_iq[0], "primero", "anual", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_iq, materias_iq[1], "segundo", "anual", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_iq, materias_iq[2], "tercero", "anual", "2023",
+                   [("Unica", [horarios_data[3]])])
+        crear_plan(c_iq, materias_iq[3], "cuarto", "anual", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[4]])])
+        crear_plan(c_iq, materias_iq[4], "quinto", "anual", "2023",
+                   [("Unica", [horarios_data[2], horarios_data[3]])])
 
-        # IEM
-        crear_plan_con_horario(
-            c_iem, materias_iem[0], "primero", "anual", "2023",
-            [("Unica", [horarios_data[0], horarios_data[3]])],
-        )
-        crear_plan_con_horario(
-            c_iem, materias_iem[1], "segundo", "anual", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_iem, materias_iem[2], "segundo", "anual", "2023",
-            [("Unica", [horarios_data[2]])],
-        )
+        # ── IEM (5 niveles, anual) ──
+        crear_plan(c_iem, materias_iem[0], "primero", "anual", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[3]])])
+        crear_plan(c_iem, materias_iem[1], "segundo", "anual", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_iem, materias_iem[2], "tercero", "anual", "2023",
+                   [("Unica", [horarios_data[2]])])
+        crear_plan(c_iem, materias_iem[3], "cuarto", "anual", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_iem, materias_iem[4], "quinto", "anual", "2023",
+                   [("Unica", [horarios_data[3], horarios_data[4]])])
 
-        # LAR
-        crear_plan_con_horario(
-            c_lar, materias_lar[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_lar, materias_lar[1], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1]])],
-        )
-        crear_plan_con_horario(
-            c_lar, materias_lar[2], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[3], horarios_data[4]])],
-        )
+        # ── LAR (5 niveles, cuatrimestral) ──
+        crear_plan(c_lar, materias_lar[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_lar, materias_lar[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1]])])
+        crear_plan(c_lar, materias_lar[2], "tercero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[3], horarios_data[4]])])
+        crear_plan(c_lar, materias_lar[3], "cuarto", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[1]])])
+        crear_plan(c_lar, materias_lar[4], "quinto", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[2], horarios_data[3]])])
 
-        # TUP
-        crear_plan_con_horario(
-            c_tup, materias_tup[0], "primero", "cuatrimestral", "2023",
-            [("K1", [horarios_data[0], horarios_data[2]]), ("K2", [horarios_data[1], horarios_data[3]])],
-        )
-        crear_plan_con_horario(
-            c_tup, materias_tup[1], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_tup, materias_tup[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[3]])],
-        )
+        # ── TUP (3 niveles, cuatrimestral) ──
+        crear_plan(c_tup, materias_tup[0], "primero", "cuatrimestral", "2023",
+                   [("K1", [horarios_data[0], horarios_data[2]]), ("K2", [horarios_data[1], horarios_data[3]])])
+        crear_plan(c_tup, materias_tup[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_tup, materias_tup[2], "tercero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[3]])])
 
-        # TUM
-        crear_plan_con_horario(
-            c_tum, materias_tum[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_tum, materias_tum[1], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_tum, materias_tum[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[3]])],
-        )
+        # ── TUM (3 niveles, cuatrimestral) ──
+        crear_plan(c_tum, materias_tum[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_tum, materias_tum[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_tum, materias_tum[2], "tercero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[3]])])
 
-        # TUOMRE
-        crear_plan_con_horario(
-            c_tuomre, materias_tuomre[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[3]])],
-        )
-        crear_plan_con_horario(
-            c_tuomre, materias_tuomre[1], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_tuomre, materias_tuomre[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[2]])],
-        )
+        # ── TUOMRE (3 niveles, cuatrimestral) ──
+        crear_plan(c_tuomre, materias_tuomre[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[3]])])
+        crear_plan(c_tuomre, materias_tuomre[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_tuomre, materias_tuomre[2], "tercero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[2]])])
 
-        # TUL
-        crear_plan_con_horario(
-            c_tul, materias_tul[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_tul, materias_tul[1], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1], horarios_data[3]])],
-        )
-        crear_plan_con_horario(
-            c_tul, materias_tul[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[4]])],
-        )
+        # ── TUL (3 niveles, cuatrimestral) ──
+        crear_plan(c_tul, materias_tul[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_tul, materias_tul[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[3]])])
+        crear_plan(c_tul, materias_tul[2], "tercero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[4]])])
 
-        # TUPaD
-        crear_plan_con_horario(
-            c_tupad, materias_tupad[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_tupad, materias_tupad[1], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_tupad, materias_tupad[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[3]])],
-        )
+        # ── TUPaD (3 niveles, cuatrimestral) ──
+        crear_plan(c_tupad, materias_tupad[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_tupad, materias_tupad[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1], horarios_data[4]])])
+        crear_plan(c_tupad, materias_tupad[2], "tercero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[3]])])
 
-        # DI
-        crear_plan_con_horario(
-            c_di, materias_di[0], "primero", "anual", "2023",
-            [("Unica", [horarios_data[0]])],
-        )
-        crear_plan_con_horario(
-            c_di, materias_di[1], "primero", "anual", "2023",
-            [("Unica", [horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_di, materias_di[2], "segundo", "anual", "2023",
-            [("Unica", [horarios_data[4]])],
-        )
+        # ── DI (2 niveles, anual) ──
+        crear_plan(c_di, materias_di[0], "primero", "anual", "2023",
+                   [("Unica", [horarios_data[0]])])
+        crear_plan(c_di, materias_di[1], "segundo", "anual", "2023",
+                   [("Unica", [horarios_data[2]])])
 
-        # EHYST
-        crear_plan_con_horario(
-            c_ehyst, materias_ehyst[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[2]])],
-        )
-        crear_plan_con_horario(
-            c_ehyst, materias_ehyst[1], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1]])],
-        )
-        crear_plan_con_horario(
-            c_ehyst, materias_ehyst[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[3]])],
-        )
+        # ── EHYST (2 niveles, cuatrimestral) ──
+        crear_plan(c_ehyst, materias_ehyst[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[2]])])
+        crear_plan(c_ehyst, materias_ehyst[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1]])])
 
-        # EIG
-        crear_plan_con_horario(
-            c_eig, materias_eig[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0], horarios_data[3]])],
-        )
-        crear_plan_con_horario(
-            c_eig, materias_eig[1], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1]])],
-        )
-        crear_plan_con_horario(
-            c_eig, materias_eig[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[4]])],
-        )
+        # ── EIG (2 niveles, cuatrimestral) ──
+        crear_plan(c_eig, materias_eig[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0], horarios_data[3]])])
+        crear_plan(c_eig, materias_eig[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[1]])])
 
-        # DTIE
-        crear_plan_con_horario(
-            c_dtie, materias_dtie[0], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[0]])],
-        )
-        crear_plan_con_horario(
-            c_dtie, materias_dtie[1], "primero", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[2], horarios_data[4]])],
-        )
-        crear_plan_con_horario(
-            c_dtie, materias_dtie[2], "segundo", "cuatrimestral", "2023",
-            [("Unica", [horarios_data[1]])],
-        )
+        # ── DTIE (2 niveles, cuatrimestral) ──
+        crear_plan(c_dtie, materias_dtie[0], "primero", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[0]])])
+        crear_plan(c_dtie, materias_dtie[1], "segundo", "cuatrimestral", "2023",
+                   [("Unica", [horarios_data[2], horarios_data[4]])])
 
         # ── Noticias ──
         hoy = date.today()
