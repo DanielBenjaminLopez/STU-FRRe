@@ -4,8 +4,8 @@ import MapaRawExperimental from "./MapaRawExperimental";
 export default function MapaFull({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
-      <div className="flex flex-col bg-white w-full h-full overflow-hidden rounded-4xl p-16 gap-8">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col bg-white/70 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl py-16 gap-8">
+        <div className="flex items-center justify-between px-16">
           <h1 className="text-xl font-semibold">Mapa interactivo</h1>
           <button
             type="button"

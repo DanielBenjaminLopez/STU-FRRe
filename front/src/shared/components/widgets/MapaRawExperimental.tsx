@@ -33,7 +33,7 @@ const TYPE_COLORS: Record<
 
 const DEFAULT_COLOR = { base: "#6b7280", highlight: "#9ca3af", label: "Otro" };
 
-export type FloorKey = "baja" | "primer" | "segundo";
+export type FloorKey = "baja" | "primero" | "segundo";
 
 type RoomData = {
   nombre: string;
@@ -56,7 +56,7 @@ const FLOORS: Record<
     data: plantaBajaData as Record<string, RoomData>,
     viewBox: "0 0 851 903",
   },
-  primer: {
+  primero: {
     label: "Primer Piso",
     svg: svgPrimerPiso,
     data: primerPisoData as Record<string, RoomData>,
@@ -714,13 +714,16 @@ export default function MapaRawExperimental({
     const height = container.clientHeight;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+    });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     // renderer.toneMapping = THREE.NoToneMapping;
@@ -760,7 +763,7 @@ export default function MapaRawExperimental({
 
     const camDistance = buildingSize * 1.2;
     camera.position.set(0, camDistance * 0.9, camDistance);
-    controls.target.set(0, 0, 0);
+    controls.target.set(1, 0, 0);
     controls.update();
 
     let animationId: number;
@@ -933,119 +936,122 @@ export default function MapaRawExperimental({
 
   return (
     <div
-      className={`flex grow flex-col items-center justify-center rounded-4xl overflow-visible gap-8`}
+      className={`flex grow flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
     >
-      {!compact && (
-        <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 backdrop-blur-xl rounded-2xl border border-gray-200">
-          <span className="text-center font-medium">Busqueda</span>
-          <div className="flex gap-4 overflow-hidden">
-            <div className="flex flex-col gap-2 flex-1">
-              <span className="text-sm font-medium text-gray-500 text-center">
-                Seleccioná un tipo
-              </span>
-              <div className="grid grid-cols-2 gap-2 justify-center">
-                <button
-                  onClick={() => {
-                    setSearchType("");
-                    setSearchPlaceId("");
-                    setSelectedRoom(null);
-                    highlightMesh(null);
-                  }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                    searchType === ""
-                      ? "bg-cyan-200 text-cyan-900"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  Todos
-                </button>
-                {availableTypes.map((t) => (
+      <div className="w-full flex flex-col px-16 gap-4">
+        {!compact && (
+          <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
+            <span className="text-center font-medium">Busqueda</span>
+            <div className="flex gap-4 overflow-hidden">
+              <div className="flex flex-col gap-2 flex-1">
+                <span className="text-sm font-medium text-gray-500 text-center">
+                  Seleccioná un tipo
+                </span>
+                <div className="grid grid-cols-2 gap-2 justify-center">
                   <button
-                    key={t.value}
                     onClick={() => {
-                      setSearchType(t.value);
+                      setSearchType("");
                       setSearchPlaceId("");
                       setSelectedRoom(null);
                       highlightMesh(null);
                     }}
                     className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                      searchType === t.value
+                      searchType === ""
                         ? "bg-cyan-200 text-cyan-900"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-white text-black"
                     }`}
                   >
-                    {t.label}
+                    Todos
                   </button>
-                ))}
+                  {availableTypes.map((t) => (
+                    <button
+                      key={t.value}
+                      onClick={() => {
+                        setSearchType(t.value);
+                        setSearchPlaceId("");
+                        setSelectedRoom(null);
+                        highlightMesh(null);
+                      }}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                        searchType === t.value
+                          ? "bg-cyan-200 text-cyan-900"
+                          : "bg-white text-black"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="w-px bg-gray-200" />
+              <div className="flex flex-col gap-2 flex-1">
+                <span className="text-sm font-medium text-gray-500 text-center">
+                  Seleccioná una ubicación
+                </span>
+                {searchType ? (
+                  <div className="flex flex-col gap-2 overflow-auto">
+                    {filteredPlaces.map((r, i) => {
+                      const colors = TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
+                      return (
+                        <button
+                          key={`${i}`}
+                          onClick={() => handleSearchSelect(r)}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
+                            searchPlaceId === r.id ? "text-white" : "text-black"
+                          }`}
+                          style={{
+                            backgroundColor:
+                              searchPlaceId === r.id
+                                ? colors.highlight
+                                : colors.base,
+                          }}
+                        >
+                          {r.data.nombre}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center text-sm text-gray-400">
+                    Elegí un tipo primero
+                  </div>
+                )}
               </div>
             </div>
-            <div className="w-px bg-gray-200" />
-            <div className="flex flex-col gap-2 flex-1">
-              <span className="text-sm font-medium text-gray-500 text-center">
-                Seleccioná una ubicación
-              </span>
-              {searchType ? (
-                <div className="flex flex-col gap-2 overflow-auto">
-                  {filteredPlaces.map((r, i) => {
-                    const colors = TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
-                    return (
-                      <button
-                        key={`${i}`}
-                        onClick={() => handleSearchSelect(r)}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
-                          searchPlaceId === r.id
-                            ? "text-white"
-                            : "text-gray-700 hover:opacity-80"
-                        }`}
-                        style={{
-                          backgroundColor:
-                            searchPlaceId === r.id
-                              ? colors.highlight
-                              : colors.base,
-                        }}
-                      >
-                        {r.data.nombre}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center text-sm text-gray-400">
-                  Elegí un tipo primero
-                </div>
-              )}
+          </div>
+        )}
+        {!compact && (
+          <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
+            <span className="font-normal text-sm">Piso actual</span>
+            <div className="flex gap-2">
+              {(
+                Object.entries(FLOORS) as [
+                  FloorKey,
+                  (typeof FLOORS)[FloorKey],
+                ][]
+              ).map(([key, config]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setFloor(key);
+                    setSelectedRoom(null);
+                    setSearchType("");
+                    setSearchPlaceId("");
+                    highlightMesh(null);
+                  }}
+                  className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                    floor === key
+                      ? "bg-cyan-200 text-cyan-900"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {config.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
-      {!compact && (
-        <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 backdrop-blur-xl rounded-2xl border border-gray-200">
-          <span className="font-normal text-sm">Piso actual</span>
-          <div className="flex gap-2">
-            {(
-              Object.entries(FLOORS) as [FloorKey, (typeof FLOORS)[FloorKey]][]
-            ).map(([key, config]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  setFloor(key);
-                  setSelectedRoom(null);
-                  setSearchType("");
-                  setSearchPlaceId("");
-                  highlightMesh(null);
-                }}
-                className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                  floor === key
-                    ? "bg-cyan-200 text-cyan-900"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {config.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
       <div ref={containerRef} className="relative w-full">
         <canvas
           ref={canvasRef}
@@ -1054,11 +1060,14 @@ export default function MapaRawExperimental({
           onPointerMove={handlePointerMove}
         />
         {selectedRoom && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-white/50 backdrop-blur-xl rounded-2xl border border-gray-200 p-4 min-w-[200px]">
-            <div className="font-semibold text-gray-900 text-lg">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-200 p-4 min-w-[200px] flex flex-col items-center">
+            <span className="text-xs font-normal text-center text-gray-600">
+              Está seleccionando
+            </span>
+            <div className="font-semibold text-black text-lg">
               {selectedRoom.data.nombre}
             </div>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded-full"
                 style={{
@@ -1067,43 +1076,39 @@ export default function MapaRawExperimental({
                     DEFAULT_COLOR.base,
                 }}
               />
-              <span className="text-sm text-gray-600">
+              <span className="text-xs text-gray-800">
                 {TYPE_COLORS[selectedRoom.data.tipo]?.label ?? "Otro"}
+                {" - "}
+                {FLOORS[selectedRoom.data.piso as FloorKey]?.label}
               </span>
             </div>
-            <div className="text-sm text-gray-500 mt-1">
-              Piso:{" "}
-              {FLOORS[selectedRoom.data.piso as FloorKey]?.label ??
-                selectedRoom.data.piso}
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              ID: {selectedRoom.id}
+          </div>
+        )}
+        {!compact && (
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full px-16">
+            <div className="flex flex-wrap gap-3 items-center text-xs border border-gray-200 bg-white/50 rounded-2xl p-4 justify-center">
+              {Object.entries(TYPE_COLORS)
+                .filter(([key]) => key !== "otro")
+                .map(([key, { base, label }]) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: base }}
+                    />
+                    <span>{label}</span>
+                  </div>
+                ))}
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-4 h-4 rounded"
+                  style={{ backgroundColor: TYPE_COLORS.otro.base }}
+                />
+                <span>{TYPE_COLORS.otro.label}</span>
+              </div>
             </div>
           </div>
         )}
       </div>
-      {!compact && (
-        <div className="flex flex-wrap gap-3 items-center text-sm text-gray-700">
-          {Object.entries(TYPE_COLORS)
-            .filter(([key]) => key !== "otro")
-            .map(([key, { base, label }]) => (
-              <div key={key} className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: base }}
-                />
-                <span>{label}</span>
-              </div>
-            ))}
-          <div className="flex items-center gap-2">
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: TYPE_COLORS.otro.base }}
-            />
-            <span>{TYPE_COLORS.otro.label}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -16,7 +16,7 @@
 <polygon id="19" fill="#cecece" points=" 700.5,619 700.5,670.5 653.5,670.5 653.5,619 700.5,619"></polygon>
 <polygon id="18" fill="#cecece" points=" 700.5,670.5 726.5,670.5 726.5,715 700.5,715 700.5,670.5"></polygon>
 <polygon id="escaleras1" fill="#cecece" points=" 726.500 775.000, 726.500 746.500, 726.500 715.000, 682.000 715.000, 682.000 775.000, 726.500 775.000"></polygon>
-<polygon id="entrada1" fill="#cecece" points=" 649.5,841 585.5,841 585.5,807.5 649.5,807.5 649.5,841"></polygon>
+<!-- <polygon id="entrada1" fill="#cecece" points=" 649.5,841 585.5,841 585.5,807.5 649.5,807.5 649.5,841"></polygon> -->
 <polygon id="22" fill="#cecece" points=" 585.5,807.5 585.5,841 439,841 439,757.5 536,757.5 585.5,757.5 585.5,807.5"></polygon>
 <polygon id="21" fill="#cecece" points=" 585.5,757.5 536,757.5 536,670.5 585.5,670.5 585.5,757.5"></polygon>
 <polygon id="23" fill="#cecece" points=" 536,757.5 439,757.5 392,757.5 392,670.5 536,670.5 536,757.5"></polygon>
