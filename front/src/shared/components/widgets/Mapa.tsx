@@ -16,8 +16,8 @@ export default function Mapa() {
             ¿No sabes donde ir? Averigualo acá
           </span>
         </div>
-        <div className="flex items-center justify-center w-full h-full bg-white/70 rounded-2xl p-2 pointer-events-none">
-          <MapaRaw initialFloor="baja" compact />
+        <div className="flex items-center justify-center w-full h-full bg-white/70 rounded-2xl pointer-events-none">
+          <MapaRaw compact />
         </div>
         <button
           type="button"
