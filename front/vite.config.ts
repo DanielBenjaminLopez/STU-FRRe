@@ -23,6 +23,11 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  resolve: {
+    alias: {
+      "three/addons": "three/examples/jsm",
+    },
+  },
   server: {
     host: true,
     port: 5173,

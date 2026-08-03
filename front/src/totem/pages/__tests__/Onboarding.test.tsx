@@ -22,9 +22,15 @@ vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../../shared/api/client", () => ({
-  setTotemToken: vi.fn(),
-}));
+vi.mock("../../../shared/api/client", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../shared/api/client")>();
+  return {
+    ...actual,
+    setTotemToken: vi.fn(),
+    clearTotemToken: vi.fn(),
+  };
+});
 
 function setupWs(
   overrides: { lastMessage?: unknown; rejected?: boolean } = {},

@@ -43,7 +43,10 @@ export default function Home() {
       setTotem(me);
       setBlocked(false);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (
+        err instanceof ApiError &&
+        (err.status === 401 || err.status === 403)
+      ) {
         navigate("/onboarding", { replace: true });
         return;
       }
