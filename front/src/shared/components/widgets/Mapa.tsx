@@ -1,6 +1,6 @@
 import { useState } from "react";
 import MapaFull from "./MapaFull";
-import svgPlantaBaja from "../../../assets/mapas/planta_baja.svg";
+import MapaRaw from "./MapaRaw";
 
 export default function Mapa() {
   const [showFull, setShowFull] = useState(false);
@@ -16,14 +16,8 @@ export default function Mapa() {
             ¿No sabes donde ir? Averigualo acá
           </span>
         </div>
-        <div className="flex items-center justify-center w-full h-full bg-white/70 rounded-2xl p-4">
-          <img
-            src={svgPlantaBaja}
-            alt="Planta Baja"
-            className="w-3/4 opacity-75"
-            draggable={false}
-            onDragStart={(e) => e.preventDefault()}
-          />
+        <div className="flex items-center justify-center w-full h-full bg-white/70 rounded-2xl pointer-events-none">
+          <MapaRaw compact />
         </div>
         <button
           type="button"

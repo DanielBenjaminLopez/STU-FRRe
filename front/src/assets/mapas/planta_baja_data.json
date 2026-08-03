@@ -189,29 +189,34 @@
     "tipo": "otro",
     "piso": "baja"
   },
-  "39": {
-    "nombre": "Sin nombre",
-    "tipo": "otro",
+  "escaleras1": {
+    "nombre": "Escalera Entrada a Primer Piso",
+    "tipo": "escaleras",
     "piso": "baja"
   },
-  "40": {
-    "nombre": "Sin nombre",
-    "tipo": "otro",
+  "escaleras2": {
+    "nombre": "Escalera Pasillo a Primer Piso",
+    "tipo": "escaleras",
     "piso": "baja"
   },
-  "41": {
-    "nombre": "Sin nombre",
-    "tipo": "otro",
+  "escaleras4": {
+    "nombre": "Escalera a Terraza",
+    "tipo": "escaleras",
     "piso": "baja"
   },
-  "42": {
-    "nombre": "Sin nombre",
-    "tipo": "otro",
+  "baño1": {
+    "nombre": "Baño Hombres",
+    "tipo": "baños",
     "piso": "baja"
   },
-  "43": {
-    "nombre": "Sin nombre",
-    "tipo": "otro",
+  "baño2": {
+    "nombre": "Baño Mujeres",
+    "tipo": "baños",
+    "piso": "baja"
+  },
+  "ascensor1": {
+    "nombre": "Ascensor",
+    "tipo": "ascensor",
     "piso": "baja"
   }
 }

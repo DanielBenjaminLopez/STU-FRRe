@@ -1,4 +1,5 @@
 <svg width="851" height="903" viewBox="0 0 851 903" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" d="M692.5 841H649.5V807.5H585.5V757.5V670.5H536H392H309H258L233 696V715H202.5V696H175V800H147V740V676H164.5H210.5L210.5 530.5V502V377.5H289V261.5V209V168.5L289 126V99H355L355 200H384V299H359.5V382.5H436V407.5H484H535V446H436H287.5V566.5V595.5H321H436H484H583H623.5H682V508V446V380.5H724.5H742V442H724.5V465V522.5V557H774V583.5H726.5V619H700.5H653.5V670.5H700.5V715H682V775H726.5V841H692.5Z" fill="#FFCEAA" stroke="#FFCEAA" stroke-opacity="0.62" stroke-width="4"/>
 <polygon id="20" fill="#cecece" points=" 692.5,841 726.5,841 726.5,775 726.5,746.5 824.5,746.5 824.5,777.5 849,777.5 849,887 833,900.5 692.5,900.5 692.5,841"></polygon>
 <polygon id="17" fill="#cecece" points=" 824.5,746.5 726.5,746.5 726.5,670.5 700.5,670.5 700.5,619 726.5,619 726.5,630 774,630 824.5,630 824.5,746.5"></polygon>
 <polygon id="4" fill="#cecece" points=" 824.5,630 774,630 774,583.5 774,557 724.5,557 724.5,522.5 800,522.5 800,499.5 824.5,499.5 824.5,630"></polygon>
@@ -14,8 +15,8 @@
 <polygon id="14" fill="#cecece" points=" 583,508 623.5,508 623.5,595.5 583,595.5 583,508"></polygon>
 <polygon id="19" fill="#cecece" points=" 700.5,619 700.5,670.5 653.5,670.5 653.5,619 700.5,619"></polygon>
 <polygon id="18" fill="#cecece" points=" 700.5,670.5 726.5,670.5 726.5,715 700.5,715 700.5,670.5"></polygon>
-<polygon id="escaleras1" fill="#cecece" points=" 726.5,746.5 726.5,775 682,775 682,715 653.5,715 653.5,670.5 700.5,670.5 700.5,715 726.5,715 726.5,746.5"></polygon>
-<polygon id="entrada1" fill="#cecece" points=" 649.5,841 585.5,841 585.5,807.5 649.5,807.5 649.5,841"></polygon>
+<polygon id="escaleras1" fill="#cecece" points=" 726.500 775.000, 726.500 746.500, 726.500 715.000, 682.000 715.000, 682.000 775.000, 726.500 775.000"></polygon>
+<!-- <polygon id="entrada1" fill="#cecece" points=" 649.5,841 585.5,841 585.5,807.5 649.5,807.5 649.5,841"></polygon> -->
 <polygon id="22" fill="#cecece" points=" 585.5,807.5 585.5,841 439,841 439,757.5 536,757.5 585.5,757.5 585.5,807.5"></polygon>
 <polygon id="21" fill="#cecece" points=" 585.5,757.5 536,757.5 536,670.5 585.5,670.5 585.5,757.5"></polygon>
 <polygon id="23" fill="#cecece" points=" 536,757.5 439,757.5 392,757.5 392,670.5 536,670.5 536,757.5"></polygon>
@@ -28,8 +29,9 @@
 <polygon id="9" fill="#cecece" points=" 384,299 436,299 436,382.5 359.5,382.5 359.5,299 384,299"></polygon>
 <polygon id="11" fill="#cecece" points=" 484,500.5 484,595.5 436,595.5 436,500.5 484,500.5"></polygon>
 <polygon id="10" fill="#cecece" points=" 436,446 436,500.5 436,595.5 321,595.5 321,566.5 287.5,566.5 287.5,446 436,446"></polygon>
+<polygon id="escaleras2" fill="#cecece" points="287.500 471.250, 287.500 566.750, 287.500 571.750, 258.500 571.750, 258.500 471.250, 287.500 471.250"></polygon>
 <polygon id="ascensor1" fill="#cecece" points=" 321,566.5 321,595.5 287.5,595.5 287.5,566.5 321,566.5"></polygon>
-<polygon id="escaleras2" fill="#cecece" points=" 384,99 384,200 355,200 355,99 384,99"></polygon>
+<polygon id="escaleras4" fill="#cecece" points=" 384,99 384,200 355,200 355,99 384,99"></polygon>
 <polygon id="34" fill="#cecece" points=" 384,2 384,99 355,99 289,99 289,2 384,2"></polygon>
 <polygon id="32" fill="#cecece" points=" 289,2 289,99 289,126 210.5,126 210.5,168.5 210.5,209 210.5,261.5 210.5,377.5 210.5,502 69.5,502 69.5,374 2,374 2,126 74,2 289,2"></polygon>
 <polygon id="baño1" fill="#cecece" points=" 210.5,126 289,126 289,168.5 210.5,168.5 210.5,126"></polygon>

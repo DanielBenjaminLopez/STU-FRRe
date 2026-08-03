@@ -103,5 +103,35 @@
     "nombre": "Aula Magna",
     "tipo": "aula",
     "piso": "primero"
+  },
+  "ascensor1": {
+    "nombre": "Ascensor",
+    "tipo": "ascensor",
+    "piso": "primero"
+  },
+  "escaleras1": {
+    "nombre": "Escalera Entrada a Planta Baja",
+    "tipo": "escaleras",
+    "piso": "primero"
+  },
+  "escaleras2": {
+    "nombre": "Escalera Pasillo a Planta Baja",
+    "tipo": "escaleras",
+    "piso": "primero"
+  },
+  "escaleras3": {
+    "nombre": "Escalera Pasillo a Segundo Piso",
+    "tipo": "escaleras",
+    "piso": "primero"
+  },
+  "escaleras4": {
+    "nombre": "Escalera Terraza a Planta Baja",
+    "tipo": "escaleras",
+    "piso": "primero"
+  },
+  "baño3": {
+    "nombre": "Baño Hombres",
+    "tipo": "baños",
+    "piso": "primero"
   }
 }
