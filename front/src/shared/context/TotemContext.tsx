@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchTotems, type Totem } from "../api/totems";
+import { useAuth } from "./AuthContext";
 
 interface TotemState {
   totems: Totem[];
@@ -21,13 +22,15 @@ const TotemContext = createContext<TotemState | null>(null);
 export function TotemProvider({ children }: { children: ReactNode }) {
   const [totems, setTotems] = useState<Totem[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     fetchTotems().then((data) => {
       setTotems(data);
       if (data.length > 0) setSelectedId(String(data[0].id));
     });
-  }, []);
+  }, [isAuthenticated]);
 
   const refreshTotems = useCallback(async () => {
     const data = await fetchTotems();

@@ -341,6 +341,7 @@ class TotemSerializer(serializers.ModelSerializer):
             'config_pantalla', 'vinculado', 'activo',
             'plantilla_id', 'plantilla', 'creado_en',
         ]
+        read_only_fields = ['vinculado', 'creado_en']
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
