@@ -163,9 +163,12 @@ class PlanMateriaViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        tipo = self.request.query_params.get('tipo')
         carrera = self.request.query_params.get('carrera')
         nivel = self.request.query_params.get('nivel')
         modalidad = self.request.query_params.get('modalidad')
+        if tipo:
+            qs = qs.filter(carrera__tipo=tipo)
         if carrera:
             qs = qs.filter(carrera_id=carrera)
         if nivel:

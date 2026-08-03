@@ -68,11 +68,13 @@ export const PLANES = [
 ] as const;
 
 export async function fetchPlanMaterias(filters?: {
+  tipo?: string;
   carrera?: number;
   nivel?: string;
   modalidad?: string;
 }): Promise<PlanMateria[]> {
   const params = new URLSearchParams();
+  if (filters?.tipo) params.append("tipo", filters.tipo);
   if (filters?.carrera) params.append("carrera", String(filters.carrera));
   if (filters?.nivel) params.append("nivel", filters.nivel);
   if (filters?.modalidad) params.append("modalidad", filters.modalidad);

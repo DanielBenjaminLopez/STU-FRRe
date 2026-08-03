@@ -95,10 +95,12 @@ function MateriasHorariosPage() {
       setError("");
       try {
         const filters: {
+          tipo?: string;
           carrera?: number;
           nivel?: string;
           modalidad?: string;
         } = {};
+        if (filterTipo) filters.tipo = filterTipo;
         if (filterCarrera !== "") filters.carrera = filterCarrera;
         if (filterNivel) filters.nivel = filterNivel;
         if (filterSoloCuatri) filters.modalidad = "cuatrimestral";
@@ -179,7 +181,7 @@ function MateriasHorariosPage() {
     return () => {
       active = false;
     };
-  }, [filterCarrera, filterNivel, filterSoloCuatri, reloadKey]);
+  }, [filterTipo, filterCarrera, filterNivel, filterSoloCuatri, reloadKey]);
 
   const TIPO_OPTIONS = [
     { value: "", label: "Todos los tipos" },
