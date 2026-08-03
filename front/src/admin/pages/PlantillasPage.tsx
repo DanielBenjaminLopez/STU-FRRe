@@ -335,12 +335,18 @@ export default function PlantillasPage() {
           nombre: plantilla.nombre,
           activa: false,
         });
-        await replacePlantillaWidgets(dto.id, positions);
-        const saved = plantillaDTOToLocal(dto);
+        const updatedDto = await replacePlantillaWidgets(dto.id, positions);
+        const saved = plantillaDTOToLocal(updatedDto);
         setPlantillas((prev) =>
           prev.map((p) => (p.id === plantilla.id ? saved : p)),
         );
         setSelectedId(saved.id);
+        if (selectedTotem) {
+          await updateTotem(selectedTotem.id, {
+            plantilla_id: Number(saved.id),
+          });
+          await refreshTotems();
+        }
       } else {
         const id = Number(plantilla.id);
         await updatePlantilla(id, { nombre: plantilla.nombre });
@@ -363,7 +369,14 @@ export default function PlantillasPage() {
     } finally {
       setSaving(false);
     }
-  }, [plantillas, selectedId, saving, widgetIdByTipo]);
+  }, [
+    plantillas,
+    selectedId,
+    saving,
+    widgetIdByTipo,
+    selectedTotem,
+    refreshTotems,
+  ]);
 
   const handleDeletePlantilla = useCallback(async () => {
     if (!deletingId) return;
