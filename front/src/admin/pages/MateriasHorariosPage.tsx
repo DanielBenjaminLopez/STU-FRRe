@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import {
   fetchPlanMaterias,
   createPlanMateria,
@@ -68,6 +69,12 @@ function MateriasHorariosPage() {
 
   const [showCreateMateria, setShowCreateMateria] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "materia" | "comision" | "horario";
+    id: number | number[];
+    name: string;
+  } | null>(null);
 
   function reload() {
     setReloadKey((k) => k + 1);
@@ -184,7 +191,7 @@ function MateriasHorariosPage() {
     cuatrimestre?: string;
     plan_estudio: string;
     comision_nombre: string;
-    dia_semana: string;
+    dias: string[];
     hora_inicio: string;
     hora_fin: string;
     espacios: number[];
@@ -218,21 +225,23 @@ function MateriasHorariosPage() {
         nombre: formData.comision_nombre,
       });
 
-      for (const espacioId of formData.espacios) {
-        await createHorario({
-          comision: comision.id,
-          espacio: espacioId,
-          dia_semana: formData.dia_semana,
-          hora_inicio: formData.hora_inicio,
-          hora_fin: formData.hora_fin,
-          activo: true,
-        });
+      for (const dia of formData.dias) {
+        for (const espacioId of formData.espacios) {
+          await createHorario({
+            comision: comision.id,
+            espacio: espacioId,
+            dia_semana: dia,
+            hora_inicio: formData.hora_inicio,
+            hora_fin: formData.hora_fin,
+            activo: true,
+          });
+        }
       }
 
       setShowCreateMateria(false);
       setSuccess("Materia creada correctamente");
       setTimeout(() => setSuccess(""), 3000);
-      await reload();
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear materia");
     }
@@ -254,76 +263,61 @@ function MateriasHorariosPage() {
       });
       setSuccess("Comision creada");
       setTimeout(() => setSuccess(""), 3000);
-      await reload();
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear comision");
     }
   }
 
-  async function handleDeleteComision(comisionId: number) {
-    try {
-      await deleteComision(comisionId);
-      setSuccess("Comision eliminada");
-      setTimeout(() => setSuccess(""), 3000);
-      await reload();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar comision",
-      );
-    }
-  }
-
   async function handleAddHorario(
     comisionId: number,
-    dia: string,
+    dias: string[],
     horaInicio: string,
     horaFin: string,
     espacioIds: number[],
   ) {
     try {
-      for (const eid of espacioIds) {
-        await createHorario({
-          comision: comisionId,
-          espacio: eid,
-          dia_semana: dia,
-          hora_inicio: horaInicio,
-          hora_fin: horaFin,
-          activo: true,
-        });
+      for (const dia of dias) {
+        for (const eid of espacioIds) {
+          await createHorario({
+            comision: comisionId,
+            espacio: eid,
+            dia_semana: dia,
+            hora_inicio: horaInicio,
+            hora_fin: horaFin,
+            activo: true,
+          });
+        }
       }
       setSuccess("Horario agregado");
       setTimeout(() => setSuccess(""), 3000);
-      await reload();
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al agregar horario");
     }
   }
 
-  async function handleDeleteHorarioGroup(horarioIds: number[]) {
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
     try {
-      for (const id of horarioIds) {
-        await deleteHorario(id);
+      if (deleteTarget.type === "materia") {
+        await deletePlanMateria(deleteTarget.id as number);
+        setSuccess("Materia eliminada");
+      } else if (deleteTarget.type === "comision") {
+        await deleteComision(deleteTarget.id as number);
+        setSuccess("Comision eliminada");
+      } else if (deleteTarget.type === "horario") {
+        for (const id of deleteTarget.id as number[]) {
+          await deleteHorario(id);
+        }
+        setSuccess("Horario eliminado");
       }
-      setSuccess("Horario eliminado");
       setTimeout(() => setSuccess(""), 3000);
-      await reload();
+      reload();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar horario",
-      );
-    }
-  }
-
-  async function handleDeletePlanMateria(planMateriaId: number) {
-    try {
-      await deletePlanMateria(planMateriaId);
-      setSuccess("Materia eliminada");
-      setTimeout(() => setSuccess(""), 3000);
-      await reload();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar materia",
-      );
+      setError(err instanceof Error ? err.message : "Error al eliminar");
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -429,10 +423,16 @@ function MateriasHorariosPage() {
             expanded={expandedIds.has(pm.id)}
             onToggle={() => toggleExpand(pm.id)}
             onAddComision={handleAddComision}
-            onDeleteComision={handleDeleteComision}
+            onDelete={(name) =>
+              setDeleteTarget({ type: "materia", id: pm.id, name })
+            }
             onAddHorario={handleAddHorario}
-            onDeleteHorarioGroup={handleDeleteHorarioGroup}
-            onDeletePlanMateria={handleDeletePlanMateria}
+            onDeleteHorarioGroup={(ids, name) =>
+              setDeleteTarget({ type: "horario", id: ids, name })
+            }
+            onDeleteComision={(id, name) =>
+              setDeleteTarget({ type: "comision", id, name })
+            }
             espacios={espacios}
           />
         ))}
@@ -451,6 +451,15 @@ function MateriasHorariosPage() {
           onClose={() => setShowCreateMateria(false)}
         />
       )}
+
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          title={`Eliminar ${deleteTarget.type}`}
+          itemName={deleteTarget.name}
+          onConfirm={handleConfirmDelete}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
   );
 }
@@ -460,26 +469,26 @@ function MateriaCard({
   expanded,
   onToggle,
   onAddComision,
-  onDeleteComision,
+  onDelete,
   onAddHorario,
   onDeleteHorarioGroup,
-  onDeletePlanMateria,
+  onDeleteComision,
   espacios,
 }: {
   planMateria: PlanMateriaConComisiones;
   expanded: boolean;
   onToggle: () => void;
   onAddComision: (planMateriaId: number, nombre: string) => Promise<void>;
-  onDeleteComision: (comisionId: number) => Promise<void>;
+  onDelete: (name: string) => void;
   onAddHorario: (
     comisionId: number,
-    dia: string,
+    dias: string[],
     horaInicio: string,
     horaFin: string,
     espacioIds: number[],
   ) => Promise<void>;
-  onDeleteHorarioGroup: (horarioIds: number[]) => Promise<void>;
-  onDeletePlanMateria: (planMateriaId: number) => Promise<void>;
+  onDeleteHorarioGroup: (horarioIds: number[], name: string) => void;
+  onDeleteComision: (comisionId: number, name: string) => void;
   espacios: Espacio[];
 }) {
   const [showAddComision, setShowAddComision] = useState(false);
@@ -489,6 +498,13 @@ function MateriaCard({
     NIVELES.find((n) => n.value === pm.nivel)?.label || pm.nivel;
   const modalidadLabel =
     MODALIDADES.find((m) => m.value === pm.modalidad)?.label || pm.modalidad;
+
+  const cuatrimestreLabel =
+    pm.cuatrimestre === "primero"
+      ? "1er"
+      : pm.cuatrimestre === "segundo"
+        ? "2do"
+        : pm.cuatrimestre;
 
   async function handleAddComision() {
     if (!newComisionNombre.trim()) return;
@@ -520,7 +536,7 @@ function MateriaCard({
           <h3 className="font-semibold text-gray-900">{pm.materia_nombre}</h3>
           <p className="text-xs text-gray-500">
             {pm.carrera_nombre} | Nivel {nivelLabel} | {modalidadLabel}
-            {pm.cuatrimestre && ` - ${pm.cuatrimestre}er cuatrimestre`}
+            {cuatrimestreLabel && ` - ${cuatrimestreLabel} cuatrimestre`}
             {` | Plan ${pm.plan_estudio}`}
           </p>
         </div>
@@ -531,11 +547,7 @@ function MateriaCard({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            if (
-              confirm("Eliminar esta materia y todas sus comisiones/horarios?")
-            ) {
-              onDeletePlanMateria(pm.id);
-            }
+            onDelete(pm.materia_nombre || `Materia #${pm.id}`);
           }}
           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           title="Eliminar materia"
@@ -568,7 +580,7 @@ function MateriaCard({
                 <ComisionBlock
                   key={c.id}
                   comision={c}
-                  onDelete={() => onDeleteComision(c.id)}
+                  onDelete={(name) => onDeleteComision(c.id, name)}
                   onAddHorario={onAddHorario}
                   onDeleteHorarioGroup={onDeleteHorarioGroup}
                   espacios={espacios}
@@ -641,28 +653,35 @@ function ComisionBlock({
   espacios,
 }: {
   comision: ComisionConHorarios;
-  onDelete: () => void;
+  onDelete: (name: string) => void;
   onAddHorario: (
     comisionId: number,
-    dia: string,
+    dias: string[],
     horaInicio: string,
     horaFin: string,
     espacioIds: number[],
   ) => Promise<void>;
-  onDeleteHorarioGroup: (horarioIds: number[]) => Promise<void>;
+  onDeleteHorarioGroup: (horarioIds: number[], name: string) => void;
   espacios: Espacio[];
 }) {
   const [showAddHorario, setShowAddHorario] = useState(false);
-  const [newDia, setNewDia] = useState("lunes");
+  const [newDias, setNewDias] = useState<string[]>([]);
   const [newInicio, setNewInicio] = useState("07:45");
   const [newFin, setNewFin] = useState("08:30");
   const [newEspacios, setNewEspacios] = useState<number[]>([]);
 
   async function handleAddHorario() {
-    if (newEspacios.length === 0) return;
-    await onAddHorario(c.id, newDia, newInicio, newFin, newEspacios);
+    if (newEspacios.length === 0 || newDias.length === 0) return;
+    await onAddHorario(c.id, newDias, newInicio, newFin, newEspacios);
     setShowAddHorario(false);
+    setNewDias([]);
     setNewEspacios([]);
+  }
+
+  function toggleDia(dia: string) {
+    setNewDias((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia],
+    );
   }
 
   function toggleEspacio(id: number) {
@@ -679,9 +698,7 @@ function ComisionBlock({
         </span>
         <button
           type="button"
-          onClick={() => {
-            if (confirm("Eliminar esta comision y sus horarios?")) onDelete();
-          }}
+          onClick={() => onDelete(c.display_name || `Comision ${c.nombre}`)}
           className="text-xs text-gray-400 hover:text-red-500 transition-colors"
         >
           Eliminar
@@ -699,7 +716,7 @@ function ComisionBlock({
                 {DIA_LABELS[g.dia_semana]}
               </span>
               <span>
-                {g.hora_inicio} - {g.hora_fin}
+                {g.hora_inicio.slice(0, 5)} - {g.hora_fin.slice(0, 5)}
               </span>
               <span className="text-gray-400">|</span>
               <span className="text-gray-500">
@@ -707,7 +724,12 @@ function ComisionBlock({
               </span>
               <button
                 type="button"
-                onClick={() => onDeleteHorarioGroup(g.horario_ids)}
+                onClick={() =>
+                  onDeleteHorarioGroup(
+                    g.horario_ids,
+                    `${DIA_LABELS[g.dia_semana]} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
+                  )
+                }
                 className="ml-auto text-gray-400 hover:text-red-500"
                 title="Eliminar horario"
               >
@@ -733,65 +755,80 @@ function ComisionBlock({
       )}
 
       {showAddHorario ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-          <select
-            value={newDia}
-            onChange={(e) => setNewDia(e.target.value)}
-            className="px-2 py-1 border border-gray-200 rounded-lg bg-white"
-          >
-            {DIAS_SEMANA.map((d) => (
-              <option key={d.value} value={d.value}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="time"
-            value={newInicio}
-            onChange={(e) => setNewInicio(e.target.value)}
-            className="px-2 py-1 border border-gray-200 rounded-lg"
-          />
-          <span>a</span>
-          <input
-            type="time"
-            value={newFin}
-            onChange={(e) => setNewFin(e.target.value)}
-            className="px-2 py-1 border border-gray-200 rounded-lg"
-          />
+        <div className="mt-2 flex flex-col gap-2 text-xs">
           <div className="flex flex-wrap gap-1">
-            {espacios.map((esp) => (
+            {DIAS_SEMANA.map((d) => (
               <label
-                key={esp.id}
+                key={d.value}
                 className={`px-2 py-0.5 rounded-lg border cursor-pointer transition-colors ${
-                  newEspacios.includes(esp.id)
+                  newDias.includes(d.value)
                     ? "bg-black text-white border-black"
                     : "border-gray-200 text-gray-600 hover:border-gray-300"
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={newEspacios.includes(esp.id)}
-                  onChange={() => toggleEspacio(esp.id)}
+                  checked={newDias.includes(d.value)}
+                  onChange={() => toggleDia(d.value)}
                   className="hidden"
                 />
-                {esp.nombre}
+                {d.label}
               </label>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={handleAddHorario}
-            className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
-          >
-            OK
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddHorario(false)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            Cancelar
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              type="time"
+              step="300"
+              value={newInicio}
+              onChange={(e) => setNewInicio(e.target.value)}
+              className="px-2 py-1 border border-gray-200 rounded-lg"
+            />
+            <span>a</span>
+            <input
+              type="time"
+              step="300"
+              value={newFin}
+              onChange={(e) => setNewFin(e.target.value)}
+              className="px-2 py-1 border border-gray-200 rounded-lg"
+            />
+            <div className="flex flex-wrap gap-1 ml-2">
+              {espacios.map((esp) => (
+                <label
+                  key={esp.id}
+                  className={`px-2 py-0.5 rounded-lg border cursor-pointer transition-colors ${
+                    newEspacios.includes(esp.id)
+                      ? "bg-black text-white border-black"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={newEspacios.includes(esp.id)}
+                    onChange={() => toggleEspacio(esp.id)}
+                    className="hidden"
+                  />
+                  {esp.nombre}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleAddHorario}
+              className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+            >
+              OK
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddHorario(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       ) : (
         <button
@@ -835,7 +872,7 @@ function CreateMateriaModal({
     cuatrimestre?: string;
     plan_estudio: string;
     comision_nombre: string;
-    dia_semana: string;
+    dias: string[];
     hora_inicio: string;
     hora_fin: string;
     espacios: number[];
@@ -849,12 +886,18 @@ function CreateMateriaModal({
   const [cuatrimestre, setCuatrimestre] = useState("primero");
   const [planEstudio, setPlanEstudio] = useState("2023");
   const [comisionNombre, setComisionNombre] = useState("Unica");
-  const [diaSemana, setDiaSemana] = useState("lunes");
+  const [diasSeleccionados, setDiasSeleccionados] = useState<string[]>([]);
   const [horaInicio, setHoraInicio] = useState("07:45");
   const [horaFin, setHoraFin] = useState("08:30");
   const [selectedEspacios, setSelectedEspacios] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function toggleDia(dia: string) {
+    setDiasSeleccionados((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia],
+    );
+  }
 
   function toggleEspacio(id: number) {
     setSelectedEspacios((prev) =>
@@ -864,7 +907,12 @@ function CreateMateriaModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!nombre.trim() || !carrera || selectedEspacios.length === 0) {
+    if (
+      !nombre.trim() ||
+      !carrera ||
+      diasSeleccionados.length === 0 ||
+      selectedEspacios.length === 0
+    ) {
       setError("Completa todos los campos obligatorios");
       return;
     }
@@ -879,7 +927,7 @@ function CreateMateriaModal({
         cuatrimestre: modalidad === "cuatrimestral" ? cuatrimestre : undefined,
         plan_estudio: planEstudio,
         comision_nombre: comisionNombre.trim() || "Unica",
-        dia_semana: diaSemana,
+        dias: diasSeleccionados,
         hora_inicio: horaInicio,
         hora_fin: horaFin,
         espacios: selectedEspacios,
@@ -1018,34 +1066,46 @@ function CreateMateriaModal({
             />
           </label>
 
-          <div className="grid grid-cols-3 gap-3">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium text-gray-700">Dias *</span>
+            <div className="flex flex-wrap gap-1.5">
+              {DIAS_SEMANA.map((d) => (
+                <label
+                  key={d.value}
+                  className={`px-3 py-1 rounded-lg border cursor-pointer transition-colors text-xs ${
+                    diasSeleccionados.includes(d.value)
+                      ? "bg-black text-white border-black"
+                      : "border-gray-200 text-gray-600 hover:border-gray-300"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={diasSeleccionados.includes(d.value)}
+                    onChange={() => toggleDia(d.value)}
+                    className="hidden"
+                  />
+                  {d.label}
+                </label>
+              ))}
+            </div>
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Dia</span>
-              <select
-                value={diaSemana}
-                onChange={(e) => setDiaSemana(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-              >
-                {DIAS_SEMANA.map((d) => (
-                  <option key={d.value} value={d.value}>
-                    {d.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Inicio</span>
+              <span className="font-medium text-gray-700">Inicio *</span>
               <input
                 type="time"
+                step="300"
                 value={horaInicio}
                 onChange={(e) => setHoraInicio(e.target.value)}
                 className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Fin</span>
+              <span className="font-medium text-gray-700">Fin *</span>
               <input
                 type="time"
+                step="300"
                 value={horaFin}
                 onChange={(e) => setHoraFin(e.target.value)}
                 className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
