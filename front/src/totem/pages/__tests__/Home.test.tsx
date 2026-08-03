@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import Home from "../Home";
 import { fetchTotemMe } from "../../../shared/api/totems";
+import { ApiError } from "../../../shared/api/client";
 import type { Totem } from "../../../shared/api/totems";
 
 vi.mock("../../../shared/api/totems", () => ({
@@ -134,5 +135,15 @@ describe("totem Home", () => {
     expect(
       await screen.findByText("Tótem fuera de servicio"),
     ).toBeInTheDocument();
+  });
+
+  it("redirige a /onboarding cuando recibe 403", async () => {
+    mockFetchTotemMe.mockRejectedValue(new ApiError("Forbidden", 403));
+    render(<Home />);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
+        replace: true,
+      });
+    });
   });
 });

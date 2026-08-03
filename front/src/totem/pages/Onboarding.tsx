@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import Logo from "../../assets/logo_negro.webp";
-import { setTotemToken } from "../../shared/api/client";
+import {
+  ApiError,
+  clearTotemToken,
+  setTotemToken,
+} from "../../shared/api/client";
 import { createTotem, fetchTotemMe } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 
@@ -47,7 +51,10 @@ export default function Onboarding() {
       try {
         await fetchTotemMe();
         if (!cancelled) navigate("/", { replace: true });
-      } catch {
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 403) {
+          clearTotemToken();
+        }
         if (!cancelled) {
           setChecking(false);
         }
