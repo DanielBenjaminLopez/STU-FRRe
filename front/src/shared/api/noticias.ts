@@ -112,3 +112,12 @@ export async function syncNoticias(): Promise<SyncResult> {
     method: "POST",
   });
 }
+
+export {
+  createEvento,
+  updateEvento,
+  deleteEvento,
+  fetchEspaciosForSelect,
+  TIPOS_EVENTO,
+} from "./eventos";
+export type { Evento } from "./eventos";

@@ -9,8 +9,14 @@ import {
   updateNoticia,
   deleteNoticia,
   syncNoticias,
+  createEvento,
+  updateEvento,
+  deleteEvento,
+  fetchEspaciosForSelect,
+  TIPOS_EVENTO,
   type ContenidoFeed,
 } from "../../shared/api/noticias";
+import type { FormField } from "../components/DataFormModal";
 
 const columns: Column<ContenidoFeed>[] = [
   { key: "titulo", label: "Título", sortable: true },
@@ -77,39 +83,42 @@ const now = new Date();
 const oneYear = new Date(now);
 oneYear.setFullYear(oneYear.getFullYear() + 1);
 
-const formFields = [
-  { name: "titulo", label: "Título", type: "text" as const, required: true },
+const oneHourLater = new Date(now);
+oneHourLater.setHours(oneHourLater.getHours() + 1);
+
+const noticiaFields: FormField[] = [
+  { name: "titulo", label: "Título", type: "text", required: true },
   {
     name: "contenido",
     label: "Contenido",
-    type: "textarea" as const,
+    type: "textarea",
     required: true,
   },
   {
     name: "imagen_url",
     label: "URL de imagen (opcional)",
-    type: "text" as const,
+    type: "text",
     required: false,
     placeholder: "https://ejemplo.com/imagen.jpg",
   },
   {
     name: "enlace",
     label: "Enlace a noticia original (opcional)",
-    type: "text" as const,
+    type: "text",
     required: false,
     placeholder: "https://frre.utn.edu.ar/noticias/...",
   },
   {
     name: "fecha_publicacion",
     label: "Fecha de publicación",
-    type: "datetime-local" as const,
+    type: "datetime-local",
     required: true,
     defaultValue: now.toISOString().slice(0, 16),
   },
   {
     name: "fecha_expiracion",
     label: "Fecha de expiración",
-    type: "datetime-local" as const,
+    type: "datetime-local",
     required: false,
     defaultValue: oneYear.toISOString().slice(0, 16),
   },
@@ -124,6 +133,12 @@ export default function NoticiasPage() {
   const [deletingRow, setDeletingRow] = useState<ContenidoFeed | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [creatingType, setCreatingType] = useState<"noticia" | "evento" | null>(
+    null,
+  );
+  const [espacios, setEspacios] = useState<{ value: number; label: string }[]>(
+    [],
+  );
 
   const load = useCallback(async () => {
     try {
@@ -143,7 +158,17 @@ export default function NoticiasPage() {
   useEffect(() => {
     let active = true;
     async function init() {
-      if (active) await load();
+      if (active) {
+        await load();
+        fetchEspaciosForSelect()
+          .then((e) => {
+            if (active)
+              setEspacios(
+                e.map((esp) => ({ value: esp.id, label: esp.nombre })),
+              );
+          })
+          .catch(() => {});
+      }
     }
     init();
     return () => {
@@ -171,6 +196,53 @@ export default function NoticiasPage() {
     }
   }
 
+  function getEventoFields(): FormField[] {
+    return [
+      { name: "titulo", label: "Título", type: "text", required: true },
+      {
+        name: "tipo",
+        label: "Tipo",
+        type: "select",
+        required: true,
+        options: TIPOS_EVENTO.map((t) => ({ value: t.value, label: t.label })),
+      },
+      {
+        name: "descripcion",
+        label: "Descripción",
+        type: "textarea",
+        required: false,
+      },
+      {
+        name: "imagen_url",
+        label: "URL de imagen (opcional)",
+        type: "text",
+        required: false,
+        placeholder: "https://ejemplo.com/imagen.jpg",
+      },
+      {
+        name: "fecha_hora_inicio",
+        label: "Fecha y hora inicio",
+        type: "datetime-local",
+        required: true,
+        defaultValue: now.toISOString().slice(0, 16),
+      },
+      {
+        name: "fecha_hora_fin",
+        label: "Fecha y hora fin",
+        type: "datetime-local",
+        required: true,
+        defaultValue: oneHourLater.toISOString().slice(0, 16),
+      },
+      {
+        name: "espacio",
+        label: "Espacio",
+        type: "select",
+        required: false,
+        options: espacios,
+      },
+    ];
+  }
+
   function validateNoticia(data: Record<string, unknown>): string | null {
     const pub = data.fecha_publicacion as string | undefined;
     const exp = data.fecha_expiracion as string | undefined;
@@ -182,36 +254,116 @@ export default function NoticiasPage() {
     return null;
   }
 
-  async function handleSubmit(formData: Record<string, unknown>) {
-    const validationError = validateNoticia(formData);
-    if (validationError) {
-      throw new Error(validationError);
+  function validateEvento(data: Record<string, unknown>): string | null {
+    const inicio = data.fecha_hora_inicio as string | undefined;
+    const fin = data.fecha_hora_fin as string | undefined;
+    if (inicio && fin) {
+      const dInicio = new Date(inicio);
+      const dFin = new Date(fin);
+      if (dFin <= dInicio) {
+        return "La fecha de fin debe ser posterior a la fecha de inicio";
+      }
+      const diffMs = dFin.getTime() - dInicio.getTime();
+      const diffDias = diffMs / (1000 * 60 * 60 * 24);
+      if (diffDias < 1) {
+        return "El evento debe tener una duración mínima de 1 día";
+      }
     }
-    if (editingRow && editingRow.tipo === "noticia") {
+    return null;
+  }
+
+  async function handleSubmit(formData: Record<string, unknown>) {
+    const isEditingEvento = editingRow?.tipo === "evento";
+    const isCreatingEvento = creatingType === "evento";
+
+    if (isEditingEvento || isCreatingEvento) {
+      const validationError = validateEvento(formData);
+      if (validationError) throw new Error(validationError);
+    } else {
+      const validationError = validateNoticia(formData);
+      if (validationError) throw new Error(validationError);
+    }
+
+    if (isEditingEvento && editingRow) {
+      await updateEvento(editingRow.id as number, formData);
+    } else if (isCreatingEvento) {
+      await createEvento(formData as Parameters<typeof createEvento>[0]);
+    } else if (editingRow) {
       await updateNoticia(editingRow.id as number, formData);
     } else {
       await createNoticia(formData as Parameters<typeof createNoticia>[0]);
     }
     setShowForm(false);
     setEditingRow(null);
+    setCreatingType(null);
     await load();
   }
 
   async function handleConfirmDelete() {
     try {
-      if (deletingRow && deletingRow.tipo === "noticia") {
+      if (!deletingRow) return;
+      if (deletingRow.tipo === "evento") {
+        await deleteEvento(deletingRow.id as number);
+      } else {
         await deleteNoticia(deletingRow.id as number);
-        await load();
       }
+      await load();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Error al eliminar la noticia",
+        err instanceof Error
+          ? err.message
+          : `Error al eliminar ${deletingRow?.tipo === "evento" ? "el evento" : "la noticia"}`,
       );
+    } finally {
+      setDeletingRow(null);
     }
   }
 
-  const canEdit = !editingRow || editingRow.tipo === "noticia";
-  const canDelete = deletingRow?.tipo === "noticia";
+  function handleOpenCreate(type: "noticia" | "evento") {
+    setEditingRow(null);
+    setCreatingType(type);
+    setShowForm(true);
+  }
+
+  function handleOpenEdit(row: ContenidoFeed) {
+    setCreatingType(null);
+    setEditingRow(row);
+    setShowForm(true);
+  }
+
+  function getInitialData(): Record<string, unknown> | undefined {
+    if (!editingRow) return undefined;
+    if (editingRow.tipo === "evento") {
+      return {
+        titulo: editingRow.titulo,
+        tipo: editingRow.tipo_evento ?? "",
+        descripcion: editingRow.contenido ?? "",
+        imagen_url: editingRow.imagen_url ?? "",
+        fecha_hora_inicio: editingRow.fecha?.slice(0, 16) ?? "",
+        fecha_hora_fin: "",
+        espacio: "",
+      };
+    }
+    return {
+      titulo: editingRow.titulo,
+      contenido: editingRow.contenido,
+      imagen_url: editingRow.imagen_url,
+      enlace: editingRow.enlace ?? "",
+      fecha_publicacion: editingRow.fecha?.slice(0, 16) ?? "",
+      fecha_expiracion: editingRow.fecha_expiracion?.slice(0, 16) ?? null,
+    };
+  }
+
+  function getFormTitle(): string {
+    if (creatingType === "evento") return "Crear evento";
+    if (creatingType === "noticia") return "Crear noticia";
+    if (editingRow?.tipo === "evento") return "Editar evento";
+    return "Editar noticia";
+  }
+
+  const isEventoForm =
+    creatingType === "evento" || editingRow?.tipo === "evento";
+  const currentFields = isEventoForm ? getEventoFields() : noticiaFields;
 
   return (
     <div className="p-8">
@@ -233,13 +385,17 @@ export default function NoticiasPage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setEditingRow(null);
-              setShowForm(true);
-            }}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
+            onClick={() => handleOpenCreate("noticia")}
+            className="px-5 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
           >
-            Crear noticia
+            Cargar noticia
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenCreate("evento")}
+            className="px-5 py-2.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-2xl hover:bg-green-100 transition-colors"
+          >
+            Cargar evento
           </button>
         </div>
       </div>
@@ -265,97 +421,38 @@ export default function NoticiasPage() {
       <DataTable
         data={feed}
         columns={columns}
-        onEdit={(row) => {
-          setEditingRow(row as ContenidoFeed);
-          setShowForm(true);
-        }}
+        onEdit={handleOpenEdit}
         onDelete={(row) => setDeletingRow(row as ContenidoFeed)}
         isLoading={loading}
         searchPlaceholder="Buscar noticia o evento..."
         label="noticias"
       />
 
-      {showForm && canEdit && (
+      {showForm && (
         <DataFormModal
-          title={editingRow ? "Editar noticia" : "Crear noticia"}
-          fields={formFields}
-          initialData={
-            editingRow
-              ? {
-                  titulo: editingRow.titulo,
-                  contenido: editingRow.contenido,
-                  imagen_url: editingRow.imagen_url,
-                  enlace: editingRow.enlace ?? "",
-                  fecha_publicacion: editingRow.fecha?.slice(0, 16) ?? "",
-                  fecha_expiracion:
-                    editingRow.fecha_expiracion?.slice(0, 16) ?? null,
-                }
-              : undefined
-          }
+          title={getFormTitle()}
+          fields={currentFields}
+          initialData={getInitialData()}
           onSubmit={handleSubmit}
           onClose={() => {
             setShowForm(false);
             setEditingRow(null);
+            setCreatingType(null);
           }}
         />
       )}
 
-      {showForm && !canEdit && editingRow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold">Detalle del evento</h2>
-            </div>
-            <div className="px-6 py-4 space-y-3">
-              <p className="text-sm text-gray-500">
-                Los eventos se gestionan desde la sección{" "}
-                <strong>Eventos</strong>. No se pueden editar ni eliminar desde
-                aquí.
-              </p>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingRow(null);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {deletingRow && canDelete && (
+      {deletingRow && (
         <ConfirmDeleteModal
-          title="Eliminar noticia"
+          title={
+            deletingRow.tipo === "evento"
+              ? "Eliminar evento"
+              : "Eliminar noticia"
+          }
           itemName={String(deletingRow.titulo ?? "")}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeletingRow(null)}
         />
-      )}
-
-      {deletingRow && !canDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-            <p className="text-sm text-gray-600 mb-4">
-              Los eventos no se pueden eliminar desde aquí. Usá la sección{" "}
-              <strong>Eventos</strong> del menú.
-            </p>
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setDeletingRow(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
