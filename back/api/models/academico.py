@@ -2,7 +2,15 @@ from django.db import models
 
 
 class Carrera(models.Model):
+    TIPO = [
+        ('grado', 'Grado'),
+        ('tecnica', 'Tecnicatura'),
+        ('posgrado', 'Posgrado'),
+        ('diplomatura', 'Diplomatura'),
+    ]
+
     nombre = models.CharField(max_length=200, unique=True)
+    tipo = models.CharField(max_length=15, choices=TIPO, default='grado')
 
     class Meta:
         ordering = ['nombre']

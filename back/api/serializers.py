@@ -174,7 +174,7 @@ class CarreraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Carrera
-        fields = ['id', 'nombre']
+        fields = ['id', 'nombre', 'tipo']
 
 
 class MateriaSerializer(serializers.ModelSerializer):
@@ -186,10 +186,11 @@ class MateriaSerializer(serializers.ModelSerializer):
 class PlanMateriaSerializer(serializers.ModelSerializer):
     carrera_nombre = serializers.CharField(source='carrera.__str__', read_only=True)
     materia_nombre = serializers.CharField(source='materia.__str__', read_only=True)
+    carrera_tipo = serializers.CharField(source='carrera.tipo', read_only=True)
     
     class Meta:
         model = PlanMateria
-        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
+        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'carrera_tipo', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
 
 
 class ComisionSerializer(serializers.ModelSerializer):

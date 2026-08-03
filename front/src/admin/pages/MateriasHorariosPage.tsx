@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import TipoCarreraBadge from "../components/TipoCarreraBadge";
+import UploadZone from "../components/UploadZone";
+import PreviewTable, { type PreviewRow } from "../components/PreviewTable";
 import {
   fetchPlanMaterias,
-  createPlanMateria,
   deletePlanMateria,
   fetchComisiones,
   createComision,
@@ -13,18 +15,11 @@ import {
   fetchEspaciosForSelect,
   DIAS_SEMANA,
   NIVELES,
-  MODALIDADES,
-  PLANES,
   type PlanMateria,
   type Comision,
   type HorarioCursado,
 } from "../../shared/api/horariosAdmin";
 import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
-import {
-  fetchMaterias,
-  createMateria,
-  type Materia,
-} from "../../shared/api/materias";
 import type { Espacio } from "../../shared/api/totems";
 
 const DIA_LABELS: Record<string, string> = {
@@ -54,6 +49,8 @@ interface PlanMateriaConComisiones extends PlanMateria {
   expanded?: boolean;
 }
 
+type UploadStep = "idle" | "uploading" | "preview" | "done";
+
 function MateriasHorariosPage() {
   const [data, setData] = useState<PlanMateriaConComisiones[]>([]);
   const [carreras, setCarreras] = useState<Carrera[]>([]);
@@ -65,9 +62,9 @@ function MateriasHorariosPage() {
 
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
-  const [filterModalidad, setFilterModalidad] = useState("");
+  const [filterSoloAnual, setFilterSoloAnual] = useState(false);
+  const [filterSoloCuatri, setFilterSoloCuatri] = useState(false);
 
-  const [showCreateMateria, setShowCreateMateria] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -75,6 +72,14 @@ function MateriasHorariosPage() {
     id: number | number[];
     name: string;
   } | null>(null);
+
+  const [uploadStep, setUploadStep] = useState<UploadStep>("idle");
+  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
+  const [previewMeta, setPreviewMeta] = useState({
+    fileName: "",
+    totalHorarios: 0,
+    totalPaginas: 0,
+  });
 
   function reload() {
     setReloadKey((k) => k + 1);
@@ -94,7 +99,12 @@ function MateriasHorariosPage() {
         } = {};
         if (filterCarrera !== "") filters.carrera = filterCarrera;
         if (filterNivel) filters.nivel = filterNivel;
-        if (filterModalidad) filters.modalidad = filterModalidad;
+
+        let modalidadFilter: string | undefined;
+        if (filterSoloAnual && !filterSoloCuatri) modalidadFilter = "anual";
+        else if (filterSoloCuatri && !filterSoloAnual)
+          modalidadFilter = "cuatrimestral";
+        if (modalidadFilter) filters.modalidad = modalidadFilter;
 
         const [planMaterias, allComisiones, allHorarios, esp, car] =
           await Promise.all([
@@ -172,7 +182,23 @@ function MateriasHorariosPage() {
     return () => {
       active = false;
     };
-  }, [filterCarrera, filterNivel, filterModalidad, reloadKey]);
+  }, [
+    filterCarrera,
+    filterNivel,
+    filterSoloAnual,
+    filterSoloCuatri,
+    reloadKey,
+  ]);
+
+  const nivelesDisponibles = useMemo(() => {
+    const niveles = new Set(data.map((pm) => pm.nivel));
+    return NIVELES.filter((n) => niveles.has(n.value));
+  }, [data]);
+
+  function handleCarreraChange(value: number | "") {
+    setFilterCarrera(value);
+    setFilterNivel("");
+  }
 
   function toggleExpand(id: number) {
     setExpandedIds((prev) => {
@@ -181,70 +207,6 @@ function MateriasHorariosPage() {
       else next.add(id);
       return next;
     });
-  }
-
-  async function handleCreateMateria(formData: {
-    nombre: string;
-    carrera: number;
-    nivel: string;
-    modalidad: string;
-    cuatrimestre?: string;
-    plan_estudio: string;
-    comision_nombre: string;
-    dias: string[];
-    hora_inicio: string;
-    hora_fin: string;
-    espacios: number[];
-  }) {
-    try {
-      let materia: Materia;
-      const materiasExistentes = await fetchMaterias();
-      const existente = materiasExistentes.find(
-        (m) => m.nombre === formData.nombre,
-      );
-      if (existente) {
-        materia = existente;
-      } else {
-        materia = await createMateria({ nombre: formData.nombre });
-      }
-
-      const planMateria = await createPlanMateria({
-        carrera: formData.carrera,
-        materia: materia.id,
-        nivel: formData.nivel,
-        modalidad: formData.modalidad,
-        cuatrimestre:
-          formData.modalidad === "cuatrimestral"
-            ? formData.cuatrimestre || "primero"
-            : null,
-        plan_estudio: formData.plan_estudio,
-      });
-
-      const comision = await createComision({
-        plan_materia: planMateria.id,
-        nombre: formData.comision_nombre,
-      });
-
-      for (const dia of formData.dias) {
-        for (const espacioId of formData.espacios) {
-          await createHorario({
-            comision: comision.id,
-            espacio: espacioId,
-            dia_semana: dia,
-            hora_inicio: formData.hora_inicio,
-            hora_fin: formData.hora_fin,
-            activo: true,
-          });
-        }
-      }
-
-      setShowCreateMateria(false);
-      setSuccess("Materia creada correctamente");
-      setTimeout(() => setSuccess(""), 3000);
-      reload();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear materia");
-    }
   }
 
   async function handleAddComision(planMateriaId: number, nombre: string) {
@@ -261,11 +223,11 @@ function MateriasHorariosPage() {
         hora_fin: "08:30",
         activo: true,
       });
-      setSuccess("Comision creada");
+      setSuccess("Comisión creada");
       setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear comision");
+      setError(err instanceof Error ? err.message : "Error al crear comisión");
     }
   }
 
@@ -305,7 +267,7 @@ function MateriasHorariosPage() {
         setSuccess("Materia eliminada");
       } else if (deleteTarget.type === "comision") {
         await deleteComision(deleteTarget.id as number);
-        setSuccess("Comision eliminada");
+        setSuccess("Comisión eliminada");
       } else if (deleteTarget.type === "horario") {
         for (const id of deleteTarget.id as number[]) {
           await deleteHorario(id);
@@ -319,6 +281,49 @@ function MateriasHorariosPage() {
     } finally {
       setDeleteTarget(null);
     }
+  }
+
+  function handleUploadFile(_file: File) {
+    setUploadStep("uploading");
+    setTimeout(() => {
+      setPreviewRows([
+        {
+          anio: "primero",
+          comision: "K1",
+          materia: "Analisis Matematico I",
+          dia: "lunes",
+          hora_inicio: "08:00",
+          hora_fin: "09:30",
+          aula: "A101",
+        },
+        {
+          anio: "primero",
+          comision: "K1",
+          materia: "Analisis Matematico I",
+          dia: "miercoles",
+          hora_inicio: "08:00",
+          hora_fin: "09:30",
+          aula: "A101",
+        },
+      ]);
+      setPreviewMeta({
+        fileName: _file.name,
+        totalHorarios: 2,
+        totalPaginas: 1,
+      });
+      setUploadStep("preview");
+    }, 1500);
+  }
+
+  function handleConfirmImport(rows: PreviewRow[]) {
+    setUploadStep("done");
+    setSuccess(
+      `Importación simulada: ${rows.length} horarios procesados. La implementación real se agregará pronto.`,
+    );
+    setTimeout(() => {
+      setSuccess("");
+      setUploadStep("idle");
+    }, 4000);
   }
 
   if (loading) {
@@ -349,9 +354,9 @@ function MateriasHorariosPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Materias y Horarios</h1>
+        <h1 className="text-2xl font-semibold">Horarios de cursado</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Gestion de materias, comisiones y horarios de cursado
+          Gestión de comisiones y horarios por materia
         </p>
       </div>
 
@@ -366,11 +371,58 @@ function MateriasHorariosPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-6">
+      {uploadStep === "idle" && (
+        <div className="mb-6">
+          <UploadZone onFileSelected={handleUploadFile} />
+        </div>
+      )}
+
+      {uploadStep === "uploading" && (
+        <div className="mb-6 px-4 py-8 bg-gray-50 border border-gray-200 rounded-2xl text-center">
+          <svg
+            className="animate-spin h-6 w-6 text-gray-400 mx-auto mb-3"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
+          <p className="text-sm text-gray-600">Procesando PDF con OCR...</p>
+        </div>
+      )}
+
+      {uploadStep === "preview" && (
+        <div className="mb-6">
+          <PreviewTable
+            fileName={previewMeta.fileName}
+            totalHorarios={previewMeta.totalHorarios}
+            totalPaginas={previewMeta.totalPaginas}
+            rows={previewRows}
+            onConfirm={handleConfirmImport}
+            onCancel={() => {
+              setUploadStep("idle");
+              setPreviewRows([]);
+            }}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <select
           value={filterCarrera}
           onChange={(e) =>
-            setFilterCarrera(e.target.value ? Number(e.target.value) : "")
+            handleCarreraChange(e.target.value ? Number(e.target.value) : "")
           }
           className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
         >
@@ -381,38 +433,62 @@ function MateriasHorariosPage() {
             </option>
           ))}
         </select>
+
         <select
           value={filterNivel}
           onChange={(e) => setFilterNivel(e.target.value)}
           className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
+          disabled={nivelesDisponibles.length === 0}
         >
-          <option value="">Todos los niveles</option>
-          {NIVELES.map((n) => (
+          <option value="">
+            {filterCarrera === "" ? "Todos los niveles" : "Niveles disponibles"}
+          </option>
+          {nivelesDisponibles.map((n) => (
             <option key={n.value} value={n.value}>
               {n.label}
             </option>
           ))}
         </select>
-        <select
-          value={filterModalidad}
-          onChange={(e) => setFilterModalidad(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
-        >
-          <option value="">Todas las modalidades</option>
-          {MODALIDADES.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </select>
+
+        <div className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filterSoloAnual}
+              onChange={(e) => setFilterSoloAnual(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <span className="text-gray-600">Anuales</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filterSoloCuatri}
+              onChange={(e) => setFilterSoloCuatri(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <span className="text-gray-600">Cuatrimestrales</span>
+          </label>
+        </div>
+
         <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setShowCreateMateria(true)}
-          className="px-5 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-        >
-          + Crear materia
-        </button>
+
+        {filterCarrera !== "" && (
+          <div className="flex items-center gap-2">
+            {(() => {
+              const carrera = carreras.find((c) => c.id === filterCarrera);
+              if (!carrera) return null;
+              return (
+                <>
+                  <span className="text-sm text-gray-500">
+                    {carrera.nombre}
+                  </span>
+                  <TipoCarreraBadge tipo={carrera.tipo} />
+                </>
+              );
+            })()}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -438,19 +514,12 @@ function MateriasHorariosPage() {
         ))}
         {data.length === 0 && (
           <div className="text-center py-12 text-gray-400 text-sm">
-            No se encontraron materias. Creá una nueva materia para comenzar.
+            {filterCarrera === ""
+              ? "Seleccioná una carrera para ver las materias disponibles."
+              : "No se encontraron materias para los filtros seleccionados."}
           </div>
         )}
       </div>
-
-      {showCreateMateria && (
-        <CreateMateriaModal
-          carreras={carreras}
-          espacios={espacios}
-          onSubmit={handleCreateMateria}
-          onClose={() => setShowCreateMateria(false)}
-        />
-      )}
 
       {deleteTarget && (
         <ConfirmDeleteModal
@@ -493,11 +562,11 @@ function MateriaCard({
 }) {
   const [showAddComision, setShowAddComision] = useState(false);
   const [newComisionNombre, setNewComisionNombre] = useState("");
+  const [showAddHorario, setShowAddHorario] = useState(false);
 
   const nivelLabel =
     NIVELES.find((n) => n.value === pm.nivel)?.label || pm.nivel;
-  const modalidadLabel =
-    MODALIDADES.find((m) => m.value === pm.modalidad)?.label || pm.modalidad;
+  const modalidadLabel = pm.modalidad === "anual" ? "Anual" : "Cuatrimestral";
 
   const cuatrimestreLabel =
     pm.cuatrimestre === "primero"
@@ -506,7 +575,7 @@ function MateriaCard({
         ? "2do"
         : pm.cuatrimestre;
 
-  async function handleAddComision() {
+  async function handleAddComisionLocal() {
     if (!newComisionNombre.trim()) return;
     await onAddComision(pm.id, newComisionNombre.trim());
     setNewComisionNombre("");
@@ -533,15 +602,18 @@ function MateriaCard({
           />
         </svg>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900">{pm.materia_nombre}</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900">{pm.materia_nombre}</h3>
+            <TipoCarreraBadge tipo={pm.carrera_tipo} />
+          </div>
           <p className="text-xs text-gray-500">
             {pm.carrera_nombre} | Nivel {nivelLabel} | {modalidadLabel}
-            {cuatrimestreLabel && ` - ${cuatrimestreLabel} cuatrimestre`}
+            {cuatrimestreLabel && ` - ${cuatrimestreLabel}°`}
             {` | Plan ${pm.plan_estudio}`}
           </p>
         </div>
         <span className="text-xs text-gray-400">
-          {pm.comisiones.length} comision(es)
+          {pm.comisiones.length} comisión(es)
         </span>
         <button
           type="button"
@@ -589,58 +661,231 @@ function MateriaCard({
             </div>
           )}
 
-          {showAddComision ? (
-            <div className="flex items-center gap-2 mt-3">
-              <input
-                value={newComisionNombre}
-                onChange={(e) => setNewComisionNombre(e.target.value)}
-                placeholder="Nombre (ej: K1)"
-                className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm w-32"
-                autoFocus
-                onKeyDown={(e) => e.key === "Enter" && handleAddComision()}
-              />
-              <button
-                type="button"
-                onClick={handleAddComision}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800"
-              >
-                Agregar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowAddComision(false);
-                  setNewComisionNombre("");
-                }}
-                className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
-              >
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowAddComision(true)}
-              className="mt-3 flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
+          <div className="flex items-center gap-3 mt-3">
+            {showAddComision ? (
+              <div className="flex items-center gap-2">
+                <input
+                  value={newComisionNombre}
+                  onChange={(e) => setNewComisionNombre(e.target.value)}
+                  placeholder="Nombre (ej: K1)"
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm w-32"
+                  autoFocus
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleAddComisionLocal()
+                  }
                 />
-              </svg>
-              Agregar comision
-            </button>
+                <button
+                  type="button"
+                  onClick={handleAddComisionLocal}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800"
+                >
+                  Agregar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddComision(false);
+                    setNewComisionNombre("");
+                  }}
+                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowAddComision(true)}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Agregar comisión
+              </button>
+            )}
+
+            {!showAddComision && (
+              <button
+                type="button"
+                onClick={() => setShowAddHorario(!showAddHorario)}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Agregar horario
+              </button>
+            )}
+          </div>
+
+          {showAddHorario && (
+            <InlineAddHorario
+              comisiones={pm.comisiones}
+              espacios={espacios}
+              onAddHorario={onAddHorario}
+              onClose={() => setShowAddHorario(false)}
+            />
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function InlineAddHorario({
+  comisiones,
+  espacios,
+  onAddHorario,
+  onClose,
+}: {
+  comisiones: Comision[];
+  espacios: Espacio[];
+  onAddHorario: (
+    comisionId: number,
+    dias: string[],
+    horaInicio: string,
+    horaFin: string,
+    espacioIds: number[],
+  ) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [comisionId, setComisionId] = useState<number>(comisiones[0]?.id ?? 0);
+  const [dias, setDias] = useState<string[]>([]);
+  const [horaInicio, setHoraInicio] = useState("07:45");
+  const [horaFin, setHoraFin] = useState("08:30");
+  const [espacioIds, setEspacioIds] = useState<number[]>([]);
+
+  function toggleDia(dia: string) {
+    setDias((prev) =>
+      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia],
+    );
+  }
+
+  function toggleEspacio(id: number) {
+    setEspacioIds((prev) =>
+      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id],
+    );
+  }
+
+  async function handleSubmit() {
+    if (dias.length === 0 || espacioIds.length === 0 || !comisionId) return;
+    await onAddHorario(comisionId, dias, horaInicio, horaFin, espacioIds);
+    onClose();
+  }
+
+  return (
+    <div className="mt-3 bg-gray-50 rounded-xl p-3 space-y-2 text-xs">
+      <div className="flex items-center gap-2">
+        <span className="text-gray-500 font-medium">Comisión:</span>
+        <select
+          value={comisionId}
+          onChange={(e) => setComisionId(Number(e.target.value))}
+          className="px-2 py-1 border border-gray-200 rounded-lg bg-white text-xs"
+        >
+          {comisiones.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-wrap gap-1">
+        {DIAS_SEMANA.map((d) => (
+          <label
+            key={d.value}
+            className={`px-2 py-0.5 rounded-lg border cursor-pointer transition-colors ${
+              dias.includes(d.value)
+                ? "bg-black text-white border-black"
+                : "border-gray-200 text-gray-600 hover:border-gray-300"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={dias.includes(d.value)}
+              onChange={() => toggleDia(d.value)}
+              className="hidden"
+            />
+            {d.label}
+          </label>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="time"
+          step="300"
+          value={horaInicio}
+          onChange={(e) => setHoraInicio(e.target.value)}
+          className="px-2 py-1 border border-gray-200 rounded-lg"
+        />
+        <span>a</span>
+        <input
+          type="time"
+          step="300"
+          value={horaFin}
+          onChange={(e) => setHoraFin(e.target.value)}
+          className="px-2 py-1 border border-gray-200 rounded-lg"
+        />
+        <div className="flex flex-wrap gap-1 ml-2">
+          {espacios.map((esp) => (
+            <label
+              key={esp.id}
+              className={`px-2 py-0.5 rounded-lg border cursor-pointer transition-colors ${
+                espacioIds.includes(esp.id)
+                  ? "bg-black text-white border-black"
+                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={espacioIds.includes(esp.id)}
+                onChange={() => toggleEspacio(esp.id)}
+                className="hidden"
+              />
+              {esp.nombre}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+        >
+          OK
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          Cancelar
+        </button>
+      </div>
     </div>
   );
 }
@@ -670,7 +915,7 @@ function ComisionBlock({
   const [newFin, setNewFin] = useState("08:30");
   const [newEspacios, setNewEspacios] = useState<number[]>([]);
 
-  async function handleAddHorario() {
+  async function handleAddHorarioLocal() {
     if (newEspacios.length === 0 || newDias.length === 0) return;
     await onAddHorario(c.id, newDias, newInicio, newFin, newEspacios);
     setShowAddHorario(false);
@@ -694,11 +939,11 @@ function ComisionBlock({
     <div className="bg-gray-50 rounded-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-700">
-          Comision: {c.nombre}
+          Comisión: {c.nombre}
         </span>
         <button
           type="button"
-          onClick={() => onDelete(c.display_name || `Comision ${c.nombre}`)}
+          onClick={() => onDelete(c.display_name || `Comisión ${c.nombre}`)}
           className="text-xs text-gray-400 hover:text-red-500 transition-colors"
         >
           Eliminar
@@ -816,7 +1061,7 @@ function ComisionBlock({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleAddHorario}
+              onClick={handleAddHorarioLocal}
               className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
             >
               OK
@@ -852,311 +1097,6 @@ function ComisionBlock({
           Agregar horario
         </button>
       )}
-    </div>
-  );
-}
-
-function CreateMateriaModal({
-  carreras,
-  espacios,
-  onSubmit,
-  onClose,
-}: {
-  carreras: Carrera[];
-  espacios: Espacio[];
-  onSubmit: (data: {
-    nombre: string;
-    carrera: number;
-    nivel: string;
-    modalidad: string;
-    cuatrimestre?: string;
-    plan_estudio: string;
-    comision_nombre: string;
-    dias: string[];
-    hora_inicio: string;
-    hora_fin: string;
-    espacios: number[];
-  }) => Promise<void>;
-  onClose: () => void;
-}) {
-  const [nombre, setNombre] = useState("");
-  const [carrera, setCarrera] = useState<number>(carreras[0]?.id ?? 0);
-  const [nivel, setNivel] = useState("primero");
-  const [modalidad, setModalidad] = useState("anual");
-  const [cuatrimestre, setCuatrimestre] = useState("primero");
-  const [planEstudio, setPlanEstudio] = useState("2023");
-  const [comisionNombre, setComisionNombre] = useState("Unica");
-  const [diasSeleccionados, setDiasSeleccionados] = useState<string[]>([]);
-  const [horaInicio, setHoraInicio] = useState("07:45");
-  const [horaFin, setHoraFin] = useState("08:30");
-  const [selectedEspacios, setSelectedEspacios] = useState<number[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  function toggleDia(dia: string) {
-    setDiasSeleccionados((prev) =>
-      prev.includes(dia) ? prev.filter((d) => d !== dia) : [...prev, dia],
-    );
-  }
-
-  function toggleEspacio(id: number) {
-    setSelectedEspacios((prev) =>
-      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id],
-    );
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (
-      !nombre.trim() ||
-      !carrera ||
-      diasSeleccionados.length === 0 ||
-      selectedEspacios.length === 0
-    ) {
-      setError("Completa todos los campos obligatorios");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    try {
-      await onSubmit({
-        nombre: nombre.trim(),
-        carrera,
-        nivel,
-        modalidad,
-        cuatrimestre: modalidad === "cuatrimestral" ? cuatrimestre : undefined,
-        plan_estudio: planEstudio,
-        comision_nombre: comisionNombre.trim() || "Unica",
-        dias: diasSeleccionados,
-        hora_inicio: horaInicio,
-        hora_fin: horaFin,
-        espacios: selectedEspacios,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="bg-white rounded-4xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-8 pt-8 pb-4">
-          <h2 className="text-xl font-semibold">Crear materia</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-lg p-1"
-          >
-            &times;
-          </button>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-4 px-8 pb-8 overflow-y-auto"
-        >
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Nombre *</span>
-            <input
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-              className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-              placeholder="Ej: Analisis Matematico I"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Carrera *</span>
-            <select
-              value={carrera}
-              onChange={(e) => setCarrera(Number(e.target.value))}
-              required
-              className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-            >
-              {carreras.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Nivel *</span>
-              <select
-                value={nivel}
-                onChange={(e) => setNivel(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-              >
-                {NIVELES.map((n) => (
-                  <option key={n.value} value={n.value}>
-                    {n.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Modalidad *</span>
-              <select
-                value={modalidad}
-                onChange={(e) => setModalidad(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-              >
-                {MODALIDADES.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {modalidad === "cuatrimestral" && (
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Cuatrimestre</span>
-              <select
-                value={cuatrimestre}
-                onChange={(e) => setCuatrimestre(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-              >
-                <option value="primero">1er cuatrimestre</option>
-                <option value="segundo">2do cuatrimestre</option>
-              </select>
-            </label>
-          )}
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Plan de estudio</span>
-            <select
-              value={planEstudio}
-              onChange={(e) => setPlanEstudio(e.target.value)}
-              className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-            >
-              {PLANES.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <hr className="border-gray-100" />
-
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-            Primera comision y horario
-          </p>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Comision</span>
-            <input
-              value={comisionNombre}
-              onChange={(e) => setComisionNombre(e.target.value)}
-              className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-              placeholder="Ej: K1, Unica"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Dias *</span>
-            <div className="flex flex-wrap gap-1.5">
-              {DIAS_SEMANA.map((d) => (
-                <label
-                  key={d.value}
-                  className={`px-3 py-1 rounded-lg border cursor-pointer transition-colors text-xs ${
-                    diasSeleccionados.includes(d.value)
-                      ? "bg-black text-white border-black"
-                      : "border-gray-200 text-gray-600 hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={diasSeleccionados.includes(d.value)}
-                    onChange={() => toggleDia(d.value)}
-                    className="hidden"
-                  />
-                  {d.label}
-                </label>
-              ))}
-            </div>
-          </label>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Inicio *</span>
-              <input
-                type="time"
-                step="300"
-                value={horaInicio}
-                onChange={(e) => setHoraInicio(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">Fin *</span>
-              <input
-                type="time"
-                step="300"
-                value={horaFin}
-                onChange={(e) => setHoraFin(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-              />
-            </label>
-          </div>
-
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-gray-700">Espacios *</span>
-            <div className="flex flex-wrap gap-1.5">
-              {espacios.map((esp) => (
-                <label
-                  key={esp.id}
-                  className={`px-3 py-1 rounded-lg border cursor-pointer transition-colors text-xs ${
-                    selectedEspacios.includes(esp.id)
-                      ? "bg-black text-white border-black"
-                      : "border-gray-200 text-gray-600 hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedEspacios.includes(esp.id)}
-                    onChange={() => toggleEspacio(esp.id)}
-                    className="hidden"
-                  />
-                  {esp.nombre}
-                </label>
-              ))}
-            </div>
-          </label>
-
-          {error && <span className="text-red-500 text-sm">{error}</span>}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
-              {loading ? "Creando..." : "Crear materia"}
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }

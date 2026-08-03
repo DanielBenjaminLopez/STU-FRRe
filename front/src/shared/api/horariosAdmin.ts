@@ -7,6 +7,7 @@ export interface PlanMateria {
   materia: number;
   carrera_nombre: string;
   materia_nombre: string;
+  carrera_tipo: "grado" | "tecnica" | "posgrado" | "diplomatura";
   nivel: string;
   modalidad: string;
   cuatrimestre: string | null;

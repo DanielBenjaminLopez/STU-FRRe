@@ -3,7 +3,6 @@ import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import VincularTotem from "./pages/VincularTotem";
-import CarrerasPage from "./pages/CarrerasPage";
 import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
@@ -32,15 +31,7 @@ export default function AdminRoutes() {
         }
       />
       <Route
-        path="/carreras"
-        element={
-          <ProtectedRoute>
-            <CarrerasPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/materias-horarios"
+        path="/horarios"
         element={
           <ProtectedRoute>
             <MateriasHorariosPage />

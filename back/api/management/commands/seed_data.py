@@ -36,23 +36,23 @@ class Command(BaseCommand):
 
         # ── Carreras ──
         carreras_data = [
-            "Ingenieria Quimica",
-            "Ingenieria Electromecanica",
-            "Licenciatura en Administracion Rural",
-            "Ingenieria en Sistemas de Informacion",
-            "Tecnicatura Universitaria en Programacion",
-            "Tecnicatura Universitaria en Mecatronica",
-            "Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas",
-            "Tecnicatura Universitaria en Logistica",
-            "Tecnicatura Universitaria en Programacion a Distancia",
-            "Doctorado en Informatica",
-            "Especializacion en Higiene y Seguridad en el Trabajo",
-            "Especializacion en Ingenieria Gerencial",
-            "Diplomatura en Tecnologias Inclusivas en Educacion",
+            ("Ingenieria Quimica", "grado"),
+            ("Ingenieria Electromecanica", "grado"),
+            ("Licenciatura en Administracion Rural", "grado"),
+            ("Ingenieria en Sistemas de Informacion", "grado"),
+            ("Tecnicatura Universitaria en Programacion", "tecnica"),
+            ("Tecnicatura Universitaria en Mecatronica", "tecnica"),
+            ("Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas", "tecnica"),
+            ("Tecnicatura Universitaria en Logistica", "tecnica"),
+            ("Tecnicatura Universitaria en Programacion a Distancia", "tecnica"),
+            ("Doctorado en Informatica", "posgrado"),
+            ("Especializacion en Higiene y Seguridad en el Trabajo", "posgrado"),
+            ("Especializacion en Ingenieria Gerencial", "posgrado"),
+            ("Diplomatura en Tecnologias Inclusivas en Educacion", "diplomatura"),
         ]
         carreras = {}
-        for nombre in carreras_data:
-            carreras[nombre] = Carrera.objects.create(nombre=nombre)
+        for nombre, tipo in carreras_data:
+            carreras[nombre] = Carrera.objects.create(nombre=nombre, tipo=tipo)
 
         c_isi = carreras["Ingenieria en Sistemas de Informacion"]
         c_iq = carreras["Ingenieria Quimica"]
