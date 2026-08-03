@@ -5,7 +5,7 @@ class Evento(models.Model):
     TIPO = [
         ('taller', 'Taller'),
         ('curso', 'Curso'),
-        ('evento', 'Evento'),
+        ('recreativo', 'Recreativo'),
         ('charla', 'Charla'),
         ('otro', 'Otro'),
     ]
@@ -21,6 +21,7 @@ class Evento(models.Model):
     descripcion = models.TextField(blank=True)
     fecha_hora_inicio = models.DateTimeField()
     fecha_hora_fin = models.DateTimeField()
+    imagen_url = models.URLField(max_length=500, blank=True, default='')
     espacio = models.ForeignKey(
         'Espacio',
         on_delete=models.CASCADE,
@@ -105,10 +106,18 @@ class Aviso(models.Model):
 
 
 class Noticias(models.Model):
+    ORIGEN_CHOICES = [
+        ('manual', 'Manual'),
+        ('scraping', 'Scraping'),
+    ]
+
     titulo = models.CharField(max_length=200)
     contenido = models.TextField()
     fecha_publicacion = models.DateTimeField()
     fecha_expiracion = models.DateTimeField(null=True, blank=True)
+    imagen_url = models.URLField(max_length=500, blank=True, default='')
+    enlace = models.URLField(max_length=500, blank=True, default='')
+    origen = models.CharField(max_length=10, choices=ORIGEN_CHOICES, default='manual')
 
     class Meta:
         ordering = ['-fecha_publicacion']

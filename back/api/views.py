@@ -1,5 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -24,7 +26,7 @@ from .models import (
     Totem,
     Widget,
 )
-from .permissions import IsAdminOrSecretaria
+from .permissions import IsAdminOrSecretaria, IsTotem
 from .serializers import (
     AvisoSerializer,
     PlanMateriaSerializer,
@@ -37,11 +39,13 @@ from .serializers import (
     MesaExamenSerializer,
     NoticiasSerializer,
     PlantillaSerializer,
+    PlantillaWidgetPosicionSerializer,
     PlantillaWidgetSerializer,
     TotemNuevoSerializer,
     TotemSerializer,
     VincularTotemSerializer,
     WidgetSerializer,
+    validar_solapamiento_payload,
 )
 
 
@@ -71,6 +75,54 @@ class PlantillaViewSet(viewsets.ModelViewSet):
     queryset = Plantilla.objects.prefetch_related('widgets_posiciones__widget').all()
     serializer_class = PlantillaSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.totems.exists():
+            return Response(
+                {
+                    "detail": (
+                        f"No se puede eliminar la plantilla '{instance.nombre}' "
+                        "porque está asignada a uno o más tótems. "
+                        "Desasígnala de los tótems antes de eliminarla."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], url_path='reemplazar-widgets')
+    def reemplazar_widgets(self, request, pk=None):
+        plantilla = self.get_object()
+
+        items = request.data
+        if not isinstance(items, list):
+            return Response(
+                {"detail": "Se esperaba una lista de widgets."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        posiciones = []
+        for item in items:
+            serializer = PlantillaWidgetPosicionSerializer(data=item)
+            serializer.is_valid(raise_exception=True)
+            posiciones.append(serializer.validated_data)
+
+        validar_solapamiento_payload(posiciones)
+
+        with transaction.atomic():
+            plantilla.widgets_posiciones.all().delete()
+            PlantillaWidget.objects.bulk_create(
+                [
+                    PlantillaWidget(plantilla=plantilla, **datos)
+                    for datos in posiciones
+                ]
+            )
+
+        plantilla_actualizada = Plantilla.objects.prefetch_related(
+            'widgets_posiciones__widget'
+        ).get(pk=plantilla.pk)
+        return Response(PlantillaSerializer(plantilla_actualizada).data)
 
 
 class PlantillaWidgetViewSet(viewsets.ModelViewSet):
@@ -109,12 +161,35 @@ class PlanMateriaViewSet(viewsets.ModelViewSet):
     queryset = PlanMateria.objects.select_related('carrera', 'materia').all()
     serializer_class = PlanMateriaSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        tipo = self.request.query_params.get('tipo')
+        carrera = self.request.query_params.get('carrera')
+        nivel = self.request.query_params.get('nivel')
+        modalidad = self.request.query_params.get('modalidad')
+        if tipo:
+            qs = qs.filter(carrera__tipo=tipo)
+        if carrera:
+            qs = qs.filter(carrera_id=carrera)
+        if nivel:
+            qs = qs.filter(nivel=nivel)
+        if modalidad:
+            qs = qs.filter(modalidad=modalidad)
+        return qs
+
 
 class ComisionViewSet(viewsets.ModelViewSet):
     queryset = Comision.objects.select_related(
         'plan_materia__carrera', 'plan_materia__materia'
     ).all()
     serializer_class = ComisionSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        plan_materia = self.request.query_params.get('plan_materia')
+        if plan_materia:
+            qs = qs.filter(plan_materia_id=plan_materia)
+        return qs
 
 
 class HorarioCursadoViewSet(viewsets.ModelViewSet):
@@ -148,13 +223,63 @@ class AvisoViewSet(viewsets.ModelViewSet):
 class NoticiasViewSet(viewsets.ModelViewSet):
     queryset = Noticias.objects.all()
     serializer_class = NoticiasSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        if self.action in ('update', 'partial_update', 'destroy'):
+            return Noticias.objects.all()
+        now = timezone.now()
+        return Noticias.objects.filter(
+            Q(fecha_expiracion__isnull=True) | Q(fecha_expiracion__gte=now)
+        )
 
     @action(detail=False, methods=['get'], url_path='latest')
     def latest(self, request):
-        noticia = Noticias.objects.order_by('-fecha_publicacion').first()
+        now = timezone.now()
+        noticia = Noticias.objects.filter(
+            Q(fecha_expiracion__isnull=True) | Q(fecha_expiracion__gte=now)
+        ).order_by('-fecha_publicacion').first()
         if not noticia:
             return Response(None)
         return Response(NoticiasSerializer(noticia).data)
+
+    @action(detail=False, methods=['post'], url_path='sync')
+    def sync(self, request):
+        from api.management.commands.scrape_noticias import scrape_noticias as do_scrape
+
+        try:
+            noticias_scrapeadas = do_scrape()
+        except Exception as e:
+            return Response(
+                {'detail': f'Error al scrapeear: {e}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        nuevas = 0
+        actualizadas = 0
+        for n in noticias_scrapeadas:
+            obj, created = Noticias.objects.update_or_create(
+                enlace=n['enlace'],
+                defaults={
+                    'titulo': n['titulo'],
+                    'contenido': n['contenido'],
+                    'fecha_publicacion': n['fecha_publicacion'],
+                    'fecha_expiracion': n['fecha_expiracion'],
+                    'imagen_url': n['imagen_url'],
+                    'origen': 'scraping',
+                },
+            )
+            if created:
+                nuevas += 1
+            else:
+                actualizadas += 1
+
+        return Response({
+            'detail': f'Sincronización completa: {nuevas} nuevas, {actualizadas} actualizadas',
+            'nuevas': nuevas,
+            'actualizadas': actualizadas,
+            'total': len(noticias_scrapeadas),
+        })
 
 
 class AvisosActivosView(APIView):
@@ -168,9 +293,23 @@ class AvisosActivosView(APIView):
 
 
 class TotemViewSet(viewsets.ModelViewSet):
-    queryset = Totem.objects.select_related('espacio').all()
+    queryset = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
+        'plantilla__widgets_posiciones__widget'
+    ).all()
     serializer_class = TotemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+
+class TotemMeView(APIView):
+    permission_classes = [IsTotem]
+
+    def get(self, request):
+        totem = Totem.objects.select_related(
+            'espacio', 'plantilla'
+        ).prefetch_related(
+            'plantilla__widgets_posiciones__widget'
+        ).get(pk=request.user.totem.id)
+        return Response(TotemSerializer(totem).data)
 
 
 class TotemNewView(APIView):

@@ -3,12 +3,9 @@ import { useAuth } from "../../shared/context/AuthContext";
 
 const navItems = [
   { to: "/admin", label: "Inicio", end: true },
-  { to: "/admin/carreras", label: "Carreras" },
-  { to: "/admin/materias", label: "Materias" },
   { to: "/admin/horarios", label: "Horarios" },
   { to: "/admin/mesas-examen", label: "Mesas de examen" },
-  { to: "/admin/noticias", label: "Noticias" },
-  { to: "/admin/eventos", label: "Eventos" },
+  { to: "/admin/noticias", label: "Noticias y Eventos" },
   { to: "/admin/avisos", label: "Avisos" },
   { to: "/admin/plantillas", label: "Plantillas" },
 ];

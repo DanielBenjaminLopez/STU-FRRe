@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fetchHorarios, type Clase } from "../horarios";
+import { fetchHorarios } from "../horarios";
 
 describe("fetchHorarios", () => {
   it("retorna un array de clases", async () => {

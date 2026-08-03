@@ -1,8 +1,29 @@
 import { describe, it, expect } from "vitest";
 import { checkCollision, type WidgetPlacement } from "../types";
 
-function makeWidget(type: "horarios" | "examenes", col: number, row: number, id = "test"): WidgetPlacement {
-  return { id, type, col, row };
+function makeWidget(
+  type: "horarios" | "examenes" | "calendario" | "mapa",
+  col: number,
+  row: number,
+  id = "test",
+  colSpan?: number,
+  rowSpan?: number,
+): WidgetPlacement {
+  const defaults = {
+    horarios: [4, 2],
+    examenes: [4, 2],
+    calendario: [2, 2],
+    mapa: [2, 2],
+  };
+  const [dCol, dRow] = defaults[type];
+  return {
+    id,
+    type,
+    col,
+    row,
+    colSpan: colSpan ?? dCol,
+    rowSpan: rowSpan ?? dRow,
+  };
 }
 
 describe("checkCollision", () => {
@@ -52,5 +73,31 @@ describe("checkCollision", () => {
       makeWidget("examenes", 0, 2, "w2"),
     ];
     expect(checkCollision(widgets, 0, 4, 4, 2)).toBe(false);
+  });
+
+  it("acepta widgets de tipo calendario", () => {
+    const widgets = [makeWidget("calendario", 0, 0, "w1")];
+    expect(checkCollision(widgets, 0, 2, 4, 2)).toBe(false);
+  });
+
+  it("acepta widgets de tipo mapa", () => {
+    const widgets = [makeWidget("mapa", 0, 0, "w1")];
+    expect(checkCollision(widgets, 0, 2, 4, 2)).toBe(false);
+  });
+
+  it("colisiona entre calendario y mapa en la misma posición", () => {
+    const widgets = [makeWidget("calendario", 0, 0, "w1")];
+    expect(checkCollision(widgets, 0, 0, 4, 2)).toBe(true);
+  });
+
+  it("mezcla de todos los tipos sin colisión", () => {
+    const widgets = [
+      makeWidget("horarios", 0, 0, "w1"),
+      makeWidget("examenes", 0, 2, "w2"),
+      makeWidget("calendario", 0, 4, "w3"),
+    ];
+    expect(checkCollision(widgets, 0, 4, 4, 2)).toBe(true);
+    expect(checkCollision(widgets, 0, 0, 4, 2)).toBe(true);
+    expect(checkCollision(widgets, 0, 2, 4, 2)).toBe(true);
   });
 });

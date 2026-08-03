@@ -69,6 +69,24 @@ class ComisionResource(resources.ModelResource):
         widget=ForeignKeyWidget(PlanMateria, field='id'),
     )
 
+    def before_import_row(self, row, **kwargs):
+        """Permite resolver el plan_materia si se ingresan las columnas 'carrera' y 'materia'."""
+        if not row.get('plan_materia'):
+            carrera_nombre = row.get('carrera')
+            materia_nombre = row.get('materia')
+            plan_estudio = row.get('plan_estudio', '2023')
+
+            if carrera_nombre and materia_nombre:
+                try:
+                    pm = PlanMateria.objects.get(
+                        carrera__nombre=carrera_nombre,
+                        materia__nombre=materia_nombre,
+                        plan_estudio=plan_estudio,
+                    )
+                    row['plan_materia'] = pm.id
+                except PlanMateria.DoesNotExist:
+                    pass
+
     class Meta:
         model = Comision
         fields = ('id', 'plan_materia', 'nombre')
@@ -85,6 +103,26 @@ class HorarioCursadoResource(resources.ModelResource):
         attribute='espacio',
         widget=ForeignKeyWidget(Espacio, field='nombre'),
     )
+
+    def before_import_row(self, row, **kwargs):
+        """Permite resolver la comision si se envían columnas 'carrera', 'materia' y 'comision_nombre'."""
+        if not row.get('comision'):
+            carrera_nombre = row.get('carrera')
+            materia_nombre = row.get('materia')
+            comision_nombre = row.get('comision_nombre') or row.get('nombre_comision')
+            plan_estudio = row.get('plan_estudio', '2023')
+
+            if carrera_nombre and materia_nombre and comision_nombre:
+                try:
+                    com = Comision.objects.get(
+                        plan_materia__carrera__nombre=carrera_nombre,
+                        plan_materia__materia__nombre=materia_nombre,
+                        plan_materia__plan_estudio=plan_estudio,
+                        nombre=comision_nombre,
+                    )
+                    row['comision'] = com.id
+                except Comision.DoesNotExist:
+                    pass
 
     class Meta:
         model = HorarioCursado
@@ -110,6 +148,24 @@ class MesaExamenResource(resources.ModelResource):
         attribute='espacio',
         widget=ForeignKeyWidget(Espacio, field='nombre'),
     )
+
+    def before_import_row(self, row, **kwargs):
+        """Permite resolver el plan_materia si se envían columnas 'carrera' y 'materia'."""
+        if not row.get('plan_materia'):
+            carrera_nombre = row.get('carrera')
+            materia_nombre = row.get('materia')
+            plan_estudio = row.get('plan_estudio', '2023')
+
+            if carrera_nombre and materia_nombre:
+                try:
+                    pm = PlanMateria.objects.get(
+                        carrera__nombre=carrera_nombre,
+                        materia__nombre=materia_nombre,
+                        plan_estudio=plan_estudio,
+                    )
+                    row['plan_materia'] = pm.id
+                except PlanMateria.DoesNotExist:
+                    pass
 
     class Meta:
         model = MesaExamen
@@ -156,6 +212,41 @@ class AvisoResource(resources.ModelResource):
         attribute='evento',
         widget=ForeignKeyWidget(Evento, field='id'),
     )
+
+    def before_import_row(self, row, **kwargs):
+        """Permite resolver horario_cursado o evento mediante nombres en lugar de IDs."""
+        if not row.get('horario_cursado'):
+            carrera = row.get('carrera')
+            materia = row.get('materia')
+            comision_nombre = row.get('comision_nombre') or row.get('nombre_comision')
+            plan_estudio = row.get('plan_estudio', '2023')
+            dia_semana = row.get('dia_semana')
+
+            if carrera and materia and comision_nombre:
+                try:
+                    qs = HorarioCursado.objects.filter(
+                        comision__plan_materia__carrera__nombre=carrera,
+                        comision__plan_materia__materia__nombre=materia,
+                        comision__plan_materia__plan_estudio=plan_estudio,
+                        comision__nombre=comision_nombre,
+                    )
+                    if dia_semana:
+                        qs = qs.filter(dia_semana=dia_semana)
+                    horario = qs.first()
+                    if horario:
+                        row['horario_cursado'] = horario.id
+                except Exception:
+                    pass
+
+        if not row.get('evento'):
+            evento_titulo = row.get('evento_titulo') or row.get('titulo_evento')
+            if evento_titulo:
+                try:
+                    ev = Evento.objects.filter(titulo=evento_titulo).first()
+                    if ev:
+                        row['evento'] = ev.id
+                except Exception:
+                    pass
 
     class Meta:
         model = Aviso

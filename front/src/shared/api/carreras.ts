@@ -2,8 +2,8 @@ import { apiFetch } from "./client";
 
 export interface Carrera {
   id: number;
-  codigo: string;
   nombre: string;
+  tipo: "grado" | "tecnica" | "posgrado" | "diplomatura";
 }
 
 export async function fetchCarreras(): Promise<Carrera[]> {

@@ -51,6 +51,45 @@ class WidgetSerializer(serializers.ModelSerializer):
 
 
 GRID_COLS = 4
+GRID_ROWS = 6
+
+
+def _validar_rango_posicion(col_pos, fila_pos, col_tam, fila_tam):
+    if col_tam < 1:
+        raise serializers.ValidationError({"col_tam": "El ancho del widget debe ser de al menos 1 columna."})
+    if fila_tam < 1:
+        raise serializers.ValidationError({"fila_tam": "El alto del widget debe ser de al menos 1 fila."})
+
+    if col_pos < 0 or col_pos >= GRID_COLS:
+        raise serializers.ValidationError({"col_pos": f"La posición de la columna debe estar entre 0 y {GRID_COLS - 1}."})
+
+    if col_pos + col_tam > GRID_COLS:
+        raise serializers.ValidationError(
+            {"col_tam": f"El widget sobrepasa el límite de {GRID_COLS} columnas de la grilla (col_pos: {col_pos} + col_tam: {col_tam})."}
+        )
+
+    if fila_pos < 0 or fila_pos >= GRID_ROWS:
+        raise serializers.ValidationError({"fila_pos": f"La posición de la fila debe estar entre 0 y {GRID_ROWS - 1}."})
+
+    if fila_pos + fila_tam > GRID_ROWS:
+        raise serializers.ValidationError(
+            {"fila_tam": f"El widget sobrepasa el límite de {GRID_ROWS} filas de la grilla (fila_pos: {fila_pos} + fila_tam: {fila_tam})."}
+        )
+
+
+class PlantillaWidgetPosicionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlantillaWidget
+        fields = ['widget', 'col_pos', 'fila_pos', 'col_tam', 'fila_tam']
+
+    def validate(self, data):
+        _validar_rango_posicion(
+            data.get('col_pos', 0),
+            data.get('fila_pos', 0),
+            data.get('col_tam', 1),
+            data.get('fila_tam', 1),
+        )
+        return data
 
 
 class PlantillaWidgetSerializer(serializers.ModelSerializer):
@@ -78,18 +117,7 @@ class PlantillaWidgetSerializer(serializers.ModelSerializer):
         fila_tam = data.get('fila_tam', getattr(self.instance, 'fila_tam', 1))
         plantilla = data.get('plantilla', getattr(self.instance, 'plantilla', None))
 
-        if col_tam < 1:
-            raise serializers.ValidationError({"col_tam": "El ancho del widget debe ser de al menos 1 columna."})
-        if fila_tam < 1:
-            raise serializers.ValidationError({"fila_tam": "El alto del widget debe ser de al menos 1 fila."})
-
-        if col_pos < 0 or col_pos >= GRID_COLS:
-            raise serializers.ValidationError({"col_pos": f"La posición de la columna debe estar entre 0 y {GRID_COLS - 1}."})
-
-        if col_pos + col_tam > GRID_COLS:
-            raise serializers.ValidationError(
-                {"col_tam": f"El widget sobrepasa el límite de {GRID_COLS} columnas de la grilla (col_pos: {col_pos} + col_tam: {col_tam})."}
-            )
+        _validar_rango_posicion(col_pos, fila_pos, col_tam, fila_tam)
 
         if plantilla:
             existentes = PlantillaWidget.objects.filter(plantilla=plantilla)
@@ -105,6 +133,26 @@ class PlantillaWidgetSerializer(serializers.ModelSerializer):
                     )
 
         return data
+
+
+def validar_solapamiento_payload(items):
+    for i, item in enumerate(items):
+        for j in range(i):
+            prev = items[j]
+            colide_x = (
+                item['col_pos'] < prev['col_pos'] + prev['col_tam']
+                and item['col_pos'] + item['col_tam'] > prev['col_pos']
+            )
+            colide_y = (
+                item['fila_pos'] < prev['fila_pos'] + prev['fila_tam']
+                and item['fila_pos'] + item['fila_tam'] > prev['fila_pos']
+            )
+            if colide_x and colide_y:
+                raise serializers.ValidationError(
+                    f"El widget '{item['widget'].nombre}' se superpone con el "
+                    f"widget '{prev['widget'].nombre}' en la posición "
+                    f"({item['col_pos']}, {item['fila_pos']})."
+                )
 
 
 
@@ -126,7 +174,7 @@ class CarreraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Carrera
-        fields = ['id', 'nombre']
+        fields = ['id', 'nombre', 'tipo']
 
 
 class MateriaSerializer(serializers.ModelSerializer):
@@ -138,16 +186,27 @@ class MateriaSerializer(serializers.ModelSerializer):
 class PlanMateriaSerializer(serializers.ModelSerializer):
     carrera_nombre = serializers.CharField(source='carrera.__str__', read_only=True)
     materia_nombre = serializers.CharField(source='materia.__str__', read_only=True)
+    carrera_tipo = serializers.CharField(source='carrera.tipo', read_only=True)
     
     class Meta:
         model = PlanMateria
-        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
+        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'carrera_tipo', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
 
 
 class ComisionSerializer(serializers.ModelSerializer):
+    display_name = serializers.SerializerMethodField()
+    materia_nombre = serializers.CharField(source='plan_materia.materia.nombre', read_only=True)
+    carrera_nombre = serializers.CharField(source='plan_materia.carrera.nombre', read_only=True)
+    nivel = serializers.CharField(source='plan_materia.nivel', read_only=True)
+    modalidad = serializers.CharField(source='plan_materia.modalidad', read_only=True)
+
     class Meta:
         model = Comision
-        fields = ['id', 'plan_materia', 'nombre']
+        fields = ['id', 'plan_materia', 'nombre', 'display_name',
+                  'materia_nombre', 'carrera_nombre', 'nivel', 'modalidad']
+
+    def get_display_name(self, obj):
+        return str(obj)
 
         
 class HorarioCursadoSerializer(serializers.ModelSerializer):
@@ -178,7 +237,7 @@ class EventoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Evento
-        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'espacio', 'espacio_nombre']
+        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre']
         
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
@@ -201,9 +260,20 @@ class AvisoSerializer(serializers.ModelSerializer):
 
 
 class NoticiasSerializer(serializers.ModelSerializer):
+    enlace = serializers.CharField(required=False, allow_blank=True)
+
     class Meta:
         model = Noticias
-        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion']
+        fields = ['id', 'titulo', 'contenido', 'fecha_publicacion', 'fecha_expiracion', 'imagen_url', 'enlace', 'origen']
+
+    def to_internal_value(self, data):
+        if data.get('fecha_expiracion') == '':
+            data = {**data, 'fecha_expiracion': None}
+        if data.get('imagen_url') == '':
+            data = {**data, 'imagen_url': ''}
+        if data.get('enlace') == '':
+            data = {**data, 'enlace': ''}
+        return super().to_internal_value(data)
 
 
 class EspacioSerializer(serializers.ModelSerializer):
@@ -267,13 +337,22 @@ class VincularTotemSerializer(serializers.Serializer):
 
 class TotemSerializer(serializers.ModelSerializer):
     espacio_nombre = serializers.SerializerMethodField()
+    plantilla = PlantillaSerializer(read_only=True)
+    plantilla_id = serializers.PrimaryKeyRelatedField(
+        source='plantilla',
+        queryset=Plantilla.objects.all(),
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = Totem
         fields = [
             'id', 'nombre', 'espacio_id', 'espacio_nombre',
-            'config_pantalla', 'vinculado', 'creado_en',
+            'config_pantalla', 'vinculado', 'activo',
+            'plantilla_id', 'plantilla', 'creado_en',
         ]
+        read_only_fields = ['vinculado', 'creado_en']
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None

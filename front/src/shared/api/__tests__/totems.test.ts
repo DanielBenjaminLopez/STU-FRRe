@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockApiFetch } = vi.hoisted(() => ({
+const { mockApiFetch, mockTotemFetch } = vi.hoisted(() => ({
   mockApiFetch: vi.fn(),
+  mockTotemFetch: vi.fn(),
 }));
 
 vi.mock("../client", () => ({
   apiFetch: mockApiFetch,
+  totemFetch: mockTotemFetch,
 }));
 
 import {
@@ -15,6 +17,7 @@ import {
   deleteTotem,
   fetchEspacios,
   vincularTotem,
+  fetchTotemMe,
 } from "../totems";
 
 describe("totems API", () => {
@@ -43,7 +46,12 @@ describe("totems API", () => {
   });
 
   it("updateTotem llama a /api/totems/:id/ con PATCH", async () => {
-    const updated = { id: 1, nombre: "Tótem Actualizado", activo: true, vinculado: true };
+    const updated = {
+      id: 1,
+      nombre: "Tótem Actualizado",
+      activo: true,
+      vinculado: true,
+    };
     mockApiFetch.mockResolvedValue(updated);
     const result = await updateTotem(1, { nombre: "Tótem Actualizado" });
     expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/1/", {
@@ -56,7 +64,9 @@ describe("totems API", () => {
   it("deleteTotem llama a /api/totems/:id/ con DELETE", async () => {
     mockApiFetch.mockResolvedValue(undefined);
     await deleteTotem(1);
-    expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/1/", { method: "DELETE" });
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/1/", {
+      method: "DELETE",
+    });
   });
 
   it("fetchEspacios llama a /api/espacios/ y retorna datos", async () => {
@@ -68,14 +78,31 @@ describe("totems API", () => {
   });
 
   it("vincularTotem llama a /api/totems/vincular/ con POST", async () => {
-    const totem = { id: 1, nombre: "Tótem Nuevo", activo: true, vinculado: true };
+    const totem = {
+      id: 1,
+      nombre: "Tótem Nuevo",
+      activo: true,
+      vinculado: true,
+    };
     mockApiFetch.mockResolvedValue(totem);
-    const data = { codigo_vinculacion: "XYZ789", nombre: "Tótem Nuevo", espacio_id: 1 };
+    const data = {
+      codigo_vinculacion: "XYZ789",
+      nombre: "Tótem Nuevo",
+      espacio_id: 1,
+    };
     const result = await vincularTotem(data);
     expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/vincular/", {
       method: "POST",
       body: JSON.stringify(data),
     });
     expect(result).toEqual(totem);
+  });
+
+  it("fetchTotemMe llama a /api/totems/me/ con totemFetch", async () => {
+    const me = { id: 1, nombre: "Tótem A", activo: true, vinculado: true };
+    mockTotemFetch.mockResolvedValue(me);
+    const result = await fetchTotemMe();
+    expect(mockTotemFetch).toHaveBeenCalledWith("/api/totems/me/");
+    expect(result).toEqual(me);
   });
 });

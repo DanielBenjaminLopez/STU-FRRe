@@ -72,10 +72,24 @@ export default function DataFormModal({
         const val = formData[field.name];
         if (field.type === "number" && val !== "" && val != null) {
           cleaned[field.name] = Number(val);
+        } else if (
+          field.type === "select" &&
+          field.options &&
+          field.options.length > 0 &&
+          typeof field.options[0].value === "number" &&
+          val !== "" &&
+          val != null
+        ) {
+          cleaned[field.name] = Number(val);
         } else if (field.type === "checkbox") {
           cleaned[field.name] = Boolean(val);
+        } else if (
+          field.type === "datetime-local" &&
+          (val === "" || val == null)
+        ) {
+          cleaned[field.name] = null;
         } else {
-          cleaned[field.name] = val ?? (field.type === "checkbox" ? false : "");
+          cleaned[field.name] = val ?? "";
         }
       }
       await onSubmit(cleaned);
@@ -108,12 +122,17 @@ export default function DataFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-8 pb-8 overflow-y-auto">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 px-8 pb-8 overflow-y-auto"
+        >
           {fields.map((field) => (
             <label key={field.name} className="flex flex-col gap-1 text-sm">
               <span className="font-medium text-gray-700">
                 {field.label}
-                {field.required && <span className="text-red-400 ml-0.5">*</span>}
+                {field.required && (
+                  <span className="text-red-400 ml-0.5">*</span>
+                )}
               </span>
 
               {field.type === "select" ? (
@@ -123,7 +142,9 @@ export default function DataFormModal({
                   required={field.required}
                   className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
                 >
-                  <option value="">{field.placeholder ?? "Seleccionar..."}</option>
+                  <option value="">
+                    {field.placeholder ?? "Seleccionar..."}
+                  </option>
                   {field.options?.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}

@@ -1,8 +1,10 @@
+import { useNavigate } from "react-router";
 import { useAuth } from "../../shared/context/AuthContext";
 import { useTotem } from "../../shared/context/TotemContext";
 import Logo from "../../assets/logo_negro.webp";
 
 export default function AdminHeader() {
+  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { totems, selectedId, setSelectedId } = useTotem();
 
@@ -15,7 +17,10 @@ export default function AdminHeader() {
           <div className="flex items-center gap-2">
             <select
               value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
+              onChange={(e) => {
+                setSelectedId(e.target.value);
+                navigate("/admin");
+              }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-2xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-black/10"
             >
               {totems.map((t) => (
@@ -29,7 +34,9 @@ export default function AdminHeader() {
 
           <span className="text-sm text-gray-500">
             Bienvenido,{" "}
-            <span className="font-semibold text-gray-900">{user?.username}</span>
+            <span className="font-semibold text-gray-900">
+              {user?.username}
+            </span>
           </span>
         </>
       )}

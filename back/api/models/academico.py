@@ -2,7 +2,15 @@ from django.db import models
 
 
 class Carrera(models.Model):
+    TIPO = [
+        ('grado', 'Grado'),
+        ('tecnica', 'Tecnicatura'),
+        ('posgrado', 'Posgrado'),
+        ('diplomatura', 'Diplomatura'),
+    ]
+
     nombre = models.CharField(max_length=200, unique=True)
+    tipo = models.CharField(max_length=15, choices=TIPO, default='grado')
 
     class Meta:
         ordering = ['nombre']
@@ -112,7 +120,9 @@ class Comision(models.Model):
         verbose_name_plural = 'Comisiones'
 
     def __str__(self):
-        return f'{self.plan_materia.materia.nombre} — {self.nombre} ({self.plan_materia.carrera.nombre})'
+        if self.plan_materia and hasattr(self.plan_materia, 'materia') and hasattr(self.plan_materia, 'carrera'):
+            return f'{self.plan_materia.materia.nombre} — {self.nombre} ({self.plan_materia.carrera.nombre})'
+        return f'Comisión {self.nombre}'
 
 
 class HorarioCursado(models.Model):
@@ -148,8 +158,10 @@ class HorarioCursado(models.Model):
         verbose_name_plural = 'Horarios de cursado'
 
     def __str__(self):
-        materia = self.comision.plan_materia.materia.nombre
-        return f'{materia} ({self.comision.nombre}) - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
+        if self.comision and hasattr(self.comision, 'plan_materia') and hasattr(self.comision.plan_materia, 'materia'):
+            materia = self.comision.plan_materia.materia.nombre
+            return f'{materia} ({self.comision.nombre}) - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
+        return f'Horario #{self.id or "nuevo"} - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
 
 
 class MesaExamen(models.Model):
@@ -198,8 +210,10 @@ class MesaExamen(models.Model):
         verbose_name_plural = 'Mesas de exámen'
 
     def __str__(self):
-        materia = self.plan_materia.materia.nombre
-        return f'{materia} - {self.get_turno_display()} ({self.llamado}° llamado)'
+        if self.plan_materia and hasattr(self.plan_materia, 'materia'):
+            materia = self.plan_materia.materia.nombre
+            return f'{materia} - {self.get_turno_display()} ({self.llamado}° llamado)'
+        return f'Mesa #{self.id or "nueva"} - {self.get_turno_display()}'
 
     @property
     def llamado(self):

@@ -19,6 +19,7 @@ class Totem(models.Model):
         max_length=10, unique=True, null=True, blank=True
     )
     vinculado = models.BooleanField(default=False)
+    activo = models.BooleanField(default=True)
     plantilla = models.ForeignKey(
         'Plantilla',
         on_delete=models.SET_NULL,

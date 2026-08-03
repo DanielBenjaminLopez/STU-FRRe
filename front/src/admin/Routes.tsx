@@ -3,12 +3,9 @@ import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import VincularTotem from "./pages/VincularTotem";
-import CarrerasPage from "./pages/CarrerasPage";
-import MateriasPage from "./pages/MateriasPage";
-import HorariosPage from "./pages/HorariosPage";
+import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
-import EventosPage from "./pages/EventosPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
 
@@ -33,26 +30,10 @@ export default function AdminRoutes() {
         }
       />
       <Route
-        path="/carreras"
-        element={
-          <ProtectedRoute>
-            <CarrerasPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/materias"
-        element={
-          <ProtectedRoute>
-            <MateriasPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
         path="/horarios"
         element={
           <ProtectedRoute>
-            <HorariosPage />
+            <MateriasHorariosPage />
           </ProtectedRoute>
         }
       />
@@ -69,14 +50,6 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <NoticiasPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/eventos"
-        element={
-          <ProtectedRoute>
-            <EventosPage />
           </ProtectedRoute>
         }
       />

@@ -18,10 +18,23 @@ vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router");
   return {
     ...actual,
-    NavLink: ({ to, children, className }: { to: string; children: React.ReactNode; className?: string | ((args: { isActive: boolean }) => string) }) => {
+    NavLink: ({
+      to,
+      children,
+      className,
+    }: {
+      to: string;
+      children: React.ReactNode;
+      className?: string | ((args: { isActive: boolean }) => string);
+    }) => {
       const isActive = to === "/admin";
-      const cls = typeof className === "function" ? className({ isActive }) : className;
-      return <a href={to} className={cls}>{children}</a>;
+      const cls =
+        typeof className === "function" ? className({ isActive }) : className;
+      return (
+        <a href={to} className={cls}>
+          {children}
+        </a>
+      );
     },
   };
 });
