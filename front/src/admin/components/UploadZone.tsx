@@ -3,11 +3,13 @@ import { useCallback, useRef, useState } from "react";
 interface UploadZoneProps {
   onFileSelected: (file: File) => void;
   disabled?: boolean;
+  label?: string;
 }
 
 export default function UploadZone({
   onFileSelected,
   disabled = false,
+  label = "Arrastrá un PDF con el cronograma de horarios",
 }: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,9 +79,7 @@ export default function UploadZone({
           d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
         />
       </svg>
-      <p className="text-sm text-gray-600 mb-1">
-        Arrastrá un PDF con el cronograma de horarios
-      </p>
+      <p className="text-sm text-gray-600 mb-1">{label}</p>
       <p className="text-xs text-gray-400">
         o hacé click para seleccionar un archivo
       </p>

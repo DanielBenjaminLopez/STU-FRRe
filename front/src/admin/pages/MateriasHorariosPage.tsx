@@ -432,68 +432,115 @@ function MateriasHorariosPage() {
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <select
-          value={filterTipo}
-          onChange={(e) =>
-            handleTipoChange(
-              e.target.value as
-                | ""
-                | "grado"
-                | "tecnica"
-                | "posgrado"
-                | "diplomatura",
-            )
-          }
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
-        >
-          {TIPO_OPTIONS.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
+      <div className="bg-gray-50/80 border border-gray-200 rounded-2xl p-4 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <svg
+            className="w-4 h-4 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
+          </svg>
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Filtros
+          </span>
+        </div>
 
-        <select
-          value={filterCarrera}
-          onChange={(e) =>
-            handleCarreraChange(e.target.value ? Number(e.target.value) : "")
-          }
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
-        >
-          <option value="">Todas las carreras</option>
-          {carrerasFiltradas.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nombre}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-end gap-3 flex-wrap">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Tipo</label>
+            <select
+              value={filterTipo}
+              onChange={(e) =>
+                handleTipoChange(
+                  e.target.value as
+                    | ""
+                    | "grado"
+                    | "tecnica"
+                    | "posgrado"
+                    | "diplomatura",
+                )
+              }
+              className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-colors"
+            >
+              {TIPO_OPTIONS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <select
-          value={filterNivel}
-          onChange={(e) => setFilterNivel(e.target.value)}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white"
-          disabled={nivelesDisponibles.length === 0}
-        >
-          <option value="">
-            {filterCarrera === "" ? "Todos los niveles" : "Niveles disponibles"}
-          </option>
-          {nivelesDisponibles.map((n) => (
-            <option key={n.value} value={n.value}>
-              {n.label}
-            </option>
-          ))}
-        </select>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-500">Carrera</label>
+            <select
+              value={filterCarrera}
+              onChange={(e) =>
+                handleCarreraChange(
+                  e.target.value ? Number(e.target.value) : "",
+                )
+              }
+              className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-colors"
+            >
+              <option value="">Todas</option>
+              {carrerasFiltradas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <label className="flex items-center gap-1.5 text-sm cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filterSoloCuatri}
-            onChange={(e) => setFilterSoloCuatri(e.target.checked)}
-            className="rounded border-gray-300"
-          />
-          <span className="text-gray-600">Solo cuatrimestrales</span>
-        </label>
+          {filterCarrera !== "" && (
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Nivel</label>
+              <select
+                value={filterNivel}
+                onChange={(e) => setFilterNivel(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-colors"
+                disabled={nivelesDisponibles.length === 0}
+              >
+                <option value="">Todos</option>
+                {nivelesDisponibles.map((n) => (
+                  <option key={n.value} value={n.value}>
+                    {n.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setFilterSoloCuatri(!filterSoloCuatri)}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
+              filterSoloCuatri
+                ? "bg-black text-white border-black"
+                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Cuatrimestrales
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
