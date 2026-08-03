@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
+import SearchableCarrera from "../components/SearchableCarrera";
 import UploadZone from "../components/UploadZone";
 import PreviewTable, { type PreviewRow } from "../components/PreviewTable";
 import {
@@ -15,6 +16,7 @@ import {
   fetchEspaciosForSelect,
   DIAS_SEMANA,
   NIVELES,
+  MODALIDADES,
   type PlanMateria,
   type Comision,
   type HorarioCursado,
@@ -60,12 +62,11 @@ function MateriasHorariosPage() {
   const [success, setSuccess] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
-  const [filterTipo, setFilterTipo] = useState<
-    "" | "grado" | "tecnica" | "posgrado" | "diplomatura"
-  >("");
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
-  const [filterSoloCuatri, setFilterSoloCuatri] = useState(false);
+  const [filterModalidad, setFilterModalidad] = useState<
+    "" | "anual" | "cuatrimestral"
+  >("");
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
@@ -100,10 +101,9 @@ function MateriasHorariosPage() {
           nivel?: string;
           modalidad?: string;
         } = {};
-        if (filterTipo) filters.tipo = filterTipo;
         if (filterCarrera !== "") filters.carrera = filterCarrera;
         if (filterNivel) filters.nivel = filterNivel;
-        if (filterSoloCuatri) filters.modalidad = "cuatrimestral";
+        if (filterModalidad) filters.modalidad = filterModalidad;
 
         const [planMaterias, allComisiones, allHorarios, esp, car] =
           await Promise.all([
@@ -181,33 +181,7 @@ function MateriasHorariosPage() {
     return () => {
       active = false;
     };
-  }, [filterTipo, filterCarrera, filterNivel, filterSoloCuatri, reloadKey]);
-
-  const TIPO_OPTIONS = [
-    { value: "", label: "Todos los tipos" },
-    { value: "grado", label: "Grado" },
-    { value: "tecnica", label: "Tecnicatura" },
-    { value: "posgrado", label: "Posgrado" },
-    { value: "diplomatura", label: "Diplomatura" },
-  ] as const;
-
-  const carrerasFiltradas = useMemo(() => {
-    if (!filterTipo) return carreras;
-    return carreras.filter((c) => c.tipo === filterTipo);
-  }, [carreras, filterTipo]);
-
-  const nivelesDisponibles = useMemo(() => {
-    const niveles = new Set(data.map((pm) => pm.nivel));
-    return NIVELES.filter((n) => niveles.has(n.value));
-  }, [data]);
-
-  function handleTipoChange(
-    value: "" | "grado" | "tecnica" | "posgrado" | "diplomatura",
-  ) {
-    setFilterTipo(value);
-    setFilterCarrera("");
-    setFilterNivel("");
-  }
+  }, [filterCarrera, filterNivel, filterModalidad, reloadKey]);
 
   function handleCarreraChange(value: number | "") {
     setFilterCarrera(value);
@@ -432,8 +406,8 @@ function MateriasHorariosPage() {
         </div>
       )}
 
-      <div className="bg-gray-50/80 border border-gray-200 rounded-2xl p-4 mb-6">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 space-y-4">
+        <div className="flex items-center gap-2">
           <svg
             className="w-4 h-4 text-gray-400"
             fill="none"
@@ -452,94 +426,78 @@ function MateriasHorariosPage() {
           </span>
         </div>
 
-        <div className="flex items-end gap-3 flex-wrap">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Tipo</label>
-            <select
-              value={filterTipo}
-              onChange={(e) =>
-                handleTipoChange(
-                  e.target.value as
-                    | ""
-                    | "grado"
-                    | "tecnica"
-                    | "posgrado"
-                    | "diplomatura",
-                )
-              }
-              className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-colors"
-            >
-              {TIPO_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <SearchableCarrera
+          carreras={carreras}
+          selectedId={filterCarrera}
+          onChange={handleCarreraChange}
+        />
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-500">Carrera</label>
-            <select
-              value={filterCarrera}
-              onChange={(e) =>
-                handleCarreraChange(
-                  e.target.value ? Number(e.target.value) : "",
-                )
-              }
-              className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-colors"
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-gray-500">Nivel</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              disabled={filterCarrera === ""}
+              onClick={() => setFilterNivel("")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                filterCarrera === ""
+                  ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+                  : filterNivel === ""
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
             >
-              <option value="">Todas</option>
-              {carrerasFiltradas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {filterCarrera !== "" && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-500">Nivel</label>
-              <select
-                value={filterNivel}
-                onChange={(e) => setFilterNivel(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-black/5 focus:border-gray-300 transition-colors"
-                disabled={nivelesDisponibles.length === 0}
+              Todos
+            </button>
+            {NIVELES.map((n) => (
+              <button
+                key={n.value}
+                type="button"
+                disabled={filterCarrera === ""}
+                onClick={() => setFilterNivel(n.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                  filterCarrera === ""
+                    ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
+                    : filterNivel === n.value
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                }`}
               >
-                <option value="">Todos</option>
-                {nivelesDisponibles.map((n) => (
-                  <option key={n.value} value={n.value}>
-                    {n.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+                {n.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => setFilterSoloCuatri(!filterSoloCuatri)}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
-              filterSoloCuatri
-                ? "bg-black text-white border-black"
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-gray-500">Modalidad</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setFilterModalidad("")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                filterModalidad === ""
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Cuatrimestrales
-          </button>
+              Todas
+            </button>
+            {MODALIDADES.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => setFilterModalidad(m.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                  filterModalidad === m.value
+                    ? "bg-black text-white border-black"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
