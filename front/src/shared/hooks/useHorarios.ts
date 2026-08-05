@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Clase } from "../api/horarios";
 import { fetchHorarios } from "../api/horarios";
 
@@ -77,5 +77,10 @@ export function useHorarios() {
     return now < start;
   });
 
-  return { ahora, siguiente, todas, loading, error };
+  const uniqueCarreras = useMemo(
+    () => [...new Set(todas.map((c) => c.carrera_codigo))].sort(),
+    [todas],
+  );
+
+  return { ahora, siguiente, todas, uniqueCarreras, loading, error };
 }
