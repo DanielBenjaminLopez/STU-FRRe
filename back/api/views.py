@@ -199,6 +199,7 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
         'espacio',
     ).all()
     serializer_class = HorarioCursadoSerializer
+    permission_classes = [AllowAny]
 
 
 class MesaExamenViewSet(viewsets.ModelViewSet):

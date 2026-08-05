@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { totemFetch } from "./client";
 
 export interface Clase {
   id: number;
@@ -26,7 +26,7 @@ interface HorarioBackend {
 }
 
 export async function fetchHorarios(): Promise<Clase[]> {
-  const data = await apiFetch<HorarioBackend[]>("/api/horarios/");
+  const data = await totemFetch<HorarioBackend[]>("/api/horarios/");
   return data
     .filter((h) => h.activo)
     .map((h) => ({
