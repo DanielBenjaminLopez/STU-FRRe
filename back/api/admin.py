@@ -77,8 +77,8 @@ class EspacioAdmin(ImportExportModelAdmin):
 @admin.register(Carrera)
 class CarreraAdmin(ImportExportModelAdmin):
     resource_class = CarreraResource
-    list_display = ['nombre']
-    search_fields = ['nombre']
+    list_display = ['codigo', 'nombre', 'tipo']
+    search_fields = ['nombre', 'codigo']
 
 
 @admin.register(Materia)

@@ -27,7 +27,7 @@ class CarreraResource(resources.ModelResource):
     class Meta:
         model = Carrera
         import_id_fields = ('nombre',)
-        fields = ('id', 'nombre')
+        fields = ('id', 'nombre', 'codigo')
 
 
 class MateriaResource(resources.ModelResource):

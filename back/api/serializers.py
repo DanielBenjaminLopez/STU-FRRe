@@ -174,7 +174,7 @@ class CarreraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Carrera
-        fields = ['id', 'nombre', 'tipo']
+        fields = ['id', 'nombre', 'codigo', 'tipo']
 
 
 class MateriaSerializer(serializers.ModelSerializer):
@@ -212,11 +212,14 @@ class ComisionSerializer(serializers.ModelSerializer):
 class HorarioCursadoSerializer(serializers.ModelSerializer):
     materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
     espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+    carrera_codigo = serializers.CharField(source='comision.plan_materia.carrera.codigo', read_only=True)
+    comision_nombre = serializers.CharField(source='comision.nombre', read_only=True)
 
     class Meta:
         model = HorarioCursado
         fields = [
-            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre', 'dia_semana',
+            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre',
+            'carrera_codigo', 'comision_nombre', 'dia_semana',
             'hora_inicio', 'hora_fin', 'activo',
         ]
 
