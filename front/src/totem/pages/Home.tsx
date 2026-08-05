@@ -118,7 +118,7 @@ export default function Home() {
       className="w-full h-full flex flex-col items-center justify-center overflow-hidden"
     >
       <div
-        className="shrink-0 bg-white border border-gray-200 rounded-3xl overflow-hidden"
+        className="shrink-0 bg-white overflow-hidden"
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
