@@ -37,8 +37,26 @@ export default function EventSummary({
 }: EventSummaryProps) {
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-[11px] text-gray-400">
-        Marcá días en el calendario para agregar eventos.
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+          <svg
+            className="w-5 h-5 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+            />
+          </svg>
+        </div>
+        <p className="text-xs text-gray-500 leading-relaxed">
+          Seleccioná un tipo de evento
+          <br />y marcá días en el calendario
+        </p>
       </div>
     );
   }
