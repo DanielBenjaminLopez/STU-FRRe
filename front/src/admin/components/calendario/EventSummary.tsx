@@ -52,10 +52,10 @@ export default function EventSummary({
         return (
           <div
             key={`${ev.tipo}-${ev.fecha_inicio}-${realIdx}`}
-            className="flex items-center gap-2 text-[11px] text-slate-600 bg-gray-50 rounded-xl px-2.5 py-1.5"
+            className="flex items-center gap-2 text-xs text-slate-600 bg-gray-50 rounded-xl px-2.5 py-1.5"
           >
             <span
-              className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium shrink-0 ${TIPO_BADGE[ev.tipo] || "bg-gray-100 text-gray-600"}`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0 ${TIPO_BADGE[ev.tipo] || "bg-gray-100 text-gray-600"}`}
             >
               {TIPO_SHORT[ev.tipo] || ev.tipo}
             </span>
