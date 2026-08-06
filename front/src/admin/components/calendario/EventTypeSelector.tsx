@@ -5,104 +5,6 @@ interface EventTypeSelectorProps {
   onSelect: (tipo: string | null) => void;
 }
 
-function TipoIcon({ tipo }: { tipo: string }) {
-  const cls = "w-4 h-4 shrink-0";
-  switch (tipo) {
-    case "inicio_cuatrimestre":
-      return (
-        <svg
-          className={cls}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 11v4m-2-2h4"
-          />
-        </svg>
-      );
-    case "fin_cuatrimestre":
-      return (
-        <svg
-          className={cls}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 14l2 2 4-4"
-          />
-        </svg>
-      );
-    case "mesa_examen":
-      return (
-        <svg
-          className={cls}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
-      );
-    case "receso_invernal":
-      return (
-        <svg
-          className={cls}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-          />
-        </svg>
-      );
-    case "feriado":
-      return (
-        <svg
-          className={cls}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-          />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
 const MODE_HINT: Record<string, string> = {
   day: "Hacé click en un día",
   range: "Arrastrá para seleccionar un rango",
@@ -114,7 +16,7 @@ export default function EventTypeSelector({
 }: EventTypeSelectorProps) {
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex items-center gap-2 flex-wrap justify-center">
+      <div className="flex items-center gap-1.5 flex-wrap justify-center">
         {EVENT_TYPES.map((t) => {
           const isActive = selected === t.value;
           return (
@@ -123,19 +25,17 @@ export default function EventTypeSelector({
               type="button"
               onClick={() => onSelect(isActive ? null : t.value)}
               className={`
-                flex items-center gap-2 px-4 py-3 rounded-xl border text-sm font-medium transition-all
+                flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-medium transition-all
                 ${
                   isActive
-                    ? `${t.bg} ${t.border} ring-2 ${t.ring} ring-offset-1 shadow-sm`
+                    ? `${t.bg} ${t.border} shadow-sm`
                     : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }
               `}
             >
               <span
-                className={`${isActive ? t.color : "text-gray-400"} transition-colors`}
-              >
-                <TipoIcon tipo={t.value} />
-              </span>
+                className={`h-2.5 w-2.5 rounded-full shrink-0 ${t.color}`}
+              />
               <span className={isActive ? "text-gray-900" : "text-gray-700"}>
                 {t.label}
               </span>

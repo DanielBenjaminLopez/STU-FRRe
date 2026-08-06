@@ -106,15 +106,15 @@ export default function MonthMiniGrid({
   }
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-2">
-      <p className="text-xs font-bold text-slate-700 capitalize mb-1 text-center">
+    <div className="rounded-2xl bg-white border border-gray-100 p-1">
+      <p className="text-[10px] font-bold text-slate-700 capitalize mb-0.5 text-center">
         {monthName}
       </p>
       <div className="grid grid-cols-7 gap-px">
         {DIAS_CORTOS.map((d) => (
           <div
             key={d}
-            className="text-center text-[10px] font-semibold text-slate-400 py-1"
+            className="text-center text-[7px] font-medium text-slate-400 py-0.5"
           >
             {d}
           </div>
@@ -126,11 +126,11 @@ export default function MonthMiniGrid({
             onMouseEnter={() => c.day > 0 && onDayMouseEnter(c.key)}
             onClick={() => c.day > 0 && !selectingRange && onDayClick(c.key)}
             className={`
-              h-7 flex items-center justify-center text-xs select-none rounded-md
+              h-4 flex items-center justify-center text-[9px] select-none rounded-md
               ${c.day === 0 ? "" : "cursor-pointer hover:bg-gray-100"}
               ${c.mark ? getBgClass(c.mark, c.inRange) : c.inRange ? "bg-sky-100 rounded-none" : ""}
               ${!c.mark && !c.inRange && c.day !== 0 ? "text-slate-700" : ""}
-              ${c.mark ? "text-slate-900 font-semibold" : ""}
+              ${c.mark ? "text-slate-900 font-medium" : ""}
             `}
           >
             {c.day > 0 ? c.day : ""}
