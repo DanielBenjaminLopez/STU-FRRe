@@ -170,7 +170,7 @@ describe("Home", () => {
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
     expect(screen.getByText("Vinculado")).toBeInTheDocument();
-    expect(screen.getByText("Pendiente de vinculación")).toBeInTheDocument();
+    expect(screen.getByText("Sin vincular")).toBeInTheDocument();
   });
 
   it("muestra la plantilla asignada del tótem", () => {
