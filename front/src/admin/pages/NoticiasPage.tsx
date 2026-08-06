@@ -379,23 +379,23 @@ export default function NoticiasPage() {
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 transition-colors disabled:opacity-50"
           >
             {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
           </button>
           <button
             type="button"
-            onClick={() => handleOpenCreate("noticia")}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
+            onClick={() => handleOpenCreate("evento")}
+            className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors"
           >
-            Cargar noticia
+            Cargar evento
           </button>
           <button
             type="button"
-            onClick={() => handleOpenCreate("evento")}
-            className="px-5 py-2.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-2xl hover:bg-green-100 transition-colors"
+            onClick={() => handleOpenCreate("noticia")}
+            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
           >
-            Cargar evento
+            Cargar noticia
           </button>
         </div>
       </div>
