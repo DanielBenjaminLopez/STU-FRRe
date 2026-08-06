@@ -27,6 +27,8 @@ from .models import (
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
+from .resources import HorarioCursadoResource, MesaExamenResource
+import tablib
 from .serializers import (
     AvisoSerializer,
     PlanMateriaSerializer,
@@ -200,6 +202,54 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = HorarioCursadoSerializer
 
+    @action(detail=False, methods=['post'], url_path='importar-csv')
+    def importar_csv(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {"detail": "No se proporcionó ningún archivo CSV."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            content = file_obj.read().decode('utf-8-sig')
+            dataset = tablib.Dataset().load(content, format='csv')
+            resource = HorarioCursadoResource()
+            result = resource.import_data(dataset, dry_run=False)
+
+            if result.has_errors() or result.has_validation_errors():
+                errors = []
+                for row_idx, row_errors in result.row_errors():
+                    for err in row_errors:
+                        errors.append(f"Fila {row_idx}: {err.error}")
+                for err in result.base_errors:
+                    errors.append(str(err.error))
+                return Response(
+                    {
+                        "detail": "Error al importar algunos registros.",
+                        "errors": errors,
+                        "totales": {
+                            "creados": result.totals.get("new", 0),
+                            "actualizados": result.totals.get("update", 0),
+                        },
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            creados = result.totals.get("new", 0)
+            actualizados = result.totals.get("update", 0)
+            return Response({
+                "detail": f"Importación exitosa. {creados} creados, {actualizados} actualizados.",
+                "creados": creados,
+                "actualizados": actualizados,
+                "total": len(dataset),
+            })
+        except Exception as e:
+            return Response(
+                {"detail": f"Error al procesar el archivo CSV: {e}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class MesaExamenViewSet(viewsets.ModelViewSet):
     queryset = MesaExamen.objects.select_related(
@@ -208,6 +258,54 @@ class MesaExamenViewSet(viewsets.ModelViewSet):
         'espacio',
     ).all()
     serializer_class = MesaExamenSerializer
+
+    @action(detail=False, methods=['post'], url_path='importar-csv')
+    def importar_csv(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {"detail": "No se proporcionó ningún archivo CSV."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            content = file_obj.read().decode('utf-8-sig')
+            dataset = tablib.Dataset().load(content, format='csv')
+            resource = MesaExamenResource()
+            result = resource.import_data(dataset, dry_run=False)
+
+            if result.has_errors() or result.has_validation_errors():
+                errors = []
+                for row_idx, row_errors in result.row_errors():
+                    for err in row_errors:
+                        errors.append(f"Fila {row_idx}: {err.error}")
+                for err in result.base_errors:
+                    errors.append(str(err.error))
+                return Response(
+                    {
+                        "detail": "Error al importar algunos registros.",
+                        "errors": errors,
+                        "totales": {
+                            "creados": result.totals.get("new", 0),
+                            "actualizados": result.totals.get("update", 0),
+                        },
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            creados = result.totals.get("new", 0)
+            actualizados = result.totals.get("update", 0)
+            return Response({
+                "detail": f"Importación exitosa. {creados} creados, {actualizados} actualizados.",
+                "creados": creados,
+                "actualizados": actualizados,
+                "total": len(dataset),
+            })
+        except Exception as e:
+            return Response(
+                {"detail": f"Error al procesar el archivo CSV: {e}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class EventoViewSet(viewsets.ModelViewSet):

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
+import ImportCsvModal from "../components/ImportCsvModal";
 
 import {
   fetchPlanMaterias,
@@ -16,12 +17,27 @@ import {
   DIAS_SEMANA,
   NIVELES,
   MODALIDADES,
+  importarHorariosCSV,
+  type CsvImportResult,
   type PlanMateria,
   type Comision,
   type HorarioCursado,
 } from "../../shared/api/horariosAdmin";
 import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
 import type { Espacio } from "../../shared/api/totems";
+
+function formatDia(dia: string): string {
+  if (!dia) return "";
+  const key = dia
+    .toLowerCase()
+    .trim()
+    .replace(/á/g, "a")
+    .replace(/é/g, "e")
+    .replace(/í/g, "i")
+    .replace(/ó/g, "o")
+    .replace(/ú/g, "u");
+  return DIA_LABELS[key] || dia;
+}
 
 const DIA_LABELS: Record<string, string> = {
   lunes: "Lun",
@@ -30,6 +46,7 @@ const DIA_LABELS: Record<string, string> = {
   jueves: "Jue",
   viernes: "Vie",
   sabado: "Sab",
+  domingo: "Dom",
 };
 
 interface HorarioGroup {
@@ -72,6 +89,8 @@ function MateriasHorariosPage() {
     id: number | number[];
     name: string;
   } | null>(null);
+
+  const [showImportModal, setShowImportModal] = useState(false);
 
   function reload() {
     setReloadKey((k) => k + 1);
@@ -287,11 +306,32 @@ function MateriasHorariosPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Horarios de cursado</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Gestión de comisiones y horarios por materia
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Horarios de cursado</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Gestión de comisiones y horarios por materia
+          </p>
+        </div>
+        <button
+          onClick={() => setShowImportModal(true)}
+          className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-xl transition-colors flex items-center gap-2"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          Importar CSV
+        </button>
       </div>
 
       {error && (
@@ -436,6 +476,19 @@ function MateriasHorariosPage() {
           itemName={deleteTarget.name}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportCsvModal
+          title="Importar horarios de cursado por CSV"
+          onClose={() => setShowImportModal(false)}
+          onImport={importarHorariosCSV}
+          onSuccess={(res: CsvImportResult) => {
+            setSuccess(res.detail || "Importación realizada exitosamente.");
+            reload();
+            setTimeout(() => setSuccess(""), 4000);
+          }}
         />
       )}
     </div>
@@ -866,9 +919,7 @@ function ComisionBlock({
               key={i}
               className="flex items-center gap-2 text-xs text-gray-600"
             >
-              <span className="font-medium w-8">
-                {DIA_LABELS[g.dia_semana]}
-              </span>
+              <span className="font-medium w-8">{formatDia(g.dia_semana)}</span>
               <span>
                 {g.hora_inicio.slice(0, 5)} - {g.hora_fin.slice(0, 5)}
               </span>
@@ -881,7 +932,7 @@ function ComisionBlock({
                 onClick={() =>
                   onDeleteHorarioGroup(
                     g.horario_ids,
-                    `${DIA_LABELS[g.dia_semana]} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
+                    `${formatDia(g.dia_semana)} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
                   )
                 }
                 className="ml-auto text-gray-400 hover:text-red-500"

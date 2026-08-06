@@ -154,6 +154,7 @@ class HorarioCursado(models.Model):
 
     class Meta:
         ordering = ['comision', 'dia_semana', 'hora_inicio']
+        unique_together = [['comision', 'espacio', 'dia_semana', 'hora_inicio', 'hora_fin']]
         verbose_name = 'Horario de cursado'
         verbose_name_plural = 'Horarios de cursado'
 
@@ -206,6 +207,7 @@ class MesaExamen(models.Model):
 
     class Meta:
         ordering = ['fecha', 'hora']
+        unique_together = [['plan_materia', 'espacio', 'fecha', 'hora', 'turno']]
         verbose_name = 'Mesa de examen'
         verbose_name_plural = 'Mesas de exámen'
 

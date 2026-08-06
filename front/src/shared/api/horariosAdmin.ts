@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, apiUpload } from "./client";
 import type { Espacio } from "./totems";
 
 export interface PlanMateria {
@@ -175,4 +175,18 @@ export async function deleteHorario(id: number): Promise<void> {
 
 export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
   return apiFetch<Espacio[]>("/api/espacios/");
+}
+
+export interface CsvImportResult {
+  detail: string;
+  creados?: number;
+  actualizados?: number;
+  total?: number;
+  errors?: string[];
+}
+
+export async function importarHorariosCSV(
+  file: File,
+): Promise<CsvImportResult> {
+  return apiUpload<CsvImportResult>("/api/horarios/importar-csv/", file);
 }

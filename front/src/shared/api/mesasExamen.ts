@@ -1,6 +1,7 @@
-import { apiFetch } from "./client";
+import { apiFetch, apiUpload } from "./client";
 import type { Espacio } from "./totems";
 import type { Materia } from "./materias";
+import type { CsvImportResult } from "./horariosAdmin";
 
 export interface MesaExamen {
   id: number;
@@ -54,4 +55,10 @@ export async function fetchMateriasForSelect(): Promise<Materia[]> {
 
 export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
   return apiFetch<Espacio[]>("/api/espacios/");
+}
+
+export async function importarMesasExamenCSV(
+  file: File,
+): Promise<CsvImportResult> {
+  return apiUpload<CsvImportResult>("/api/mesas-examen/importar-csv/", file);
 }

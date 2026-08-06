@@ -4,6 +4,7 @@ import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
+import ImportCsvModal from "../components/ImportCsvModal";
 import {
   fetchMesasExamen,
   createMesaExamen,
@@ -11,6 +12,7 @@ import {
   deleteMesaExamen,
   fetchMateriasForSelect,
   fetchEspaciosForSelect,
+  importarMesasExamenCSV,
   TURNOS,
   type MesaExamen,
 } from "../../shared/api/mesasExamen";
@@ -63,6 +65,7 @@ export default function MesasExamenPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<MesaExamen | null>(null);
   const [deletingRow, setDeletingRow] = useState<MesaExamen | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -207,7 +210,28 @@ export default function MesasExamenPage() {
         subtitle="Gestión y carga de mesas de examen"
         onCreate={handleCreate}
         createLabel="Cargar mesa de examen"
-      />
+      >
+        <button
+          type="button"
+          onClick={() => setShowImportModal(true)}
+          className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-2xl transition-colors flex items-center gap-2"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          Importar CSV
+        </button>
+      </PageHeader>
 
       {error && (
         <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
@@ -251,6 +275,19 @@ export default function MesasExamenPage() {
           itemName={`${deletingRow.materia_nombre} - ${deletingRow.turno} Llamado ${deletingRow.llamado}`}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeletingRow(null)}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportCsvModal
+          title="Importar mesas de examen por CSV"
+          onClose={() => setShowImportModal(false)}
+          onImport={importarMesasExamenCSV}
+          onSuccess={(res) => {
+            setSuccess(res.detail || "Importación realizada exitosamente.");
+            loadData();
+            setTimeout(() => setSuccess(""), 4000);
+          }}
         />
       )}
     </div>

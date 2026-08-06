@@ -1,4 +1,4 @@
-from import_export import fields, resources
+from import_export import fields, resources, widgets
 from import_export.widgets import ForeignKeyWidget
 
 from .models import (
@@ -92,6 +92,36 @@ class ComisionResource(resources.ModelResource):
         fields = ('id', 'plan_materia', 'nombre')
 
 
+def normalizar_dia_semana(dia_raw):
+    if not dia_raw or not isinstance(dia_raw, str):
+        return dia_raw
+    d = dia_raw.strip().lower()
+    d = d.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+    mapping = {
+        'lun': 'lunes',
+        'lunes': 'lunes',
+        'mar': 'martes',
+        'martes': 'martes',
+        'mie': 'miercoles',
+        'miercoles': 'miercoles',
+        'jue': 'jueves',
+        'jueves': 'jueves',
+        'vie': 'viernes',
+        'viernes': 'viernes',
+        'sab': 'sabado',
+        'sabado': 'sabado',
+        'dom': 'domingo',
+        'domingo': 'domingo',
+    }
+    return mapping.get(d, d)
+
+
+class NormalisedDiaSemanaWidget(widgets.CharWidget):
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row, **kwargs)
+        return normalizar_dia_semana(val)
+
+
 class HorarioCursadoResource(resources.ModelResource):
     comision = fields.Field(
         column_name='comision',
@@ -103,13 +133,51 @@ class HorarioCursadoResource(resources.ModelResource):
         attribute='espacio',
         widget=ForeignKeyWidget(Espacio, field='nombre'),
     )
+    dia_semana = fields.Field(
+        column_name='dia_semana',
+        attribute='dia_semana',
+        widget=NormalisedDiaSemanaWidget(),
+    )
 
     def before_import_row(self, row, **kwargs):
-        """Permite resolver la comision si se envían columnas 'carrera', 'materia' y 'comision_nombre'."""
+        """Permite resolver la comision, espacio y normalizar el día de la semana con soporte para variaciones de encabezado."""
+        # Fallback de encabezados para dia_semana (ej: dia, día, Día, DIA)
+        dia_val = (
+            row.get('dia_semana')
+            or row.get('dia')
+            or row.get('día')
+            or row.get('Dia')
+            or row.get('Día')
+            or row.get('DIA')
+            or row.get('DIA_SEMANA')
+        )
+        if dia_val:
+            row['dia_semana'] = normalizar_dia_semana(dia_val)
+
+        # Fallback de encabezados para espacio (ej: aula, Aula, Espacio)
+        if not row.get('espacio'):
+            espacio_val = (
+                row.get('aula')
+                or row.get('Aula')
+                or row.get('AULA')
+                or row.get('Espacio')
+                or row.get('ESPACIO')
+                or row.get('laboratorio')
+                or row.get('Laboratorio')
+            )
+            if espacio_val:
+                row['espacio'] = espacio_val
+
+        # Fallback para horas
+        if not row.get('hora_inicio') and row.get('hora_ini'):
+            row['hora_inicio'] = row.get('hora_ini')
+        if not row.get('hora_fin') and row.get('hora_final'):
+            row['hora_fin'] = row.get('hora_final')
+
         if not row.get('comision'):
             carrera_nombre = row.get('carrera')
             materia_nombre = row.get('materia')
-            comision_nombre = row.get('comision_nombre') or row.get('nombre_comision')
+            comision_nombre = row.get('comision_nombre') or row.get('nombre_comision') or row.get('comision') or row.get('curso') or row.get('Curso')
             plan_estudio = row.get('plan_estudio', '2023')
 
             if carrera_nombre and materia_nombre and comision_nombre:
@@ -124,8 +192,38 @@ class HorarioCursadoResource(resources.ModelResource):
                 except Comision.DoesNotExist:
                     pass
 
+    def get_instance(self, instance_loader, row):
+        comision_id = row.get('comision')
+        espacio_val = row.get('espacio') or row.get('aula') or row.get('Aula')
+        dia_raw = (
+            row.get('dia_semana')
+            or row.get('dia')
+            or row.get('día')
+            or row.get('Dia')
+            or row.get('Día')
+        )
+        dia_semana = normalizar_dia_semana(dia_raw)
+        hora_inicio = row.get('hora_inicio') or row.get('hora_ini')
+        hora_fin = row.get('hora_fin') or row.get('hora_final')
+        if comision_id and espacio_val and dia_semana and hora_inicio and hora_fin:
+            try:
+                espacio_id = espacio_val if isinstance(espacio_val, int) else Espacio.objects.filter(nombre=espacio_val).values_list('id', flat=True).first()
+                if espacio_id:
+                    return self._meta.model.objects.get(
+                        comision_id=comision_id,
+                        espacio_id=espacio_id,
+                        dia_semana=dia_semana,
+                        hora_inicio=hora_inicio,
+                        hora_fin=hora_fin,
+                    )
+            except self._meta.model.DoesNotExist:
+                return None
+        return super().get_instance(instance_loader, row)
+
     class Meta:
         model = HorarioCursado
+        skip_unchanged = True
+        report_skipped = True
         fields = (
             'id',
             'comision',
@@ -167,8 +265,31 @@ class MesaExamenResource(resources.ModelResource):
                 except PlanMateria.DoesNotExist:
                     pass
 
+    def get_instance(self, instance_loader, row):
+        plan_materia_id = row.get('plan_materia')
+        espacio_val = row.get('espacio')
+        fecha = row.get('fecha')
+        hora = row.get('hora')
+        turno = row.get('turno')
+        if plan_materia_id and espacio_val and fecha and hora and turno:
+            try:
+                espacio_id = espacio_val if isinstance(espacio_val, int) else Espacio.objects.filter(nombre=espacio_val).values_list('id', flat=True).first()
+                if espacio_id:
+                    return self._meta.model.objects.get(
+                        plan_materia_id=plan_materia_id,
+                        espacio_id=espacio_id,
+                        fecha=fecha,
+                        hora=hora,
+                        turno=turno,
+                    )
+            except self._meta.model.DoesNotExist:
+                return None
+        return super().get_instance(instance_loader, row)
+
     class Meta:
         model = MesaExamen
+        skip_unchanged = True
+        report_skipped = True
         fields = (
             'id',
             'plan_materia',
