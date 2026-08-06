@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
-import UploadZone from "../components/UploadZone";
-import PreviewTable, { type PreviewRow } from "../components/PreviewTable";
+
 import {
   fetchPlanMaterias,
   deletePlanMateria,
@@ -51,8 +50,6 @@ interface PlanMateriaConComisiones extends PlanMateria {
   expanded?: boolean;
 }
 
-type UploadStep = "idle" | "uploading" | "preview" | "done";
-
 function MateriasHorariosPage() {
   const [data, setData] = useState<PlanMateriaConComisiones[]>([]);
   const [carreras, setCarreras] = useState<Carrera[]>([]);
@@ -75,14 +72,6 @@ function MateriasHorariosPage() {
     id: number | number[];
     name: string;
   } | null>(null);
-
-  const [uploadStep, setUploadStep] = useState<UploadStep>("idle");
-  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
-  const [previewMeta, setPreviewMeta] = useState({
-    fileName: "",
-    totalHorarios: 0,
-    totalPaginas: 0,
-  });
 
   function reload() {
     setReloadKey((k) => k + 1);
@@ -271,49 +260,6 @@ function MateriasHorariosPage() {
     }
   }
 
-  function handleUploadFile(_file: File) {
-    setUploadStep("uploading");
-    setTimeout(() => {
-      setPreviewRows([
-        {
-          anio: "primero",
-          comision: "K1",
-          materia: "Analisis Matematico I",
-          dia: "lunes",
-          hora_inicio: "08:00",
-          hora_fin: "09:30",
-          aula: "A101",
-        },
-        {
-          anio: "primero",
-          comision: "K1",
-          materia: "Analisis Matematico I",
-          dia: "miercoles",
-          hora_inicio: "08:00",
-          hora_fin: "09:30",
-          aula: "A101",
-        },
-      ]);
-      setPreviewMeta({
-        fileName: _file.name,
-        totalHorarios: 2,
-        totalPaginas: 1,
-      });
-      setUploadStep("preview");
-    }, 1500);
-  }
-
-  function handleConfirmImport(rows: PreviewRow[]) {
-    setUploadStep("done");
-    setSuccess(
-      `Importación simulada: ${rows.length} horarios procesados. La implementación real se agregará pronto.`,
-    );
-    setTimeout(() => {
-      setSuccess("");
-      setUploadStep("idle");
-    }, 4000);
-  }
-
   if (loading) {
     return (
       <div className="p-8">
@@ -356,53 +302,6 @@ function MateriasHorariosPage() {
       {success && (
         <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
           {success}
-        </div>
-      )}
-
-      {uploadStep === "idle" && (
-        <div className="mb-6">
-          <UploadZone onFileSelected={handleUploadFile} />
-        </div>
-      )}
-
-      {uploadStep === "uploading" && (
-        <div className="mb-6 px-4 py-8 bg-gray-50 border border-gray-200 rounded-2xl text-center">
-          <svg
-            className="animate-spin h-6 w-6 text-gray-400 mx-auto mb-3"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          <p className="text-sm text-gray-600">Procesando PDF con OCR...</p>
-        </div>
-      )}
-
-      {uploadStep === "preview" && (
-        <div className="mb-6">
-          <PreviewTable
-            fileName={previewMeta.fileName}
-            totalHorarios={previewMeta.totalHorarios}
-            totalPaginas={previewMeta.totalPaginas}
-            rows={previewRows}
-            onConfirm={handleConfirmImport}
-            onCancel={() => {
-              setUploadStep("idle");
-              setPreviewRows([]);
-            }}
-          />
         </div>
       )}
 

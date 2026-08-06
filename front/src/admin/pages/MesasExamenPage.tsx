@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import UploadZone from "../components/UploadZone";
-import MesaExamenPreviewTable, {
-  type MesaExamenPreviewRow,
-} from "../components/MesaExamenPreviewTable";
+
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
@@ -17,8 +14,6 @@ import {
   TURNOS,
   type MesaExamen,
 } from "../../shared/api/mesasExamen";
-
-type UploadStep = "idle" | "uploading" | "preview" | "done";
 
 const columns: Column<MesaExamen>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },
@@ -57,14 +52,6 @@ export default function MesasExamenPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const [uploadStep, setUploadStep] = useState<UploadStep>("idle");
-  const [previewRows, setPreviewRows] = useState<MesaExamenPreviewRow[]>([]);
-  const [previewMeta, setPreviewMeta] = useState<{
-    fileName: string;
-    totalMesas: number;
-    totalPaginas: number;
-  } | null>(null);
 
   const [materias, setMaterias] = useState<{ value: number; label: string }[]>(
     [],
@@ -127,49 +114,6 @@ export default function MesasExamenPage() {
     };
   }, [loadData]);
 
-  function handleUploadFile(_file: File) {
-    setUploadStep("uploading");
-    setTimeout(() => {
-      setPreviewRows([
-        {
-          materia: "Analisis Matematico I",
-          espacio: "",
-          fecha: "2026-06-15",
-          hora: "08:00",
-          turno: "junio",
-          llamado: 1,
-          tribunal: "",
-        },
-        {
-          materia: "Algebra y Geometria Analitica",
-          espacio: "",
-          fecha: "2026-06-15",
-          hora: "10:00",
-          turno: "junio",
-          llamado: 1,
-          tribunal: "",
-        },
-      ]);
-      setPreviewMeta({
-        fileName: _file.name,
-        totalMesas: 2,
-        totalPaginas: 1,
-      });
-      setUploadStep("preview");
-    }, 1500);
-  }
-
-  function handleConfirmImport(_rows: MesaExamenPreviewRow[]) {
-    setUploadStep("done");
-    setSuccess(
-      `Importación simulada: ${_rows.length} mesas procesadas. La implementación real se agregará pronto.`,
-    );
-    setTimeout(() => {
-      setSuccess("");
-      setUploadStep("idle");
-    }, 4000);
-  }
-
   const formFields: FormField[] = [
     {
       name: "materia",
@@ -227,9 +171,12 @@ export default function MesasExamenPage() {
     try {
       if (editingRow) {
         await updateMesaExamen(editingRow.id, formData);
+        setSuccess("Mesa de examen actualizada");
       } else {
         await createMesaExamen(formData as Omit<MesaExamen, "id">);
+        setSuccess("Mesa de examen creada");
       }
+      setTimeout(() => setSuccess(""), 3000);
       setShowForm(false);
       setEditingRow(null);
       await loadData();
@@ -242,6 +189,8 @@ export default function MesasExamenPage() {
     try {
       if (deletingRow) {
         await deleteMesaExamen(deletingRow.id);
+        setSuccess("Mesa de examen eliminada");
+        setTimeout(() => setSuccess(""), 3000);
         await loadData();
       }
     } catch (err) {
@@ -268,56 +217,6 @@ export default function MesasExamenPage() {
       {success && (
         <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
           {success}
-        </div>
-      )}
-
-      {uploadStep === "idle" && (
-        <div className="mb-6">
-          <UploadZone
-            onFileSelected={handleUploadFile}
-            label="Arrastrá un PDF con las mesas de examen"
-          />
-        </div>
-      )}
-
-      {uploadStep === "uploading" && (
-        <div className="mb-6 px-4 py-8 bg-gray-50 border border-gray-200 rounded-2xl text-center">
-          <svg
-            className="animate-spin h-6 w-6 text-gray-400 mx-auto mb-3"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          <p className="text-sm text-gray-500">Procesando PDF...</p>
-        </div>
-      )}
-
-      {uploadStep === "preview" && previewMeta && (
-        <div className="mb-6">
-          <MesaExamenPreviewTable
-            fileName={previewMeta.fileName}
-            totalMesas={previewMeta.totalMesas}
-            totalPaginas={previewMeta.totalPaginas}
-            rows={previewRows}
-            onConfirm={handleConfirmImport}
-            onCancel={() => {
-              setUploadStep("idle");
-              setPreviewRows([]);
-            }}
-          />
         </div>
       )}
 
