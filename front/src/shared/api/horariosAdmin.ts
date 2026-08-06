@@ -177,11 +177,25 @@ export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
   return apiFetch<Espacio[]>("/api/espacios/");
 }
 
+export interface CsvImportDetailRow {
+  fila: number;
+  tipo: "new" | "update" | "skip" | "error" | string;
+  datos: Record<string, string | number | boolean | null>;
+  errores: string[];
+}
+
 export interface CsvImportResult {
   detail: string;
   creados?: number;
   actualizados?: number;
   total?: number;
+  totales?: {
+    creados: number;
+    actualizados: number;
+    omitidos: number;
+    errores: number;
+  };
+  detalles?: CsvImportDetailRow[];
   errors?: string[];
 }
 

@@ -425,3 +425,31 @@ class CsvImportAPITestCase(TestCase):
         response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(HorarioCursado.objects.count(), 2)
+
+    def test_importar_horarios_csv_con_errores_falla_atomicamente(self):
+        from io import BytesIO
+        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+
+        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
+        mat = Materia.objects.create(nombre="Análisis Numérico")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        Espacio.objects.create(nombre="Aula 1.1", tipo="aula", piso=1)
+
+        csv_content = (
+            "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\n"
+            "Sistemas,Materia Inexistente 99,Curso 1,Aula 1.1,Lunes,08:00,10:00,2023\n"
+            "Sistemas,Análisis Numérico,Curso 1,Aula Fantasma 999,Lunes,15:50,18:05,2023\n"
+            "Sistemas,Análisis Numérico,Curso 1,Aula 1.1,,15:50,18:05,2023\n"
+            "Sistemas,Análisis Numérico,Curso 1,Aula 1.1,Lunes,hora_invalida,18:05,2023\n"
+            ",,Curso 1,Aula 1.1,Lunes,15:50,18:05,2023\n"
+        )
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "errores_importacion.csv"
+
+        response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        res_data = response.json()
+        self.assertEqual(res_data["totales"]["errores"], 5)
+        self.assertEqual(res_data["totales"]["creados"], 0)
+        self.assertEqual(HorarioCursado.objects.count(), 0)

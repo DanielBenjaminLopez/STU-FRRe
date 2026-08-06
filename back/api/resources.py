@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from import_export import fields, resources, widgets
 from import_export.widgets import ForeignKeyWidget
 
@@ -122,6 +123,21 @@ class NormalisedDiaSemanaWidget(widgets.CharWidget):
         return normalizar_dia_semana(val)
 
 
+def validar_hora(hora_str, nombre_campo):
+    if not hora_str or not isinstance(hora_str, str) or not hora_str.strip():
+        raise ValidationError(f"El campo '{nombre_campo}' es obligatorio.")
+    h_str = hora_str.strip()
+    parts = h_str.split(':')
+    if len(parts) < 2:
+        raise ValidationError(f"Formato de hora inválido en '{nombre_campo}' ('{h_str}'). Debe ser HH:MM (ej: 08:00, 15:30).")
+    try:
+        h, m = int(parts[0]), int(parts[1])
+        if h < 0 or h > 23 or m < 0 or m > 59:
+            raise ValidationError(f"Hora fuera de rango en '{nombre_campo}' ('{h_str}'). Debe ser un horario entre 00:00 y 23:59.")
+    except ValueError:
+        raise ValidationError(f"Formato de hora inválido en '{nombre_campo}' ('{h_str}'). Debe ser HH:MM (ej: 08:00, 15:30).")
+
+
 class HorarioCursadoResource(resources.ModelResource):
     comision = fields.Field(
         column_name='comision',
@@ -140,8 +156,59 @@ class HorarioCursadoResource(resources.ModelResource):
     )
 
     def before_import_row(self, row, **kwargs):
-        """Permite resolver la comision, espacio y normalizar el día de la semana con soporte para variaciones de encabezado."""
-        # Fallback de encabezados para dia_semana (ej: dia, día, Día, DIA)
+        """Validación estricta fila por fila para HorarioCursado."""
+        # 1. Validar Carrera y Materia
+        carrera_nombre = row.get('carrera') or row.get('Carrera')
+        materia_nombre = row.get('materia') or row.get('Materia')
+        if not carrera_nombre or not materia_nombre:
+            raise ValidationError("Los campos 'carrera' y 'materia' son obligatorios.")
+
+        # 2. Validar Comisión
+        comision_nombre = (
+            row.get('comision_nombre')
+            or row.get('nombre_comision')
+            or row.get('comision')
+            or row.get('curso')
+            or row.get('Curso')
+        )
+        if not comision_nombre:
+            raise ValidationError("El campo 'comision' o 'comision_nombre' es obligatorio.")
+
+        plan_estudio = row.get('plan_estudio', '2023')
+        if not row.get('comision') or not isinstance(row.get('comision'), int):
+            try:
+                com = Comision.objects.get(
+                    plan_materia__carrera__nombre=carrera_nombre,
+                    plan_materia__materia__nombre=materia_nombre,
+                    plan_materia__plan_estudio=plan_estudio,
+                    nombre=comision_nombre,
+                )
+                row['comision'] = com.id
+            except Comision.DoesNotExist:
+                raise ValidationError(
+                    f"No existe la comisión '{comision_nombre}' para la materia '{materia_nombre}'."
+                )
+
+        # 3. Validar Espacio / Aula
+        espacio_val = (
+            row.get('espacio')
+            or row.get('aula')
+            or row.get('Aula')
+            or row.get('AULA')
+            or row.get('Espacio')
+            or row.get('ESPACIO')
+            or row.get('laboratorio')
+            or row.get('Laboratorio')
+        )
+        if not espacio_val:
+            raise ValidationError("El campo 'espacio' o 'aula' es obligatorio.")
+
+        if not Espacio.objects.filter(nombre=espacio_val).exists():
+            raise ValidationError(f"No existe el espacio o aula '{espacio_val}' en la base de datos.")
+
+        row['espacio'] = espacio_val
+
+        # 4. Validar Día de la semana
         dia_val = (
             row.get('dia_semana')
             or row.get('dia')
@@ -151,46 +218,24 @@ class HorarioCursadoResource(resources.ModelResource):
             or row.get('DIA')
             or row.get('DIA_SEMANA')
         )
-        if dia_val:
-            row['dia_semana'] = normalizar_dia_semana(dia_val)
+        if not dia_val or not str(dia_val).strip():
+            raise ValidationError("El campo 'dia_semana' es obligatorio y no puede estar vacío.")
 
-        # Fallback de encabezados para espacio (ej: aula, Aula, Espacio)
-        if not row.get('espacio'):
-            espacio_val = (
-                row.get('aula')
-                or row.get('Aula')
-                or row.get('AULA')
-                or row.get('Espacio')
-                or row.get('ESPACIO')
-                or row.get('laboratorio')
-                or row.get('Laboratorio')
-            )
-            if espacio_val:
-                row['espacio'] = espacio_val
+        dia_norm = normalizar_dia_semana(dia_val)
+        if dia_norm not in ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']:
+            raise ValidationError(f"El día de la semana '{dia_val}' no es válido.")
 
-        # Fallback para horas
-        if not row.get('hora_inicio') and row.get('hora_ini'):
-            row['hora_inicio'] = row.get('hora_ini')
-        if not row.get('hora_fin') and row.get('hora_final'):
-            row['hora_fin'] = row.get('hora_final')
+        row['dia_semana'] = dia_norm
 
-        if not row.get('comision'):
-            carrera_nombre = row.get('carrera')
-            materia_nombre = row.get('materia')
-            comision_nombre = row.get('comision_nombre') or row.get('nombre_comision') or row.get('comision') or row.get('curso') or row.get('Curso')
-            plan_estudio = row.get('plan_estudio', '2023')
+        # 5. Validar Horarios
+        h_ini = row.get('hora_inicio') or row.get('hora_ini')
+        h_fin = row.get('hora_fin') or row.get('hora_final')
 
-            if carrera_nombre and materia_nombre and comision_nombre:
-                try:
-                    com = Comision.objects.get(
-                        plan_materia__carrera__nombre=carrera_nombre,
-                        plan_materia__materia__nombre=materia_nombre,
-                        plan_materia__plan_estudio=plan_estudio,
-                        nombre=comision_nombre,
-                    )
-                    row['comision'] = com.id
-                except Comision.DoesNotExist:
-                    pass
+        validar_hora(h_ini, "hora_inicio")
+        validar_hora(h_fin, "hora_fin")
+
+        row['hora_inicio'] = str(h_ini).strip()
+        row['hora_fin'] = str(h_fin).strip()
 
     def get_instance(self, instance_loader, row):
         comision_id = row.get('comision')
@@ -248,22 +293,44 @@ class MesaExamenResource(resources.ModelResource):
     )
 
     def before_import_row(self, row, **kwargs):
-        """Permite resolver el plan_materia si se envían columnas 'carrera' y 'materia'."""
-        if not row.get('plan_materia'):
-            carrera_nombre = row.get('carrera')
-            materia_nombre = row.get('materia')
-            plan_estudio = row.get('plan_estudio', '2023')
+        carrera_nombre = row.get('carrera') or row.get('Carrera')
+        materia_nombre = row.get('materia') or row.get('Materia')
+        if not carrera_nombre or not materia_nombre:
+            raise ValidationError("Los campos 'carrera' y 'materia' son obligatorios.")
 
-            if carrera_nombre and materia_nombre:
-                try:
-                    pm = PlanMateria.objects.get(
-                        carrera__nombre=carrera_nombre,
-                        materia__nombre=materia_nombre,
-                        plan_estudio=plan_estudio,
-                    )
-                    row['plan_materia'] = pm.id
-                except PlanMateria.DoesNotExist:
-                    pass
+        plan_estudio = row.get('plan_estudio', '2023')
+        if not row.get('plan_materia') or not isinstance(row.get('plan_materia'), int):
+            try:
+                pm = PlanMateria.objects.get(
+                    carrera__nombre=carrera_nombre,
+                    materia__nombre=materia_nombre,
+                    plan_estudio=plan_estudio,
+                )
+                row['plan_materia'] = pm.id
+            except PlanMateria.DoesNotExist:
+                raise ValidationError(
+                    f"No existe la materia '{materia_nombre}' para la carrera '{carrera_nombre}' (Plan '{plan_estudio}')."
+                )
+
+        espacio_val = (
+            row.get('espacio')
+            or row.get('aula')
+            or row.get('Aula')
+            or row.get('Espacio')
+        )
+        if not espacio_val:
+            raise ValidationError("El campo 'espacio' o 'aula' es obligatorio.")
+        if not Espacio.objects.filter(nombre=espacio_val).exists():
+            raise ValidationError(f"No existe el espacio o aula '{espacio_val}' en la base de datos.")
+
+        row['espacio'] = espacio_val
+
+        fecha_val = row.get('fecha') or row.get('Fecha')
+        if not fecha_val or not str(fecha_val).strip():
+            raise ValidationError("El campo 'fecha' es obligatorio.")
+
+        hora_val = row.get('hora') or row.get('Hora')
+        validar_hora(hora_val, "hora")
 
     def get_instance(self, instance_loader, row):
         plan_materia_id = row.get('plan_materia')

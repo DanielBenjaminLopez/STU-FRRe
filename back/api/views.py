@@ -194,6 +194,84 @@ class ComisionViewSet(viewsets.ModelViewSet):
         return qs
 
 
+def traducir_error(err_str):
+    if not err_str:
+        return "Error no especificado al procesar la fila."
+
+    msg = str(err_str)
+    # Limpiar envoltorios de excepciones como [ValidationError(['...'])]
+    if "ValidationError" in msg or "['" in msg or "[\"" in msg:
+        import re
+        msg = re.sub(r"^\[?ValidationError\(\[?\s*", "", msg)
+        msg = re.sub(r"\]?\s*\)?\]?$", "", msg)
+
+    msg = msg.strip("['\" ]")
+    if (msg.startswith("'") and msg.endswith("'")) or (msg.startswith('"') and msg.endswith('"')):
+        msg = msg[1:-1]
+
+    err_lower = msg.lower()
+
+    if "matching query does not exist" in err_lower or "doesnotexist" in err_lower:
+        if "comision" in err_lower:
+            return "No existe la comisión especificada en la base de datos."
+        if "espacio" in err_lower or "aula" in err_lower:
+            return "No existe el espacio o aula especificada en la base de datos."
+        if "planmateria" in err_lower or "materia" in err_lower:
+            return "No existe la materia o plan de estudio en el sistema."
+        return "Un registro relacionado no existe en el sistema."
+
+    if "unique constraint failed" in err_lower or "already exists" in err_lower or "duplicad" in err_lower:
+        return "Ya existe un registro con la misma comisión, espacio, día y horario."
+
+    if "null value in column" in err_lower or "cannot be null" in err_lower or "is required" in err_lower:
+        return "Esta fila contiene campos requeridos vacíos."
+
+    if "invalid literal for int" in err_lower or "valueerror" in err_lower:
+        return "Formato de número o valor inválido en uno de los campos."
+
+    msg = msg.replace("Row ", "Fila ").replace("Line ", "Fila ").replace("Column ", "Columna ")
+    return msg
+
+
+def extract_import_details(result, dataset):
+    detalles = []
+    base_errs = [traducir_error(e.error) for e in result.base_errors] if getattr(result, 'base_errors', None) else []
+    dataset_dicts = dataset.dict if hasattr(dataset, 'dict') else []
+
+    row_errors_count = 0
+
+    for idx, row_res in enumerate(result.rows, start=1):
+        tipo = row_res.import_type  # 'new', 'update', 'skip', 'error'
+        row_dict = dataset_dicts[idx - 1] if (idx - 1 < len(dataset_dicts)) else {}
+
+        errs = []
+        if getattr(row_res, 'errors', None):
+            for e in row_res.errors:
+                errs.append(traducir_error(e.error))
+        if getattr(row_res, 'validation_error', None):
+            errs.append(traducir_error(row_res.validation_error))
+
+        if errs:
+            tipo = "error"
+            row_errors_count += 1
+
+        detalles.append({
+            "fila": idx,
+            "tipo": tipo,
+            "datos": row_dict,
+            "errores": errs,
+        })
+
+    totales = {
+        "creados": result.totals.get("new", 0),
+        "actualizados": result.totals.get("update", 0),
+        "omitidos": result.totals.get("skip", 0),
+        "errores": row_errors_count + len(base_errs),
+    }
+
+    return totales, detalles, base_errs
+
+
 class HorarioCursadoViewSet(viewsets.ModelViewSet):
     queryset = HorarioCursado.objects.select_related(
         'comision__plan_materia__materia',
@@ -215,33 +293,29 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
             content = file_obj.read().decode('utf-8-sig')
             dataset = tablib.Dataset().load(content, format='csv')
             resource = HorarioCursadoResource()
-            result = resource.import_data(dataset, dry_run=False)
 
-            if result.has_errors() or result.has_validation_errors():
-                errors = []
-                for row_idx, row_errors in result.row_errors():
-                    for err in row_errors:
-                        errors.append(f"Fila {row_idx}: {err.error}")
-                for err in result.base_errors:
-                    errors.append(str(err.error))
-                return Response(
-                    {
-                        "detail": "Error al importar algunos registros.",
-                        "errors": errors,
-                        "totales": {
-                            "creados": result.totals.get("new", 0),
-                            "actualizados": result.totals.get("update", 0),
-                        },
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            with transaction.atomic():
+                result = resource.import_data(dataset, dry_run=False)
+                totales, detalles, base_errs = extract_import_details(result, dataset)
 
-            creados = result.totals.get("new", 0)
-            actualizados = result.totals.get("update", 0)
+                if totales["errores"] > 0:
+                    transaction.set_rollback(True)
+                    totales["creados"] = 0
+                    totales["actualizados"] = 0
+                    detail_msg = f"Importación fallida. Se detectaron {totales['errores']} errores. No se guardó ningún registro."
+                    es_exitosa = False
+                else:
+                    detail_msg = f"Importación exitosa. {totales['creados']} creados, {totales['actualizados']} actualizados."
+                    es_exitosa = True
+
             return Response({
-                "detail": f"Importación exitosa. {creados} creados, {actualizados} actualizados.",
-                "creados": creados,
-                "actualizados": actualizados,
+                "detail": detail_msg,
+                "exito": es_exitosa,
+                "totales": totales,
+                "detalles": detalles,
+                "errors": base_errs,
+                "creados": totales["creados"],
+                "actualizados": totales["actualizados"],
                 "total": len(dataset),
             })
         except Exception as e:
@@ -272,33 +346,29 @@ class MesaExamenViewSet(viewsets.ModelViewSet):
             content = file_obj.read().decode('utf-8-sig')
             dataset = tablib.Dataset().load(content, format='csv')
             resource = MesaExamenResource()
-            result = resource.import_data(dataset, dry_run=False)
 
-            if result.has_errors() or result.has_validation_errors():
-                errors = []
-                for row_idx, row_errors in result.row_errors():
-                    for err in row_errors:
-                        errors.append(f"Fila {row_idx}: {err.error}")
-                for err in result.base_errors:
-                    errors.append(str(err.error))
-                return Response(
-                    {
-                        "detail": "Error al importar algunos registros.",
-                        "errors": errors,
-                        "totales": {
-                            "creados": result.totals.get("new", 0),
-                            "actualizados": result.totals.get("update", 0),
-                        },
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+            with transaction.atomic():
+                result = resource.import_data(dataset, dry_run=False)
+                totales, detalles, base_errs = extract_import_details(result, dataset)
 
-            creados = result.totals.get("new", 0)
-            actualizados = result.totals.get("update", 0)
+                if totales["errores"] > 0:
+                    transaction.set_rollback(True)
+                    totales["creados"] = 0
+                    totales["actualizados"] = 0
+                    detail_msg = f"Importación fallida. Se detectaron {totales['errores']} errores. No se guardó ningún registro."
+                    es_exitosa = False
+                else:
+                    detail_msg = f"Importación exitosa. {totales['creados']} creados, {totales['actualizados']} actualizados."
+                    es_exitosa = True
+
             return Response({
-                "detail": f"Importación exitosa. {creados} creados, {actualizados} actualizados.",
-                "creados": creados,
-                "actualizados": actualizados,
+                "detail": detail_msg,
+                "exito": es_exitosa,
+                "totales": totales,
+                "detalles": detalles,
+                "errors": base_errs,
+                "creados": totales["creados"],
+                "actualizados": totales["actualizados"],
                 "total": len(dataset),
             })
         except Exception as e:

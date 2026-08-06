@@ -76,6 +76,9 @@ function MateriasHorariosPage() {
   const [success, setSuccess] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
+  void error;
+  void success;
+
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
   const [filterModalidad, setFilterModalidad] = useState<
@@ -315,35 +318,11 @@ function MateriasHorariosPage() {
         </div>
         <button
           onClick={() => setShowImportModal(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-xl transition-colors flex items-center gap-2"
+          className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-xl transition-colors"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-            />
-          </svg>
           Importar
         </button>
       </div>
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
-          {success}
-        </div>
-      )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 space-y-4">
         <div className="flex items-center gap-2">
