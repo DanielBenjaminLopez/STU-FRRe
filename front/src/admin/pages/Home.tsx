@@ -120,6 +120,13 @@ export default function Home() {
           Tótems
         </h3>
 
+        <Link
+          to="/admin/vincular"
+          className="block w-full text-center px-4 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors mb-3"
+        >
+          Vincular nuevo tótem
+        </Link>
+
         {error && (
           <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600">
             {error}
@@ -259,15 +266,6 @@ export default function Home() {
               No hay tótems
             </p>
           )}
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-gray-100">
-          <Link
-            to="/admin/vincular"
-            className="block w-full text-center px-4 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-          >
-            Vincular nuevo tótem
-          </Link>
         </div>
       </div>
 

@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .authentication import TotemToken
 from .models import (
@@ -30,6 +31,7 @@ from .models import (
 from .permissions import IsAdminOrSecretaria, IsTotem
 from .serializers import (
     AvisoSerializer,
+    CustomTokenObtainPairSerializer,
     EventoCalendarioSerializer,
     PlanMateriaSerializer,
     CarreraSerializer,
@@ -49,6 +51,10 @@ from .serializers import (
     WidgetSerializer,
     validar_solapamiento_payload,
 )
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class WidgetViewSet(viewsets.ModelViewSet):

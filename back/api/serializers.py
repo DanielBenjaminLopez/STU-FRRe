@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     Aviso,
@@ -383,3 +384,13 @@ class EventoCalendarioSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.documento_fuente.url)
             return obj.documento_fuente.url
         return None
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except Exception:
+            raise serializers.ValidationError(
+                {"detail": "Usuario o contraseña incorrectos."}
+            )
