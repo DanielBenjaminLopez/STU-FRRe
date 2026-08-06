@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TURNOS } from "../../shared/api/mesasExamen";
+import Button from "./Button";
 
 export interface MesaExamenPreviewRow {
   materia: string;
@@ -167,20 +168,12 @@ export default function MesaExamenPreviewTable({
       </div>
 
       <div className="flex justify-end gap-3 mt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
-        >
+        <Button variant="ghost" size="md" onClick={onCancel}>
           Cancelar
-        </button>
-        <button
-          type="button"
-          onClick={() => onConfirm(rows)}
-          className="px-5 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-        >
+        </Button>
+        <Button variant="primary" size="md" onClick={() => onConfirm(rows)}>
           Confirmar importación ({rows.length} mesas)
-        </button>
+        </Button>
       </div>
     </div>
   );

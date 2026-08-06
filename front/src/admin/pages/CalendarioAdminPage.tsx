@@ -3,6 +3,7 @@ import AnnualCalendarGrid from "../components/calendario/AnnualCalendarGrid";
 import EventTypeSelector from "../components/calendario/EventTypeSelector";
 import EventSummary from "../components/calendario/EventSummary";
 import SaveConfirmationModal from "../components/calendario/SaveConfirmationModal";
+import Button from "../components/Button";
 import {
   fetchEventosCalendario,
   bulkSaveCalendario,
@@ -193,14 +194,15 @@ export default function CalendarioAdminPage() {
               />
             </svg>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => pending.length > 0 && setShowConfirm(true)}
             disabled={pending.length === 0 || saving}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            loading={saving}
           >
             {saving ? "Guardando..." : `Guardar (${pending.length})`}
-          </button>
+          </Button>
         </div>
       </div>
 

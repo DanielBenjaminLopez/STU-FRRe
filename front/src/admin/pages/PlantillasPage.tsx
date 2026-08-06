@@ -12,6 +12,7 @@ import {
 import WidgetPalette from "../components/WidgetPalette";
 import TemplateCanvas from "../components/TemplateCanvas";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import Button from "../components/Button";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
@@ -438,13 +439,9 @@ export default function PlantillasPage() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4">
         <p className="text-gray-500">Todavía no hay plantillas</p>
-        <button
-          type="button"
-          onClick={handleCreatePlantilla}
-          className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
-        >
+        <Button variant="primary" size="md" onClick={handleCreatePlantilla}>
           Crear plantilla
-        </button>
+        </Button>
       </div>
     );
   }
@@ -521,10 +518,10 @@ export default function PlantillasPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="dangerGhost"
+              size="sm"
               onClick={() => setDeletingId(selectedId)}
-              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
               title="Eliminar plantilla"
             >
               <svg
@@ -540,23 +537,24 @@ export default function PlantillasPage() {
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                 />
               </svg>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={handleCargarAlTotem}
               disabled={!selectedTotem || !selected || selected.isNew}
-              className="px-4 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Cargar al tótem
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              loading={saving}
             >
               {saving ? "Guardando..." : "Guardar plantilla"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

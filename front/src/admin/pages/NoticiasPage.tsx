@@ -3,6 +3,7 @@ import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import NoticiasCarousel from "../components/NoticiasCarousel";
+import Button from "../components/Button";
 import {
   fetchFeed,
   createNoticia,
@@ -375,28 +376,29 @@ export default function NoticiasPage() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={handleSync}
             disabled={syncing}
-            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+            loading={syncing}
           >
             {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
             onClick={() => handleOpenCreate("evento")}
-            className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors"
           >
             Cargar evento
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => handleOpenCreate("noticia")}
-            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
           >
             Cargar noticia
-          </button>
+          </Button>
         </div>
       </div>
 
