@@ -4,6 +4,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
     AvisoViewSet,
+    BulkCalendarView,
+    EventoCalendarioViewSet,
     PlanMateriaViewSet,
     AvisosActivosView,
     CarreraViewSet,
@@ -38,6 +40,7 @@ router.register('totems', TotemViewSet)
 router.register('widgets', WidgetViewSet)
 router.register('plantillas', PlantillaViewSet)
 router.register('plantilla-widgets', PlantillaWidgetViewSet)
+router.register('calendario/eventos', EventoCalendarioViewSet)
 
 
 urlpatterns = [
@@ -50,4 +53,5 @@ urlpatterns = [
     path('auth/me/', MeView.as_view(), name='auth_me'),
     path('espacios/', EspacioListView.as_view(), name='espacios_list'),
     path('avisos-activos/', AvisosActivosView.as_view(), name='avisos_activos'),
+    path('calendario/bulk/', BulkCalendarView.as_view(), name='calendario_bulk'),
 ]

@@ -4,6 +4,7 @@ from rest_framework import serializers
 from .models import (
     Aviso,
     Carrera,
+    EventoCalendario,
     PlanMateria,
     Comision,
     Espacio,
@@ -359,3 +360,26 @@ class TotemSerializer(serializers.ModelSerializer):
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
+
+
+class EventoCalendarioSerializer(serializers.ModelSerializer):
+    es_rango = serializers.BooleanField(read_only=True)
+    documento_fuente_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventoCalendario
+        fields = [
+            'id', 'titulo', 'tipo', 'fecha_inicio', 'fecha_fin',
+            'es_rango', 'todo_el_dia', 'color', 'descripcion',
+            'documento_fuente', 'documento_fuente_url',
+            'creado_en', 'actualizado_en',
+        ]
+        read_only_fields = ['creado_en', 'actualizado_en']
+
+    def get_documento_fuente_url(self, obj):
+        if obj.documento_fuente:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.documento_fuente.url)
+            return obj.documento_fuente.url
+        return None
