@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import type { ContenidoFeed } from "../../shared/api/noticias";
-import Button from "./Button";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -141,9 +140,13 @@ export default function NoticiaDetailModal({
         </div>
 
         <div className="flex justify-end px-8 pb-8 pt-2">
-          <Button variant="primary" size="md" onClick={onClose}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-8 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
+          >
             Cerrar
-          </Button>
+          </button>
         </div>
       </div>
     </div>

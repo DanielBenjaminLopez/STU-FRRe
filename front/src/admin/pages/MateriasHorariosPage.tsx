@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-import Button from "../components/Button";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
 import UploadZone from "../components/UploadZone";
@@ -632,7 +631,7 @@ function MateriaCard({
             e.stopPropagation();
             onDelete(pm.materia_nombre || `Materia #${pm.id}`);
           }}
-          className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           title="Eliminar materia"
         >
           <svg
@@ -685,23 +684,23 @@ function MateriaCard({
                     e.key === "Enter" && handleAddComisionLocal()
                   }
                 />
-                <Button
-                  variant="primary"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={handleAddComisionLocal}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800"
                 >
                   Agregar
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     setShowAddComision(false);
                     setNewComisionNombre("");
                   }}
+                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
                 >
                   Cancelar
-                </Button>
+                </button>
               </div>
             ) : (
               <button
@@ -882,12 +881,20 @@ function InlineAddHorario({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="primary" size="sm" onClick={handleSubmit}>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+        >
           OK
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onClose}>
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-700"
+        >
           Cancelar
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -944,13 +951,13 @@ function ComisionBlock({
         <span className="text-sm font-medium text-gray-700">
           Comisión: {c.nombre}
         </span>
-        <Button
-          variant="dangerGhost"
-          size="sm"
+        <button
+          type="button"
           onClick={() => onDelete(c.display_name || `Comisión ${c.nombre}`)}
+          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
         >
           Eliminar
-        </Button>
+        </button>
       </div>
 
       {c.horarios_agrupados.length > 0 ? (
@@ -978,7 +985,7 @@ function ComisionBlock({
                     `${DIA_LABELS[g.dia_semana]} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
                   )
                 }
-                className="ml-auto p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="ml-auto text-gray-400 hover:text-red-500"
                 title="Eliminar horario"
               >
                 <svg
@@ -1062,16 +1069,20 @@ function ComisionBlock({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="primary" size="sm" onClick={handleAddHorarioLocal}>
+            <button
+              type="button"
+              onClick={handleAddHorarioLocal}
+              className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+            >
               OK
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+            </button>
+            <button
+              type="button"
               onClick={() => setShowAddHorario(false)}
+              className="text-gray-500 hover:text-gray-700"
             >
               Cancelar
-            </Button>
+            </button>
           </div>
         </div>
       ) : (

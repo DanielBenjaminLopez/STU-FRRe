@@ -1,5 +1,3 @@
-import Button from "./Button";
-
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
@@ -17,13 +15,19 @@ export default function PageHeader({
     <div className="flex items-center justify-between mb-8">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">{title}</h1>
-        {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
+        {subtitle && (
+          <span className="text-sm text-gray-500">{subtitle}</span>
+        )}
       </div>
 
       {onCreate && (
-        <Button variant="primary" size="md" onClick={onCreate}>
+        <button
+          type="button"
+          onClick={onCreate}
+          className="px-6 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
+        >
           {createLabel}
-        </Button>
+        </button>
       )}
     </div>
   );
