@@ -800,6 +800,7 @@ export default function MapaRaw({
       renderer.dispose();
       scene.clear();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
