@@ -27,6 +27,11 @@ interface DataFormModalProps {
   initialData?: Record<string, unknown>;
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   onClose: () => void;
+  onChange?: (
+    name: string,
+    value: unknown,
+    setFormData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
+  ) => void;
 }
 
 export default function DataFormModal({
@@ -35,6 +40,7 @@ export default function DataFormModal({
   initialData,
   onSubmit,
   onClose,
+  onChange,
 }: DataFormModalProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>(
     () =>
@@ -59,6 +65,9 @@ export default function DataFormModal({
 
   function handleChange(name: string, value: unknown) {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (onChange) {
+      onChange(name, value, setFormData);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {

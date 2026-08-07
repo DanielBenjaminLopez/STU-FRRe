@@ -318,7 +318,7 @@ function MateriasHorariosPage() {
         </div>
         <button
           onClick={() => setShowImportModal(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-xl transition-colors"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
         >
           Importar
         </button>

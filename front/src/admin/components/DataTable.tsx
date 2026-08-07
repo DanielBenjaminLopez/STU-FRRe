@@ -1,4 +1,5 @@
 import { useState } from "react";
+import FloatingBulkActionBar from "./FloatingBulkActionBar";
 
 export interface Column<T> {
   key: keyof T;
@@ -12,9 +13,13 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
+  onBulkDelete?: (selectedRows: T[]) => void;
+  onBulkToggleStatus?: (selectedRows: T[]) => void;
   isLoading?: boolean;
   searchPlaceholder?: string;
   label?: string;
+  hideCount?: boolean;
+  enableSelection?: boolean;
 }
 
 export default function DataTable<T extends { id: number }>({
@@ -22,13 +27,23 @@ export default function DataTable<T extends { id: number }>({
   columns,
   onEdit,
   onDelete,
+  onBulkDelete,
+  onBulkToggleStatus,
   isLoading,
   searchPlaceholder = "Buscar...",
   label = "elementos",
+  hideCount = false,
+  enableSelection: propsEnableSelection,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  const enableSelection =
+    Boolean(propsEnableSelection) ||
+    Boolean(onBulkDelete) ||
+    Boolean(onBulkToggleStatus);
 
   const filtered = data.filter((row) => {
     if (!search) return true;
@@ -47,6 +62,23 @@ export default function DataTable<T extends { id: number }>({
     return sortDir === "asc" ? cmp : -cmp;
   });
 
+  const allSelected =
+    sorted.length > 0 && sorted.every((row) => selectedIds.includes(row.id));
+
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(sorted.map((r) => r.id));
+    }
+  }
+
+  function toggleSelectRow(id: number) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  }
+
   function handleSort(key: keyof T) {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -58,23 +90,78 @@ export default function DataTable<T extends { id: number }>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-500">
-          {filtered.length} {label}
-        </span>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="border border-gray-200 rounded-2xl px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-black/10"
-        />
+      <div
+        className={`flex items-center ${hideCount ? "justify-end" : "justify-between"}`}
+      >
+        {!hideCount && (
+          <span className="text-sm text-gray-500">
+            {filtered.length} {label}
+          </span>
+        )}
+        <div className="relative w-64">
+          <svg
+            className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="w-full border border-gray-200 rounded-2xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+          />
+        </div>
       </div>
+
+      <FloatingBulkActionBar
+        selectedCount={selectedIds.length}
+        onToggleStatus={
+          onBulkToggleStatus
+            ? () => {
+                const selectedRows = sorted.filter((r) =>
+                  selectedIds.includes(r.id),
+                );
+                onBulkToggleStatus(selectedRows);
+                setSelectedIds([]);
+              }
+            : undefined
+        }
+        onDelete={
+          onBulkDelete
+            ? () => {
+                const selectedRows = sorted.filter((r) =>
+                  selectedIds.includes(r.id),
+                );
+                onBulkDelete(selectedRows);
+                setSelectedIds([]);
+              }
+            : undefined
+        }
+        onClearSelection={() => setSelectedIds([])}
+      />
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b-2 border-gray-100">
+              {enableSelection && (
+                <th className="px-4 py-3 text-left w-10">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black/10 cursor-pointer"
+                  />
+                </th>
+              )}
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
@@ -120,7 +207,11 @@ export default function DataTable<T extends { id: number }>({
             {!isLoading && sorted.length === 0 && (
               <tr>
                 <td
-                  colSpan={columns.length + ((onEdit || onDelete) ? 1 : 0)}
+                  colSpan={
+                    columns.length +
+                    (onEdit || onDelete ? 1 : 0) +
+                    (enableSelection ? 1 : 0)
+                  }
                   className="px-4 py-8 text-center text-gray-400"
                 >
                   No se encontraron {label}
@@ -132,8 +223,22 @@ export default function DataTable<T extends { id: number }>({
               sorted.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors"
+                  className={`border-b border-gray-100 last:border-0 transition-colors ${
+                    selectedIds.includes(row.id)
+                      ? "bg-gray-50/90"
+                      : "hover:bg-gray-50/50"
+                  }`}
                 >
+                  {enableSelection && (
+                    <td className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(row.id)}
+                        onChange={() => toggleSelectRow(row.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black/10 cursor-pointer"
+                      />
+                    </td>
+                  )}
                   {columns.map((col) => (
                     <td key={String(col.key)} className="px-4 py-3">
                       {col.render
@@ -151,8 +256,18 @@ export default function DataTable<T extends { id: number }>({
                             className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
                             title="Editar"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
                             </svg>
                           </button>
                         )}
@@ -163,8 +278,18 @@ export default function DataTable<T extends { id: number }>({
                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Eliminar"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
                             </svg>
                           </button>
                         )}

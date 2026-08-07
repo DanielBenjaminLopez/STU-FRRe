@@ -202,7 +202,7 @@ class HorarioCursadoResource(resources.ModelResource):
             or row.get('Curso')
         )
         if not comision_nombre:
-            raise ValidationError("El campo 'comision' o 'comision_nombre' es obligatorio.")
+            raise ValidationError("El campo 'comision' es obligatorio.")
 
         plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
         if not row.get('comision') or not isinstance(row.get('comision'), int):
@@ -226,7 +226,7 @@ class HorarioCursadoResource(resources.ModelResource):
             or row.get('Laboratorio')
         )
         if not espacio_val:
-            raise ValidationError("El campo 'espacio' o 'aula' es obligatorio.")
+            raise ValidationError("El campo 'espacio' es obligatorio.")
 
         if not Espacio.objects.filter(nombre=espacio_val).exists():
             raise ValidationError(f"No existe el espacio o aula '{espacio_val}' en la base de datos.")
@@ -244,7 +244,7 @@ class HorarioCursadoResource(resources.ModelResource):
             or row.get('DIA_SEMANA')
         )
         if not dia_val or not str(dia_val).strip():
-            raise ValidationError("El campo 'dia_semana' es obligatorio y no puede estar vacío.")
+            raise ValidationError("El campo 'dia de la semana' es obligatorio y no puede estar vacío.")
 
         dia_norm = normalizar_dia_semana(dia_val)
         if dia_norm not in ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']:

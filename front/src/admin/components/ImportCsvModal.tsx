@@ -144,7 +144,7 @@ export default function ImportCsvModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-none border border-gray-200/80 space-y-4 max-h-[90vh] flex flex-col">
-        <div>
+        <div className="pb-3 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">
             {step === "summary" ? "Resumen de Importación" : title}
           </h2>
@@ -236,7 +236,7 @@ export default function ImportCsvModal({
                   />
                 </svg>
                 <p className="text-sm text-gray-600 font-medium">
-                  Arrastrá y soltá tu archivo CSV
+                  Arrastrá tu archivo CSV aqui
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
                   o hacé click para seleccionarlo
@@ -302,49 +302,21 @@ export default function ImportCsvModal({
           </form>
         ) : (
           <div className="space-y-3.5 flex-1 flex flex-col min-h-0">
-            {/* Alerta de Error Atómico */}
-            {totales.errores > 0 && (
-              <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-3">
-                <svg
-                  className="w-5 h-5 text-red-500 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold">
-                    Importación fallida debido a errores
-                  </p>
-                  <p className="text-[11px] opacity-90 mt-0.5">
-                    Se detectaron {totales.errores} fila(s) con errores. Ningún
-                    registro fue guardado en la base de datos.
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Píldoras de Estadísticas Interactivas para Filtrar */}
-            <div className="grid grid-cols-4 gap-2 text-center">
+            <div className="grid grid-cols-4 gap-2.5 text-center">
               <button
                 type="button"
                 onClick={() =>
                   setFilterType(filterType === "new" ? null : "new")
                 }
-                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
                   filterType === "new"
                     ? "bg-emerald-100 border-emerald-300 ring-2 ring-emerald-400 text-emerald-950 font-semibold"
                     : "bg-emerald-50/80 border-emerald-100 text-emerald-800 hover:bg-emerald-100/60"
                 }`}
               >
-                <p className="text-lg font-bold">{totales.creados}</p>
-                <p className="text-[11px] font-medium opacity-80">Creados</p>
+                <p className="text-xl font-extrabold">{totales.creados}</p>
+                <p className="text-xs font-medium opacity-80">Creados</p>
               </button>
 
               <button
@@ -352,16 +324,14 @@ export default function ImportCsvModal({
                 onClick={() =>
                   setFilterType(filterType === "update" ? null : "update")
                 }
-                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
                   filterType === "update"
                     ? "bg-blue-100 border-blue-300 ring-2 ring-blue-400 text-blue-950 font-semibold"
                     : "bg-blue-50/80 border-blue-100 text-blue-800 hover:bg-blue-100/60"
                 }`}
               >
-                <p className="text-lg font-bold">{totales.actualizados}</p>
-                <p className="text-[11px] font-medium opacity-80">
-                  Actualizados
-                </p>
+                <p className="text-xl font-extrabold">{totales.actualizados}</p>
+                <p className="text-xs font-medium opacity-80">Actualizados</p>
               </button>
 
               <button
@@ -369,16 +339,14 @@ export default function ImportCsvModal({
                 onClick={() =>
                   setFilterType(filterType === "skip" ? null : "skip")
                 }
-                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
                   filterType === "skip"
                     ? "bg-gray-200 border-gray-400 ring-2 ring-gray-400 text-gray-950 font-semibold"
                     : "bg-gray-50 border-gray-200/70 text-gray-700 hover:bg-gray-100/80"
                 }`}
               >
-                <p className="text-lg font-bold">{totales.omitidos}</p>
-                <p className="text-[11px] font-medium opacity-80">
-                  Sin cambios
-                </p>
+                <p className="text-xl font-extrabold">{totales.omitidos}</p>
+                <p className="text-xs font-medium opacity-80">Sin cambios</p>
               </button>
 
               <button
@@ -386,14 +354,14 @@ export default function ImportCsvModal({
                 onClick={() =>
                   setFilterType(filterType === "error" ? null : "error")
                 }
-                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`p-3.5 rounded-2xl border text-center transition-all cursor-pointer ${
                   filterType === "error"
                     ? "bg-red-100 border-red-300 ring-2 ring-red-400 text-red-950 font-semibold"
                     : "bg-red-50/80 border-red-100 text-red-800 hover:bg-red-100/60"
                 }`}
               >
-                <p className="text-lg font-bold">{totales.errores}</p>
-                <p className="text-[11px] font-medium opacity-80">Errores</p>
+                <p className="text-xl font-extrabold">{totales.errores}</p>
+                <p className="text-xs font-medium opacity-80">Errores</p>
               </button>
             </div>
 
@@ -445,25 +413,25 @@ export default function ImportCsvModal({
                   return (
                     <div
                       key={idx}
-                      className="p-3.5 bg-white border border-gray-200/80 rounded-2xl text-xs flex flex-col gap-2"
+                      className="p-4.5 bg-white border border-gray-200/90 rounded-2xl flex flex-col gap-3"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-semibold text-gray-400 shrink-0">
+                          <span className="font-semibold text-gray-400 text-sm shrink-0">
                             #{item.fila}
                           </span>
-                          <span className="font-medium text-gray-900 truncate">
+                          <span className="font-semibold text-gray-900 text-sm truncate">
                             {materia}
                           </span>
                           {comision && (
-                            <span className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded-md text-[10px] font-medium shrink-0">
+                            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md text-xs font-medium shrink-0">
                               {comision}
                             </span>
                           )}
                         </div>
 
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                          className={`px-3 py-1 rounded-full text-xs font-semibold shrink-0 ${
                             item.tipo === "new"
                               ? "bg-emerald-100 text-emerald-800"
                               : item.tipo === "update"
@@ -483,11 +451,11 @@ export default function ImportCsvModal({
                         </span>
                       </div>
 
-                      <div className="text-gray-500 text-[11px] flex flex-wrap items-center gap-x-3.5 gap-y-1">
+                      <div className="text-gray-600 text-xs flex flex-wrap items-center gap-x-4 gap-y-1.5">
                         {espacio && (
-                          <span className="flex items-center gap-1 text-gray-600">
+                          <span className="flex items-center gap-1.5">
                             <svg
-                              className="w-3 h-3 text-gray-400 shrink-0"
+                              className="w-3.5 h-3.5 text-gray-400 shrink-0"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -510,9 +478,9 @@ export default function ImportCsvModal({
                         )}
 
                         {diaOFecha && (
-                          <span className="flex items-center gap-1 text-gray-600">
+                          <span className="flex items-center gap-1.5">
                             <svg
-                              className="w-3 h-3 text-gray-400 shrink-0"
+                              className="w-3.5 h-3.5 text-gray-400 shrink-0"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -529,9 +497,9 @@ export default function ImportCsvModal({
                         )}
 
                         {horario && (
-                          <span className="flex items-center gap-1 text-gray-600">
+                          <span className="flex items-center gap-1.5">
                             <svg
-                              className="w-3 h-3 text-gray-400 shrink-0"
+                              className="w-3.5 h-3.5 text-gray-400 shrink-0"
                               fill="none"
                               viewBox="0 0 24 24"
                               stroke="currentColor"
@@ -549,7 +517,7 @@ export default function ImportCsvModal({
                       </div>
 
                       {item.errores && item.errores.length > 0 && (
-                        <div className="mt-0.5 px-3 py-1.5 bg-red-50/70 border border-red-200/80 rounded-xl text-red-600 text-[11px] leading-snug">
+                        <div className="mt-0.5 p-3 bg-red-50/70 border border-red-200/80 rounded-xl text-red-600 text-xs leading-relaxed">
                           {item.errores.map((e, eIdx) => (
                             <p key={eIdx}>{formatErrorText(e)}</p>
                           ))}
@@ -562,7 +530,7 @@ export default function ImportCsvModal({
             </div>
 
             {/* Pie de modal */}
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-3 pt-1">
               <button
                 type="button"
                 onClick={onClose}
