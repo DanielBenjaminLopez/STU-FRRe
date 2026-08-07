@@ -1097,7 +1097,7 @@ export default function MapaRaw({
           </div>
         )}
         {!compact && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full px-16">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full px-16">
             <div className="flex flex-wrap gap-3 items-center text-xs border border-gray-200 bg-white/50 rounded-2xl p-4 justify-center">
               {Object.entries(TYPE_COLORS)
                 .filter(([key]) => key !== "otro")
