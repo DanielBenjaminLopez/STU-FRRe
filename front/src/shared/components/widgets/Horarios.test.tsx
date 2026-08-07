@@ -36,22 +36,23 @@ describe("Horarios", () => {
     cleanup();
   });
 
-  it("muestra el título y subtítulo", () => {
+  it("muestra el título", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [],
+      uniqueCarreras: [],
       loading: false,
       error: null,
     });
     render(<Horarios />);
     expect(screen.getByText("Horario general")).toBeInTheDocument();
-    expect(screen.getByText("Lista de clases")).toBeInTheDocument();
   });
 
   it("muestra estado de carga", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [],
+      uniqueCarreras: [],
       loading: true,
       error: null,
     });
@@ -63,6 +64,7 @@ describe("Horarios", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [],
+      uniqueCarreras: [],
       loading: false,
       error: "Error de conexión",
     });
@@ -74,6 +76,7 @@ describe("Horarios", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [mockClaseAhora],
       siguiente: [],
+      uniqueCarreras: ["ISI"],
       loading: false,
       error: null,
     });
@@ -90,6 +93,7 @@ describe("Horarios", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [mockClaseSiguiente],
+      uniqueCarreras: ["IEM"],
       loading: false,
       error: null,
     });
@@ -104,6 +108,7 @@ describe("Horarios", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [mockClaseSiguiente],
+      uniqueCarreras: ["IEM"],
       loading: false,
       error: null,
     });
@@ -117,6 +122,7 @@ describe("Horarios", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [mockClaseAhora],
       siguiente: [],
+      uniqueCarreras: ["ISI"],
       loading: false,
       error: null,
     });
@@ -128,6 +134,7 @@ describe("Horarios", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [],
+      uniqueCarreras: [],
       loading: false,
       error: null,
     });

@@ -165,7 +165,7 @@ describe("Home", () => {
     expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
-  it("muestra el badge de vinculado/pendiente", () => {
+  it("muestra el badge de vinculado/sin vincular", () => {
     mockTotems.mockReturnValue([vinculado, sinVincular]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);

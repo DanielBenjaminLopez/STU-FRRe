@@ -738,7 +738,10 @@ export default function MapaRaw({
     controls.maxAzimuthAngle = 0;
     controls.minPolarAngle = 0;
     controls.maxPolarAngle = Math.PI / 2.7;
-    if (compact) controls.maxPolarAngle = 0;
+    if (compact) {
+      controls.minPolarAngle = 0.8;
+      controls.maxPolarAngle = 0.8;
+    }
     controlsRef.current = controls;
     controls.enableDamping = true;
 
@@ -765,7 +768,7 @@ export default function MapaRaw({
     if (compact) {
       const camDistance = buildingSize * 0.9;
       camera.position.set(0, camDistance * 0.9, camDistance);
-      controls.target.set(0, 0, 0);
+      controls.target.set(1, -5, 0);
     } else {
       const camDistance = buildingSize * 1.2;
       camera.position.set(0, camDistance * 0.9, camDistance);
@@ -826,7 +829,10 @@ export default function MapaRaw({
     scene.add(group);
     buildingGroupRef.current = group;
 
-    buildFloorPlane(polygons, bounds, group);
+    if (!compact) {
+      buildFloorPlane(polygons, bounds, group);
+    }
+
     meshesRef.current = buildMeshes(polygons, bounds, group);
 
     if (USTED_AQUI_ENABLED && floor === "baja") {
@@ -834,7 +840,7 @@ export default function MapaRaw({
     } else {
       youAreHereRef.current = null;
     }
-  }, [polygons, bounds, floor]);
+  }, [polygons, bounds, floor, compact]);
 
   const highlightMesh = useCallback((id: string | null) => {
     meshesRef.current.forEach((meshes) => {
