@@ -9,8 +9,16 @@
   src: url("./assets/fonts/InterVariable.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./assets/fonts/Manrope.ttf") format("truetype");
+}
+
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 @theme {
@@ -24,4 +32,25 @@ body {
   --color-pink-200: #deaecc;
   --color-green-100: #c0f0d4;
   --color-green-200: #aae4c2;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #999;
+  border-radius: 16px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
 }

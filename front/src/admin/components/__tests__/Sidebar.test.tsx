@@ -51,12 +51,9 @@ describe("Sidebar", () => {
   it("renderiza todos los items de navegación", () => {
     render(<Sidebar />);
     expect(screen.getByText("Inicio")).toBeInTheDocument();
-    expect(screen.getByText("Carreras")).toBeInTheDocument();
-    expect(screen.getByText("Materias")).toBeInTheDocument();
     expect(screen.getByText("Horarios")).toBeInTheDocument();
     expect(screen.getByText("Mesas de examen")).toBeInTheDocument();
-    expect(screen.getByText("Noticias")).toBeInTheDocument();
-    expect(screen.getByText("Eventos")).toBeInTheDocument();
+    expect(screen.getByText("Noticias y Eventos")).toBeInTheDocument();
     expect(screen.getByText("Avisos")).toBeInTheDocument();
     expect(screen.getByText("Plantillas")).toBeInTheDocument();
   });
@@ -72,10 +69,10 @@ describe("Sidebar", () => {
     expect(mockLogout).toHaveBeenCalled();
   });
 
-  it("tiene 9 items de navegación", () => {
+  it("tiene 6 items de navegación", () => {
     render(<Sidebar />);
     const links = screen.getAllByRole("link");
-    expect(links.length).toBe(9);
+    expect(links.length).toBe(6);
   });
 
   it("tiene clase w-48 en el aside", () => {

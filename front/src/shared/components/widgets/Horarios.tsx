@@ -16,7 +16,7 @@ function ClaseRow({ clase }: { clase: Clase }) {
   const badgeColor = badgeColors[clase.carrera_codigo] ?? defaultBadgeColor;
 
   return (
-    <div className="flex flex-col justify-center gap-2 items-start w-full p-4 border border-gray-200 rounded-2xl">
+    <div className="flex flex-col justify-center gap-2 items-start w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
       <span className="text-xs font-medium">
         {clase.hora_inicio} - {clase.hora_fin}
       </span>
@@ -30,7 +30,7 @@ function ClaseRow({ clase }: { clase: Clase }) {
         >
           {clase.carrera_codigo}
         </div>
-        <div className="flex justify-center py-1 px-2 bg-gray-200 text-sm font-semibold rounded-2xl w-fit">
+        <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit">
           <span className="font-semibold">Aula {clase.aula}</span>
         </div>
       </div>
@@ -67,7 +67,7 @@ function VerButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="text-sm font-normal underline"
+      className="shadow-xs absolute top-1/2 -translate-y-1/2 right-0 text-sm font-medium bg-white/50 border border-gray-200 px-8 py-1 rounded-2xl"
     >
       Ver horario completo
     </button>
@@ -83,10 +83,10 @@ export default function Horarios() {
       {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
 
       {loading && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-gray-100 to-gray-200 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 items-center">
-            <span className="text-3xl font-semibold">Horario general</span>
-            <span className="text-2xl font-normal">Lista de clases</span>
+        <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+          <div className="flex flex-col gap-2 w-full">
+            <span className="text-xl font-semibold">Horario general</span>
+            {/* <span className="text-2xl font-normal">Lista de clases</span> */}
           </div>
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-gray-400">Cargando horarios...</span>
@@ -96,10 +96,10 @@ export default function Horarios() {
       )}
 
       {!loading && error && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-gray-300 to-gray-400 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 items-center">
-            <span className="text-3xl font-semibold">Horario general</span>
-            <span className="text-2xl font-normal">Lista de clases</span>
+        <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+          <div className="flex flex-col gap-2 w-full">
+            <span className="text-xl font-semibold">Horario general</span>
+            {/* <span className="text-2xl font-normal">Lista de clases</span> */}
           </div>
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-red-400 text-sm">{error}</span>
@@ -109,32 +109,36 @@ export default function Horarios() {
       )}
 
       {!loading && !error && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-gray-100 to-gray-200 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 items-center">
-            <span className="text-3xl font-semibold">Horario general</span>
-            <span className="text-2xl font-normal">Lista de clases</span>
+        <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+          <div className="relative flex flex-row gap-2 w-full">
+            <span className="text-xl font-semibold">Horario general</span>
+            <VerButton onClick={() => setShowFull(true)} />
+            {/* <span className="text-2xl font-normal">Lista de clases</span> */}
           </div>
           <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
-            <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8 h-full overflow-hidden">
-              <span className="w-full text-base font-semibold flex flex-col">
-                Cursando ahora
-              </span>
-              <ClaseList
-                clases={ahora}
-                emptyMessage="No hay clases en este momento"
-              />
+            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
+              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+                <span className="text-base font-normal flex flex-col">
+                  Cursando ahora
+                </span>
+                <ClaseList
+                  clases={ahora}
+                  emptyMessage="No hay clases en este momento"
+                />
+              </div>
             </div>
-            <div className="bg-white/70 rounded-4xl flex flex-col gap-3 items-center p-8 overflow-hidden">
-              <span className="w-full text-base font-semibold flex flex-col">
-                A continuación
-              </span>
-              <ClaseList
-                clases={siguiente}
-                emptyMessage="No hay más clases hoy"
-              />
+            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
+              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+                <span className="text-base font-normal flex flex-col">
+                  A continuación
+                </span>
+                <ClaseList
+                  clases={siguiente}
+                  emptyMessage="No hay más clases hoy"
+                />
+              </div>
             </div>
           </div>
-          <VerButton onClick={() => setShowFull(true)} />
         </div>
       )}
     </>

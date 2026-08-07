@@ -56,7 +56,7 @@ describe("Calendar", () => {
       error: null,
     });
     render(<Calendar />);
-    expect(screen.getByText("Calendario académico")).toBeInTheDocument();
+    expect(screen.getByText("Calendario")).toBeInTheDocument();
     expect(screen.getByText("Julio 2026")).toBeInTheDocument();
   });
 
@@ -109,17 +109,17 @@ describe("Calendar", () => {
     expect(screen.getByText("Feriado")).toBeInTheDocument();
   });
 
-  it("muestra el enlace 'Ver calendario completo'", () => {
+  it("muestra el botón 'Abrir calendario'", () => {
     mockUseCalendario.mockReturnValue({
       eventos: [],
       loading: false,
       error: null,
     });
     render(<Calendar />);
-    expect(screen.getByText("Ver calendario completo")).toBeInTheDocument();
+    expect(screen.getByText("Abrir calendario")).toBeInTheDocument();
   });
 
-  it("abre la vista completa al hacer click en 'Ver calendario completo'", () => {
+  it("abre la vista completa al hacer click en 'Abrir calendario'", () => {
     mockUseCalendario.mockReturnValue({
       eventos: [],
       loading: false,
@@ -129,7 +129,7 @@ describe("Calendar", () => {
 
     expect(screen.queryByTestId("calendar-full")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Ver calendario completo"));
+    fireEvent.click(screen.getByText("Abrir calendario"));
 
     expect(screen.getByTestId("calendar-full")).toBeInTheDocument();
   });

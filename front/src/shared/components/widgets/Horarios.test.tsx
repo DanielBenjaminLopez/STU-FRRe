@@ -36,7 +36,7 @@ describe("Horarios", () => {
     cleanup();
   });
 
-  it("muestra el título y subtítulo", () => {
+  it("muestra el título", () => {
     mockUseHorarios.mockReturnValue({
       ahora: [],
       siguiente: [],
@@ -45,7 +45,6 @@ describe("Horarios", () => {
     });
     render(<Horarios />);
     expect(screen.getByText("Horario general")).toBeInTheDocument();
-    expect(screen.getByText("Lista de clases")).toBeInTheDocument();
   });
 
   it("muestra estado de carga", () => {
