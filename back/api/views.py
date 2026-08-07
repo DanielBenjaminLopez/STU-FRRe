@@ -390,6 +390,7 @@ class MesaExamenViewSet(viewsets.ModelViewSet):
 class EventoViewSet(viewsets.ModelViewSet):
     queryset = Evento.objects.select_related('espacio').all()
     serializer_class = EventoSerializer
+    permission_classes = [AllowAny]
 
 
 class AvisoViewSet(viewsets.ModelViewSet):
