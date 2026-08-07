@@ -138,6 +138,36 @@ def validar_hora(hora_str, nombre_campo):
         raise ValidationError(f"Formato de hora inválido en '{nombre_campo}' ('{h_str}'). Debe ser HH:MM (ej: 08:00, 15:30).")
 
 
+def resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw=None):
+    if not carrera_nombre or not materia_nombre:
+        return None
+    c_str = str(carrera_nombre).strip()
+    m_str = str(materia_nombre).strip()
+
+    qs = PlanMateria.objects.filter(
+        carrera__nombre__icontains=c_str,
+        materia__nombre__iexact=m_str,
+    )
+    if not qs.exists():
+        # Fallback si el nombre de la carrera difiere ligeramente o es una sigla
+        qs = PlanMateria.objects.filter(materia__nombre__iexact=m_str)
+
+    if plan_estudio_raw and str(plan_estudio_raw).strip():
+        qs_plan = qs.filter(plan_estudio=str(plan_estudio_raw).strip())
+        if qs_plan.exists():
+            return qs_plan.first()
+
+    return qs.first()
+
+
+def resolver_comision(carrera_nombre, materia_nombre, comision_nombre, plan_estudio_raw=None):
+    pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw)
+    if not pm:
+        return None
+    c_nom = str(comision_nombre).strip()
+    return Comision.objects.filter(plan_materia=pm, nombre__iexact=c_nom).first()
+
+
 class HorarioCursadoResource(resources.ModelResource):
     comision = fields.Field(
         column_name='comision',
@@ -174,19 +204,14 @@ class HorarioCursadoResource(resources.ModelResource):
         if not comision_nombre:
             raise ValidationError("El campo 'comision' o 'comision_nombre' es obligatorio.")
 
-        plan_estudio = row.get('plan_estudio', '2023')
+        plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
         if not row.get('comision') or not isinstance(row.get('comision'), int):
-            try:
-                com = Comision.objects.get(
-                    plan_materia__carrera__nombre=carrera_nombre,
-                    plan_materia__materia__nombre=materia_nombre,
-                    plan_materia__plan_estudio=plan_estudio,
-                    nombre=comision_nombre,
-                )
+            com = resolver_comision(carrera_nombre, materia_nombre, comision_nombre, plan_estudio)
+            if com:
                 row['comision'] = com.id
-            except Comision.DoesNotExist:
+            else:
                 raise ValidationError(
-                    f"No existe la comisión '{comision_nombre}' para la materia '{materia_nombre}'."
+                    f"No existe la comisión '{comision_nombre}' para la materia '{materia_nombre}' (Carrera '{carrera_nombre}')."
                 )
 
         # 3. Validar Espacio / Aula
@@ -298,18 +323,14 @@ class MesaExamenResource(resources.ModelResource):
         if not carrera_nombre or not materia_nombre:
             raise ValidationError("Los campos 'carrera' y 'materia' son obligatorios.")
 
-        plan_estudio = row.get('plan_estudio', '2023')
+        plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
         if not row.get('plan_materia') or not isinstance(row.get('plan_materia'), int):
-            try:
-                pm = PlanMateria.objects.get(
-                    carrera__nombre=carrera_nombre,
-                    materia__nombre=materia_nombre,
-                    plan_estudio=plan_estudio,
-                )
+            pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio)
+            if pm:
                 row['plan_materia'] = pm.id
-            except PlanMateria.DoesNotExist:
+            else:
                 raise ValidationError(
-                    f"No existe la materia '{materia_nombre}' para la carrera '{carrera_nombre}' (Plan '{plan_estudio}')."
+                    f"No existe la materia '{materia_nombre}' para la carrera '{carrera_nombre}'."
                 )
 
         espacio_val = (

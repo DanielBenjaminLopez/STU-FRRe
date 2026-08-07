@@ -8,6 +8,26 @@ interface ImportCsvModalProps {
   onSuccess: (result: CsvImportResult) => void;
 }
 
+function formatErrorText(errorText: string) {
+  const parts = errorText.split("'");
+  if (parts.length === 1) return errorText;
+
+  return (
+    <span>
+      {parts.map((part, index) => {
+        if (index % 2 === 1) {
+          return (
+            <strong key={index} className="font-semibold text-red-700">
+              {part}
+            </strong>
+          );
+        }
+        return part;
+      })}
+    </span>
+  );
+}
+
 export default function ImportCsvModal({
   title,
   onClose,
@@ -531,7 +551,7 @@ export default function ImportCsvModal({
                       {item.errores && item.errores.length > 0 && (
                         <div className="mt-0.5 px-3 py-1.5 bg-red-50/70 border border-red-200/80 rounded-xl text-red-600 text-[11px] leading-snug">
                           {item.errores.map((e, eIdx) => (
-                            <p key={eIdx}>{e}</p>
+                            <p key={eIdx}>{formatErrorText(e)}</p>
                           ))}
                         </div>
                       )}
