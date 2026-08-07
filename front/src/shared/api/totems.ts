@@ -35,7 +35,7 @@ export async function createTotem(): Promise<CreateTotemResponse> {
 export async function vincularTotem(data: {
   codigo_vinculacion: string;
   nombre: string;
-  espacio_id: number;
+  espacio_id?: number;
 }): Promise<Totem> {
   return apiFetch<Totem>("/api/totems/vincular/", {
     method: "POST",

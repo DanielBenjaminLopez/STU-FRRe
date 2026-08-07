@@ -313,7 +313,7 @@ class TotemNuevoSerializer(serializers.Serializer):
 class VincularTotemSerializer(serializers.Serializer):
     codigo_vinculacion = serializers.CharField(max_length=10)
     nombre = serializers.CharField(max_length=150)
-    espacio_id = serializers.IntegerField()
+    espacio_id = serializers.IntegerField(required=False, allow_null=True)
 
     def validate_codigo_vinculacion(self, value):
         try:
@@ -333,6 +333,8 @@ class VincularTotemSerializer(serializers.Serializer):
         return value
 
     def validate_espacio_id(self, value):
+        if value is None:
+            return None
         if not Espacio.objects.filter(id=value).exists():
             raise serializers.ValidationError('El espacio seleccionado no existe.')
         return value
@@ -340,7 +342,7 @@ class VincularTotemSerializer(serializers.Serializer):
     def create(self, validated_data):
         totem = self._totem
         totem.nombre = validated_data['nombre']
-        totem.espacio_id = validated_data['espacio_id']
+        totem.espacio_id = validated_data.get('espacio_id')
         totem.vinculado = True
         totem.codigo_vinculacion = None
         totem.codigo_creado_en = None
