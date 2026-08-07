@@ -16,7 +16,7 @@ export default function FloatingBulkActionBar({
   return (
     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center bg-black text-white border border-gray-800 shadow-none rounded-2xl p-2 gap-3 transition-all animate-in fade-in slide-in-from-bottom-4 duration-200">
       {/* Cantidad Seleccionada */}
-      <div className="px-3 py-1.5 text-sm font-semibold text-blue-400 shrink-0 flex items-center gap-2 pr-4 border-r border-gray-800">
+      <div className="px-3 py-1.5 text-sm font-semibold text-blue-400 shrink-0 flex items-center justify-center min-w-[145px] tabular-nums pr-4 border-r border-gray-800">
         <span>{selectedCount} seleccionados</span>
       </div>
 

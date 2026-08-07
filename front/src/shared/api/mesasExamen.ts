@@ -1,6 +1,5 @@
 import { apiFetch, apiUpload } from "./client";
 import type { Espacio } from "./totems";
-import type { Materia } from "./materias";
 import type { CsvImportResult } from "./horariosAdmin";
 
 export interface MesaExamen {
@@ -65,16 +64,6 @@ export interface PlanMateriaDTO {
 
 export async function fetchPlanMaterias(): Promise<PlanMateriaDTO[]> {
   return apiFetch<PlanMateriaDTO[]>("/api/plan-materias/");
-}
-
-export async function fetchMateriasForSelect(): Promise<Materia[]> {
-  const list = await fetchPlanMaterias();
-  return list.map((pm) => ({
-    id: pm.id,
-    nombre: pm.carrera_nombre
-      ? `${pm.materia_nombre} (${pm.carrera_nombre})`
-      : pm.materia_nombre || `Materia #${pm.id}`,
-  }));
 }
 
 export async function fetchEspaciosForSelect(): Promise<Espacio[]> {

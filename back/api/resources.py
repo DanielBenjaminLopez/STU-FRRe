@@ -229,7 +229,7 @@ class HorarioCursadoResource(resources.ModelResource):
             raise ValidationError("El campo 'espacio' es obligatorio.")
 
         if not Espacio.objects.filter(nombre=espacio_val).exists():
-            raise ValidationError(f"No existe el espacio o aula '{espacio_val}' en la base de datos.")
+            raise ValidationError(f"No existe el espacio'{espacio_val}' en la base de datos.")
 
         row['espacio'] = espacio_val
 
