@@ -10,6 +10,7 @@ class Carrera(models.Model):
     ]
 
     nombre = models.CharField(max_length=200, unique=True)
+    codigo = models.CharField(max_length=10, unique=True, null=True, blank=True, help_text='Código abreviado (ej: ISI, IEM, IQ, LAR)')
     tipo = models.CharField(max_length=15, choices=TIPO, default='grado')
 
     class Meta:
@@ -18,7 +19,7 @@ class Carrera(models.Model):
         verbose_name_plural = 'Carreras'
 
     def __str__(self):
-        return self.nombre
+        return f'{self.codigo} - {self.nombre}'
 
 
 class Materia(models.Model):

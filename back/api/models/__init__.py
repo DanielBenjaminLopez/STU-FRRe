@@ -9,3 +9,4 @@ from .academico import (
     MesaExamen,
 )
 from .eventos import Evento, Aviso, Noticias
+from .calendario import EventoCalendario

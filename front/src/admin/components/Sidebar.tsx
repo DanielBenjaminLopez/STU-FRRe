@@ -6,6 +6,7 @@ const navItems = [
   { to: "/admin/horarios", label: "Horarios" },
   { to: "/admin/mesas-examen", label: "Mesas de examen" },
   { to: "/admin/noticias", label: "Noticias y Eventos" },
+  { to: "/admin/calendario-avisos", label: "Calendario" },
   { to: "/admin/avisos", label: "Avisos" },
   { to: "/admin/plantillas", label: "Plantillas" },
 ];

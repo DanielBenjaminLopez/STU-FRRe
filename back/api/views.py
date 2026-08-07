@@ -8,11 +8,13 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .authentication import TotemToken
 from .models import (
     Aviso,
     Carrera,
+    EventoCalendario,
     PlanMateria,
     Comision,
     Espacio,
@@ -29,6 +31,8 @@ from .models import (
 from .permissions import IsAdminOrSecretaria, IsTotem
 from .serializers import (
     AvisoSerializer,
+    CustomTokenObtainPairSerializer,
+    EventoCalendarioSerializer,
     PlanMateriaSerializer,
     CarreraSerializer,
     ComisionSerializer,
@@ -47,6 +51,10 @@ from .serializers import (
     WidgetSerializer,
     validar_solapamiento_payload,
 )
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class WidgetViewSet(viewsets.ModelViewSet):
@@ -199,6 +207,7 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
         'espacio',
     ).all()
     serializer_class = HorarioCursadoSerializer
+    permission_classes = [AllowAny]
 
 
 class MesaExamenViewSet(viewsets.ModelViewSet):
@@ -358,3 +367,57 @@ class EspacioListView(APIView):
         espacios = Espacio.objects.all().order_by("piso", "nombre")
         serializer = EspacioSerializer(espacios, many=True)
         return Response(serializer.data)
+
+
+class EventoCalendarioViewSet(viewsets.ModelViewSet):
+    queryset = EventoCalendario.objects.all()
+    serializer_class = EventoCalendarioSerializer
+    permission_classes = [AllowAny]
+
+
+class BulkCalendarView(APIView):
+    """Reemplaza todos los eventos de un año con una lista nueva."""
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def post(self, request):
+        eventos = request.data.get('eventos', [])
+        year = request.data.get('year')
+
+        if not eventos:
+            return Response(
+                {'detail': 'No se proporcionaron eventos.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            with transaction.atomic():
+                if year:
+                    EventoCalendario.objects.filter(
+                        fecha_inicio__year=year
+                    ).delete()
+                else:
+                    EventoCalendario.objects.all().delete()
+
+                created = []
+                for e in eventos:
+                    evento = EventoCalendario.objects.create(
+                        titulo=e.get('titulo', ''),
+                        tipo=e.get('tipo', 'otro'),
+                        fecha_inicio=e.get('fecha_inicio'),
+                        fecha_fin=e.get('fecha_fin') or None,
+                        todo_el_dia=e.get('todo_el_dia', True),
+                        color=e.get('color', ''),
+                        descripcion=e.get('descripcion', ''),
+                    )
+                    created.append(evento.id)
+
+            return Response({
+                'guardados': len(created),
+                'ids': created,
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'detail': f'Error al guardar eventos: {e}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

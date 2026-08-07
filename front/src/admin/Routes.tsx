@@ -6,6 +6,7 @@ import VincularTotem from "./pages/VincularTotem";
 import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
+import CalendarioAdminPage from "./pages/CalendarioAdminPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
 
@@ -50,6 +51,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <NoticiasPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/calendario-avisos"
+        element={
+          <ProtectedRoute>
+            <CalendarioAdminPage />
           </ProtectedRoute>
         }
       />

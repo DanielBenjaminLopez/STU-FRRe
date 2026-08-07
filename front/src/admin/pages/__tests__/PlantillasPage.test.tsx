@@ -55,6 +55,10 @@ vi.mock("../../../shared/components/widgets/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
 
+vi.mock("../../../shared/components/widgets/Mapa", () => ({
+  default: () => <div data-testid="mock-mapa">Mapa widget</div>,
+}));
+
 vi.mock("../../../shared/hooks/useTotemScale", () => ({
   useTotemScale: () => ({
     containerRef: { current: null },

@@ -4,7 +4,8 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    gcc libpq-dev libssl-dev netcat-openbsd && \
+    gcc libpq-dev libssl-dev netcat-openbsd \
+    tesseract-ocr tesseract-ocr-spa poppler-utils && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

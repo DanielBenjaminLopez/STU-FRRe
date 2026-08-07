@@ -7,6 +7,7 @@ from .models import (
     Comision,
     Espacio,
     Evento,
+    EventoCalendario,
     HorarioCursado,
     Materia,
     MesaExamen,
@@ -27,7 +28,7 @@ class CarreraResource(resources.ModelResource):
     class Meta:
         model = Carrera
         import_id_fields = ('nombre',)
-        fields = ('id', 'nombre')
+        fields = ('id', 'nombre', 'codigo')
 
 
 class MateriaResource(resources.ModelResource):
@@ -291,4 +292,21 @@ class TotemResource(resources.ModelResource):
             'vinculado',
             'config_pantalla',
             'creado_en',
+        )
+
+
+class EventoCalendarioResource(resources.ModelResource):
+    class Meta:
+        model = EventoCalendario
+        fields = (
+            'id',
+            'titulo',
+            'tipo',
+            'fecha_inicio',
+            'fecha_fin',
+            'todo_el_dia',
+            'color',
+            'descripcion',
+            'creado_en',
+            'actualizado_en',
         )

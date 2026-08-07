@@ -7,6 +7,7 @@ from .models import (
     Comision,
     Espacio,
     Evento,
+    EventoCalendario,
     HorarioCursado,
     Materia,
     MesaExamen,
@@ -23,6 +24,7 @@ from .resources import (
     ComisionResource,
     EspacioResource,
     EventoResource,
+    EventoCalendarioResource,
     HorarioCursadoResource,
     MateriaResource,
     MesaExamenResource,
@@ -77,8 +79,8 @@ class EspacioAdmin(ImportExportModelAdmin):
 @admin.register(Carrera)
 class CarreraAdmin(ImportExportModelAdmin):
     resource_class = CarreraResource
-    list_display = ['nombre']
-    search_fields = ['nombre']
+    list_display = ['codigo', 'nombre', 'tipo']
+    search_fields = ['nombre', 'codigo']
 
 
 @admin.register(Materia)
@@ -170,3 +172,11 @@ class NoticiasAdmin(ImportExportModelAdmin):
     resource_class = NoticiasResource
     list_display = ['titulo', 'fecha_publicacion', 'fecha_expiracion']
     search_fields = ['titulo', 'contenido']
+
+
+@admin.register(EventoCalendario)
+class EventoCalendarioAdmin(ImportExportModelAdmin):
+    resource_class = EventoCalendarioResource
+    list_display = ['titulo', 'tipo', 'fecha_inicio', 'fecha_fin', 'creado_en']
+    list_filter = ['tipo']
+    search_fields = ['titulo', 'descripcion']

@@ -4,21 +4,21 @@ interface UploadZoneProps {
   onFileSelected: (file: File) => void;
   disabled?: boolean;
   label?: string;
+  accept?: string;
 }
 
 export default function UploadZone({
   onFileSelected,
   disabled = false,
-  label = "Arrastrá un PDF con el cronograma de horarios",
+  label = "Arrastrá un archivo",
+  accept,
 }: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     (file: File) => {
-      if (file.type === "application/pdf") {
-        onFileSelected(file);
-      }
+      onFileSelected(file);
     },
     [onFileSelected],
   );
@@ -57,7 +57,7 @@ export default function UploadZone({
       <input
         ref={inputRef}
         type="file"
-        accept=".pdf"
+        accept={accept}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

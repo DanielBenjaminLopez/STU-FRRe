@@ -1,9 +1,11 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     Aviso,
     Carrera,
+    EventoCalendario,
     PlanMateria,
     Comision,
     Espacio,
@@ -174,7 +176,7 @@ class CarreraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Carrera
-        fields = ['id', 'nombre', 'tipo']
+        fields = ['id', 'nombre', 'codigo', 'tipo']
 
 
 class MateriaSerializer(serializers.ModelSerializer):
@@ -212,11 +214,14 @@ class ComisionSerializer(serializers.ModelSerializer):
 class HorarioCursadoSerializer(serializers.ModelSerializer):
     materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
     espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+    carrera_codigo = serializers.CharField(source='comision.plan_materia.carrera.codigo', read_only=True)
+    comision_nombre = serializers.CharField(source='comision.nombre', read_only=True)
 
     class Meta:
         model = HorarioCursado
         fields = [
-            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre', 'dia_semana',
+            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre',
+            'carrera_codigo', 'comision_nombre', 'dia_semana',
             'hora_inicio', 'hora_fin', 'activo',
         ]
 
@@ -356,3 +361,36 @@ class TotemSerializer(serializers.ModelSerializer):
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
+
+
+class EventoCalendarioSerializer(serializers.ModelSerializer):
+    es_rango = serializers.BooleanField(read_only=True)
+    documento_fuente_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventoCalendario
+        fields = [
+            'id', 'titulo', 'tipo', 'fecha_inicio', 'fecha_fin',
+            'es_rango', 'todo_el_dia', 'color', 'descripcion',
+            'documento_fuente', 'documento_fuente_url',
+            'creado_en', 'actualizado_en',
+        ]
+        read_only_fields = ['creado_en', 'actualizado_en']
+
+    def get_documento_fuente_url(self, obj):
+        if obj.documento_fuente:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.documento_fuente.url)
+            return obj.documento_fuente.url
+        return None
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except Exception:
+            raise serializers.ValidationError(
+                {"detail": "Usuario o contraseña incorrectos."}
+            )
