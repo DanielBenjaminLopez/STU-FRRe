@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0011_add_tipo_to_carrera'),
+        ('api', '0012_cargar_widgets_iniciales'),
     ]
 
     operations = [

@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0014_merge_20260805_2245'),
+        ('api', '0015_populate_carrera_codigo'),
     ]
 
     operations = [

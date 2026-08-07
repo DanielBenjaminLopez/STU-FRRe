@@ -35,7 +35,7 @@ def backwards(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0012_carrera_codigo'),
+        ('api', '0014_modifica_horarios_y_mesas'),
     ]
 
     operations = [
