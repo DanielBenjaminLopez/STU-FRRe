@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCalendario } from "../../hooks/useCalendario";
 import CalendarFull from "./CalendarFull";
 import { MesGrilla, LeyendaCalendario } from "./CalendarGrid";
+import { CalendarSkeleton } from "../ui/Skeleton";
 
 const MESES = [
   "Enero",
@@ -46,11 +47,7 @@ export default function Calendar() {
           </button>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center w-full h-full">
-            <span className="text-slate-600">Cargando eventos...</span>
-          </div>
-        )}
+        {loading && <CalendarSkeleton />}
 
         {!loading && error && (
           <div className="flex items-center justify-center w-full h-full">

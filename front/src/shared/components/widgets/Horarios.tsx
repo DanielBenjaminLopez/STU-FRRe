@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useHorarios } from "../../hooks/useHorarios";
 import type { Clase } from "../../api/horarios";
 import HorariosFull from "./HorariosFull";
+import { ClaseListSkeleton } from "../ui/Skeleton";
 
 const badgeColors: Record<string, string> = {
   ISI: "bg-cyan-100",
@@ -89,7 +90,7 @@ function VerButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="shadow-xs absolute top-1/2 -translate-y-1/2 right-0 text-sm font-medium bg-white/50 border border-gray-200 px-8 py-1 rounded-2xl"
+      className="shadow-xs text-sm font-medium bg-white/50 border border-gray-200 px-8 py-1 rounded-2xl"
     >
       Ver horario completo
     </button>
@@ -200,11 +201,22 @@ export default function Horarios() {
 
       {loading && (
         <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Horario general</span>
           </div>
-          <div className="flex items-center justify-center w-full h-full">
-            <span className="text-gray-400">Cargando horarios...</span>
+          <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
+            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
+              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+                <span className="text-base font-normal">Cursando ahora</span>
+                <ClaseListSkeleton count={2} />
+              </div>
+            </div>
+            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
+              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+                <span className="text-base font-normal">A continuación</span>
+                <ClaseListSkeleton count={2} />
+              </div>
+            </div>
           </div>
           <VerButton onClick={() => setShowFull(true)} />
         </div>
@@ -212,7 +224,7 @@ export default function Horarios() {
 
       {!loading && error && (
         <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Horario general</span>
             {/* <span className="text-2xl font-normal">Lista de clases</span> */}
           </div>
@@ -225,7 +237,7 @@ export default function Horarios() {
 
       {!loading && !error && (
         <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="relative flex flex-row items-center gap-2 w-full">
+          <div className="relative flex flex-row items-center gap-2 w-full justify-between">
             <span className="text-xl font-semibold shrink-0">
               Horario general
             </span>

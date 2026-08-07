@@ -20,7 +20,7 @@ export default function Mapa() {
             Ver mapa
           </button>
         </div>
-        <div className="flex items-center justify-center w-full h-full bg-white/50 rounded-4xl pointer-events-none border border-gray-200">
+        <div className="flex items-center justify-center w-full h-full bg-white/50 rounded-4xl pointer-events-none border border-gray-200 overflow-hidden">
           <MapaRaw compact />
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { ScheduleGridSkeleton } from "../ui/Skeleton";
 
 export interface ScheduleItem {
   id: number;
@@ -370,7 +371,6 @@ export default function ScheduleGrid({
   loading,
   error,
   onClose,
-  loadingText = "Cargando...",
 }: ScheduleGridProps) {
   const [view] = useState<ViewMode>("list");
   const [date, setDate] = useState(() => new Date());
@@ -532,7 +532,7 @@ export default function ScheduleGrid({
             <button
               type="button"
               onClick={onClose}
-              className="text-sm font-normal underline text-gray-500 hover:text-gray-700"
+              className="shadow-xs text-sm font-medium bg-white/50 border border-gray-200 px-8 py-1 rounded-2xl"
             >
               Cerrar
             </button>
@@ -594,11 +594,7 @@ export default function ScheduleGrid({
         )}
 
         <div className="flex-1 overflow-hidden">
-          {loading && (
-            <div className="flex items-center justify-center h-full">
-              <span className="text-gray-400">{loadingText}</span>
-            </div>
-          )}
+          {loading && <ScheduleGridSkeleton />}
 
           {error && (
             <div className="flex items-center justify-center h-full">

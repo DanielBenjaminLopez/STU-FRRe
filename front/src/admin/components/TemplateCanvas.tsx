@@ -16,12 +16,14 @@ import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
+import Noticias from "../../shared/components/widgets/Noticias";
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
   examenes: Examenes,
   calendario: Calendar,
   mapa: Mapa,
+  noticias: Noticias,
 };
 
 interface PlacedWidgetProps {

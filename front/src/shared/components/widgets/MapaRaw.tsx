@@ -371,7 +371,7 @@ function buildIdMarker(
     img.src = iconUrl;
   } else {
     let fontSize = 120;
-    ctx.font = `bold ${fontSize}px Inter`;
+    ctx.font = `bold ${fontSize}px sans-serif`;
     const maxTextWidth = 200;
     const textWidth = ctx.measureText(id).width;
     if (textWidth > maxTextWidth) {
@@ -379,7 +379,7 @@ function buildIdMarker(
         20,
         Math.floor((fontSize * maxTextWidth) / textWidth),
       );
-      ctx.font = `bold ${fontSize}px Inter`;
+      ctx.font = `bold ${fontSize}px sans-serif`;
     }
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "center";
@@ -605,7 +605,7 @@ function buildYouAreHerePin(
   labelCanvas.height = 400;
   const ctx = labelCanvas.getContext("2d")!;
   ctx.fillStyle = "#ef4444";
-  ctx.font = "bold 320px Inter";
+  ctx.font = "bold 320px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("Ud. está aquí", 1000, 200);
@@ -766,11 +766,11 @@ export default function MapaRaw({
     // scene.add(floorPlane);
 
     if (compact) {
-      const camDistance = buildingSize * 0.9;
+      const camDistance = buildingSize * 0.5;
       camera.position.set(0, camDistance * 0.9, camDistance);
-      controls.target.set(1, -5, 0);
+      controls.target.set(8.5, 0, 8);
     } else {
-      const camDistance = buildingSize * 1.2;
+      const camDistance = buildingSize * 1.4;
       camera.position.set(0, camDistance * 0.9, camDistance);
       controls.target.set(1, 0, 0);
     }
@@ -950,10 +950,10 @@ export default function MapaRaw({
 
   return (
     <div
-      className={`flex grow flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
+      className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
     >
-      <div className="w-full flex flex-col px-16 gap-4">
-        {!compact && (
+      {!compact && (
+        <div className="w-full flex flex-col px-16 gap-4">
           <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
             <span className="text-center font-medium">Busqueda</span>
             <div className="flex gap-4 overflow-hidden">
@@ -1033,8 +1033,6 @@ export default function MapaRaw({
               </div>
             </div>
           </div>
-        )}
-        {!compact && (
           <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
             <span className="font-normal text-sm">Piso actual</span>
             <div className="flex gap-2">
@@ -1064,12 +1062,12 @@ export default function MapaRaw({
               ))}
             </div>
           </div>
-        )}
-      </div>
-      <div ref={containerRef} className="relative w-full">
+        </div>
+      )}
+      <div ref={containerRef} className="relative w-full h-full">
         <canvas
           ref={canvasRef}
-          className={`w-full cursor-grab active:cursor-grabbing overflow-visible ${compact ? "aspect-4/3" : "aspect-square"}`}
+          className={`w-full cursor-grab active:cursor-grabbing overflow-visible ${compact ? "" : "aspect-square"}`}
           onClick={handleClick}
           onPointerMove={handlePointerMove}
         />
@@ -1099,7 +1097,7 @@ export default function MapaRaw({
           </div>
         )}
         {!compact && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full px-16">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full px-16">
             <div className="flex flex-wrap gap-3 items-center text-xs border border-gray-200 bg-white/50 rounded-2xl p-4 justify-center">
               {Object.entries(TYPE_COLORS)
                 .filter(([key]) => key !== "otro")
