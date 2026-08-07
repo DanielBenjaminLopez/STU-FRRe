@@ -199,7 +199,9 @@ export default function CalendarioAdminPage() {
             disabled={pending.length === 0 || saving}
             className="px-6 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {saving ? "Guardando..." : `Guardar (${pending.length})`}
+            {saving
+              ? "Guardando..."
+              : `Guardar${pending.length > 0 ? ` (${pending.length})` : ""}`}
           </button>
         </div>
       </div>

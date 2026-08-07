@@ -53,7 +53,7 @@ function ClaseRow({ clase }: { clase: Clase }) {
           <span className={badgeTextColor}>{clase.carrera_codigo}</span>
         </div>
         <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit">
-          <span className="font-semibold">Aula {clase.aula}</span>
+          <span className="font-semibold">{clase.aula}</span>
         </div>
       </div>
     </div>
@@ -225,10 +225,16 @@ export default function Horarios() {
 
       {!loading && !error && (
         <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="relative flex flex-row gap-2 w-full">
-            <span className="text-xl font-semibold">Horario general</span>
+          <div className="relative flex flex-row items-center gap-2 w-full">
+            <span className="text-xl font-semibold shrink-0">
+              Horario general
+            </span>
+            <CarreraFilter
+              carreras={uniqueCarreras}
+              selected={selectedCarrera}
+              onSelect={handleSelect}
+            />
             <VerButton onClick={() => setShowFull(true)} />
-            {/* <span className="text-2xl font-normal">Lista de clases</span> */}
           </div>
           <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
             <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
@@ -237,7 +243,7 @@ export default function Horarios() {
                   Cursando ahora
                 </span>
                 <ClaseList
-                  clases={ahora}
+                  clases={ahoraFiltrado}
                   emptyMessage="No hay clases en este momento"
                 />
               </div>
@@ -248,7 +254,7 @@ export default function Horarios() {
                   A continuación
                 </span>
                 <ClaseList
-                  clases={siguiente}
+                  clases={siguienteFiltrado}
                   emptyMessage="No hay más clases hoy"
                 />
               </div>

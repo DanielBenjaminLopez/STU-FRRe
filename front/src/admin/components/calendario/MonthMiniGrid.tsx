@@ -126,7 +126,7 @@ export default function MonthMiniGrid({
             onMouseEnter={() => c.day > 0 && onDayMouseEnter(c.key)}
             onClick={() => c.day > 0 && !selectingRange && onDayClick(c.key)}
             className={`
-              h-4 flex items-center justify-center text-[9px] select-none rounded-md
+              h-4 flex items-center justify-center text-[11px] select-none rounded-md
               ${c.day === 0 ? "" : "cursor-pointer hover:bg-gray-100"}
               ${c.mark ? getBgClass(c.mark, c.inRange) : c.inRange ? "bg-sky-100 rounded-none" : ""}
               ${!c.mark && !c.inRange && c.day !== 0 ? "text-slate-700" : ""}
