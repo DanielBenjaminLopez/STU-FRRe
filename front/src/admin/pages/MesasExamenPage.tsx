@@ -80,19 +80,6 @@ const columns: Column<MesaExamen>[] = [
       return num ? `${num}º llamado` : "-";
     },
   },
-  {
-    key: "activo",
-    label: "Estado",
-    render: (val) => (
-      <span
-        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-          val ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
-        }`}
-      >
-        {val ? "Activo" : "Inactivo"}
-      </span>
-    ),
-  },
 ];
 
 export default function MesasExamenPage() {
@@ -116,9 +103,6 @@ export default function MesasExamenPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<MesaExamen | null>(null);
   const [deletingRow, setDeletingRow] = useState<MesaExamen | null>(null);
-  const [bulkDeletingRows, setBulkDeletingRows] = useState<MesaExamen[] | null>(
-    null,
-  );
   const [showImportModal, setShowImportModal] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -331,47 +315,6 @@ export default function MesasExamenPage() {
     }
   }
 
-  async function handleBulkToggleStatus(rows: MesaExamen[]) {
-    try {
-      setLoading(true);
-      await Promise.all(
-        rows.map((row) => updateMesaExamen(row.id, { activo: !row.activo })),
-      );
-      setSuccess(`Estado actualizado para ${rows.length} mesas de examen.`);
-      setTimeout(() => setSuccess(""), 3000);
-      await loadData();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al actualizar estados",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function handleBulkDeleteRequest(rows: MesaExamen[]) {
-    setBulkDeletingRows(rows);
-  }
-
-  async function handleConfirmBulkDelete() {
-    try {
-      if (bulkDeletingRows && bulkDeletingRows.length > 0) {
-        await Promise.all(bulkDeletingRows.map((r) => deleteMesaExamen(r.id)));
-        setSuccess(
-          `${bulkDeletingRows.length} mesas de examen eliminadas con éxito.`,
-        );
-        setTimeout(() => setSuccess(""), 3000);
-        await loadData();
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar registros",
-      );
-    } finally {
-      setBulkDeletingRows(null);
-    }
-  }
-
   return (
     <div className="p-8">
       <PageHeader
@@ -394,8 +337,6 @@ export default function MesasExamenPage() {
         columns={columns}
         onEdit={handleEdit}
         onDelete={(row) => setDeletingRow(row)}
-        onBulkDelete={handleBulkDeleteRequest}
-        onBulkToggleStatus={handleBulkToggleStatus}
         isLoading={loading}
         searchPlaceholder="Buscar"
         hideCount
@@ -446,15 +387,6 @@ export default function MesasExamenPage() {
           itemName={`${deletingRow.materia_nombre} - ${deletingRow.turno} Llamado ${deletingRow.llamado}`}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeletingRow(null)}
-        />
-      )}
-
-      {bulkDeletingRows && (
-        <ConfirmDeleteModal
-          title="Eliminar mesas de examen seleccionadas"
-          itemName={`${bulkDeletingRows.length} mesas de examen seleccionadas`}
-          onConfirm={handleConfirmBulkDelete}
-          onClose={() => setBulkDeletingRows(null)}
         />
       )}
 
