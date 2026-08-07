@@ -74,7 +74,7 @@ export default function Noticias() {
       )}
 
       {!loading && !error && feed.length > 0 && (
-        <div className="col-span-4 row-span-2 relative rounded-4xl overflow-hidden">
+        <div className="relative w-full h-full col-span-4 row-span-2 rounded-4xl overflow-hidden">
           {feed.map((item, i) => {
             const isActive = i === current;
             const badgeLabel =
@@ -94,7 +94,7 @@ export default function Noticias() {
             return (
               <div
                 key={`${item.tipo}-${item.id}`}
-                className={`absolute inset-0 transition-opacity duration-500 ${
+                className={`absolute inset-0 transition-opacity duration-500 rounded-4xl overflow-hidden ${
                   isActive ? "opacity-100 z-10" : "opacity-0 z-0"
                 }`}
               >

@@ -84,7 +84,7 @@ export default function Examenes() {
       {showFull && <ExamenesFull onClose={() => setShowFull(false)} />}
 
       {loading && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="flex flex-col gap-2 w-full">
             <span className="text-xl font-semibold">Horario de examenes</span>
           </div>
@@ -107,7 +107,7 @@ export default function Examenes() {
       )}
 
       {!loading && error && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="flex flex-col gap-2 w-full">
             <span className="text-xl font-semibold">Horario de examenes</span>
             {/* <span className="text-2xl font-normal">Lista de clases</span> */}
@@ -120,7 +120,7 @@ export default function Examenes() {
       )}
 
       {!loading && !error && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="relative flex flex-row gap-2 w-full">
             <span className="text-xl font-semibold">Horario de examenes</span>
             <VerButton onClick={() => setShowFull(true)} />

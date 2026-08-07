@@ -13,12 +13,14 @@ import {
   plantillaDTOToLocal,
   type WidgetType,
 } from "../pages/plantillas/types";
+import Noticias from "../../shared/components/widgets/Noticias";
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
   examenes: Examenes,
   calendario: Calendar,
   mapa: Mapa,
+  noticias: Noticias,
 };
 
 export default function TotemPreview() {

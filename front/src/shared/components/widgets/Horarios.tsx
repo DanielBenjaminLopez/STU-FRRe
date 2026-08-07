@@ -200,7 +200,7 @@ export default function Horarios() {
       {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
 
       {loading && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Horario general</span>
           </div>
@@ -223,7 +223,7 @@ export default function Horarios() {
       )}
 
       {!loading && error && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Horario general</span>
             {/* <span className="text-2xl font-normal">Lista de clases</span> */}
@@ -236,7 +236,7 @@ export default function Horarios() {
       )}
 
       {!loading && !error && (
-        <div className="col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="relative flex flex-row items-center gap-2 w-full justify-between">
             <span className="text-xl font-semibold shrink-0">
               Horario general
