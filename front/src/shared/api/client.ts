@@ -39,6 +39,33 @@ export async function totemFetch<T>(
   return request<T>(url, options, "Totem");
 }
 
+export async function apiUpload<T>(url: string, file: File): Promise<T> {
+  const token = getAdminToken();
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new ApiError(
+      extractErrorMessage(body, response.status),
+      response.status,
+    );
+  }
+
+  return response.json();
+}
+
 function firstMessage(value: unknown): string | null {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) {

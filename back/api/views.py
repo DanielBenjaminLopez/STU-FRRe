@@ -29,6 +29,8 @@ from .models import (
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
+from .resources import HorarioCursadoResource, MesaExamenResource
+import tablib
 from .serializers import (
     AvisoSerializer,
     CustomTokenObtainPairSerializer,
@@ -200,6 +202,84 @@ class ComisionViewSet(viewsets.ModelViewSet):
         return qs
 
 
+def traducir_error(err_str):
+    if not err_str:
+        return "Error no especificado al procesar la fila."
+
+    msg = str(err_str)
+    # Limpiar envoltorios de excepciones como [ValidationError(['...'])]
+    if "ValidationError" in msg or "['" in msg or "[\"" in msg:
+        import re
+        msg = re.sub(r"^\[?ValidationError\(\[?\s*", "", msg)
+        msg = re.sub(r"\]?\s*\)?\]?$", "", msg)
+
+    msg = msg.strip("['\" ]")
+    if (msg.startswith("'") and msg.endswith("'")) or (msg.startswith('"') and msg.endswith('"')):
+        msg = msg[1:-1]
+
+    err_lower = msg.lower()
+
+    if "matching query does not exist" in err_lower or "doesnotexist" in err_lower:
+        if "comision" in err_lower:
+            return "No existe la comisión especificada en la base de datos."
+        if "espacio" in err_lower or "aula" in err_lower:
+            return "No existe el espacio o aula especificada en la base de datos."
+        if "planmateria" in err_lower or "materia" in err_lower:
+            return "No existe la materia o plan de estudio en el sistema."
+        return "Un registro relacionado no existe en el sistema."
+
+    if "unique constraint failed" in err_lower or "already exists" in err_lower or "duplicad" in err_lower:
+        return "Ya existe un registro con la misma comisión, espacio, día y horario."
+
+    if "null value in column" in err_lower or "cannot be null" in err_lower or "is required" in err_lower:
+        return "Esta fila contiene campos requeridos vacíos."
+
+    if "invalid literal for int" in err_lower or "valueerror" in err_lower:
+        return "Formato de número o valor inválido en uno de los campos."
+
+    msg = msg.replace("Row ", "Fila ").replace("Line ", "Fila ").replace("Column ", "Columna ")
+    return msg
+
+
+def extract_import_details(result, dataset):
+    detalles = []
+    base_errs = [traducir_error(e.error) for e in result.base_errors] if getattr(result, 'base_errors', None) else []
+    dataset_dicts = dataset.dict if hasattr(dataset, 'dict') else []
+
+    row_errors_count = 0
+
+    for idx, row_res in enumerate(result.rows, start=1):
+        tipo = row_res.import_type  # 'new', 'update', 'skip', 'error'
+        row_dict = dataset_dicts[idx - 1] if (idx - 1 < len(dataset_dicts)) else {}
+
+        errs = []
+        if getattr(row_res, 'errors', None):
+            for e in row_res.errors:
+                errs.append(traducir_error(e.error))
+        if getattr(row_res, 'validation_error', None):
+            errs.append(traducir_error(row_res.validation_error))
+
+        if errs:
+            tipo = "error"
+            row_errors_count += 1
+
+        detalles.append({
+            "fila": idx,
+            "tipo": tipo,
+            "datos": row_dict,
+            "errores": errs,
+        })
+
+    totales = {
+        "creados": result.totals.get("new", 0),
+        "actualizados": result.totals.get("update", 0),
+        "omitidos": result.totals.get("skip", 0),
+        "errores": row_errors_count + len(base_errs),
+    }
+
+    return totales, detalles, base_errs
+
+
 class HorarioCursadoViewSet(viewsets.ModelViewSet):
     queryset = HorarioCursado.objects.select_related(
         'comision__plan_materia__materia',
@@ -209,6 +289,50 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
     serializer_class = HorarioCursadoSerializer
     permission_classes = [AllowAny]
 
+    @action(detail=False, methods=['post'], url_path='importar-csv')
+    def importar_csv(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {"detail": "No se proporcionó ningún archivo CSV."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            content = file_obj.read().decode('utf-8-sig')
+            dataset = tablib.Dataset().load(content, format='csv')
+            resource = HorarioCursadoResource()
+
+            with transaction.atomic():
+                result = resource.import_data(dataset, dry_run=False)
+                totales, detalles, base_errs = extract_import_details(result, dataset)
+
+                if totales["errores"] > 0:
+                    transaction.set_rollback(True)
+                    totales["creados"] = 0
+                    totales["actualizados"] = 0
+                    detail_msg = f"Importación fallida. Se detectaron {totales['errores']} errores. No se guardó ningún registro."
+                    es_exitosa = False
+                else:
+                    detail_msg = f"Importación exitosa. {totales['creados']} creados, {totales['actualizados']} actualizados."
+                    es_exitosa = True
+
+            return Response({
+                "detail": detail_msg,
+                "exito": es_exitosa,
+                "totales": totales,
+                "detalles": detalles,
+                "errors": base_errs,
+                "creados": totales["creados"],
+                "actualizados": totales["actualizados"],
+                "total": len(dataset),
+            })
+        except Exception as e:
+            return Response(
+                {"detail": f"Error al procesar el archivo CSV: {e}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class MesaExamenViewSet(viewsets.ModelViewSet):
     queryset = MesaExamen.objects.select_related(
@@ -217,6 +341,50 @@ class MesaExamenViewSet(viewsets.ModelViewSet):
         'espacio',
     ).all()
     serializer_class = MesaExamenSerializer
+
+    @action(detail=False, methods=['post'], url_path='importar-csv')
+    def importar_csv(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {"detail": "No se proporcionó ningún archivo CSV."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            content = file_obj.read().decode('utf-8-sig')
+            dataset = tablib.Dataset().load(content, format='csv')
+            resource = MesaExamenResource()
+
+            with transaction.atomic():
+                result = resource.import_data(dataset, dry_run=False)
+                totales, detalles, base_errs = extract_import_details(result, dataset)
+
+                if totales["errores"] > 0:
+                    transaction.set_rollback(True)
+                    totales["creados"] = 0
+                    totales["actualizados"] = 0
+                    detail_msg = f"Importación fallida. Se detectaron {totales['errores']} errores. No se guardó ningún registro."
+                    es_exitosa = False
+                else:
+                    detail_msg = f"Importación exitosa. {totales['creados']} creados, {totales['actualizados']} actualizados."
+                    es_exitosa = True
+
+            return Response({
+                "detail": detail_msg,
+                "exito": es_exitosa,
+                "totales": totales,
+                "detalles": detalles,
+                "errors": base_errs,
+                "creados": totales["creados"],
+                "actualizados": totales["actualizados"],
+                "total": len(dataset),
+            })
+        except Exception as e:
+            return Response(
+                {"detail": f"Error al procesar el archivo CSV: {e}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class EventoViewSet(viewsets.ModelViewSet):

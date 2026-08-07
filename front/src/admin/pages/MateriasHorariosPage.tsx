@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
-import UploadZone from "../components/UploadZone";
-import PreviewTable, { type PreviewRow } from "../components/PreviewTable";
+import ImportCsvModal from "../components/ImportCsvModal";
+
 import {
   fetchPlanMaterias,
   deletePlanMateria,
@@ -17,12 +17,27 @@ import {
   DIAS_SEMANA,
   NIVELES,
   MODALIDADES,
+  importarHorariosCSV,
+  type CsvImportResult,
   type PlanMateria,
   type Comision,
   type HorarioCursado,
 } from "../../shared/api/horariosAdmin";
 import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
 import type { Espacio } from "../../shared/api/totems";
+
+function formatDia(dia: string): string {
+  if (!dia) return "";
+  const key = dia
+    .toLowerCase()
+    .trim()
+    .replace(/á/g, "a")
+    .replace(/é/g, "e")
+    .replace(/í/g, "i")
+    .replace(/ó/g, "o")
+    .replace(/ú/g, "u");
+  return DIA_LABELS[key] || dia;
+}
 
 const DIA_LABELS: Record<string, string> = {
   lunes: "Lun",
@@ -31,6 +46,7 @@ const DIA_LABELS: Record<string, string> = {
   jueves: "Jue",
   viernes: "Vie",
   sabado: "Sab",
+  domingo: "Dom",
 };
 
 interface HorarioGroup {
@@ -51,8 +67,6 @@ interface PlanMateriaConComisiones extends PlanMateria {
   expanded?: boolean;
 }
 
-type UploadStep = "idle" | "uploading" | "preview" | "done";
-
 function MateriasHorariosPage() {
   const [data, setData] = useState<PlanMateriaConComisiones[]>([]);
   const [carreras, setCarreras] = useState<Carrera[]>([]);
@@ -61,6 +75,9 @@ function MateriasHorariosPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+
+  void error;
+  void success;
 
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
@@ -76,13 +93,7 @@ function MateriasHorariosPage() {
     name: string;
   } | null>(null);
 
-  const [uploadStep, setUploadStep] = useState<UploadStep>("idle");
-  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
-  const [previewMeta, setPreviewMeta] = useState({
-    fileName: "",
-    totalHorarios: 0,
-    totalPaginas: 0,
-  });
+  const [showImportModal, setShowImportModal] = useState(false);
 
   function reload() {
     setReloadKey((k) => k + 1);
@@ -271,49 +282,6 @@ function MateriasHorariosPage() {
     }
   }
 
-  function handleUploadFile(_file: File) {
-    setUploadStep("uploading");
-    setTimeout(() => {
-      setPreviewRows([
-        {
-          anio: "primero",
-          comision: "K1",
-          materia: "Analisis Matematico I",
-          dia: "lunes",
-          hora_inicio: "08:00",
-          hora_fin: "09:30",
-          aula: "A101",
-        },
-        {
-          anio: "primero",
-          comision: "K1",
-          materia: "Analisis Matematico I",
-          dia: "miercoles",
-          hora_inicio: "08:00",
-          hora_fin: "09:30",
-          aula: "A101",
-        },
-      ]);
-      setPreviewMeta({
-        fileName: _file.name,
-        totalHorarios: 2,
-        totalPaginas: 1,
-      });
-      setUploadStep("preview");
-    }, 1500);
-  }
-
-  function handleConfirmImport(rows: PreviewRow[]) {
-    setUploadStep("done");
-    setSuccess(
-      `Importación simulada: ${rows.length} horarios procesados. La implementación real se agregará pronto.`,
-    );
-    setTimeout(() => {
-      setSuccess("");
-      setUploadStep("idle");
-    }, 4000);
-  }
-
   if (loading) {
     return (
       <div className="p-8">
@@ -341,70 +309,20 @@ function MateriasHorariosPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Horarios de cursado</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Gestión de comisiones y horarios por materia
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Horarios de cursado</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Gestión de comisiones y horarios por materia
+          </p>
+        </div>
+        <button
+          onClick={() => setShowImportModal(true)}
+          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
+        >
+          Importar
+        </button>
       </div>
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
-          {success}
-        </div>
-      )}
-
-      {uploadStep === "idle" && (
-        <div className="mb-6">
-          <UploadZone onFileSelected={handleUploadFile} />
-        </div>
-      )}
-
-      {uploadStep === "uploading" && (
-        <div className="mb-6 px-4 py-8 bg-gray-50 border border-gray-200 rounded-2xl text-center">
-          <svg
-            className="animate-spin h-6 w-6 text-gray-400 mx-auto mb-3"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
-          </svg>
-          <p className="text-sm text-gray-600">Procesando PDF con OCR...</p>
-        </div>
-      )}
-
-      {uploadStep === "preview" && (
-        <div className="mb-6">
-          <PreviewTable
-            fileName={previewMeta.fileName}
-            totalHorarios={previewMeta.totalHorarios}
-            totalPaginas={previewMeta.totalPaginas}
-            rows={previewRows}
-            onConfirm={handleConfirmImport}
-            onCancel={() => {
-              setUploadStep("idle");
-              setPreviewRows([]);
-            }}
-          />
-        </div>
-      )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 space-y-4">
         <div className="flex items-center gap-2">
@@ -537,6 +455,19 @@ function MateriasHorariosPage() {
           itemName={deleteTarget.name}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportCsvModal
+          title="Importar horarios de cursado"
+          onClose={() => setShowImportModal(false)}
+          onImport={importarHorariosCSV}
+          onSuccess={(res: CsvImportResult) => {
+            setSuccess(res.detail || "Importación realizada exitosamente.");
+            reload();
+            setTimeout(() => setSuccess(""), 4000);
+          }}
         />
       )}
     </div>
@@ -967,9 +898,7 @@ function ComisionBlock({
               key={i}
               className="flex items-center gap-2 text-xs text-gray-600"
             >
-              <span className="font-medium w-8">
-                {DIA_LABELS[g.dia_semana]}
-              </span>
+              <span className="font-medium w-8">{formatDia(g.dia_semana)}</span>
               <span>
                 {g.hora_inicio.slice(0, 5)} - {g.hora_fin.slice(0, 5)}
               </span>
@@ -982,7 +911,7 @@ function ComisionBlock({
                 onClick={() =>
                   onDeleteHorarioGroup(
                     g.horario_ids,
-                    `${DIA_LABELS[g.dia_semana]} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
+                    `${formatDia(g.dia_semana)} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
                   )
                 }
                 className="ml-auto text-gray-400 hover:text-red-500"

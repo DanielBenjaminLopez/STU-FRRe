@@ -369,3 +369,87 @@ class TotemKioscoAPITestCase(TestCase):
         response = self.client.get("/api/totems/me/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["id"], self.totem.id)
+
+
+class CsvImportAPITestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_csv", email="admin_csv@test.com", password="password123"
+        )
+        admin_group, _ = Group.objects.get_or_create(name="admin")
+        self.admin_user.groups.add(admin_group)
+        self.client.force_authenticate(user=self.admin_user)
+
+    def test_importar_horarios_csv_sin_archivo(self):
+        response = self.client.post("/api/horarios/importar-csv/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_importar_mesas_examen_csv_sin_archivo(self):
+        response = self.client.post("/api/mesas-examen/importar-csv/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_importar_horarios_csv_sin_duplicados(self):
+        from io import BytesIO
+        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+
+        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
+        mat = Materia.objects.create(nombre="Física I")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        com = Comision.objects.create(plan_materia=pm, nombre="K1")
+        esp = Espacio.objects.create(nombre="Aula 10", tipo="aula", piso=1)
+
+        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas,Física I,K1,Aula 10,lunes,08:00,10:00,2023\nSistemas,Física I,K1,Aula 10,lunes,08:00,10:00,2023\n"
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "horarios.csv"
+
+        response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(HorarioCursado.objects.count(), 1)
+
+    def test_importar_horarios_diferente_espacio_misma_comision(self):
+        from io import BytesIO
+        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+
+        car = Carrera.objects.create(nombre="ISI", tipo="grado")
+        mat = Materia.objects.create(nombre="SGBD")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        Espacio.objects.create(nombre="Lab 5", tipo="laboratorio", piso=1)
+        Espacio.objects.create(nombre="Lab 6", tipo="laboratorio", piso=1)
+
+        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nISI,SGBD,Curso 1,Lab 5,martes,18:10,22:45,2023\nISI,SGBD,Curso 1,Lab 6,martes,18:10,22:45,2023\n"
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "horarios.csv"
+
+        response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(HorarioCursado.objects.count(), 2)
+
+    def test_importar_horarios_csv_con_errores_falla_atomicamente(self):
+        from io import BytesIO
+        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+
+        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
+        mat = Materia.objects.create(nombre="Análisis Numérico")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        Espacio.objects.create(nombre="Aula 1.1", tipo="aula", piso=1)
+
+        csv_content = (
+            "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\n"
+            "Sistemas,Materia Inexistente 99,Curso 1,Aula 1.1,Lunes,08:00,10:00,2023\n"
+            "Sistemas,Análisis Numérico,Curso 1,Aula Fantasma 999,Lunes,15:50,18:05,2023\n"
+            "Sistemas,Análisis Numérico,Curso 1,Aula 1.1,,15:50,18:05,2023\n"
+            "Sistemas,Análisis Numérico,Curso 1,Aula 1.1,Lunes,hora_invalida,18:05,2023\n"
+            ",,Curso 1,Aula 1.1,Lunes,15:50,18:05,2023\n"
+        )
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "errores_importacion.csv"
+
+        response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        res_data = response.json()
+        self.assertEqual(res_data["totales"]["errores"], 5)
+        self.assertEqual(res_data["totales"]["creados"], 0)
+        self.assertEqual(HorarioCursado.objects.count(), 0)
