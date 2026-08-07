@@ -8,19 +8,13 @@ import {
 } from "@testing-library/react";
 import VincularTotem from "../VincularTotem";
 
-const {
-  mockFetchEspacios,
-  mockVincularTotem,
-  mockNavigate,
-  mockRefresh,
-  mockSetSelectedId,
-} = vi.hoisted(() => ({
-  mockFetchEspacios: vi.fn(),
-  mockVincularTotem: vi.fn(),
-  mockNavigate: vi.fn(),
-  mockRefresh: vi.fn(),
-  mockSetSelectedId: vi.fn(),
-}));
+const { mockVincularTotem, mockNavigate, mockRefresh, mockSetSelectedId } =
+  vi.hoisted(() => ({
+    mockVincularTotem: vi.fn(),
+    mockNavigate: vi.fn(),
+    mockRefresh: vi.fn(),
+    mockSetSelectedId: vi.fn(),
+  }));
 
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
@@ -37,28 +31,22 @@ vi.mock("../../../shared/context/TotemContext", () => ({
 }));
 
 vi.mock("../../../shared/api/totems", () => ({
-  fetchEspacios: mockFetchEspacios,
   vincularTotem: mockVincularTotem,
 }));
 
 describe("VincularTotem", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchEspacios.mockResolvedValue([
-      { id: 1, nombre: "Hall Central", tipo: "hall", piso: 0 },
-    ]);
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it("renderiza el formulario de vinculación", async () => {
+  it("renderiza el formulario de vinculación", () => {
     render(<VincularTotem />);
-    await screen.findByRole("option", { name: /Hall Central/ });
     expect(screen.getByLabelText("Código de vinculación")).toBeInTheDocument();
     expect(screen.getByLabelText("Nombre del tótem")).toBeInTheDocument();
-    expect(screen.getByLabelText("Espacio")).toBeInTheDocument();
   });
 
   it("vincula el tótem, navega a plantillas con recienVinculado y setSelectedId", async () => {
@@ -67,16 +55,11 @@ describe("VincularTotem", () => {
 
     render(<VincularTotem />);
 
-    await screen.findByRole("option", { name: /Hall Central/ });
-
     fireEvent.change(screen.getByLabelText("Código de vinculación"), {
       target: { value: "34735" },
     });
     fireEvent.change(screen.getByLabelText("Nombre del tótem"), {
       target: { value: "Tótem Hall" },
-    });
-    fireEvent.change(screen.getByLabelText("Espacio"), {
-      target: { value: "1" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Vincular tótem" }));
 
@@ -86,7 +69,6 @@ describe("VincularTotem", () => {
     expect(mockVincularTotem).toHaveBeenCalledWith({
       codigo_vinculacion: "34735",
       nombre: "Tótem Hall",
-      espacio_id: 1,
     });
     expect(mockSetSelectedId).toHaveBeenCalledWith("3");
     expect(mockRefresh).toHaveBeenCalled();
@@ -106,16 +88,11 @@ describe("VincularTotem", () => {
 
     render(<VincularTotem />);
 
-    await screen.findByRole("option", { name: /Hall Central/ });
-
     fireEvent.change(screen.getByLabelText("Código de vinculación"), {
       target: { value: "99999" },
     });
     fireEvent.change(screen.getByLabelText("Nombre del tótem"), {
       target: { value: "Tótem Hall" },
-    });
-    fireEvent.change(screen.getByLabelText("Espacio"), {
-      target: { value: "1" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Vincular tótem" }));
 

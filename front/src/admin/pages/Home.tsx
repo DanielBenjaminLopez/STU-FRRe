@@ -35,9 +35,11 @@ export default function Home() {
     });
   }, []);
 
-  const sortedTotems = [...totems].sort((a, b) =>
-    String(a.id) === selectedId ? -1 : String(b.id) === selectedId ? 1 : 0,
-  );
+  const sortedTotems = [...totems]
+    .filter((t) => t.vinculado)
+    .sort((a, b) =>
+      String(a.id) === selectedId ? -1 : String(b.id) === selectedId ? 1 : 0,
+    );
 
   const espacioOptions = espacios.map((e) => ({
     value: e.id,

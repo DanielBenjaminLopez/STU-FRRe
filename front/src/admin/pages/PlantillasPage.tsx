@@ -603,7 +603,7 @@ export default function PlantillasPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-2xl shadow-lg">
+        <div className="fixed bottom-20 right-6 z-50 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-2xl shadow-lg">
           {toast}
         </div>
       )}
