@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0016_eventocalendario'),
+        ('api', '0017_cargar_widget_noticias'),
     ]
 
     operations = [
