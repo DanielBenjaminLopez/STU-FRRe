@@ -4,7 +4,12 @@ import type {
 } from "../../../shared/api/plantillas";
 import type { WidgetDTO } from "../../../shared/api/widgets";
 
-export type WidgetType = "horarios" | "examenes" | "calendario" | "mapa";
+export type WidgetType =
+  | "horarios"
+  | "examenes"
+  | "calendario"
+  | "mapa"
+  | "noticias";
 
 export interface WidgetDefinition {
   type: WidgetType;
@@ -42,6 +47,13 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     colSpan: 2,
     rowSpan: 2,
     color: "from-orange-100 to-orange-200",
+  },
+  noticias: {
+    type: "noticias",
+    label: "Noticias",
+    colSpan: 4,
+    rowSpan: 2,
+    color: "from-purple-100 to-purple-200",
   },
 };
 

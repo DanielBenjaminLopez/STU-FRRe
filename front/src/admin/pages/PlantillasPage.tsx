@@ -16,6 +16,7 @@ import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
+import Noticias from "../../shared/components/widgets/Noticias";
 import { fetchWidgets } from "../../shared/api/widgets";
 import { updateTotem } from "../../shared/api/totems";
 import { useTotem } from "../../shared/context/TotemContext";
@@ -45,6 +46,7 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   examenes: Examenes,
   calendario: Calendar,
   mapa: Mapa,
+  noticias: Noticias,
 };
 
 function makeId(): string {
@@ -467,6 +469,7 @@ export default function PlantillasPage() {
               examenes: Examenes,
               calendario: Calendar,
               mapa: Mapa,
+              noticias: Noticias,
             }}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
