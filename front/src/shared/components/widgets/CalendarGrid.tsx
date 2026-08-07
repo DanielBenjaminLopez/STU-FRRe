@@ -3,6 +3,7 @@ import type {
   EventoCalendario,
   TipoEventoCalendario,
 } from "../../api/calendario";
+import { CalendarGridSkeleton } from "../ui/Skeleton";
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                               */
@@ -317,7 +318,6 @@ export default function CalendarGrid({
   loading,
   error,
   onClose,
-  loadingText = "Cargando...",
 }: CalendarGridProps) {
   const [anio] = useState(() => new Date().getFullYear());
   const [eventoSeleccionado, setEventoSeleccionado] =
@@ -371,11 +371,7 @@ export default function CalendarGrid({
         </div>
 
         <div className="flex-1 overflow-auto p-8">
-          {loading && (
-            <div className="flex items-center justify-center h-full">
-              <span className="text-gray-400">{loadingText}</span>
-            </div>
-          )}
+          {loading && <CalendarGridSkeleton />}
 
           {error && (
             <div className="flex items-center justify-center h-full">
