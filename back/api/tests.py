@@ -453,3 +453,25 @@ class CsvImportAPITestCase(TestCase):
         self.assertEqual(res_data["totales"]["errores"], 5)
         self.assertEqual(res_data["totales"]["creados"], 0)
         self.assertEqual(HorarioCursado.objects.count(), 0)
+
+    def test_importar_horarios_csv_sin_espacio_exitoso(self):
+        from io import BytesIO
+        from api.models import Carrera, Materia, PlanMateria, Comision, HorarioCursado
+
+        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
+        mat = Materia.objects.create(nombre="Diseño de Sistemas")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+
+        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas,Diseño de Sistemas,Curso 1,,Miércoles,15:30,17:00,2023\n"
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "horarios_sin_espacio.csv"
+
+        response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        res_data = response.json()
+        self.assertEqual(res_data["totales"]["creados"], 1)
+        self.assertEqual(res_data["totales"]["errores"], 0)
+        self.assertEqual(HorarioCursado.objects.count(), 1)
+        h = HorarioCursado.objects.first()
+        self.assertIsNone(h.espacio)

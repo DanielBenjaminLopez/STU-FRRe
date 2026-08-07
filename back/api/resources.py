@@ -215,7 +215,7 @@ class HorarioCursadoResource(resources.ModelResource):
                     f"No existe la comisión '{comision_nombre}' para la materia '{materia_nombre}' (Carrera '{carrera_nombre}')."
                 )
 
-        # 3. Validar Espacio / Aula
+        # 3. Validar Espacio / Aula (opcional)
         espacio_val = (
             row.get('espacio')
             or row.get('aula')
@@ -226,13 +226,13 @@ class HorarioCursadoResource(resources.ModelResource):
             or row.get('laboratorio')
             or row.get('Laboratorio')
         )
-        if not espacio_val:
-            raise ValidationError("El campo 'espacio' es obligatorio.")
-
-        if not Espacio.objects.filter(nombre=espacio_val).exists():
-            raise ValidationError(f"No existe el espacio'{espacio_val}' en la base de datos.")
-
-        row['espacio'] = espacio_val
+        if espacio_val and str(espacio_val).strip():
+            espacio_str = str(espacio_val).strip()
+            if not Espacio.objects.filter(nombre=espacio_str).exists():
+                raise ValidationError(f"No existe el espacio '{espacio_str}' en la base de datos.")
+            row['espacio'] = espacio_str
+        else:
+            row['espacio'] = None
 
         # 4. Validar Día de la semana
         dia_val = (

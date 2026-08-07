@@ -1,5 +1,4 @@
 import { useState } from "react";
-import FloatingBulkActionBar from "./FloatingBulkActionBar";
 
 export interface Column<T> {
   key: keyof T;
@@ -13,13 +12,10 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
-  onBulkDelete?: (selectedRows: T[]) => void;
-  onBulkToggleStatus?: (selectedRows: T[]) => void;
   isLoading?: boolean;
   searchPlaceholder?: string;
   label?: string;
   hideCount?: boolean;
-  enableSelection?: boolean;
 }
 
 export default function DataTable<T extends { id: number }>({
@@ -27,23 +23,14 @@ export default function DataTable<T extends { id: number }>({
   columns,
   onEdit,
   onDelete,
-  onBulkDelete,
-  onBulkToggleStatus,
   isLoading,
   searchPlaceholder = "Buscar...",
   label = "elementos",
   hideCount = false,
-  enableSelection: propsEnableSelection,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-  const enableSelection =
-    Boolean(propsEnableSelection) ||
-    Boolean(onBulkDelete) ||
-    Boolean(onBulkToggleStatus);
 
   const filtered = data.filter((row) => {
     if (!search) return true;
@@ -61,23 +48,6 @@ export default function DataTable<T extends { id: number }>({
     const cmp = String(aVal).localeCompare(String(bVal), "es");
     return sortDir === "asc" ? cmp : -cmp;
   });
-
-  const allSelected =
-    sorted.length > 0 && sorted.every((row) => selectedIds.includes(row.id));
-
-  function toggleSelectAll() {
-    if (allSelected) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(sorted.map((r) => r.id));
-    }
-  }
-
-  function toggleSelectRow(id: number) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  }
 
   function handleSort(key: keyof T) {
     if (sortKey === key) {
@@ -121,47 +91,10 @@ export default function DataTable<T extends { id: number }>({
         </div>
       </div>
 
-      <FloatingBulkActionBar
-        selectedCount={selectedIds.length}
-        onToggleStatus={
-          onBulkToggleStatus
-            ? () => {
-                const selectedRows = sorted.filter((r) =>
-                  selectedIds.includes(r.id),
-                );
-                onBulkToggleStatus(selectedRows);
-                setSelectedIds([]);
-              }
-            : undefined
-        }
-        onDelete={
-          onBulkDelete
-            ? () => {
-                const selectedRows = sorted.filter((r) =>
-                  selectedIds.includes(r.id),
-                );
-                onBulkDelete(selectedRows);
-                setSelectedIds([]);
-              }
-            : undefined
-        }
-        onClearSelection={() => setSelectedIds([])}
-      />
-
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b-2 border-gray-100">
-              {enableSelection && (
-                <th className="px-4 py-3 text-left w-10">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
-                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black/10 cursor-pointer"
-                  />
-                </th>
-              )}
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
@@ -207,11 +140,7 @@ export default function DataTable<T extends { id: number }>({
             {!isLoading && sorted.length === 0 && (
               <tr>
                 <td
-                  colSpan={
-                    columns.length +
-                    (onEdit || onDelete ? 1 : 0) +
-                    (enableSelection ? 1 : 0)
-                  }
+                  colSpan={columns.length + (onEdit || onDelete ? 1 : 0)}
                   className="px-4 py-8 text-center text-gray-400"
                 >
                   No se encontraron {label}
@@ -223,22 +152,8 @@ export default function DataTable<T extends { id: number }>({
               sorted.map((row) => (
                 <tr
                   key={row.id}
-                  className={`border-b border-gray-100 last:border-0 transition-colors ${
-                    selectedIds.includes(row.id)
-                      ? "bg-gray-50/90"
-                      : "hover:bg-gray-50/50"
-                  }`}
+                  className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors"
                 >
-                  {enableSelection && (
-                    <td className="px-4 py-3 w-10">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(row.id)}
-                        onChange={() => toggleSelectRow(row.id)}
-                        className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black/10 cursor-pointer"
-                      />
-                    </td>
-                  )}
                   {columns.map((col) => (
                     <td key={String(col.key)} className="px-4 py-3">
                       {col.render
