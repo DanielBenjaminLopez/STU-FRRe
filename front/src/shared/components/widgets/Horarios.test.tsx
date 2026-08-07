@@ -81,7 +81,7 @@ describe("Horarios", () => {
       error: null,
     });
     render(<Horarios />);
-    expect(screen.getAllByText("ISI").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("ISI")).toBeInTheDocument();
     expect(screen.getByText(/\[K2\.1\]/)).toBeInTheDocument();
     expect(
       screen.getByText("Algoritmos y Estructuras de Datos"),
@@ -98,7 +98,7 @@ describe("Horarios", () => {
       error: null,
     });
     render(<Horarios />);
-    expect(screen.getAllByText("IEM").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("IEM")).toBeInTheDocument();
     expect(screen.getByText(/\[M1\.1\]/)).toBeInTheDocument();
     expect(screen.getByText("Física II")).toBeInTheDocument();
     expect(screen.getByText(/10:00.*-.*12:00/)).toBeInTheDocument();
