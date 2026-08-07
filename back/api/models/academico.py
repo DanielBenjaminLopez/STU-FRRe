@@ -147,6 +147,8 @@ class HorarioCursado(models.Model):
         'Espacio',
         on_delete=models.CASCADE,
         related_name='horarios',
+        null=True,
+        blank=True,
     )
     dia_semana = models.CharField(max_length=15, choices=DIA_SEMANA)
     hora_inicio = models.TimeField()

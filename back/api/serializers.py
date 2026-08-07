@@ -213,9 +213,17 @@ class ComisionSerializer(serializers.ModelSerializer):
         
 class HorarioCursadoSerializer(serializers.ModelSerializer):
     materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
-    espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+    espacio_nombre = serializers.SerializerMethodField()
     carrera_codigo = serializers.CharField(source='comision.plan_materia.carrera.codigo', read_only=True)
     comision_nombre = serializers.CharField(source='comision.nombre', read_only=True)
+    espacio = serializers.PrimaryKeyRelatedField(
+        queryset=Espacio.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+    def get_espacio_nombre(self, obj):
+        return str(obj.espacio) if obj.espacio else ""
 
     class Meta:
         model = HorarioCursado
