@@ -198,82 +198,60 @@ export default function Horarios() {
   return (
     <>
       {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
-
-      {loading && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 w-full justify-between">
-            <span className="text-xl font-semibold">Horario general</span>
-          </div>
-          <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
-            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
-              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-                <span className="text-base font-normal">Cursando ahora</span>
-                <ClaseListSkeleton count={2} />
-              </div>
-            </div>
-            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
-              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-                <span className="text-base font-normal">A continuación</span>
-                <ClaseListSkeleton count={2} />
-              </div>
-            </div>
-          </div>
+      <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="relative flex flex-row items-center gap-2 w-full justify-between">
+          <span className="text-xl font-semibold shrink-0">
+            Horario general
+          </span>
+          <CarreraFilter
+            carreras={uniqueCarreras}
+            selected={selectedCarrera}
+            onSelect={handleSelect}
+          />
           <VerButton onClick={() => setShowFull(true)} />
         </div>
-      )}
-
-      {!loading && error && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="flex flex-col gap-2 w-full justify-between">
-            <span className="text-xl font-semibold">Horario general</span>
-            {/* <span className="text-2xl font-normal">Lista de clases</span> */}
-          </div>
+        {!loading && error && (
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-red-400 text-sm">{error}</span>
           </div>
-          <VerButton onClick={() => setShowFull(true)} />
-        </div>
-      )}
-
-      {!loading && !error && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-          <div className="relative flex flex-row items-center gap-2 w-full justify-between">
-            <span className="text-xl font-semibold shrink-0">
-              Horario general
-            </span>
-            <CarreraFilter
-              carreras={uniqueCarreras}
-              selected={selectedCarrera}
-              onSelect={handleSelect}
-            />
-            <VerButton onClick={() => setShowFull(true)} />
-          </div>
-          <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
-            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
-              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-                <span className="text-base font-normal flex flex-col">
-                  Cursando ahora
-                </span>
+        )}
+        <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
+          <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
+            <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+              <span className="text-base font-normal flex flex-col">
+                Cursando ahora
+              </span>
+              {loading && <ClaseListSkeleton count={2} />}
+              {!loading && (
                 <ClaseList
                   clases={ahoraFiltrado}
                   emptyMessage="No hay clases en este momento"
                 />
-              </div>
+              )}
+              {!loading && error && (
+                <span className="text-red-400 text-sm">{error}</span>
+              )}
             </div>
-            <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
-              <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-                <span className="text-base font-normal flex flex-col">
-                  A continuación
-                </span>
+          </div>
+          <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
+            <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+              <span className="text-base font-normal flex flex-col">
+                A continuación
+              </span>
+              {loading && <ClaseListSkeleton count={2} />}
+              {!loading && (
                 <ClaseList
                   clases={siguienteFiltrado}
                   emptyMessage="No hay más clases hoy"
                 />
-              </div>
+              )}
+              {!loading && error && (
+                <span className="text-red-400 text-sm">{error}</span>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 }
