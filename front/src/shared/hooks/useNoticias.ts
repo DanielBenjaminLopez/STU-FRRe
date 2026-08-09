@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchFeed, type ContenidoFeed } from "../api/noticias";
+import { useTotemRealtime } from "../context/TotemRealtimeContext";
 
 const REFRESH_MS = 5 * 60_000;
 const TICK_MS = 30_000;
@@ -9,11 +10,15 @@ export function useNoticias() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  const realtimeEvent = useTotemRealtime();
+  const relevantEvent =
+    realtimeEvent?.resource === "noticias" ? realtimeEvent : null;
 
   useEffect(() => {
     mountedRef.current = true;
 
     async function load() {
+      if (realtimeEvent && !relevantEvent) return;
       try {
         const data = await fetchFeed();
         if (mountedRef.current) {
@@ -39,7 +44,7 @@ export function useNoticias() {
       clearInterval(refreshTimer);
       clearInterval(tickTimer);
     };
-  }, []);
+  }, [relevantEvent]);
 
   return { feed, loading, error };
 }

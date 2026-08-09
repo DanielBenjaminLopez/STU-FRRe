@@ -7,4 +7,8 @@ websocket_urlpatterns = [
         r'^ws/totem/(?P<codigo>\w+)/$',
         consumers.TotemConsumer.as_asgi(),
     ),
+    re_path(
+        r'^ws/totem-config/$',
+        consumers.TotemConfigConsumer.as_asgi(),
+    ),
 ]

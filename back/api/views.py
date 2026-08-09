@@ -29,6 +29,27 @@ from .models import (
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
+from .realtime import notify_content, notify_totems
+
+
+class RealtimeContentMixin:
+    content_resource = None
+
+    def _notify_content(self):
+        if self.content_resource:
+            transaction.on_commit(lambda: notify_content(self.content_resource))
+
+    def perform_create(self, serializer):
+        serializer.save()
+        self._notify_content()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        self._notify_content()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        self._notify_content()
 from .resources import HorarioCursadoResource, MesaExamenResource
 import tablib
 from .serializers import (
@@ -86,6 +107,11 @@ class PlantillaViewSet(viewsets.ModelViewSet):
     serializer_class = PlantillaSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
 
+    def _notify_assigned_totems(self, plantilla):
+        notify_totems(
+            plantilla.totems.filter(vinculado=True).values_list('id', flat=True)
+        )
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.totems.exists():
@@ -128,6 +154,7 @@ class PlantillaViewSet(viewsets.ModelViewSet):
                     for datos in posiciones
                 ]
             )
+            transaction.on_commit(lambda: self._notify_assigned_totems(plantilla))
 
         plantilla_actualizada = Plantilla.objects.prefetch_related(
             'widgets_posiciones__widget'
@@ -280,7 +307,8 @@ def extract_import_details(result, dataset):
     return totales, detalles, base_errs
 
 
-class HorarioCursadoViewSet(viewsets.ModelViewSet):
+class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+    content_resource = 'horarios'
     queryset = HorarioCursado.objects.select_related(
         'comision__plan_materia__materia',
         'comision__plan_materia__carrera',
@@ -317,6 +345,9 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
                     detail_msg = f"Importación exitosa. {totales['creados']} creados, {totales['actualizados']} actualizados."
                     es_exitosa = True
 
+                if es_exitosa:
+                    transaction.on_commit(lambda: notify_content('horarios'))
+
             return Response({
                 "detail": detail_msg,
                 "exito": es_exitosa,
@@ -334,7 +365,8 @@ class HorarioCursadoViewSet(viewsets.ModelViewSet):
             )
 
 
-class MesaExamenViewSet(viewsets.ModelViewSet):
+class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+    content_resource = 'examenes'
     queryset = MesaExamen.objects.select_related(
         'plan_materia__materia',
         'plan_materia__carrera',
@@ -370,6 +402,9 @@ class MesaExamenViewSet(viewsets.ModelViewSet):
                     detail_msg = f"Importación exitosa. {totales['creados']} creados, {totales['actualizados']} actualizados."
                     es_exitosa = True
 
+                if es_exitosa:
+                    transaction.on_commit(lambda: notify_content('examenes'))
+
             return Response({
                 "detail": detail_msg,
                 "exito": es_exitosa,
@@ -387,18 +422,21 @@ class MesaExamenViewSet(viewsets.ModelViewSet):
             )
 
 
-class EventoViewSet(viewsets.ModelViewSet):
+class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+    content_resource = 'eventos'
     queryset = Evento.objects.select_related('espacio').all()
     serializer_class = EventoSerializer
     permission_classes = [AllowAny]
 
 
-class AvisoViewSet(viewsets.ModelViewSet):
+class AvisoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+    content_resource = 'avisos'
     queryset = Aviso.objects.select_related('horario_cursado', 'evento').all()
     serializer_class = AvisoSerializer
 
 
-class NoticiasViewSet(viewsets.ModelViewSet):
+class NoticiasViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+    content_resource = 'noticias'
     queryset = Noticias.objects.all()
     serializer_class = NoticiasSerializer
     permission_classes = [AllowAny]
@@ -452,6 +490,8 @@ class NoticiasViewSet(viewsets.ModelViewSet):
             else:
                 actualizadas += 1
 
+        transaction.on_commit(lambda: notify_content('noticias'))
+
         return Response({
             'detail': f'Sincronización completa: {nuevas} nuevas, {actualizadas} actualizadas',
             'nuevas': nuevas,
@@ -476,6 +516,10 @@ class TotemViewSet(viewsets.ModelViewSet):
     ).all()
     serializer_class = TotemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def perform_update(self, serializer):
+        totem = serializer.save()
+        transaction.on_commit(lambda: notify_totems([totem.id]))
 
 
 class TotemMeView(APIView):
@@ -538,7 +582,8 @@ class EspacioListView(APIView):
         return Response(serializer.data)
 
 
-class EventoCalendarioViewSet(viewsets.ModelViewSet):
+class EventoCalendarioViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+    content_resource = 'calendario'
     queryset = EventoCalendario.objects.all()
     serializer_class = EventoCalendarioSerializer
     permission_classes = [AllowAny]
@@ -579,6 +624,8 @@ class BulkCalendarView(APIView):
                         descripcion=e.get('descripcion', ''),
                     )
                     created.append(evento.id)
+
+                transaction.on_commit(lambda: notify_content('calendario'))
 
             return Response({
                 'guardados': len(created),
