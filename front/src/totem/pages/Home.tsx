@@ -18,8 +18,10 @@ import {
 } from "../../admin/pages/plantillas/types";
 import { ApiError, getTotemToken } from "../../shared/api/client";
 import { fetchTotemMe, type Totem } from "../../shared/api/totems";
+import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
+import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext";
 
-const POLLING_MS = 30_000;
+const POLLING_MS = 5 * 60_000;
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
@@ -37,6 +39,7 @@ export default function Home() {
   const [blockedMessage, setBlockedMessage] = useState("");
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
+  const { lastMessage } = useTotemWebSocket(null, true);
 
   const load = useCallback(async () => {
     try {
@@ -61,7 +64,7 @@ export default function Home() {
         setBlockedMessage("Sin conexión con el servidor");
       }
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (!getTotemToken()) {
@@ -73,6 +76,14 @@ export default function Home() {
     const timer = setInterval(load, POLLING_MS);
     return () => clearInterval(timer);
   }, [navigate, load]);
+
+  useEffect(() => {
+    if (lastMessage?.type === "configuracion_actualizada") {
+      // The message invalidates the cached configuration; fetch the source of truth.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      load();
+    }
+  }, [lastMessage, load]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -115,51 +126,53 @@ export default function Home() {
   const hasWidgets = plantilla && plantilla.widgets.length > 0;
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full flex flex-col items-center justify-center overflow-hidden"
-    >
+    <TotemRealtimeProvider value={lastMessage}>
       <div
-        className="shrink-0 bg-white overflow-hidden"
-        style={{
-          width: TOTEM_WIDTH,
-          height: TOTEM_HEIGHT,
-          transform: `scale(${scale})`,
-        }}
+        ref={containerRef}
+        className="w-full h-full flex flex-col items-center justify-center overflow-hidden"
       >
-        <div className="flex flex-col w-full h-full p-16 gap-16">
-          <Encabezado />
-          <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
-            {hasWidgets ? (
-              plantilla.widgets.map((w) => {
-                const Component = WIDGET_COMPONENTS[w.type];
-                if (!Component) return null;
-                return (
-                  <div
-                    key={w.id}
-                    className="overflow-hidden grid"
-                    style={{
-                      gridColumn: `${w.col + 1} / span ${w.colSpan}`,
-                      gridRow: `${w.row + 1} / span ${w.rowSpan}`,
-                      gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
-                    }}
-                  >
-                    <Component />
-                  </div>
-                );
-              })
-            ) : (
-              <div className="col-span-4 row-span-6 flex items-center justify-center p-8">
-                <p className="text-gray-400 text-center text-lg leading-relaxed">
-                  Próximamente encontrarás aquí los horarios de cursada y
-                  novedades del campus.
-                </p>
-              </div>
-            )}
+        <div
+          className="shrink-0 bg-white overflow-hidden"
+          style={{
+            width: TOTEM_WIDTH,
+            height: TOTEM_HEIGHT,
+            transform: `scale(${scale})`,
+          }}
+        >
+          <div className="flex flex-col w-full h-full p-16 gap-16">
+            <Encabezado />
+            <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
+              {hasWidgets ? (
+                plantilla.widgets.map((w) => {
+                  const Component = WIDGET_COMPONENTS[w.type];
+                  if (!Component) return null;
+                  return (
+                    <div
+                      key={w.id}
+                      className="overflow-hidden grid"
+                      style={{
+                        gridColumn: `${w.col + 1} / span ${w.colSpan}`,
+                        gridRow: `${w.row + 1} / span ${w.rowSpan}`,
+                        gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
+                        gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      <Component />
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-4 row-span-6 flex items-center justify-center p-8">
+                  <p className="text-gray-400 text-center text-lg leading-relaxed">
+                    Próximamente encontrarás aquí los horarios de cursada y
+                    novedades del campus.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </TotemRealtimeProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Clase } from "../api/horarios";
 import { fetchHorarios } from "../api/horarios";
+import { useTotemRealtime } from "../context/TotemRealtimeContext";
 
 function getTodayDayName(): string {
   const days = [
@@ -25,11 +26,15 @@ export function useHorarios() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
+  const realtimeEvent = useTotemRealtime();
+  const relevantEvent =
+    realtimeEvent?.resource === "horarios" ? realtimeEvent : null;
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
+      if (realtimeEvent && !relevantEvent) return;
       try {
         setLoading(true);
         setError(null);
@@ -52,7 +57,7 @@ export function useHorarios() {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, []);
+  }, [relevantEvent]);
 
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);

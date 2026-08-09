@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { wsUrl } from "../api/client";
+import { wsUrl, wsUrlWithTotemToken, getTotemToken } from "../api/client";
 
 const MAX_RETRIES = 5;
 
@@ -8,7 +8,7 @@ interface WebSocketMessage {
   [key: string]: unknown;
 }
 
-export function useTotemWebSocket(codigo: string | null) {
+export function useTotemWebSocket(codigo: string | null, linked = false) {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [rejected, setRejected] = useState(false);
@@ -16,18 +16,21 @@ export function useTotemWebSocket(codigo: string | null) {
   const reconnectCountRef = useRef(0);
 
   useEffect(() => {
-    if (!codigo) return;
+    if (!codigo && !linked) return;
+    const token = linked ? getTotemToken() : null;
+    if (linked && !token) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRejected(false);
 
     let mounted = true;
-    let wasConnected = false;
-
     function connect() {
-      const socket = new WebSocket(wsUrl(`/ws/totem/${codigo}/`));
+      const socket = new WebSocket(
+        linked
+          ? wsUrlWithTotemToken("/ws/totem-config/", token as string)
+          : wsUrl(`/ws/totem/${codigo}/`),
+      );
 
       socket.onopen = () => {
-        wasConnected = true;
         reconnectCountRef.current = 0;
         if (mounted) {
           setIsConnected(true);
@@ -47,7 +50,7 @@ export function useTotemWebSocket(codigo: string | null) {
       socket.onclose = () => {
         if (mounted) {
           setIsConnected(false);
-          if (wasConnected && reconnectCountRef.current < MAX_RETRIES) {
+          if (reconnectCountRef.current < MAX_RETRIES) {
             reconnectCountRef.current += 1;
             reconnectTimerRef.current = setTimeout(connect, 3000);
           } else {
@@ -69,7 +72,7 @@ export function useTotemWebSocket(codigo: string | null) {
       }
       ws.close();
     };
-  }, [codigo]);
+  }, [codigo, linked]);
 
   return { lastMessage, isConnected, rejected };
 }

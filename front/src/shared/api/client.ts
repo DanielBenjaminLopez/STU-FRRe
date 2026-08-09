@@ -143,3 +143,8 @@ export function wsUrl(path: string): string {
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${window.location.host}${path}`;
 }
+
+export function wsUrlWithTotemToken(path: string, token: string): string {
+  const url = wsUrl(path);
+  return `${url}?token=${encodeURIComponent(token)}`;
+}

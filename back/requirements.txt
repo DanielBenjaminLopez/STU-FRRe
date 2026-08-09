@@ -9,6 +9,7 @@ tzdata==2026.2
 djangorestframework-simplejwt==5.5.0
 channels
 daphne
+channels-redis
 whitenoise
 django-import-export
 openpyxl
@@ -18,4 +19,3 @@ lxml
 Pillow
 pytesseract==0.3.13
 pdf2image==1.17.0
-
