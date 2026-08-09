@@ -72,6 +72,9 @@ const FLOORS: Record<
 
 const SCALE = 1 / 32;
 const DEFAULT_HEIGHT = 0.6;
+const IDLE_ANIMATION_DELAY = 2500;
+const IDLE_PAN_AMPLITUDE = 0.7;
+const IDLE_PAN_SPEED = 0.00015;
 const HEIGHT_OVERRIDES: Record<string, number> = {
   escaleras1: 1.5,
   escaleras2: 1.5,
@@ -654,6 +657,8 @@ export default function MapaRaw({
   const buildingGroupRef = useRef<THREE.Group | null>(null);
   const hoveredRef = useRef<THREE.Mesh | null>(null);
   const youAreHereRef = useRef<THREE.Group | null>(null);
+  const idleAnimationStartRef = useRef(0);
+  const isInteractingRef = useRef(false);
 
   const floorConfig = FLOORS[floor];
   const polygons = useMemo(
@@ -777,9 +782,34 @@ export default function MapaRaw({
 
     controls.update();
 
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const idleTarget = controls.target.clone();
+    idleAnimationStartRef.current = performance.now();
+
+    const handleControlStart = () => {
+      isInteractingRef.current = true;
+    };
+    const handleControlEnd = () => {
+      isInteractingRef.current = false;
+      idleAnimationStartRef.current = performance.now();
+    };
+    controls.addEventListener("start", handleControlStart);
+    controls.addEventListener("end", handleControlEnd);
+
     let animationId: number;
     const animate = () => {
       animationId = requestAnimationFrame(animate);
+      if (
+        !reducedMotion &&
+        !isInteractingRef.current &&
+        performance.now() - idleAnimationStartRef.current > IDLE_ANIMATION_DELAY
+      ) {
+        const time = performance.now();
+        controls.target.x =
+          idleTarget.x + Math.sin(time * IDLE_PAN_SPEED) * IDLE_PAN_AMPLITUDE;
+      }
       controls.update();
       renderer.render(scene, camera);
     };
@@ -797,6 +827,9 @@ export default function MapaRaw({
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
+      controls.removeEventListener("start", handleControlStart);
+      controls.removeEventListener("end", handleControlEnd);
+      controls.dispose();
       renderer.dispose();
       scene.clear();
     };
