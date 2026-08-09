@@ -18,7 +18,8 @@ export function useNoticias() {
     mountedRef.current = true;
 
     async function load() {
-      if (realtimeEvent && !relevantEvent) return;
+      if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
+        return;
       try {
         const data = await fetchFeed();
         if (mountedRef.current) {

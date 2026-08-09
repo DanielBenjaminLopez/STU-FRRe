@@ -15,7 +15,8 @@ export function useCalendario() {
     let mounted = true;
 
     async function load() {
-      if (realtimeEvent && !relevantEvent) return;
+      if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
+        return;
       try {
         setLoading(true);
         setError(null);
