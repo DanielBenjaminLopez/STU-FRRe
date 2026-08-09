@@ -82,11 +82,25 @@ function getCellFromEvent(
     event.activatorEvent instanceof PointerEvent ? event.activatorEvent : null;
   if (!pointer) return null;
 
-  const x = pointer.clientX - rect.left + (event.delta?.x ?? 0);
-  const y = pointer.clientY - rect.top + (event.delta?.y ?? 0);
+  let pointerX = pointer.clientX + (event.delta?.x ?? 0);
+  let pointerY = pointer.clientY + (event.delta?.y ?? 0);
 
-  const col = Math.floor(x / cellW);
-  const row = Math.floor(y / cellH);
+  // When moving an existing widget, preserve the point where it was grabbed
+  // instead of treating that point as the widget's top-left corner.
+  const initialRect = event.active.rect.current.initial;
+  const widgetId = event.active.data.current?.widgetId;
+  if (widgetId && initialRect) {
+    pointerX -= pointer.clientX - initialRect.left;
+    pointerY -= pointer.clientY - initialRect.top;
+  }
+
+  const x = pointerX - rect.left;
+  const y = pointerY - rect.top;
+
+  // A CSS grid position is a track plus its following gap. Do not let a
+  // pointer over a gap select the next track prematurely.
+  const col = Math.floor(x / (cellW + gap));
+  const row = Math.floor(y / (cellH + gap));
 
   if (col < 0 || col >= GRID_COLS || row < 0 || row >= GRID_ROWS) return null;
   return { col, row };
@@ -183,6 +197,11 @@ export default function PlantillasPage() {
 
   useEffect(() => {
     if (plantillas.length === 0) return;
+    // Do not replace the template currently being edited. In particular, a
+    // newly created template is marked dirty immediately, and this effect
+    // also runs whenever its name or widgets change.
+    if (selectedId && dirtyIds[selectedId]) return;
+
     const targetId = selectedTotem?.plantilla_id
       ? String(selectedTotem.plantilla_id)
       : "";
@@ -410,13 +429,13 @@ export default function PlantillasPage() {
     if (!selectedTotem) return;
     const selected = plantillas.find((p) => p.id === selectedId);
     if (!selected || selected.isNew) return;
-    if (dirtyIds[selectedId]) {
+    if (dirtyIds[selected.id]) {
       setToast("Guardá la plantilla antes de cargarla al tótem.");
       return;
     }
     try {
       await updateTotem(selectedTotem.id, {
-        plantilla_id: Number(selectedId),
+        plantilla_id: Number(selected.id),
       });
       await refreshTotems();
       setToast("Plantilla cargada al tótem correctamente");
