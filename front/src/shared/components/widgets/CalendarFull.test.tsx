@@ -31,7 +31,9 @@ describe("CalendarFull", () => {
       error: null,
     });
     render(<CalendarFull onClose={vi.fn()} />);
-    expect(screen.getByText("Cargando eventos...")).toBeInTheDocument();
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("muestra error", () => {

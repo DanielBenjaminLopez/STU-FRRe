@@ -122,8 +122,13 @@ describe("CalendarioAdminPage", () => {
         fecha_inicio: "2026-03-01",
         fecha_fin: null,
         todo_el_dia: true,
+        es_rango: false,
         color: "",
         descripcion: "",
+        documento_fuente: null,
+        documento_fuente_url: null,
+        creado_en: "2026-01-01T00:00:00Z",
+        actualizado_en: "2026-01-01T00:00:00Z",
       },
     ]);
     render(<CalendarioAdminPage />);
@@ -197,7 +202,7 @@ describe("CalendarioAdminPage", () => {
   });
 
   it("guarda eventos al confirmar", async () => {
-    mockBulkSave.mockResolvedValue(undefined);
+    mockBulkSave.mockResolvedValue({ guardados: 1, ids: [1] });
     render(<CalendarioAdminPage />);
     await screen.findByTestId("event-count");
 

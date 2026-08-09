@@ -57,7 +57,9 @@ describe("Horarios", () => {
       error: null,
     });
     render(<Horarios />);
-    expect(screen.getByText("Cargando horarios...")).toBeInTheDocument();
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("muestra error", () => {
@@ -69,7 +71,7 @@ describe("Horarios", () => {
       error: "Error de conexión",
     });
     render(<Horarios />);
-    expect(screen.getByText("Error de conexión")).toBeInTheDocument();
+    expect(screen.getAllByText("Error de conexión")).toHaveLength(3);
   });
 
   it("muestra clases en cursando ahora", () => {

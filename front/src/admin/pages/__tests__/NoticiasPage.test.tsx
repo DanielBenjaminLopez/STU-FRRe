@@ -51,13 +51,16 @@ vi.mock("../../components/DataTable", () => ({
       <span data-testid="loading">{String(isLoading)}</span>
       <span data-testid="placeholder">{searchPlaceholder}</span>
       <span data-testid="count">{data.length}</span>
-      {data.map((row: Record<string, unknown>, i: number) => (
-        <div key={i} data-testid={`row-${i}`}>
-          <span>{String(row.titulo)}</span>
-          <button onClick={() => onEdit(row)}>edit</button>
-          <button onClick={() => onDelete(row)}>delete</button>
-        </div>
-      ))}
+      {data.map((row, i) => {
+        const item = row as Record<string, unknown>;
+        return (
+          <div key={i} data-testid={`row-${i}`}>
+            <span>{String(item.titulo)}</span>
+            <button onClick={() => onEdit(item)}>edit</button>
+            <button onClick={() => onDelete(item)}>delete</button>
+          </div>
+        );
+      })}
     </div>
   ),
 }));
@@ -146,7 +149,12 @@ describe("NoticiasPage", () => {
   });
 
   it("sincroniza desde UTN al hacer click", async () => {
-    mockSyncNoticias.mockResolvedValue({ detail: "Sincronizados 5 items" });
+    mockSyncNoticias.mockResolvedValue({
+      detail: "Sincronizados 5 items",
+      nuevas: 5,
+      actualizadas: 0,
+      total: 5,
+    });
     render(<NoticiasPage />);
     await screen.findByTestId("count");
     fireEvent.click(screen.getByText("Sincronizar desde UTN"));

@@ -24,12 +24,16 @@ function MockCalendario() {
 function MockMapa() {
   return <div data-testid="mock-mapa">Mapa</div>;
 }
+function MockNoticias() {
+  return <div data-testid="mock-noticias">Noticias</div>;
+}
 
 const mockComponents = {
   horarios: MockHorarios,
   examenes: MockExamenes,
   calendario: MockCalendario,
   mapa: MockMapa,
+  noticias: MockNoticias,
 };
 
 describe("WidgetPalette", () => {
@@ -51,7 +55,7 @@ describe("WidgetPalette", () => {
     expect(screen.getByText("Agregar elementos")).toBeInTheDocument();
   });
 
-  it("renderiza los cuatro widgets del registry", () => {
+  it("renderiza los widgets del registry", () => {
     render(
       <WidgetPalette
         widgets={Object.values(WIDGET_REGISTRY)}
@@ -62,6 +66,7 @@ describe("WidgetPalette", () => {
     expect(screen.getByText("Exámenes")).toBeInTheDocument();
     expect(screen.getByText("Calendario")).toBeInTheDocument();
     expect(screen.getByText("Mapa")).toBeInTheDocument();
+    expect(screen.getByText("Noticias")).toBeInTheDocument();
   });
 
   it("muestra el tamaño de cada widget", () => {
@@ -71,7 +76,7 @@ describe("WidgetPalette", () => {
         components={mockComponents}
       />,
     );
-    expect(screen.getAllByText(/4×2/)).toHaveLength(2);
+    expect(screen.getAllByText(/4×2/)).toHaveLength(3);
     expect(screen.getAllByText(/2×2/)).toHaveLength(2);
   });
 
@@ -86,5 +91,6 @@ describe("WidgetPalette", () => {
     expect(screen.getByTestId("mock-examenes")).toBeInTheDocument();
     expect(screen.getByTestId("mock-calendario")).toBeInTheDocument();
     expect(screen.getByTestId("mock-mapa")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-noticias")).toBeInTheDocument();
   });
 });

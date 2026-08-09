@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { EventoCalendarioAdmin } from "../api/calendarioAdmin";
-import {
-  fetchEventosCalendario,
-  createEventoCalendario,
-  updateEventoCalendario,
-  deleteEventoCalendario,
-} from "../api/calendarioAdmin";
+import { fetchEventosCalendario } from "../api/calendarioAdmin";
 
 export function useCalendarioAdmin() {
   const [eventos, setEventos] = useState<EventoCalendarioAdmin[]>([]);
@@ -40,33 +35,6 @@ export function useCalendarioAdmin() {
     };
   }, []);
 
-  const create = useCallback(
-    async (
-      data: Omit<
-        EventoCalendarioAdmin,
-        | "id"
-        | "creado_en"
-        | "actualizado_en"
-        | "es_rango"
-        | "documento_fuente_url"
-      >,
-    ) => {
-      await createEventoCalendario(data);
-    },
-    [],
-  );
-
-  const update = useCallback(
-    async (id: number, data: Partial<EventoCalendarioAdmin>) => {
-      await updateEventoCalendario(id, data);
-    },
-    [],
-  );
-
-  const remove = useCallback(async (id: number) => {
-    await deleteEventoCalendario(id);
-  }, []);
-
   const reload = useCallback(async () => {
     try {
       setLoading(true);
@@ -82,5 +50,5 @@ export function useCalendarioAdmin() {
     }
   }, []);
 
-  return { eventos, loading, error, create, update, remove, reload };
+  return { eventos, loading, error, reload };
 }
