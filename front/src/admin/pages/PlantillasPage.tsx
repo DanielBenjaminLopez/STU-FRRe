@@ -17,6 +17,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
+import { AdminTemplatesSkeleton } from "../../shared/components/ui/Skeleton";
 import { fetchWidgets } from "../../shared/api/widgets";
 import { updateTotem } from "../../shared/api/totems";
 import { useTotem } from "../../shared/context/TotemContext";
@@ -429,11 +430,7 @@ export default function PlantillasPage() {
   }, [selectedTotem, plantillas, selectedId, dirtyIds, refreshTotems]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        Cargando plantillas...
-      </div>
-    );
+    return <AdminTemplatesSkeleton />;
   }
 
   if (plantillas.length === 0) {
