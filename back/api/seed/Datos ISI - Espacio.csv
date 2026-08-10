@@ -1,0 +1,71 @@
+nombre,tipo,tipo_otro,piso
+Decanato,otro,decanato,planta_baja
+Vicedecanato,otro,vicedecanato,planta_baja
+Sala de Consejo Directivo,otro,sala de consejo directivo,planta_baja
+Secretaría de Ciencia y Tecnología,secretaria,,planta_baja
+Dirección de TICs,otro,dirección de TICs,planta_baja
+Gestión Tecnológica,otro,gestión tecnológica,planta_baja
+CinApTIC,otro,CinApTIC,planta_baja
+Departamento de Materias Básicas,departamento,,planta_baja
+Kiosco,otro,kiosco,planta_baja
+Secretaría de Asuntos Universitarios,secretaria,,planta_baja
+UCES,otro,UCES,planta_baja
+Alumnado,otro,alumnado,planta_baja
+Secretaría Académica,secretaria,,planta_baja
+Bedelía,otro,bedelia,planta_baja
+Despacho,otro,despacho,planta_baja
+Secretaría de Infraestructura,secretaria,,planta_baja
+Secretaría de Extensión Universitaria,secretaria,,planta_baja
+Informes,otro,informes,planta_baja
+Campus Virtual,otro,campus virtual,planta_baja
+Radio Universidad,otro,radio universidad,planta_baja
+Seminario Universitario,otro,seminario universitario,planta_baja
+Planeamiento Académico,otro,planeamiento académico,planta_baja
+Dirección de Personal,otro,dirección de personal,planta_baja
+Datusen,otro,datusen,planta_baja
+Secretaría Administrativa - Tesorería,secretaria,,planta_baja
+Mantenimiento,otro,mantenimiento,planta_baja
+CInApTIC,otro,CInApTIC,planta_baja
+Departamento I.Q.,departamento,,planta_baja
+Departamento L.A.R.,departamento,,planta_baja
+Departamento I.E.M.,departamento,,planta_baja
+Departamento I.S.I.,departamento,,planta_baja
+Biblioteca,otro,biblioteca,planta_baja
+Oficina de Archivos,otro,oficina de archivos,planta_baja
+Sala de Profesores,otro,sala de profesores,planta_baja
+Playón Deportivo,otro,playón deportivo,planta_baja
+Aula 1.3,aula,,primer_piso
+G.I.E.S.IN,otro,G.I.E.S.IN,primer_piso
+G.IMe.F. / G.I.LAR,otro,G.IMe.F. / G.I.LAR,primer_piso
+Laboratorio de Radiosimetría,otro,laboratorio de radiosimetría,primer_piso
+Centro de Estudiantes (CET),otro,CET,primer_piso
+Laboratorio informático 5,laboratorio_informatico,,primer_piso
+Laboratorio informático 6,laboratorio_informatico,,primer_piso
+Aula 1.2,aula,,primer_piso
+Aula 1.1,aula,,primer_piso
+GISTAQ,otro,GISTAQ,primer_piso
+Coordinación TUP y LTE,otro,coordinación TUP y LTE,primer_piso
+Aula 1.4,aula,,primer_piso
+Aula 1.5,aula,,primer_piso
+Aula 1.6,aula,,primer_piso
+Laboratorio informático 1,laboratorio_informatico,,primer_piso
+Dirección de Posgrado,otro,dirección de posgrado,primer_piso
+Laboratorio informático 2,laboratorio_informatico,,segundo_piso
+Espacio Progresar,otro,espacio progresar,segundo_piso
+Laboratorio informático 4,laboratorio_informatico,,segundo_piso
+Laboratorio informático 3,laboratorio_informatico,,segundo_piso
+Aula Magna,aula,,segundo_piso
+Aula 2.1,aula,,segundo_piso
+Aula 2.2,aula,,segundo_piso
+Departamento Obras y Proyectos,departamento,,segundo_piso
+Aula 2.3,aula,,segundo_piso
+Aula 2.4,aula,,segundo_piso
+Aula 2.5,aula,,segundo_piso
+Aula 2.6,aula,,segundo_piso
+Aula 2.9,aula,,segundo_piso
+Aula 2.11,aula,,segundo_piso
+Aula 2.10,aula,,segundo_piso
+Aula 2.8,aula,,segundo_piso
+Fotocopiadora,otro,fotocopiadora,segundo_piso
+Terraza,otro,terraza,segundo_piso
+Lactario,otro,lactario,segundo_piso

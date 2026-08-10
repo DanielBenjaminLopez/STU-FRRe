@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { wsUrl, wsUrlWithTotemToken, getTotemToken } from "../api/client";
 
-const MAX_RETRIES = 5;
+const RECONNECT_DELAY = 3000;
 
 interface WebSocketMessage {
   type: string;
@@ -50,12 +50,8 @@ export function useTotemWebSocket(codigo: string | null, linked = false) {
       socket.onclose = () => {
         if (mounted) {
           setIsConnected(false);
-          if (reconnectCountRef.current < MAX_RETRIES) {
-            reconnectCountRef.current += 1;
-            reconnectTimerRef.current = setTimeout(connect, 3000);
-          } else {
-            setRejected(true);
-          }
+          reconnectCountRef.current += 1;
+          reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY);
         }
       };
 

@@ -1,0 +1,79 @@
+carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,activo,plan_estudio
+Ingeniería en Sistemas de Información,Sistemas y Procesos de Negocio,Curso 1,Aula 1.1,Lunes,07:45,10:00,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático I,Curso 1,Aula 1.1,Lunes,10:10,12:25,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático I,Curso 1,Aula 1.1,Martes,07:45,09:15,TRUE,2023
+Ingeniería en Sistemas de Información,Algebra,Curso 1,Aula 1.1,Martes,09:15,10:55,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 1,Aula 1.1,Martes,10:55,12:25,TRUE,2023
+Ingeniería en Sistemas de Información,Física I,Curso 1,Aula 1.1,Miércoles,07:45,10:55,TRUE,2023
+Ingeniería en Sistemas de Información,Algebra,Curso 1,Aula 1.1,Jueves,07:45,10:00,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 1,Aula 1.1,Viernes,10:10,12:25,TRUE,2023
+Ingeniería en Sistemas de Información,Física I,Curso 2,Aula 1.1,Lunes,07:45,10:55,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 2,Aula 1.1,Lunes,10:55,12:25,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas y Procesos de Negocio,Curso 2,Aula 1.1,Martes,07:45,10:00,TRUE,2023
+Ingeniería en Sistemas de Información,Algebra,Curso 2,Aula 1.1,Martes,10:10,11:40,TRUE,2023
+Ingeniería en Sistemas de Información,Algebra,Curso 2,Aula 1.1,Miércoles,07:45,10:00,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático I,Curso 2,Aula 1.1,Miércoles,10:10,12:25,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático I,Curso 2,Aula 1.1,Jueves,07:45,9:15,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 2,Aula 1.1,Viernes,07:45,10:00,TRUE,2023
+Ingeniería en Sistemas de Información,Física I,Curso 3,Aula 1.1,Miércoles,10:10,13:10,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático I,Curso 3,Aula 1.1,Lunes,13:30,17:20,TRUE,2023
+Ingeniería en Sistemas de Información,Algebra,Curso 3,Aula 1.1,Martes,14:15,17:20,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas y Procesos de Negocio,Curso 3,Aula 1.1,Miércoles,13:30,15:45,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 3,Aula 1.1,Miércoles,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 3,Aula 1.1,Viernes,16:35,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Física I,Curso 4,Aula 1.1,Jueves,15:00,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 4,Aula 1.1,Lunes,20:30,22:00,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático I,Curso 4,Aula 1.1,Martes,18:10,22:00,TRUE,2023
+Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,Curso 4,Aula 1.1,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas y Procesos de Negocio,Curso 4,Aula 1.1,Miércoles,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Algebra,Curso 4,Aula 1.1,Jueves,18:10,22:00,TRUE,2023
+Ingeniería en Sistemas de Información,Inglés II,Curso 1,Aula 1.1,Lunes,13:30,16:35,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático II,Curso 1,Aula 1.1,Lunes,16:35,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático II,Curso 1,Aula 1.1,Martes,12:45,15:00,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas Operativos,Curso 1,Aula 1.1,Martes,15:00,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Paradigmas,Curso 1,Aula 1.1,Miércoles,13:30,15:45,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis de Sistemas,Curso 1,Aula 1.1,Miércoles,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Paradigmas,Curso 1,Aula 1.1,Jueves,15:00,18:55,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas Operativos,Curso 1,Aula 1.1,Viernes,12:00,15:00,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis de Sistemas,Curso 1,Aula 1.1,Viernes,15:00,17:20,TRUE,2023
+Ingeniería en Sistemas de Información,Inglés II,Curso 2,Aula 1.1,Lunes,13:30,16:35,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático II,Curso 2,Aula 1.1,Lunes,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Paradigmas,Curso 2,Aula 1.1,Lunes,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Matemático II,Curso 2,Aula 1.1,Martes,18:10,19:40,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas Operativos,Curso 2,Aula 1.1,Martes,19:40,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis de Sistemas,Curso 2,Aula 1.1,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Paradigmas,Curso 2,Aula 1.1,Jueves,18:55,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis de Sistemas,Curso 2,Aula 1.1,Viernes,17:20,19:40,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas Operativos,Curso 2,Aula 1.1,Viernes,19:40,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Numérico,Curso 1,Aula 2.1,Lunes,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Probabilidad y Estadística,Curso 2,Aula 2.1,Lunes,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Análisis Numérico,Curso 1,Aula 2.1,Lunes,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Probabilidad y Estadística,Curso 1,Aula 2.1,Martes,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas de Gestión de Base de Datos,Curso 1,Laboratorio informático 5,Martes,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas de Gestión de Base de Datos,Curso 1,Laboratorio informático 6,Martes,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Planificación,Curso 1,Aula 2.1,Martes,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Diseño de Sistemas de Información,Curso 1,Aula Magna,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Diseño de Sistemas de Información,Curso 1,Aula 2.1,Miércoles,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Diseño de Sistemas de Información,Curso 1,Aula 2.10,Miércoles,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Desarrollo de Software,Curso 1,Aula 2.1,Jueves,16:35,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Probabilidad y Estadística,Curso 1,Aula 2.1,Viernes,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Probabilidad y Estadística,Curso 2,Aula 2.1,Viernes,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Aspectos Avanzados de Calidad de Software,Curso 1,Aula 1.1,Lunes,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Tecnologías para la Automatización,Curso 1,Aula 1.1,Lunes,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Redes de Datos,Curso 1,Aula 1.1,Martes,16:35,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas de Información Geográficos,Curso 1,Aula 1.1,Martes,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Administración de Sistemas de Información,Curso 1,Aula 1.1,Miércoles,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Aspectos Avanzados de Calidad de Software,Curso 1,Aula 1.1,Jueves,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Sistemas de Información Geográficos,Curso 1,Aula 1.1,Jueves,18:10,20:25,TRUE,2023
+Ingeniería en Sistemas de Información,Redes de Datos,Curso 1,Aula 1.1,Jueves,20:30,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Agilidad Avanzada,Curso 1,Aula 1.1,Viernes,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Práctica Supervisada,Curso 1,Aula 1.1,Lunes,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Proyecto,Curso 1,Aula 1.1,Martes,15:50,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Ciencia de Datos,Curso 1,Aula 1.1,Martes,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Auditoría,Curso 1,Aula 1.1,Miércoles,16:35,18:05,TRUE,2023
+Ingeniería en Sistemas de Información,Inteligencia Artificial,Curso 1,Aula 1.1,Miércoles,18:10,22:45,TRUE,2023
+Ingeniería en Sistemas de Información,Proyecto,Curso 1,Aula 1.1,Jueves,16:35,18:55,TRUE,2023
+Ingeniería en Sistemas de Información,Fundamentos de Ciberseguridad,Curso 1,Aula 1.1,Jueves,16:35,18:55,TRUE,2023
+Ingeniería en Sistemas de Información,Aspectos Avanzados de Redes de Información,Curso 1,Aula 1.1,Jueves,16:35,18:55,TRUE,2023
+Ingeniería en Sistemas de Información,DevOps,Curso 1,Aula 1.1,Viernes,17:20,18:55,TRUE,2023
+Ingeniería en Sistemas de Información,Fundamentos de Ciberseguridad,Curso 1,Aula 1.1,Viernes,18:55,21:15,TRUE,2023

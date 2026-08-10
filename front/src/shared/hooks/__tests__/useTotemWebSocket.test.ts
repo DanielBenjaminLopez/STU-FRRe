@@ -75,7 +75,7 @@ describe("useTotemWebSocket", () => {
     expect(second).toHaveProperty("url", expect.stringContaining("ABC123"));
   });
 
-  it("marca rejected tras MAX_RETRIES (5) fallos consecutivos", () => {
+  it("sigue reconectando tras varios fallos consecutivos", () => {
     const { result } = renderHook(() => useTotemWebSocket("ABC123"));
 
     const first = MockWebSocket.instances[0];
@@ -91,8 +91,8 @@ describe("useTotemWebSocket", () => {
       act(() => vi.advanceTimersByTime(3000));
     }
 
-    expect(MockWebSocket.instances).toHaveLength(6);
-    expect(result.current.rejected).toBe(true);
+    expect(MockWebSocket.instances).toHaveLength(7);
+    expect(result.current.rejected).toBe(false);
   });
 
   it("resetea el contador de reintentos tras una conexión exitosa", () => {
