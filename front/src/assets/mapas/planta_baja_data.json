@@ -1,0 +1,222 @@
+{
+  "1": {
+    "nombre": "Decanato",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "2": {
+    "nombre": "Vicedecanato",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "3": {
+    "nombre": "Sala de Consejo Directivo",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "4": {
+    "nombre": "Secretaría de Ciencia y Tecnología",
+    "tipo": "secretaria",
+    "piso": "baja"
+  },
+  "5": {
+    "nombre": "Dirección de TICs",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "6": {
+    "nombre": "Gestión Tecnológica",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "7": {
+    "nombre": "CinApTIC",
+    "tipo": "laboratorio",
+    "piso": "baja"
+  },
+  "8": {
+    "nombre": "Departamento de Materias Básicas",
+    "tipo": "departamento",
+    "piso": "baja"
+  },
+  "9": {
+    "nombre": "Kiosco",
+    "tipo": "servicio",
+    "piso": "baja"
+  },
+  "10": {
+    "nombre": "Secretaría de Asuntos Universitarios",
+    "tipo": "secretaria",
+    "piso": "baja"
+  },
+  "11": {
+    "nombre": "UCES",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "12": {
+    "nombre": "Alumnado",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "13": {
+    "nombre": "Secretaría Académica",
+    "tipo": "secretaria",
+    "piso": "baja"
+  },
+  "14": {
+    "nombre": "Bedelía",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "15": {
+    "nombre": "Despacho",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "16": {
+    "nombre": "Secretaría de Infraestructura",
+    "tipo": "secretaria",
+    "piso": "baja"
+  },
+  "17": {
+    "nombre": "Secretaría de Extensión Universitaria",
+    "tipo": "secretaria",
+    "piso": "baja"
+  },
+  "18": {
+    "nombre": "Informes",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "19": {
+    "nombre": "Campus Virtual",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "20": {
+    "nombre": "Radio Universidad",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "21": {
+    "nombre": "Seminario Universitario",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "22": {
+    "nombre": "Planeamiento Académico",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "23": {
+    "nombre": "Dirección de Personal",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "24": {
+    "nombre": "Datusen",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "25": {
+    "nombre": "Secretaría Administrativa / Tesorería",
+    "tipo": "secretaria",
+    "piso": "baja"
+  },
+  "26": {
+    "nombre": "Mantenimiento",
+    "tipo": "servicio",
+    "piso": "baja"
+  },
+  "27": {
+    "nombre": "CinApTIC",
+    "tipo": "laboratorio",
+    "piso": "baja"
+  },
+  "28": {
+    "nombre": "Dpto. I.Q.",
+    "tipo": "departamento",
+    "piso": "baja"
+  },
+  "29": {
+    "nombre": "Dpto. L.A.R.",
+    "tipo": "departamento",
+    "piso": "baja"
+  },
+  "30": {
+    "nombre": "Dpto. I.E.M.",
+    "tipo": "departamento",
+    "piso": "baja"
+  },
+  "31": {
+    "nombre": "Dpto. I.S.I.",
+    "tipo": "departamento",
+    "piso": "baja"
+  },
+  "32": {
+    "nombre": "Biblioteca",
+    "tipo": "servicio",
+    "piso": "baja"
+  },
+  "33": {
+    "nombre": "Oficina de Archivos",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "34": {
+    "nombre": "Sala de Profesores",
+    "tipo": "oficina",
+    "piso": "baja"
+  },
+  "35": {
+    "nombre": "Playon deportivo",
+    "tipo": "servicio",
+    "piso": "baja"
+  },
+  "36": {
+    "nombre": "Sin nombre",
+    "tipo": "otro",
+    "piso": "baja"
+  },
+  "37": {
+    "nombre": "Sin nombre",
+    "tipo": "otro",
+    "piso": "baja"
+  },
+  "38": {
+    "nombre": "Sin nombre",
+    "tipo": "otro",
+    "piso": "baja"
+  },
+  "escaleras1": {
+    "nombre": "Escalera Entrada a Primer Piso",
+    "tipo": "escaleras",
+    "piso": "baja"
+  },
+  "escaleras2": {
+    "nombre": "Escalera Pasillo a Primer Piso",
+    "tipo": "escaleras",
+    "piso": "baja"
+  },
+  "escaleras4": {
+    "nombre": "Escalera a Terraza",
+    "tipo": "escaleras",
+    "piso": "baja"
+  },
+  "baño1": {
+    "nombre": "Baño Hombres",
+    "tipo": "baños",
+    "piso": "baja"
+  },
+  "baño2": {
+    "nombre": "Baño Mujeres",
+    "tipo": "baños",
+    "piso": "baja"
+  },
+  "ascensor1": {
+    "nombre": "Ascensor",
+    "tipo": "ascensor",
+    "piso": "baja"
+  }
+}

@@ -1,4 +1,13 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -31,9 +40,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - REDIS_URL=redis://redis:6379/0
+      - CHANNEL_LAYER_BACKEND=channels_redis.core.RedisChannelLayer
       - PYTHONDONTWRITEBYTECODE=${PYTHONDONTWRITEBYTECODE}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   frontend:
