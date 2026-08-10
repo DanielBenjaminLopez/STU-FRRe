@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AdminCalendarSkeleton } from "../../shared/components/ui/Skeleton";
 import AnnualCalendarGrid from "../components/calendario/AnnualCalendarGrid";
 import EventTypeSelector from "../components/calendario/EventTypeSelector";
 import EventSummary from "../components/calendario/EventSummary";
@@ -224,9 +225,7 @@ export default function CalendarioAdminPage() {
             onSelect={setSelectedTipo}
           />
           {loading ? (
-            <div className="flex items-center justify-center py-20 text-sm text-gray-400">
-              Cargando calendario...
-            </div>
+            <AdminCalendarSkeleton />
           ) : (
             <AnnualCalendarGrid
               year={year}

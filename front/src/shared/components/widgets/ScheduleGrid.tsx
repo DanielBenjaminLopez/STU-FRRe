@@ -433,45 +433,11 @@ export default function ScheduleGrid({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
-      <div className="flex flex-col bg-white w-full h-full overflow-hidden rounded-4xl">
+      <div className="flex flex-col bg-white/70 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl border border-gray-200">
         <div className="flex items-center justify-between p-8 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">{title}</h1>
-            <div className="flex items-center bg-gray-100 rounded-2xl p-1">
-              {/* <button
-                type="button"
-                onClick={() => setView("day")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-2xl transition-colors ${
-                  view === "day"
-                    ? "bg-white text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Diario
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("week")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-2xl transition-colors ${
-                  view === "week"
-                    ? "bg-white text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Semanal
-              </button>
-              <button
-                type="button"
-                onClick={() => setView("list")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-2xl transition-colors ${
-                  view === "list"
-                    ? "bg-white text-gray-900"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Lista
-              </button> */}
-            </div>
+            <div className="flex items-center bg-gray-100 rounded-2xl p-1"></div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -543,7 +509,7 @@ export default function ScheduleGrid({
           <div className="flex items-center gap-4 px-8 h-12 border-b border-gray-100">
             {uniqueCarreras.length > 0 && (
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                <span className="text-xs font-medium text-black uppercase tracking-wide">
                   Carrera
                 </span>
                 <div className="flex gap-1">

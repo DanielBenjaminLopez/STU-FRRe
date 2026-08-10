@@ -201,3 +201,121 @@ export function HomeSkeleton() {
     </div>
   );
 }
+
+export function AdminCalendarSkeleton() {
+  return (
+    <div className="flex-1 min-h-0 flex gap-6">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3 items-center">
+        <div className="flex flex-wrap justify-center gap-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-28 rounded-xl" />
+          ))}
+        </div>
+        <div className="grid grid-cols-3 grid-rows-4 gap-4 w-full flex-1">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-gray-200 bg-white p-3"
+            >
+              <Skeleton className="h-4 w-24 mb-3" />
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: 35 }).map((_, j) => (
+                  <Skeleton key={j} className="aspect-square w-full" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="w-56 shrink-0 flex flex-col gap-3">
+        <Skeleton className="h-3 w-24" />
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 flex flex-col gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-3 w-2/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminTemplatesSkeleton() {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-3 w-64" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-28 rounded-xl" />
+          <Skeleton className="h-9 w-32 rounded-xl" />
+        </div>
+      </div>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-72 shrink-0 bg-gray-50 border-r border-gray-200 p-5 flex flex-col gap-4">
+          <Skeleton className="h-4 w-36" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl border border-gray-200 bg-white p-3 flex flex-col gap-3"
+            >
+              <Skeleton className="h-28 w-full rounded-xl" />
+              <Skeleton className="h-3 w-28" />
+            </div>
+          ))}
+        </div>
+        <div className="flex-1 bg-gray-100 p-8 flex items-center justify-center">
+          <div className="w-full max-w-5xl aspect-video rounded-2xl bg-white border border-gray-200 p-6">
+            <Skeleton className="h-8 w-56 mb-6" />
+            <div className="grid grid-cols-4 grid-rows-6 gap-3 h-[calc(100%-3.5rem)]">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className={`rounded-xl ${i < 4 ? "col-span-2 row-span-2" : "col-span-1 row-span-2"}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function AdminSchedulesSkeleton() {
+  return (
+    <div className="p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+        <Skeleton className="h-10 w-28 rounded-2xl" />
+      </div>
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-10 w-64 rounded-2xl" />
+        </div>
+        <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+          <Skeleton className="h-12 w-full rounded-none" />
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex gap-4 px-4 py-4 border-t border-gray-100"
+            >
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-4 w-1/5" />
+              <Skeleton className="h-4 w-16 ml-auto" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

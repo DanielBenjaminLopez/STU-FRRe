@@ -1,5 +1,6 @@
 import { Navigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import Logo from "../../assets/logo_negro.webp";
 
 export default function ProtectedRoute({
   children,
@@ -11,7 +12,7 @@ export default function ProtectedRoute({
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Cargando...
+        <img src={Logo} alt="Logo" className="w-48 animate-pulse" />
       </div>
     );
   }

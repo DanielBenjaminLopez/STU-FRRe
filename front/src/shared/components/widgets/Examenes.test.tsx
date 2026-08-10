@@ -36,7 +36,7 @@ describe("Examenes", () => {
     cleanup();
   });
 
-  it("muestra el título y subtítulo", () => {
+  it("muestra el título y los paneles actuales", () => {
     mockUseExamenes.mockReturnValue({
       ahora: [],
       siguiente: [],
@@ -44,8 +44,9 @@ describe("Examenes", () => {
       error: null,
     });
     render(<Examenes />);
-    expect(screen.getByText("Horario de exámenes")).toBeInTheDocument();
-    expect(screen.getByText("Lista de exámenes")).toBeInTheDocument();
+    expect(screen.getByText("Horario de examenes")).toBeInTheDocument();
+    expect(screen.getByText("Cursando ahora")).toBeInTheDocument();
+    expect(screen.getByText("A continuación")).toBeInTheDocument();
   });
 
   it("muestra estado de carga", () => {
@@ -56,7 +57,9 @@ describe("Examenes", () => {
       error: null,
     });
     render(<Examenes />);
-    expect(screen.getByText("Cargando exámenes...")).toBeInTheDocument();
+    expect(document.querySelectorAll(".animate-pulse").length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("muestra error", () => {
@@ -67,7 +70,7 @@ describe("Examenes", () => {
       error: "Error de conexión",
     });
     render(<Examenes />);
-    expect(screen.getByText("Error de conexión")).toBeInTheDocument();
+    expect(screen.getAllByText("Error de conexión")).toHaveLength(2);
   });
 
   it("muestra exámenes en examinando ahora", () => {
@@ -109,7 +112,7 @@ describe("Examenes", () => {
     });
     render(<Examenes />);
     expect(
-      screen.getByText("No hay exámenes en este momento"),
+      screen.getByText("No hay examenes en este momento"),
     ).toBeInTheDocument();
   });
 
@@ -121,7 +124,7 @@ describe("Examenes", () => {
       error: null,
     });
     render(<Examenes />);
-    expect(screen.getByText("No hay más exámenes hoy")).toBeInTheDocument();
+    expect(screen.getByText("No hay más examenes hoy")).toBeInTheDocument();
   });
 
   it("muestra el enlace 'Ver horario completo'", () => {
