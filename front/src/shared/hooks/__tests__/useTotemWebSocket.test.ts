@@ -28,9 +28,9 @@ class MockWebSocket {
     this.onopen?.();
   }
 
-  simulateClose() {
+  simulateClose(code = 1006) {
     this.readyState = MockWebSocket.CLOSED;
-    this.onclose?.();
+    this.onclose?.({ code } as CloseEvent);
   }
 
   simulateMessage(data: string) {
@@ -75,14 +75,15 @@ describe("useTotemWebSocket", () => {
     expect(second).toHaveProperty("url", expect.stringContaining("ABC123"));
   });
 
-  it("sigue reconectando tras varios fallos consecutivos", () => {
+  it("marca rejected tras superar MAX_RECONNECTS fallos consecutivos", () => {
     const { result } = renderHook(() => useTotemWebSocket("ABC123"));
 
     const first = MockWebSocket.instances[0];
     act(() => first.simulateOpen());
     expect(result.current.rejected).toBe(false);
 
-    for (let i = 0; i < 6; i++) {
+    // 5 fallos consecutivos sin abrir => alcanza MAX_RECONNECTS
+    for (let i = 0; i < 5; i++) {
       act(() => {
         MockWebSocket.instances[
           MockWebSocket.instances.length - 1
@@ -91,8 +92,26 @@ describe("useTotemWebSocket", () => {
       act(() => vi.advanceTimersByTime(3000));
     }
 
-    expect(MockWebSocket.instances).toHaveLength(7);
-    expect(result.current.rejected).toBe(false);
+    // La 6ta desconexión supera MAX_RECONNECTS y marca rejected
+    act(() => {
+      MockWebSocket.instances[
+        MockWebSocket.instances.length - 1
+      ].simulateClose();
+    });
+
+    expect(result.current.rejected).toBe(true);
+  });
+
+  it("marca rejected inmediatamente con código 4403", () => {
+    const { result } = renderHook(() => useTotemWebSocket("ABC123"));
+
+    const first = MockWebSocket.instances[0];
+    act(() => first.simulateClose(4403));
+
+    expect(result.current.rejected).toBe(true);
+    // No debe intentar reconectar
+    act(() => vi.advanceTimersByTime(3000));
+    expect(MockWebSocket.instances).toHaveLength(1);
   });
 
   it("resetea el contador de reintentos tras una conexión exitosa", () => {
