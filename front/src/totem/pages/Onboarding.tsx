@@ -52,7 +52,10 @@ export default function Onboarding() {
         await fetchTotemMe();
         if (!cancelled) navigate("/", { replace: true });
       } catch (err) {
-        if (err instanceof ApiError && err.status === 403) {
+        if (
+          err instanceof ApiError &&
+          (err.status === 401 || err.status === 403)
+        ) {
           clearTotemToken();
         }
         if (!cancelled) {
