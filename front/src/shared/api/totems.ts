@@ -19,6 +19,9 @@ export interface Totem {
   plantilla_id: number | null;
   plantilla: PlantillaDTO | null;
   creado_en: string;
+  pin_mapa_piso: "baja" | "primero" | "segundo" | null;
+  pin_mapa_svg_x: number | null;
+  pin_mapa_svg_y: number | null;
 }
 
 export interface CreateTotemResponse {
@@ -59,6 +62,28 @@ export async function updateTotem(
 
 export async function deleteTotem(id: number): Promise<void> {
   await apiFetch(`/api/totems/${id}/`, { method: "DELETE" });
+}
+
+export async function updateTotemPinMapa(
+  id: number,
+  pin: {
+    pin_mapa_piso: string;
+    pin_mapa_svg_x: number;
+    pin_mapa_svg_y: number;
+  } | null,
+): Promise<Totem> {
+  return apiFetch<Totem>(`/api/totems/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify(
+      pin
+        ? {
+            pin_mapa_piso: pin.pin_mapa_piso,
+            pin_mapa_svg_x: pin.pin_mapa_svg_x,
+            pin_mapa_svg_y: pin.pin_mapa_svg_y,
+          }
+        : { pin_mapa_piso: null, pin_mapa_svg_x: null, pin_mapa_svg_y: null },
+    ),
+  });
 }
 
 export async function fetchEspacios(): Promise<Espacio[]> {
