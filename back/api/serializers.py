@@ -17,6 +17,7 @@ from .models import (
     Plantilla,
     PlantillaWidget,
     Totem,
+    UbicacionMapa,
     Widget,
 )
 
@@ -293,6 +294,16 @@ class EspacioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Espacio
         fields = ['id', 'nombre', 'tipo', 'piso']
+
+
+class UbicacionMapaSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    piso_display = serializers.CharField(source='get_piso_display', read_only=True)
+
+    class Meta:
+        model = UbicacionMapa
+        fields = ['id', 'svg_id', 'nombre', 'tipo', 'tipo_display', 'piso', 'piso_display']
+        read_only_fields = ['svg_id', 'piso']
 
 
 class TotemNuevoSerializer(serializers.Serializer):

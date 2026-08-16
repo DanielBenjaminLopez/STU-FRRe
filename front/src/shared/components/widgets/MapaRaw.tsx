@@ -2,14 +2,13 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import svgPlantaBaja from "../../../assets/mapas/planta_baja.svg?raw";
-import plantaBajaData from "../../../assets/mapas/planta_baja_data.json";
 import svgPrimerPiso from "../../../assets/mapas/primer_piso.svg?raw";
-import primerPisoData from "../../../assets/mapas/primer_piso_data.json";
 import svgSegundoPiso from "../../../assets/mapas/segundo_piso.svg?raw";
-import segundoPisoData from "../../../assets/mapas/segundo_piso_data.json";
 import escalerasUrl from "../../../assets/escaleras.svg?url";
 import ascensorUrl from "../../../assets/ascensor.svg?url";
 import wcUrl from "../../../assets/wc.svg?url";
+import { fetchUbicacionesMapa } from "../../api/ubicacionesMapa";
+import type { PisoKey } from "../../api/ubicacionesMapa";
 
 const TYPE_COLORS: Record<
   string,
@@ -41,33 +40,33 @@ type RoomData = {
   piso: string;
 };
 
-const FLOORS: Record<
+const FLOORS_META: Record<
   FloorKey,
   {
     label: string;
     svg: string;
-    data: Record<string, RoomData>;
     viewBox: string;
   }
 > = {
   baja: {
     label: "Planta Baja",
     svg: svgPlantaBaja,
-    data: plantaBajaData as Record<string, RoomData>,
     viewBox: "0 0 851 903",
   },
   primero: {
     label: "Primer Piso",
     svg: svgPrimerPiso,
-    data: primerPisoData as Record<string, RoomData>,
     viewBox: "0 0 862 895",
   },
   segundo: {
     label: "Segundo Piso",
     svg: svgSegundoPiso,
-    data: segundoPisoData as Record<string, RoomData>,
     viewBox: "0 0 621 873",
   },
+};
+
+type FloorConfig = (typeof FLOORS_META)[FloorKey] & {
+  data: Record<string, RoomData>;
 };
 
 const SCALE = 1 / 32;
@@ -75,15 +74,11 @@ const DEFAULT_HEIGHT = 0.6;
 const IDLE_ANIMATION_DELAY = 2500;
 const IDLE_PAN_AMPLITUDE = 0.7;
 const IDLE_PAN_SPEED = 0.00015;
-const HEIGHT_OVERRIDES: Record<string, number> = {
-  escaleras1: 1.5,
-  escaleras2: 1.5,
-  escaleras3: 1.5,
-  escaleras4: 1.5,
-  ascensor1: 1.5,
-  baño1: 0.6,
-  baño2: 0.6,
-  entrada1: 0.2,
+
+// Alturas por tipo (en lugar de por ID de polígono)
+const HEIGHT_BY_TIPO: Record<string, number> = {
+  escaleras: 1.5,
+  ascensor: 1.5,
 };
 
 // === Indicador "Ud. está aquí" ===
@@ -166,16 +161,14 @@ function getPolygonCenter(pointsStr: string): { x: number; y: number } {
   return { x: cx, y: cy };
 }
 
-function isStairId(id: string): boolean {
-  return id.toLowerCase().includes("escalera");
+function isStairTipo(tipo: string): boolean {
+  return tipo === "escaleras";
 }
 
-function getSpecialIconUrl(id: string): string | null {
-  const lowerId = id.toLowerCase();
-  if (lowerId.includes("escalera")) return escalerasUrl;
-  if (lowerId.includes("baño") || lowerId.includes("bano")) return wcUrl;
-  if (lowerId.includes("ascensor") || lowerId.includes("elevador"))
-    return ascensorUrl;
+function getSpecialIconByTipo(tipo: string): string | null {
+  if (tipo === "escaleras") return escalerasUrl;
+  if (tipo === "baños") return wcUrl;
+  if (tipo === "ascensor") return ascensorUrl;
   return null;
 }
 
@@ -335,14 +328,13 @@ function computeBounds(polygons: PolygonData[]) {
 function buildIdMarker(
   bounds: { cx: number; cy: number },
   id: string,
+  tipo: string,
   center: { x: number; y: number },
   topHeight: number,
   buildingGroup: THREE.Group,
 ) {
-  const dx = id === "25" ? -25 : 0;
-  const dy = id === "25" ? -10 : 0;
-  const x = (center.x + dx - bounds.cx) * SCALE;
-  const z = (center.y + dy - bounds.cy) * SCALE;
+  const x = (center.x - bounds.cx) * SCALE;
+  const z = (center.y - bounds.cy) * SCALE;
   const y = topHeight + 0.4;
 
   const canvas = document.createElement("canvas");
@@ -357,7 +349,7 @@ function buildIdMarker(
   ctx.fillStyle = "rgba(10, 10, 10, 1)";
   ctx.fill();
 
-  const iconUrl = getSpecialIconUrl(id);
+  const iconUrl = getSpecialIconByTipo(tipo);
   if (iconUrl) {
     const img = new Image();
     img.onload = () => {
@@ -501,12 +493,13 @@ function buildMeshes(
   polygons.forEach((polygon) => {
     if (!polygon.points) return;
 
-    if (isStairId(polygon.id)) {
+    if (isStairTipo(polygon.tipo)) {
       meshes.set(polygon.id, buildStaircase(polygon, bounds, buildingGroup));
       const top = computeStairSteps(parsePoints(polygon.points)) * STAIR_RISE;
       buildIdMarker(
         bounds,
         polygon.id,
+        polygon.tipo,
         getPolygonCenter(polygon.points),
         top,
         buildingGroup,
@@ -524,7 +517,7 @@ function buildMeshes(
     }
     shape.closePath();
 
-    const depth = HEIGHT_OVERRIDES[polygon.id] ?? DEFAULT_HEIGHT;
+    const depth = HEIGHT_BY_TIPO[polygon.tipo] ?? DEFAULT_HEIGHT;
     const geometry = new THREE.ExtrudeGeometry(shape, {
       depth,
       bevelEnabled: false,
@@ -558,6 +551,7 @@ function buildMeshes(
     buildIdMarker(
       bounds,
       polygon.id,
+      polygon.tipo,
       getPolygonCenter(polygon.points),
       depth,
       buildingGroup,
@@ -645,6 +639,48 @@ export default function MapaRaw({
   const [searchType, setSearchType] = useState<string>("");
   const [searchPlaceId, setSearchPlaceId] = useState<string>("");
 
+  // Datos de ubicaciones cargados desde la API
+  const [floorsData, setFloorsData] = useState<
+    Record<FloorKey, Record<string, RoomData>>
+  >({ baja: {}, primero: {}, segundo: {} });
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  useEffect(() => {
+    fetchUbicacionesMapa()
+      .then((ubicaciones) => {
+        const byFloor: Record<FloorKey, Record<string, RoomData>> = {
+          baja: {},
+          primero: {},
+          segundo: {},
+        };
+        for (const u of ubicaciones) {
+          const pisoKey = u.piso as PisoKey;
+          if (pisoKey in byFloor) {
+            byFloor[pisoKey][u.svg_id] = {
+              nombre: u.nombre,
+              tipo: u.tipo,
+              piso: u.piso,
+            };
+          }
+        }
+        setFloorsData(byFloor);
+        setDataLoaded(true);
+      })
+      .catch(() => {
+        // Si falla la red, el mapa queda vacío pero funcional
+        setDataLoaded(true);
+      });
+  }, []);
+
+  const floors = useMemo<Record<FloorKey, FloorConfig>>(
+    () => ({
+      baja: { ...FLOORS_META.baja, data: floorsData.baja },
+      primero: { ...FLOORS_META.primero, data: floorsData.primero },
+      segundo: { ...FLOORS_META.segundo, data: floorsData.segundo },
+    }),
+    [floorsData],
+  );
+
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -660,7 +696,7 @@ export default function MapaRaw({
   const idleAnimationStartRef = useRef(0);
   const isInteractingRef = useRef(false);
 
-  const floorConfig = FLOORS[floor];
+  const floorConfig = floors[floor];
   const polygons = useMemo(
     () => parsePolygons(floorConfig.svg, floorConfig.data),
     [floorConfig],
@@ -676,16 +712,16 @@ export default function MapaRaw({
 
   const allRooms = useMemo(() => {
     const rooms: { id: string; data: RoomData; floor: FloorKey }[] = [];
-    for (const [floorKey, config] of Object.entries(FLOORS) as [
+    for (const [floorKey, config] of Object.entries(floors) as [
       FloorKey,
-      (typeof FLOORS)[FloorKey],
+      FloorConfig,
     ][]) {
       for (const [id, data] of Object.entries(config.data)) {
         rooms.push({ id, data, floor: floorKey });
       }
     }
     return rooms;
-  }, []);
+  }, [floors]);
 
   const availableTypes = useMemo(() => {
     const excludedTypes = new Set(["escaleras", "ascensor"]);
@@ -901,14 +937,14 @@ export default function MapaRaw({
     (r: { id: string; data: RoomData; floor: FloorKey }) => {
       setSearchPlaceId(r.id);
       setFloor(r.floor);
-      const config = FLOORS[r.floor];
+      const config = floors[r.floor];
       const polys = parsePolygons(config.svg, config.data);
       const poly = polys.find((p) => p.id === r.id);
       if (poly) {
         setSelectedRoom({ id: r.id, data: r.data });
       }
     },
-    [],
+    [floors],
   );
 
   const handlePointerMove = useCallback(
@@ -978,13 +1014,18 @@ export default function MapaRaw({
         highlightMesh(null);
       }
     },
-    [floorConfig, floor, highlightMesh],
+    [floorConfig, floor, highlightMesh, floors],
   );
 
   return (
     <div
       className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
     >
+      {!dataLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm rounded-4xl z-10">
+          <span className="text-sm text-gray-500">Cargando mapa...</span>
+        </div>
+      )}
       {!compact && (
         <div className="w-full flex flex-col px-16 gap-4">
           <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
@@ -1069,30 +1110,27 @@ export default function MapaRaw({
           <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
             <span className="font-normal text-sm">Piso actual</span>
             <div className="flex gap-2">
-              {(
-                Object.entries(FLOORS) as [
-                  FloorKey,
-                  (typeof FLOORS)[FloorKey],
-                ][]
-              ).map(([key, config]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setFloor(key);
-                    setSelectedRoom(null);
-                    setSearchType("");
-                    setSearchPlaceId("");
-                    highlightMesh(null);
-                  }}
-                  className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                    floor === key
-                      ? "bg-cyan-200 text-cyan-900"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {config.label}
-                </button>
-              ))}
+              {(Object.entries(floors) as [FloorKey, FloorConfig][]).map(
+                ([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setFloor(key);
+                      setSelectedRoom(null);
+                      setSearchType("");
+                      setSearchPlaceId("");
+                      highlightMesh(null);
+                    }}
+                    className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                      floor === key
+                        ? "bg-cyan-200 text-cyan-900"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {config.label}
+                  </button>
+                ),
+              )}
             </div>
           </div>
         </div>
@@ -1124,7 +1162,7 @@ export default function MapaRaw({
               <span className="text-xs text-gray-800">
                 {TYPE_COLORS[selectedRoom.data.tipo]?.label ?? "Otro"}
                 {" - "}
-                {FLOORS[selectedRoom.data.piso as FloorKey]?.label}
+                {floors[selectedRoom.data.piso as FloorKey]?.label}
               </span>
             </div>
           </div>

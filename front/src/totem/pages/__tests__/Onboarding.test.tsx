@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import {
+  render,
+  screen,
+  cleanup,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import Onboarding from "../Onboarding";
 import { createTotem, fetchTotemMe } from "../../../shared/api/totems";
 import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
@@ -77,8 +82,6 @@ describe("Onboarding", () => {
       .mockResolvedValueOnce({ codigo_vinculacion: "OLD111" })
       .mockResolvedValueOnce({ codigo_vinculacion: "NEW222" });
 
-    const user = userEvent.setup();
-
     render(<Onboarding />);
 
     await waitFor(() => {
@@ -86,7 +89,7 @@ describe("Onboarding", () => {
     });
 
     const btn = screen.getByRole("button", { name: /regenerar código/i });
-    await user.click(btn);
+    fireEvent.click(btn);
 
     await waitFor(() => {
       expect(screen.getByText("NEW222")).toBeInTheDocument();

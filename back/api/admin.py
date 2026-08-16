@@ -16,6 +16,7 @@ from .models import (
     Plantilla,
     PlantillaWidget,
     Totem,
+    UbicacionMapa,
     Widget,
 )
 from .resources import (
@@ -74,6 +75,14 @@ class EspacioAdmin(ImportExportModelAdmin):
     list_display = ['nombre', 'tipo', 'piso']
     list_filter = ['tipo', 'piso']
     search_fields = ['nombre']
+
+
+@admin.register(UbicacionMapa)
+class UbicacionMapaAdmin(admin.ModelAdmin):
+    list_display = ['svg_id', 'nombre', 'tipo', 'piso']
+    list_filter = ['piso', 'tipo']
+    search_fields = ['nombre', 'svg_id']
+    readonly_fields = ['svg_id', 'piso']
 
 
 @admin.register(Carrera)

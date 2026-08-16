@@ -70,10 +70,10 @@ describe("Sidebar", () => {
     expect(mockLogout).toHaveBeenCalled();
   });
 
-  it("tiene 7 items de navegación", () => {
+  it("tiene 8 items de navegación", () => {
     render(<Sidebar />);
     const links = screen.getAllByRole("link");
-    expect(links.length).toBe(7);
+    expect(links.length).toBe(8);
   });
 
   it("tiene clase w-48 en el aside", () => {

@@ -11,11 +11,11 @@ class WidgetModelTest(TestCase):
     def test_crear_widget(self):
         widget = Widget.objects.create(
             nombre="Horarios de Cursado",
-            tipo="horarios",
+            tipo="horarios_model_test",
             col_tam_default=4,
             fila_tam_default=2,
         )
-        self.assertEqual(str(widget), "Horarios de Cursado (horarios)")
+        self.assertEqual(str(widget), "Horarios de Cursado (horarios_model_test)")
         self.assertTrue(widget.activo)
 
 
@@ -23,7 +23,7 @@ class PlantillaModelTest(TestCase):
     def test_crear_plantilla_con_widgets(self):
         plantilla = Plantilla.objects.create(nombre="Plantilla Principal")
         widget = Widget.objects.create(
-            nombre="Exámenes", tipo="examenes", col_tam_default=2, fila_tam_default=2
+            nombre="Exámenes", tipo="examenes_model_test", col_tam_default=2, fila_tam_default=2
         )
         pw = PlantillaWidget.objects.create(
             plantilla=plantilla,
@@ -51,13 +51,13 @@ class WidgetAPITestCase(TestCase):
         url = "/api/widgets/"
         data = {
             "nombre": "Avisos Recientes",
-            "tipo": "avisos",
+            "tipo": "avisos_api_test",
             "col_tam_default": 4,
             "fila_tam_default": 2,
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Widget.objects.count(), 1)
+        self.assertEqual(Widget.objects.filter(tipo="avisos_api_test").count(), 1)
 
     def test_validacion_ancho_excedido(self):
         url = "/api/widgets/"
@@ -72,7 +72,7 @@ class WidgetAPITestCase(TestCase):
 
     def test_proteccion_borrado_widget_en_uso(self):
         plantilla = Plantilla.objects.create(nombre="Plantilla Aulas")
-        widget = Widget.objects.create(nombre="Noticias", tipo="noticias")
+        widget = Widget.objects.create(nombre="Noticias", tipo="noticias_api_test")
         PlantillaWidget.objects.create(
             plantilla=plantilla,
             widget=widget,
@@ -215,7 +215,7 @@ class TotemAPITestCase(TestCase):
 
         self.plantilla = Plantilla.objects.create(nombre="Plantilla Kiosco")
         self.widget = Widget.objects.create(
-            nombre="Horarios", tipo="horarios", col_tam_default=2, fila_tam_default=2
+            nombre="Horarios", tipo="horarios_totem_test", col_tam_default=2, fila_tam_default=2
         )
         PlantillaWidget.objects.create(
             plantilla=self.plantilla,
@@ -235,7 +235,7 @@ class TotemAPITestCase(TestCase):
         self.assertEqual(response.data["plantilla_id"], self.plantilla.id)
         self.assertEqual(
             response.data["plantilla"]["widgets_posiciones"][0]["widget_tipo"],
-            "horarios",
+            "horarios_totem_test",
         )
 
     def test_no_se_puede_borrar_plantilla_asignada(self):
@@ -252,7 +252,7 @@ class TotemAPITestCase(TestCase):
 
     def test_reemplazar_widgets(self):
         widget2 = Widget.objects.create(
-            nombre="Exámenes", tipo="examenes", col_tam_default=2, fila_tam_default=2
+            nombre="Exámenes", tipo="examenes_totem_test", col_tam_default=2, fila_tam_default=2
         )
         url = f"/api/plantillas/{self.plantilla.id}/reemplazar-widgets/"
         data = [
@@ -272,7 +272,7 @@ class TotemAPITestCase(TestCase):
 
     def test_reemplazar_widgets_rechaza_solapamiento(self):
         widget2 = Widget.objects.create(
-            nombre="Exámenes", tipo="examenes", col_tam_default=2, fila_tam_default=2
+            nombre="Exámenes", tipo="examenes_totem_test", col_tam_default=2, fila_tam_default=2
         )
         url = f"/api/plantillas/{self.plantilla.id}/reemplazar-widgets/"
         data = [
@@ -301,7 +301,7 @@ class TotemKioscoAPITestCase(TestCase):
     def setUp(self):
         self.plantilla = Plantilla.objects.create(nombre="Plantilla Kiosco")
         self.widget = Widget.objects.create(
-            nombre="Horarios", tipo="horarios", col_tam_default=2, fila_tam_default=2
+            nombre="Horarios", tipo="horarios_kiosco_test", col_tam_default=2, fila_tam_default=2
         )
         PlantillaWidget.objects.create(
             plantilla=self.plantilla,
@@ -329,7 +329,7 @@ class TotemKioscoAPITestCase(TestCase):
         self.assertEqual(response.data["plantilla"]["nombre"], "Plantilla Kiosco")
         self.assertEqual(
             response.data["plantilla"]["widgets_posiciones"][0]["widget_tipo"],
-            "horarios",
+            "horarios_kiosco_test",
         )
 
     def test_me_sin_plantilla_devuelve_null(self):
@@ -393,85 +393,89 @@ class CsvImportAPITestCase(TestCase):
         from io import BytesIO
         from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
 
-        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
-        mat = Materia.objects.create(nombre="Física I")
+        car = Carrera.objects.create(nombre="Sistemas Test Duplicados", tipo="grado")
+        mat = Materia.objects.create(nombre="Física I Test")
         pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="K1")
         esp = Espacio.objects.create(nombre="Aula 10", tipo="aula", piso=1)
 
-        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas,Física I,K1,Aula 10,lunes,08:00,10:00,2023\nSistemas,Física I,K1,Aula 10,lunes,08:00,10:00,2023\n"
+        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Duplicados,Física I Test,K1,Aula 10,lunes,08:00,10:00,2023\nSistemas Test Duplicados,Física I Test,K1,Aula 10,lunes,08:00,10:00,2023\n"
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "horarios.csv"
 
+        horarios_antes = HorarioCursado.objects.count()
         response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(HorarioCursado.objects.count(), 1)
+        self.assertEqual(HorarioCursado.objects.count(), horarios_antes + 1)
 
     def test_importar_horarios_diferente_espacio_misma_comision(self):
         from io import BytesIO
         from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
 
-        car = Carrera.objects.create(nombre="ISI", tipo="grado")
-        mat = Materia.objects.create(nombre="SGBD")
+        car = Carrera.objects.create(nombre="ISI Test", tipo="grado")
+        mat = Materia.objects.create(nombre="SGBD Test")
         pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Lab 5", tipo="laboratorio", piso=1)
         Espacio.objects.create(nombre="Lab 6", tipo="laboratorio", piso=1)
 
-        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nISI,SGBD,Curso 1,Lab 5,martes,18:10,22:45,2023\nISI,SGBD,Curso 1,Lab 6,martes,18:10,22:45,2023\n"
+        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nISI Test,SGBD Test,Curso 1,Lab 5,martes,18:10,22:45,2023\nISI Test,SGBD Test,Curso 1,Lab 6,martes,18:10,22:45,2023\n"
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "horarios.csv"
 
+        horarios_antes = HorarioCursado.objects.count()
         response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(HorarioCursado.objects.count(), 2)
+        self.assertEqual(HorarioCursado.objects.count(), horarios_antes + 2)
 
     def test_importar_horarios_csv_con_errores_falla_atomicamente(self):
         from io import BytesIO
         from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
 
-        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
-        mat = Materia.objects.create(nombre="Análisis Numérico")
+        car = Carrera.objects.create(nombre="Sistemas Test Errores", tipo="grado")
+        mat = Materia.objects.create(nombre="Análisis Numérico Test")
         pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
-        Espacio.objects.create(nombre="Aula 1.1", tipo="aula", piso=1)
+        Espacio.objects.create(nombre="Aula Test Errores", tipo="aula", piso=1)
 
         csv_content = (
             "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\n"
-            "Sistemas,Materia Inexistente 99,Curso 1,Aula 1.1,Lunes,08:00,10:00,2023\n"
-            "Sistemas,Análisis Numérico,Curso 1,Aula Fantasma 999,Lunes,15:50,18:05,2023\n"
-            "Sistemas,Análisis Numérico,Curso 1,Aula 1.1,,15:50,18:05,2023\n"
-            "Sistemas,Análisis Numérico,Curso 1,Aula 1.1,Lunes,hora_invalida,18:05,2023\n"
-            ",,Curso 1,Aula 1.1,Lunes,15:50,18:05,2023\n"
+            "Sistemas Test Errores,Materia Inexistente 99,Curso 1,Aula Test Errores,Lunes,08:00,10:00,2023\n"
+            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Fantasma 999,Lunes,15:50,18:05,2023\n"
+            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Test Errores,,15:50,18:05,2023\n"
+            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Test Errores,Lunes,hora_invalida,18:05,2023\n"
+            ",,Curso 1,Aula Test Errores,Lunes,15:50,18:05,2023\n"
         )
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "errores_importacion.csv"
 
+        horarios_antes = HorarioCursado.objects.count()
         response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         res_data = response.json()
         self.assertEqual(res_data["totales"]["errores"], 5)
         self.assertEqual(res_data["totales"]["creados"], 0)
-        self.assertEqual(HorarioCursado.objects.count(), 0)
+        self.assertEqual(HorarioCursado.objects.count(), horarios_antes)
 
     def test_importar_horarios_csv_sin_espacio_exitoso(self):
         from io import BytesIO
         from api.models import Carrera, Materia, PlanMateria, Comision, HorarioCursado
 
-        car = Carrera.objects.create(nombre="Sistemas", tipo="grado")
-        mat = Materia.objects.create(nombre="Diseño de Sistemas")
+        car = Carrera.objects.create(nombre="Sistemas Test Sin Espacio", tipo="grado")
+        mat = Materia.objects.create(nombre="Diseño de Sistemas Test")
         pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
 
-        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas,Diseño de Sistemas,Curso 1,,Miércoles,15:30,17:00,2023\n"
+        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Sin Espacio,Diseño de Sistemas Test,Curso 1,,Miércoles,15:30,17:00,2023\n"
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "horarios_sin_espacio.csv"
 
+        horarios_antes = HorarioCursado.objects.count()
         response = self.client.post("/api/horarios/importar-csv/", {"file": csv_file}, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         res_data = response.json()
         self.assertEqual(res_data["totales"]["creados"], 1)
         self.assertEqual(res_data["totales"]["errores"], 0)
-        self.assertEqual(HorarioCursado.objects.count(), 1)
-        h = HorarioCursado.objects.first()
+        self.assertEqual(HorarioCursado.objects.count(), horarios_antes + 1)
+        h = HorarioCursado.objects.latest("id")
         self.assertIsNone(h.espacio)
