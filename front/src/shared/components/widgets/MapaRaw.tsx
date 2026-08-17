@@ -82,9 +82,6 @@ const HEIGHT_BY_TIPO: Record<string, number> = {
 };
 
 // === Indicador "Ud. está aquí" ===
-const USTED_AQUI_SVG_X = 617.5;
-const USTED_AQUI_SVG_Y = 100.25;
-const USTED_AQUI_ENABLED = true;
 const USTED_AQUI_PIN_COLOR = 0xef4444;
 
 // === Marcador de ID por polígono ===
@@ -593,15 +590,22 @@ function buildMeshes(
 function buildYouAreHerePin(
   bounds: { cx: number; cy: number },
   buildingGroup: THREE.Group,
+  svgX: number,
+  svgY: number,
+  ghost = false,
 ): THREE.Group {
   const group = new THREE.Group();
 
-  const x = (USTED_AQUI_SVG_X - bounds.cx) * SCALE;
-  const z = -(USTED_AQUI_SVG_Y - bounds.cy) * SCALE;
+  const x = (svgX - bounds.cx) * SCALE;
+  const z = -(svgY - bounds.cy) * SCALE;
+  const pinColor = ghost ? 0xff8888 : USTED_AQUI_PIN_COLOR;
+  const pinOpacity = ghost ? 0.45 : 1;
 
   const shaftGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.2, 16);
   const shaftMat = new THREE.MeshPhongMaterial({
-    color: USTED_AQUI_PIN_COLOR,
+    color: pinColor,
+    transparent: ghost,
+    opacity: ghost ? pinOpacity : 1,
   });
   const shaft = new THREE.Mesh(shaftGeo, shaftMat);
   shaft.position.y = 0.6;
@@ -609,7 +613,9 @@ function buildYouAreHerePin(
 
   const headGeo = new THREE.SphereGeometry(0.15, 16, 16);
   const headMat = new THREE.MeshPhongMaterial({
-    color: USTED_AQUI_PIN_COLOR,
+    color: pinColor,
+    transparent: ghost,
+    opacity: ghost ? pinOpacity : 1,
   });
   const head = new THREE.Mesh(headGeo, headMat);
   head.position.y = 1.35;
@@ -619,48 +625,72 @@ function buildYouAreHerePin(
   const shadowMat = new THREE.MeshPhongMaterial({
     color: 0x000000,
     transparent: true,
-    opacity: 0.15,
+    opacity: ghost ? 0.05 : 0.15,
   });
   const shadow = new THREE.Mesh(shadowGeo, shadowMat);
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.01;
   group.add(shadow);
 
-  const labelCanvas = document.createElement("canvas");
-  labelCanvas.width = 2000;
-  labelCanvas.height = 400;
-  const ctx = labelCanvas.getContext("2d")!;
-  ctx.fillStyle = "#ef4444";
-  ctx.font = "bold 320px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Ud. está aquí", 1000, 200);
+  if (!ghost) {
+    const labelCanvas = document.createElement("canvas");
+    labelCanvas.width = 2000;
+    labelCanvas.height = 400;
+    const ctx = labelCanvas.getContext("2d")!;
+    ctx.fillStyle = "#ef4444";
+    ctx.font = "bold 320px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Ud. está aquí", 1000, 200);
 
-  const labelTexture = new THREE.CanvasTexture(labelCanvas);
-  labelTexture.anisotropy = 4;
-  labelTexture.minFilter = THREE.LinearMipmapLinearFilter;
-  labelTexture.magFilter = THREE.LinearFilter;
-  const labelMat = new THREE.SpriteMaterial({
-    map: labelTexture,
-    transparent: true,
-    color: USTED_AQUI_PIN_COLOR,
-  });
-  const label = new THREE.Sprite(labelMat);
-  label.scale.set(2.5, 0.5, 1);
-  label.position.y = 1.75;
-  label.position.z = -0.5;
-  group.add(label);
+    const labelTexture = new THREE.CanvasTexture(labelCanvas);
+    labelTexture.anisotropy = 4;
+    labelTexture.minFilter = THREE.LinearMipmapLinearFilter;
+    labelTexture.magFilter = THREE.LinearFilter;
+    const labelMat = new THREE.SpriteMaterial({
+      map: labelTexture,
+      transparent: true,
+      color: USTED_AQUI_PIN_COLOR,
+    });
+    const label = new THREE.Sprite(labelMat);
+    label.scale.set(2.5, 0.5, 1);
+    label.position.y = 1.75;
+    label.position.z = -0.5;
+    group.add(label);
+  }
 
   group.position.set(x, 0, z);
   buildingGroup.add(group);
   return group;
 }
 
+export type PinPosition = {
+  svgX: number;
+  svgY: number;
+  floor: FloorKey;
+};
+
 export default function MapaRaw({
   initialFloor = "baja",
   compact = false,
-}: { initialFloor?: FloorKey; compact?: boolean } = {}) {
-  const [floor, setFloor] = useState<FloorKey>(initialFloor);
+  pinPosition = null,
+  onPinPlaced,
+  externalFloor,
+}: {
+  initialFloor?: FloorKey;
+  compact?: boolean;
+  /** Posición del pin leída externamente (desde la BD). Si es null, no se muestra. */
+  pinPosition?: PinPosition | null;
+  /** Si se provee, activa el modo edición: click en el canvas llama a esta función con la posición elegida. */
+  onPinPlaced?: (pos: PinPosition) => void;
+  /** Permite que un componente padre controle el piso activo sin remountar MapaRaw. */
+  externalFloor?: FloorKey;
+} = {}) {
+  const [internalFloor, setFloor] = useState<FloorKey>(initialFloor);
+  // Cuando se controla externamente, el piso externo tiene precedencia.
+  // Así evitamos el anti-patrón de setState dentro de un effect.
+  const floor = externalFloor ?? internalFloor;
+
   const [selectedRoom, setSelectedRoom] = useState<{
     id: string;
     data: RoomData;
@@ -723,9 +753,11 @@ export default function MapaRaw({
   const buildingGroupRef = useRef<THREE.Group | null>(null);
   const hoveredRef = useRef<THREE.Mesh | null>(null);
   const youAreHereRef = useRef<THREE.Group | null>(null);
+  const ghostPinRef = useRef<THREE.Group | null>(null);
   const idleAnimationStartRef = useRef(0);
   const isInteractingRef = useRef(false);
   const needsRenderRef = useRef(true);
+  const floorPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
 
   const floorConfig = floors[floor];
   const polygons = useMemo(
@@ -814,6 +846,10 @@ export default function MapaRaw({
       controls.minPolarAngle = 0.8;
       controls.maxPolarAngle = 0.8;
     }
+    if (onPinPlaced) {
+      controls.minPolarAngle = 0;
+      controls.maxPolarAngle = 0;
+    }
     controlsRef.current = controls;
     controls.enableDamping = true;
 
@@ -845,6 +881,12 @@ export default function MapaRaw({
       const camDistance = buildingSize * 1.4;
       camera.position.set(0, camDistance * 0.9, camDistance);
       controls.target.set(1, 0, 0);
+    }
+
+    if (onPinPlaced) {
+      const camDistance = buildingSize * 1;
+      camera.position.set(0, camDistance * 0.9, camDistance);
+      controls.target.set(8.5, 0, 0);
     }
 
     controls.update();
@@ -979,14 +1021,43 @@ export default function MapaRaw({
     );
     raycastTargetsRef.current = Array.from(meshesRef.current.values()).flat();
     hoveredRef.current = null;
+    ghostPinRef.current = null;
     needsRenderRef.current = true;
+  }, [polygons, bounds, floor, compact]);
 
-    if (USTED_AQUI_ENABLED && floor === "baja") {
-      youAreHereRef.current = buildYouAreHerePin(bounds, group);
-    } else {
+  // --- Efecto dedicado al pin (separado del build de meshes) ---
+  useEffect(() => {
+    const group = buildingGroupRef.current;
+    if (!group) return;
+
+    // Limpiar pin real anterior
+    if (youAreHereRef.current) {
+      group.remove(youAreHereRef.current);
+      youAreHereRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          (child.material as THREE.Material).dispose();
+        }
+        if (child instanceof THREE.Sprite) {
+          const mat = child.material as THREE.SpriteMaterial;
+          mat.map?.dispose();
+          mat.dispose();
+        }
+      });
       youAreHereRef.current = null;
     }
-  }, [polygons, bounds, floor, compact]);
+
+    // Dibujar pin si la posición corresponde al piso actual
+    if (pinPosition && pinPosition.floor === floor) {
+      youAreHereRef.current = buildYouAreHerePin(
+        bounds,
+        group,
+        pinPosition.svgX,
+        pinPosition.svgY,
+      );
+    }
+    needsRenderRef.current = true;
+  }, [pinPosition, floor, bounds]);
 
   const highlightMesh = useCallback((id: string | null) => {
     meshesRef.current.forEach((meshes) => {
@@ -1027,17 +1098,49 @@ export default function MapaRaw({
     (event: React.PointerEvent<HTMLCanvasElement>) => {
       if (!canvasRef.current || !cameraRef.current) return;
 
-      if (selectedRoom) {
-        hoveredRef.current = null;
-        return;
-      }
-
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
       mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+      // Modo edición de pin: mostrar pin fantasma en la posición del cursor
+      if (onPinPlaced && buildingGroupRef.current) {
+        const target = new THREE.Vector3();
+        raycasterRef.current.ray.intersectPlane(floorPlaneRef.current, target);
+        if (target.lengthSq() > 0) {
+          const svgX = target.x / SCALE + bounds.cx;
+          const svgY = -target.z / SCALE + bounds.cy;
+          // Actualizar o crear pin fantasma
+          if (ghostPinRef.current) {
+            buildingGroupRef.current.remove(ghostPinRef.current);
+            ghostPinRef.current.traverse((child) => {
+              if (child instanceof THREE.Mesh) {
+                child.geometry.dispose();
+                (child.material as THREE.Material).dispose();
+              }
+            });
+            ghostPinRef.current = null;
+          }
+          ghostPinRef.current = buildYouAreHerePin(
+            bounds,
+            buildingGroupRef.current,
+            svgX,
+            svgY,
+            true,
+          );
+        }
+        needsRenderRef.current = true;
+        return;
+      }
+
+      // Modo normal: hover sobre habitaciones
+      if (selectedRoom) {
+        hoveredRef.current = null;
+        return;
+      }
+
       const intersects = raycasterRef.current.intersectObjects(
         raycastTargetsRef.current,
       );
@@ -1056,7 +1159,7 @@ export default function MapaRaw({
       }
       needsRenderRef.current = true;
     },
-    [selectedRoom],
+    [selectedRoom, onPinPlaced, bounds],
   );
 
   const handleClick = useCallback(
@@ -1069,6 +1172,21 @@ export default function MapaRaw({
       mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+      // Modo edición de pin: colocar en cualquier punto del plano del piso
+      if (onPinPlaced) {
+        const target = new THREE.Vector3();
+        raycasterRef.current.ray.intersectPlane(floorPlaneRef.current, target);
+        if (target.lengthSq() > 0) {
+          const svgX = target.x / SCALE + bounds.cx;
+          const svgY = -target.z / SCALE + bounds.cy;
+          onPinPlaced({ svgX, svgY, floor });
+        }
+        needsRenderRef.current = true;
+        return;
+      }
+
+      // Modo normal: selección de habitación
       const intersects = raycasterRef.current.intersectObjects(
         raycastTargetsRef.current,
       );
@@ -1090,7 +1208,7 @@ export default function MapaRaw({
       }
       needsRenderRef.current = true;
     },
-    [floorConfig, floor, highlightMesh],
+    [floorConfig, floor, highlightMesh, onPinPlaced, bounds],
   );
 
   return (
@@ -1104,119 +1222,142 @@ export default function MapaRaw({
       )}
       {!compact && (
         <div className="w-full flex flex-col px-16 gap-4">
-          <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
-            <span className="text-center font-medium">Busqueda</span>
-            <div className="flex gap-4 overflow-hidden">
-              <div className="flex flex-col gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-500 text-center">
-                  Seleccioná un tipo
-                </span>
-                <div className="grid grid-cols-2 gap-2 justify-center">
-                  <button
-                    onClick={() => {
-                      setSearchType("");
-                      setSearchPlaceId("");
-                      setSelectedRoom(null);
-                      highlightMesh(null);
-                    }}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                      searchType === ""
-                        ? "bg-cyan-200 text-cyan-900"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    Todos
-                  </button>
-                  {availableTypes.map((t) => (
+          {/* Panel de búsqueda: solo en modo normal (no en editor de pin) */}
+          {!onPinPlaced && (
+            <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
+              <span className="text-center font-medium">Busqueda</span>
+              <div className="flex gap-4 overflow-hidden">
+                <div className="flex flex-col gap-2 flex-1">
+                  <span className="text-sm font-medium text-gray-500 text-center">
+                    Seleccioná un tipo
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 justify-center">
                     <button
-                      key={t.value}
                       onClick={() => {
-                        setSearchType(t.value);
+                        setSearchType("");
                         setSearchPlaceId("");
                         setSelectedRoom(null);
                         highlightMesh(null);
                       }}
                       className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                        searchType === t.value
+                        searchType === ""
                           ? "bg-cyan-200 text-cyan-900"
                           : "bg-white text-black"
                       }`}
                     >
-                      {t.label}
+                      Todos
                     </button>
-                  ))}
+                    {availableTypes.map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => {
+                          setSearchType(t.value);
+                          setSearchPlaceId("");
+                          setSelectedRoom(null);
+                          highlightMesh(null);
+                        }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                          searchType === t.value
+                            ? "bg-cyan-200 text-cyan-900"
+                            : "bg-white text-black"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="w-px bg-gray-200" />
+                <div className="flex flex-col gap-2 flex-1">
+                  <span className="text-sm font-medium text-gray-500 text-center">
+                    Seleccioná una ubicación
+                  </span>
+                  {searchType ? (
+                    <div className="flex flex-col gap-2 overflow-auto">
+                      {filteredPlaces.map((r, i) => {
+                        const colors =
+                          TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
+                        return (
+                          <button
+                            key={`${i}`}
+                            onClick={() => handleSearchSelect(r)}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
+                              searchPlaceId === r.id
+                                ? "text-white"
+                                : "text-black"
+                            }`}
+                            style={{
+                              backgroundColor:
+                                searchPlaceId === r.id
+                                  ? colors.highlight
+                                  : colors.base,
+                            }}
+                          >
+                            {r.data.nombre}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center text-sm text-gray-400">
+                      Elegí un tipo primero
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="w-px bg-gray-200" />
-              <div className="flex flex-col gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-500 text-center">
-                  Seleccioná una ubicación
-                </span>
-                {searchType ? (
-                  <div className="flex flex-col gap-2 overflow-auto">
-                    {filteredPlaces.map((r, i) => {
-                      const colors = TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
-                      return (
-                        <button
-                          key={`${i}`}
-                          onClick={() => handleSearchSelect(r)}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
-                            searchPlaceId === r.id ? "text-white" : "text-black"
-                          }`}
-                          style={{
-                            backgroundColor:
-                              searchPlaceId === r.id
-                                ? colors.highlight
-                                : colors.base,
-                          }}
-                        >
-                          {r.data.nombre}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center text-sm text-gray-400">
-                    Elegí un tipo primero
-                  </div>
+            </div>
+          )}
+          {!onPinPlaced && (
+            <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
+              <span className="font-normal text-sm">Piso actual</span>
+              <div className="flex gap-2">
+                {(Object.entries(floors) as [FloorKey, FloorConfig][]).map(
+                  ([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setFloor(key);
+                        setSelectedRoom(null);
+                        setSearchType("");
+                        setSearchPlaceId("");
+                        highlightMesh(null);
+                      }}
+                      className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                        floor === key
+                          ? "bg-cyan-200 text-cyan-900"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ),
                 )}
               </div>
             </div>
-          </div>
-          <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
-            <span className="font-normal text-sm">Piso actual</span>
-            <div className="flex gap-2">
-              {(Object.entries(floors) as [FloorKey, FloorConfig][]).map(
-                ([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setFloor(key);
-                      setSelectedRoom(null);
-                      setSearchType("");
-                      setSearchPlaceId("");
-                      highlightMesh(null);
-                    }}
-                    className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                      floor === key
-                        ? "bg-cyan-200 text-cyan-900"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {config.label}
-                  </button>
-                ),
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
+
       <div ref={containerRef} className="relative w-full h-full">
         <canvas
           ref={canvasRef}
-          className={`w-full cursor-grab active:cursor-grabbing overflow-visible ${compact ? "" : "aspect-square"}`}
+          className={`w-full overflow-visible ${onPinPlaced ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"} ${compact ? "" : "aspect-square"}`}
           onClick={handleClick}
           onPointerMove={handlePointerMove}
+          onPointerLeave={() => {
+            // Limpiar el pin fantasma al salir del canvas
+            if (ghostPinRef.current && buildingGroupRef.current) {
+              buildingGroupRef.current.remove(ghostPinRef.current);
+              ghostPinRef.current.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                  child.geometry.dispose();
+                  (child.material as THREE.Material).dispose();
+                }
+              });
+              ghostPinRef.current = null;
+              needsRenderRef.current = true;
+            }
+          }}
         />
         {selectedRoom && (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-200 p-4 min-w-[200px] flex flex-col items-center">
@@ -1243,7 +1384,7 @@ export default function MapaRaw({
             </div>
           </div>
         )}
-        {!compact && (
+        {!compact && !onPinPlaced && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full px-16">
             <div className="flex flex-wrap gap-3 items-center text-xs border border-gray-200 bg-white/50 rounded-2xl p-4 justify-center">
               {Object.entries(TYPE_COLORS)

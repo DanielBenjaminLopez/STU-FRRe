@@ -31,6 +31,29 @@ class Totem(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     codigo_creado_en = models.DateTimeField(null=True, blank=True)
 
+    PISO_MAPA_CHOICES = [
+        ('baja', 'Planta Baja'),
+        ('primero', 'Primer Piso'),
+        ('segundo', 'Segundo Piso'),
+    ]
+    pin_mapa_piso = models.CharField(
+        max_length=10,
+        choices=PISO_MAPA_CHOICES,
+        null=True,
+        blank=True,
+        help_text='Piso donde está ubicado el tótem en el mapa interactivo.',
+    )
+    pin_mapa_svg_x = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='Coordenada X en el sistema de coordenadas del SVG del mapa.',
+    )
+    pin_mapa_svg_y = models.FloatField(
+        null=True,
+        blank=True,
+        help_text='Coordenada Y en el sistema de coordenadas del SVG del mapa.',
+    )
+
     class Meta:
         ordering = ['nombre']
         verbose_name = 'Tótem'
