@@ -6,6 +6,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
+import Avisos from "../../shared/components/widgets/Avisos";
 import {
   useTotemScale,
   TOTEM_WIDTH,
@@ -155,6 +156,7 @@ export default function Home() {
             }}
           >
             <div className="flex flex-col w-full h-full p-16 gap-16">
+              <Avisos />
               <Encabezado />
               <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
                 {hasWidgets ? (
