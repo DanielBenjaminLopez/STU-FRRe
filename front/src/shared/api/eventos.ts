@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, publicFetch } from "./client";
 import type { Espacio } from "./totems";
 
 export interface Evento {
@@ -22,7 +22,7 @@ export const TIPOS_EVENTO = [
 ] as const;
 
 export async function fetchEventos(): Promise<Evento[]> {
-  return apiFetch<Evento[]>("/api/eventos/");
+  return publicFetch<Evento[]>("/api/eventos/");
 }
 
 export async function createEvento(data: Omit<Evento, "id">): Promise<Evento> {
