@@ -1,7 +1,13 @@
 // import MapaRaw from "./MapaRaw";
-import MapaRaw from "./MapaRaw";
+import MapaRaw, { type PinPosition } from "./MapaRaw";
 
-export default function MapaFull({ onClose }: { onClose: () => void }) {
+export default function MapaFull({
+  onClose,
+  pinPosition,
+}: {
+  onClose: () => void;
+  pinPosition?: PinPosition | null;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
       <div className="flex flex-col bg-white/70 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl gap-8">
@@ -21,7 +27,7 @@ export default function MapaFull({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         {/* <MapaRaw /> */}
-        <MapaRaw />
+        <MapaRaw pinPosition={pinPosition} />
       </div>
     </div>
   );

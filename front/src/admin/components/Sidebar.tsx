@@ -8,6 +8,7 @@ const navItems = [
   { to: "/admin/noticias", label: "Noticias y Eventos" },
   { to: "/admin/calendario-avisos", label: "Calendario" },
   { to: "/admin/avisos", label: "Avisos" },
+  { to: "/admin/ubicaciones-mapa", label: "Mapas" },
   { to: "/admin/plantillas", label: "Plantillas" },
 ];
 

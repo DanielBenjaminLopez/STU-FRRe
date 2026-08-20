@@ -28,7 +28,7 @@ SECRET_KEY = "django-insecure-kw^*q8^vf@hs(&p))6)18=@ixwp646tmyn6y#j+8rw)py7-v^h
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "backend"]
+ALLOWED_HOSTS = ["*"] if DEBUG else ["localhost", "127.0.0.1", "backend"]
 
 
 # Application definition
@@ -85,7 +85,12 @@ CHANNEL_LAYER_BACKEND = config(
 CHANNEL_LAYERS = {"default": {"BACKEND": CHANNEL_LAYER_BACKEND}}
 if CHANNEL_LAYER_BACKEND == "channels_redis.core.RedisChannelLayer":
     CHANNEL_LAYERS["default"]["CONFIG"] = {
-        "hosts": [config("REDIS_URL", default="redis://redis:6379/0")],
+        "hosts": [{
+            "address": config("REDIS_URL", default="redis://redis:6379/0"),
+            # redis-py 8.x defaults socket_timeout to 5s which races against
+            # channels_redis brpop_timeout (also 5s), causing TimeoutError.
+            "socket_timeout": None,
+        }],
     }
 
 

@@ -1,5 +1,5 @@
 from .configuracion import Totem, Widget, Plantilla, PlantillaWidget
-from .ubicaciones import Espacio
+from .ubicaciones import Espacio, UbicacionMapa
 from .academico import (
     Carrera,
     Materia,

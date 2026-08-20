@@ -2,14 +2,13 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import svgPlantaBaja from "../../../assets/mapas/planta_baja.svg?raw";
-import plantaBajaData from "../../../assets/mapas/planta_baja_data.json";
 import svgPrimerPiso from "../../../assets/mapas/primer_piso.svg?raw";
-import primerPisoData from "../../../assets/mapas/primer_piso_data.json";
 import svgSegundoPiso from "../../../assets/mapas/segundo_piso.svg?raw";
-import segundoPisoData from "../../../assets/mapas/segundo_piso_data.json";
 import escalerasUrl from "../../../assets/escaleras.svg?url";
 import ascensorUrl from "../../../assets/ascensor.svg?url";
 import wcUrl from "../../../assets/wc.svg?url";
+import { fetchUbicacionesMapa } from "../../api/ubicacionesMapa";
+import type { PisoKey } from "../../api/ubicacionesMapa";
 
 const TYPE_COLORS: Record<
   string,
@@ -41,33 +40,33 @@ type RoomData = {
   piso: string;
 };
 
-const FLOORS: Record<
+const FLOORS_META: Record<
   FloorKey,
   {
     label: string;
     svg: string;
-    data: Record<string, RoomData>;
     viewBox: string;
   }
 > = {
   baja: {
     label: "Planta Baja",
     svg: svgPlantaBaja,
-    data: plantaBajaData as Record<string, RoomData>,
     viewBox: "0 0 851 903",
   },
   primero: {
     label: "Primer Piso",
     svg: svgPrimerPiso,
-    data: primerPisoData as Record<string, RoomData>,
     viewBox: "0 0 862 895",
   },
   segundo: {
     label: "Segundo Piso",
     svg: svgSegundoPiso,
-    data: segundoPisoData as Record<string, RoomData>,
     viewBox: "0 0 621 873",
   },
+};
+
+type FloorConfig = (typeof FLOORS_META)[FloorKey] & {
+  data: Record<string, RoomData>;
 };
 
 const SCALE = 1 / 32;
@@ -75,21 +74,14 @@ const DEFAULT_HEIGHT = 0.6;
 const IDLE_ANIMATION_DELAY = 2500;
 const IDLE_PAN_AMPLITUDE = 0.7;
 const IDLE_PAN_SPEED = 0.00015;
-const HEIGHT_OVERRIDES: Record<string, number> = {
-  escaleras1: 1.5,
-  escaleras2: 1.5,
-  escaleras3: 1.5,
-  escaleras4: 1.5,
-  ascensor1: 1.5,
-  baño1: 0.6,
-  baño2: 0.6,
-  entrada1: 0.2,
+
+// Alturas por tipo (en lugar de por ID de polígono)
+const HEIGHT_BY_TIPO: Record<string, number> = {
+  escaleras: 1.5,
+  ascensor: 1.5,
 };
 
 // === Indicador "Ud. está aquí" ===
-const USTED_AQUI_SVG_X = 617.5;
-const USTED_AQUI_SVG_Y = 100.25;
-const USTED_AQUI_ENABLED = true;
 const USTED_AQUI_PIN_COLOR = 0xef4444;
 
 // === Marcador de ID por polígono ===
@@ -166,16 +158,14 @@ function getPolygonCenter(pointsStr: string): { x: number; y: number } {
   return { x: cx, y: cy };
 }
 
-function isStairId(id: string): boolean {
-  return id.toLowerCase().includes("escalera");
+function isStairTipo(tipo: string): boolean {
+  return tipo === "escaleras";
 }
 
-function getSpecialIconUrl(id: string): string | null {
-  const lowerId = id.toLowerCase();
-  if (lowerId.includes("escalera")) return escalerasUrl;
-  if (lowerId.includes("baño") || lowerId.includes("bano")) return wcUrl;
-  if (lowerId.includes("ascensor") || lowerId.includes("elevador"))
-    return ascensorUrl;
+function getSpecialIconByTipo(tipo: string): string | null {
+  if (tipo === "escaleras") return escalerasUrl;
+  if (tipo === "baños") return wcUrl;
+  if (tipo === "ascensor") return ascensorUrl;
   return null;
 }
 
@@ -242,6 +232,7 @@ function buildStaircase(
   polygon: PolygonData,
   bounds: { cx: number; cy: number },
   buildingGroup: THREE.Group,
+  material: THREE.MeshLambertMaterial,
 ): THREE.Mesh[] {
   const pts = parsePoints(polygon.points);
 
@@ -264,12 +255,6 @@ function buildStaircase(
 
   const crossMin = alongX ? minY : minX;
   const crossMax = alongX ? maxY : maxX;
-
-  const colors = TYPE_COLORS[polygon.tipo] ?? DEFAULT_COLOR;
-  const material = new THREE.MeshPhongMaterial({
-    color: new THREE.Color(colors.base),
-    side: THREE.DoubleSide,
-  });
 
   const group = new THREE.Group();
   group.rotation.x = -Math.PI / 2;
@@ -297,6 +282,10 @@ function buildStaircase(
       height,
     );
     const mesh = new THREE.Mesh(geometry, material);
+    addVertexColors(
+      geometry,
+      (TYPE_COLORS[polygon.tipo] ?? DEFAULT_COLOR).base,
+    );
     mesh.position.set(x, y, height / 2);
     mesh.userData = { id: polygon.id, tipo: polygon.tipo };
     group.add(mesh);
@@ -304,6 +293,27 @@ function buildStaircase(
   }
 
   return meshes;
+}
+
+function addVertexColors(geometry: THREE.BufferGeometry, color: string) {
+  const position = geometry.getAttribute("position");
+  const colors = new Float32Array(position.count * 3);
+  const threeColor = new THREE.Color(color);
+  for (let i = 0; i < position.count; i++) {
+    threeColor.toArray(colors, i * 3);
+  }
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+}
+
+function setMeshColor(mesh: THREE.Mesh, color: string) {
+  const attribute = mesh.geometry.getAttribute(
+    "color",
+  ) as THREE.BufferAttribute;
+  const threeColor = new THREE.Color(color);
+  for (let i = 0; i < attribute.count; i++) {
+    threeColor.toArray(attribute.array as Float32Array, i * 3);
+  }
+  attribute.needsUpdate = true;
 }
 
 function computeBounds(polygons: PolygonData[]) {
@@ -335,14 +345,14 @@ function computeBounds(polygons: PolygonData[]) {
 function buildIdMarker(
   bounds: { cx: number; cy: number },
   id: string,
+  tipo: string,
   center: { x: number; y: number },
   topHeight: number,
   buildingGroup: THREE.Group,
+  onTextureUpdate?: () => void,
 ) {
-  const dx = id === "25" ? -25 : 0;
-  const dy = id === "25" ? -10 : 0;
-  const x = (center.x + dx - bounds.cx) * SCALE;
-  const z = (center.y + dy - bounds.cy) * SCALE;
+  const x = (center.x - bounds.cx) * SCALE;
+  const z = (center.y - bounds.cy) * SCALE;
   const y = topHeight + 0.4;
 
   const canvas = document.createElement("canvas");
@@ -357,7 +367,7 @@ function buildIdMarker(
   ctx.fillStyle = "rgba(10, 10, 10, 1)";
   ctx.fill();
 
-  const iconUrl = getSpecialIconUrl(id);
+  const iconUrl = getSpecialIconByTipo(tipo);
   if (iconUrl) {
     const img = new Image();
     img.onload = () => {
@@ -370,6 +380,7 @@ function buildIdMarker(
         iconSize,
       );
       texture.needsUpdate = true;
+      onTextureUpdate?.();
     };
     img.src = iconUrl;
   } else {
@@ -495,21 +506,34 @@ function buildMeshes(
   polygons: PolygonData[],
   bounds: { cx: number; cy: number },
   buildingGroup: THREE.Group,
+  materialsByTipo: Map<string, THREE.MeshLambertMaterial>,
+  edgeMaterial: THREE.LineBasicMaterial,
+  onTextureUpdate?: () => void,
 ): Map<string, THREE.Mesh[]> {
   const meshes = new Map<string, THREE.Mesh[]>();
 
   polygons.forEach((polygon) => {
     if (!polygon.points) return;
 
-    if (isStairId(polygon.id)) {
-      meshes.set(polygon.id, buildStaircase(polygon, bounds, buildingGroup));
+    if (isStairTipo(polygon.tipo)) {
+      meshes.set(
+        polygon.id,
+        buildStaircase(
+          polygon,
+          bounds,
+          buildingGroup,
+          materialsByTipo.get(polygon.tipo) ?? materialsByTipo.get("otro")!,
+        ),
+      );
       const top = computeStairSteps(parsePoints(polygon.points)) * STAIR_RISE;
       buildIdMarker(
         bounds,
         polygon.id,
+        polygon.tipo,
         getPolygonCenter(polygon.points),
         top,
         buildingGroup,
+        onTextureUpdate,
       );
       return;
     }
@@ -524,18 +548,19 @@ function buildMeshes(
     }
     shape.closePath();
 
-    const depth = HEIGHT_OVERRIDES[polygon.id] ?? DEFAULT_HEIGHT;
+    const depth = HEIGHT_BY_TIPO[polygon.tipo] ?? DEFAULT_HEIGHT;
     const geometry = new THREE.ExtrudeGeometry(shape, {
       depth,
       bevelEnabled: false,
       curveSegments: 1,
     });
 
-    const colors = TYPE_COLORS[polygon.tipo] ?? DEFAULT_COLOR;
-    const material = new THREE.MeshPhongMaterial({
-      color: new THREE.Color(colors.base),
-      side: THREE.DoubleSide,
-    });
+    const material =
+      materialsByTipo.get(polygon.tipo) ?? materialsByTipo.get("otro")!;
+    addVertexColors(
+      geometry,
+      (TYPE_COLORS[polygon.tipo] ?? DEFAULT_COLOR).base,
+    );
 
     const mesh = new THREE.Mesh(geometry, material);
     mesh.rotation.x = -Math.PI / 2;
@@ -544,23 +569,18 @@ function buildMeshes(
     meshes.set(polygon.id, [mesh]);
 
     const edges = new THREE.EdgesGeometry(geometry, 20);
-    const line = new THREE.LineSegments(
-      edges,
-      new THREE.LineBasicMaterial({
-        color: 0xdddddd,
-        transparent: true,
-        opacity: 0.35,
-      }),
-    );
+    const line = new THREE.LineSegments(edges, edgeMaterial);
     line.rotation.x = -Math.PI / 2;
     buildingGroup.add(line);
 
     buildIdMarker(
       bounds,
       polygon.id,
+      polygon.tipo,
       getPolygonCenter(polygon.points),
       depth,
       buildingGroup,
+      onTextureUpdate,
     );
   });
 
@@ -570,15 +590,22 @@ function buildMeshes(
 function buildYouAreHerePin(
   bounds: { cx: number; cy: number },
   buildingGroup: THREE.Group,
+  svgX: number,
+  svgY: number,
+  ghost = false,
 ): THREE.Group {
   const group = new THREE.Group();
 
-  const x = (USTED_AQUI_SVG_X - bounds.cx) * SCALE;
-  const z = -(USTED_AQUI_SVG_Y - bounds.cy) * SCALE;
+  const x = (svgX - bounds.cx) * SCALE;
+  const z = -(svgY - bounds.cy) * SCALE;
+  const pinColor = ghost ? 0xff8888 : USTED_AQUI_PIN_COLOR;
+  const pinOpacity = ghost ? 0.45 : 1;
 
   const shaftGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.2, 16);
   const shaftMat = new THREE.MeshPhongMaterial({
-    color: USTED_AQUI_PIN_COLOR,
+    color: pinColor,
+    transparent: ghost,
+    opacity: ghost ? pinOpacity : 1,
   });
   const shaft = new THREE.Mesh(shaftGeo, shaftMat);
   shaft.position.y = 0.6;
@@ -586,7 +613,9 @@ function buildYouAreHerePin(
 
   const headGeo = new THREE.SphereGeometry(0.15, 16, 16);
   const headMat = new THREE.MeshPhongMaterial({
-    color: USTED_AQUI_PIN_COLOR,
+    color: pinColor,
+    transparent: ghost,
+    opacity: ghost ? pinOpacity : 1,
   });
   const head = new THREE.Mesh(headGeo, headMat);
   head.position.y = 1.35;
@@ -596,54 +625,120 @@ function buildYouAreHerePin(
   const shadowMat = new THREE.MeshPhongMaterial({
     color: 0x000000,
     transparent: true,
-    opacity: 0.15,
+    opacity: ghost ? 0.05 : 0.15,
   });
   const shadow = new THREE.Mesh(shadowGeo, shadowMat);
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.01;
   group.add(shadow);
 
-  const labelCanvas = document.createElement("canvas");
-  labelCanvas.width = 2000;
-  labelCanvas.height = 400;
-  const ctx = labelCanvas.getContext("2d")!;
-  ctx.fillStyle = "#ef4444";
-  ctx.font = "bold 320px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("Ud. está aquí", 1000, 200);
+  if (!ghost) {
+    const labelCanvas = document.createElement("canvas");
+    labelCanvas.width = 2000;
+    labelCanvas.height = 400;
+    const ctx = labelCanvas.getContext("2d")!;
+    ctx.fillStyle = "#ef4444";
+    ctx.font = "bold 320px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Ud. está aquí", 1000, 200);
 
-  const labelTexture = new THREE.CanvasTexture(labelCanvas);
-  labelTexture.anisotropy = 4;
-  labelTexture.minFilter = THREE.LinearMipmapLinearFilter;
-  labelTexture.magFilter = THREE.LinearFilter;
-  const labelMat = new THREE.SpriteMaterial({
-    map: labelTexture,
-    transparent: true,
-    color: USTED_AQUI_PIN_COLOR,
-  });
-  const label = new THREE.Sprite(labelMat);
-  label.scale.set(2.5, 0.5, 1);
-  label.position.y = 1.75;
-  label.position.z = -0.5;
-  group.add(label);
+    const labelTexture = new THREE.CanvasTexture(labelCanvas);
+    labelTexture.anisotropy = 4;
+    labelTexture.minFilter = THREE.LinearMipmapLinearFilter;
+    labelTexture.magFilter = THREE.LinearFilter;
+    const labelMat = new THREE.SpriteMaterial({
+      map: labelTexture,
+      transparent: true,
+      color: USTED_AQUI_PIN_COLOR,
+    });
+    const label = new THREE.Sprite(labelMat);
+    label.scale.set(2.5, 0.5, 1);
+    label.position.y = 1.75;
+    label.position.z = -0.5;
+    group.add(label);
+  }
 
   group.position.set(x, 0, z);
   buildingGroup.add(group);
   return group;
 }
 
+export type PinPosition = {
+  svgX: number;
+  svgY: number;
+  floor: FloorKey;
+};
+
 export default function MapaRaw({
   initialFloor = "baja",
   compact = false,
-}: { initialFloor?: FloorKey; compact?: boolean } = {}) {
-  const [floor, setFloor] = useState<FloorKey>(initialFloor);
+  pinPosition = null,
+  onPinPlaced,
+  externalFloor,
+}: {
+  initialFloor?: FloorKey;
+  compact?: boolean;
+  /** Posición del pin leída externamente (desde la BD). Si es null, no se muestra. */
+  pinPosition?: PinPosition | null;
+  /** Si se provee, activa el modo edición: click en el canvas llama a esta función con la posición elegida. */
+  onPinPlaced?: (pos: PinPosition) => void;
+  /** Permite que un componente padre controle el piso activo sin remountar MapaRaw. */
+  externalFloor?: FloorKey;
+} = {}) {
+  const [internalFloor, setFloor] = useState<FloorKey>(initialFloor);
+  // Cuando se controla externamente, el piso externo tiene precedencia.
+  // Así evitamos el anti-patrón de setState dentro de un effect.
+  const floor = externalFloor ?? internalFloor;
+
   const [selectedRoom, setSelectedRoom] = useState<{
     id: string;
     data: RoomData;
   } | null>(null);
   const [searchType, setSearchType] = useState<string>("");
   const [searchPlaceId, setSearchPlaceId] = useState<string>("");
+
+  // Datos de ubicaciones cargados desde la API
+  const [floorsData, setFloorsData] = useState<
+    Record<FloorKey, Record<string, RoomData>>
+  >({ baja: {}, primero: {}, segundo: {} });
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  useEffect(() => {
+    fetchUbicacionesMapa()
+      .then((ubicaciones) => {
+        const byFloor: Record<FloorKey, Record<string, RoomData>> = {
+          baja: {},
+          primero: {},
+          segundo: {},
+        };
+        for (const u of ubicaciones) {
+          const pisoKey = u.piso as PisoKey;
+          if (pisoKey in byFloor) {
+            byFloor[pisoKey][u.svg_id] = {
+              nombre: u.nombre,
+              tipo: u.tipo,
+              piso: u.piso,
+            };
+          }
+        }
+        setFloorsData(byFloor);
+        setDataLoaded(true);
+      })
+      .catch(() => {
+        // Si falla la red, el mapa queda vacío pero funcional
+        setDataLoaded(true);
+      });
+  }, []);
+
+  const floors = useMemo<Record<FloorKey, FloorConfig>>(
+    () => ({
+      baja: { ...FLOORS_META.baja, data: floorsData.baja },
+      primero: { ...FLOORS_META.primero, data: floorsData.primero },
+      segundo: { ...FLOORS_META.segundo, data: floorsData.segundo },
+    }),
+    [floorsData],
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -654,13 +749,17 @@ export default function MapaRaw({
   const raycasterRef = useRef(new THREE.Raycaster());
   const mouseRef = useRef(new THREE.Vector2());
   const meshesRef = useRef<Map<string, THREE.Mesh[]>>(new Map());
+  const raycastTargetsRef = useRef<THREE.Mesh[]>([]);
   const buildingGroupRef = useRef<THREE.Group | null>(null);
   const hoveredRef = useRef<THREE.Mesh | null>(null);
   const youAreHereRef = useRef<THREE.Group | null>(null);
+  const ghostPinRef = useRef<THREE.Group | null>(null);
   const idleAnimationStartRef = useRef(0);
   const isInteractingRef = useRef(false);
+  const needsRenderRef = useRef(true);
+  const floorPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
 
-  const floorConfig = FLOORS[floor];
+  const floorConfig = floors[floor];
   const polygons = useMemo(
     () => parsePolygons(floorConfig.svg, floorConfig.data),
     [floorConfig],
@@ -676,16 +775,16 @@ export default function MapaRaw({
 
   const allRooms = useMemo(() => {
     const rooms: { id: string; data: RoomData; floor: FloorKey }[] = [];
-    for (const [floorKey, config] of Object.entries(FLOORS) as [
+    for (const [floorKey, config] of Object.entries(floors) as [
       FloorKey,
-      (typeof FLOORS)[FloorKey],
+      FloorConfig,
     ][]) {
       for (const [id, data] of Object.entries(config.data)) {
         rooms.push({ id, data, floor: floorKey });
       }
     }
     return rooms;
-  }, []);
+  }, [floors]);
 
   const availableTypes = useMemo(() => {
     const excludedTypes = new Set(["escaleras", "ascensor"]);
@@ -726,11 +825,11 @@ export default function MapaRaw({
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: window.devicePixelRatio < 2,
       alpha: true,
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     // renderer.toneMapping = THREE.NoToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
@@ -746,6 +845,10 @@ export default function MapaRaw({
     if (compact) {
       controls.minPolarAngle = 0.8;
       controls.maxPolarAngle = 0.8;
+    }
+    if (onPinPlaced) {
+      controls.minPolarAngle = 0;
+      controls.maxPolarAngle = 0;
     }
     controlsRef.current = controls;
     controls.enableDamping = true;
@@ -780,6 +883,12 @@ export default function MapaRaw({
       controls.target.set(1, 0, 0);
     }
 
+    if (onPinPlaced) {
+      const camDistance = buildingSize * 1;
+      camera.position.set(0, camDistance * 0.9, camDistance);
+      controls.target.set(8.5, 0, 0);
+    }
+
     controls.update();
 
     const reducedMotion = window.matchMedia(
@@ -790,28 +899,43 @@ export default function MapaRaw({
 
     const handleControlStart = () => {
       isInteractingRef.current = true;
+      needsRenderRef.current = true;
     };
     const handleControlEnd = () => {
       isInteractingRef.current = false;
       idleAnimationStartRef.current = performance.now();
+      needsRenderRef.current = true;
+    };
+    const handleControlChange = () => {
+      needsRenderRef.current = true;
     };
     controls.addEventListener("start", handleControlStart);
     controls.addEventListener("end", handleControlEnd);
+    controls.addEventListener("change", handleControlChange);
 
     let animationId: number;
     const animate = () => {
       animationId = requestAnimationFrame(animate);
-      if (
+      const idle =
+        compact &&
         !reducedMotion &&
         !isInteractingRef.current &&
-        performance.now() - idleAnimationStartRef.current > IDLE_ANIMATION_DELAY
-      ) {
+        performance.now() - idleAnimationStartRef.current >
+          IDLE_ANIMATION_DELAY;
+      if (idle) {
         const time = performance.now();
         controls.target.x =
           idleTarget.x + Math.sin(time * IDLE_PAN_SPEED) * IDLE_PAN_AMPLITUDE;
+        needsRenderRef.current = true;
       }
-      controls.update();
-      renderer.render(scene, camera);
+      if (isInteractingRef.current) {
+        needsRenderRef.current = true;
+      }
+      if (needsRenderRef.current) {
+        needsRenderRef.current = false;
+        controls.update();
+        renderer.render(scene, camera);
+      }
     };
     animate();
 
@@ -821,6 +945,7 @@ export default function MapaRaw({
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      needsRenderRef.current = true;
     };
     window.addEventListener("resize", handleResize);
 
@@ -829,11 +954,13 @@ export default function MapaRaw({
       window.removeEventListener("resize", handleResize);
       controls.removeEventListener("start", handleControlStart);
       controls.removeEventListener("end", handleControlEnd);
+      controls.removeEventListener("change", handleControlChange);
       controls.dispose();
       renderer.dispose();
       scene.clear();
+      raycastTargetsRef.current = [];
     };
-  }, []);
+  }, [buildingSize, compact]);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -866,21 +993,79 @@ export default function MapaRaw({
       buildFloorPlane(polygons, bounds, group);
     }
 
-    meshesRef.current = buildMeshes(polygons, bounds, group);
+    const materialsByTipo = new Map<string, THREE.MeshLambertMaterial>();
+    for (const tipo of Object.keys(TYPE_COLORS)) {
+      materialsByTipo.set(
+        tipo,
+        new THREE.MeshLambertMaterial({
+          color: 0xffffff,
+          side: THREE.DoubleSide,
+          vertexColors: true,
+        }),
+      );
+    }
+    const edgeMaterial = new THREE.LineBasicMaterial({
+      color: 0xdddddd,
+      transparent: true,
+      opacity: 0.35,
+    });
+    meshesRef.current = buildMeshes(
+      polygons,
+      bounds,
+      group,
+      materialsByTipo,
+      edgeMaterial,
+      () => {
+        needsRenderRef.current = true;
+      },
+    );
+    raycastTargetsRef.current = Array.from(meshesRef.current.values()).flat();
+    hoveredRef.current = null;
+    ghostPinRef.current = null;
+    needsRenderRef.current = true;
+  }, [polygons, bounds, floor, compact]);
 
-    if (USTED_AQUI_ENABLED && floor === "baja") {
-      youAreHereRef.current = buildYouAreHerePin(bounds, group);
-    } else {
+  // --- Efecto dedicado al pin (separado del build de meshes) ---
+  useEffect(() => {
+    const group = buildingGroupRef.current;
+    if (!group) return;
+
+    // Limpiar pin real anterior
+    if (youAreHereRef.current) {
+      group.remove(youAreHereRef.current);
+      youAreHereRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          (child.material as THREE.Material).dispose();
+        }
+        if (child instanceof THREE.Sprite) {
+          const mat = child.material as THREE.SpriteMaterial;
+          mat.map?.dispose();
+          mat.dispose();
+        }
+      });
       youAreHereRef.current = null;
     }
-  }, [polygons, bounds, floor, compact]);
+
+    // Dibujar pin si la posición corresponde al piso actual
+    if (pinPosition && pinPosition.floor === floor) {
+      youAreHereRef.current = buildYouAreHerePin(
+        bounds,
+        group,
+        pinPosition.svgX,
+        pinPosition.svgY,
+      );
+    }
+    needsRenderRef.current = true;
+  }, [pinPosition, floor, bounds]);
 
   const highlightMesh = useCallback((id: string | null) => {
     meshesRef.current.forEach((meshes) => {
       for (const m of meshes) {
         const colors =
           TYPE_COLORS[(m.userData as { tipo: string }).tipo] ?? DEFAULT_COLOR;
-        (m.material as THREE.MeshPhongMaterial).color.set(
+        setMeshColor(
+          m,
           m.userData.id === id
             ? colors.highlight
             : id
@@ -889,6 +1074,7 @@ export default function MapaRaw({
         );
       }
     });
+    needsRenderRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -901,24 +1087,16 @@ export default function MapaRaw({
     (r: { id: string; data: RoomData; floor: FloorKey }) => {
       setSearchPlaceId(r.id);
       setFloor(r.floor);
-      const config = FLOORS[r.floor];
-      const polys = parsePolygons(config.svg, config.data);
-      const poly = polys.find((p) => p.id === r.id);
-      if (poly) {
+      if (floors[r.floor].data[r.id]) {
         setSelectedRoom({ id: r.id, data: r.data });
       }
     },
-    [],
+    [floors],
   );
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<HTMLCanvasElement>) => {
       if (!canvasRef.current || !cameraRef.current) return;
-
-      if (selectedRoom) {
-        hoveredRef.current = null;
-        return;
-      }
 
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
@@ -926,26 +1104,62 @@ export default function MapaRaw({
       mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+      // Modo edición de pin: mostrar pin fantasma en la posición del cursor
+      if (onPinPlaced && buildingGroupRef.current) {
+        const target = new THREE.Vector3();
+        raycasterRef.current.ray.intersectPlane(floorPlaneRef.current, target);
+        if (target.lengthSq() > 0) {
+          const svgX = target.x / SCALE + bounds.cx;
+          const svgY = -target.z / SCALE + bounds.cy;
+          // Actualizar o crear pin fantasma
+          if (ghostPinRef.current) {
+            buildingGroupRef.current.remove(ghostPinRef.current);
+            ghostPinRef.current.traverse((child) => {
+              if (child instanceof THREE.Mesh) {
+                child.geometry.dispose();
+                (child.material as THREE.Material).dispose();
+              }
+            });
+            ghostPinRef.current = null;
+          }
+          ghostPinRef.current = buildYouAreHerePin(
+            bounds,
+            buildingGroupRef.current,
+            svgX,
+            svgY,
+            true,
+          );
+        }
+        needsRenderRef.current = true;
+        return;
+      }
+
+      // Modo normal: hover sobre habitaciones
+      if (selectedRoom) {
+        hoveredRef.current = null;
+        return;
+      }
+
       const intersects = raycasterRef.current.intersectObjects(
-        Array.from(meshesRef.current.values()).flat(),
+        raycastTargetsRef.current,
       );
 
       if (hoveredRef.current) {
         const prevTipo = hoveredRef.current.userData.tipo as string;
         const prevColors = TYPE_COLORS[prevTipo] ?? DEFAULT_COLOR;
-        (hoveredRef.current.material as THREE.MeshPhongMaterial).color.set(
-          prevColors.base,
-        );
+        setMeshColor(hoveredRef.current, prevColors.base);
         hoveredRef.current = null;
       }
 
       if (intersects.length > 0) {
         const mesh = intersects[0].object as THREE.Mesh;
         hoveredRef.current = mesh;
-        (mesh.material as THREE.MeshPhongMaterial).color.set(0xdddddd);
+        setMeshColor(mesh, "#dddddd");
       }
+      needsRenderRef.current = true;
     },
-    [selectedRoom],
+    [selectedRoom, onPinPlaced, bounds],
   );
 
   const handleClick = useCallback(
@@ -958,8 +1172,23 @@ export default function MapaRaw({
       mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
       raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+
+      // Modo edición de pin: colocar en cualquier punto del plano del piso
+      if (onPinPlaced) {
+        const target = new THREE.Vector3();
+        raycasterRef.current.ray.intersectPlane(floorPlaneRef.current, target);
+        if (target.lengthSq() > 0) {
+          const svgX = target.x / SCALE + bounds.cx;
+          const svgY = -target.z / SCALE + bounds.cy;
+          onPinPlaced({ svgX, svgY, floor });
+        }
+        needsRenderRef.current = true;
+        return;
+      }
+
+      // Modo normal: selección de habitación
       const intersects = raycasterRef.current.intersectObjects(
-        Array.from(meshesRef.current.values()).flat(),
+        raycastTargetsRef.current,
       );
 
       if (intersects.length > 0) {
@@ -977,132 +1206,158 @@ export default function MapaRaw({
         setSelectedRoom(null);
         highlightMesh(null);
       }
+      needsRenderRef.current = true;
     },
-    [floorConfig, floor, highlightMesh],
+    [floorConfig, floor, highlightMesh, onPinPlaced, bounds],
   );
 
   return (
     <div
       className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
     >
+      {!dataLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm rounded-4xl z-10">
+          <span className="text-sm text-gray-500">Cargando mapa...</span>
+        </div>
+      )}
       {!compact && (
         <div className="w-full flex flex-col px-16 gap-4">
-          <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
-            <span className="text-center font-medium">Busqueda</span>
-            <div className="flex gap-4 overflow-hidden">
-              <div className="flex flex-col gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-500 text-center">
-                  Seleccioná un tipo
-                </span>
-                <div className="grid grid-cols-2 gap-2 justify-center">
-                  <button
-                    onClick={() => {
-                      setSearchType("");
-                      setSearchPlaceId("");
-                      setSelectedRoom(null);
-                      highlightMesh(null);
-                    }}
-                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                      searchType === ""
-                        ? "bg-cyan-200 text-cyan-900"
-                        : "bg-white text-black"
-                    }`}
-                  >
-                    Todos
-                  </button>
-                  {availableTypes.map((t) => (
+          {/* Panel de búsqueda: solo en modo normal (no en editor de pin) */}
+          {!onPinPlaced && (
+            <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
+              <span className="text-center font-medium">Busqueda</span>
+              <div className="flex gap-4 overflow-hidden">
+                <div className="flex flex-col gap-2 flex-1">
+                  <span className="text-sm font-medium text-gray-500 text-center">
+                    Seleccioná un tipo
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 justify-center">
                     <button
-                      key={t.value}
                       onClick={() => {
-                        setSearchType(t.value);
+                        setSearchType("");
                         setSearchPlaceId("");
                         setSelectedRoom(null);
                         highlightMesh(null);
                       }}
                       className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                        searchType === t.value
+                        searchType === ""
                           ? "bg-cyan-200 text-cyan-900"
                           : "bg-white text-black"
                       }`}
                     >
-                      {t.label}
+                      Todos
                     </button>
-                  ))}
+                    {availableTypes.map((t) => (
+                      <button
+                        key={t.value}
+                        onClick={() => {
+                          setSearchType(t.value);
+                          setSearchPlaceId("");
+                          setSelectedRoom(null);
+                          highlightMesh(null);
+                        }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                          searchType === t.value
+                            ? "bg-cyan-200 text-cyan-900"
+                            : "bg-white text-black"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="w-px bg-gray-200" />
+                <div className="flex flex-col gap-2 flex-1">
+                  <span className="text-sm font-medium text-gray-500 text-center">
+                    Seleccioná una ubicación
+                  </span>
+                  {searchType ? (
+                    <div className="flex flex-col gap-2 overflow-auto">
+                      {filteredPlaces.map((r, i) => {
+                        const colors =
+                          TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
+                        return (
+                          <button
+                            key={`${i}`}
+                            onClick={() => handleSearchSelect(r)}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
+                              searchPlaceId === r.id
+                                ? "text-white"
+                                : "text-black"
+                            }`}
+                            style={{
+                              backgroundColor:
+                                searchPlaceId === r.id
+                                  ? colors.highlight
+                                  : colors.base,
+                            }}
+                          >
+                            {r.data.nombre}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center text-sm text-gray-400">
+                      Elegí un tipo primero
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="w-px bg-gray-200" />
-              <div className="flex flex-col gap-2 flex-1">
-                <span className="text-sm font-medium text-gray-500 text-center">
-                  Seleccioná una ubicación
-                </span>
-                {searchType ? (
-                  <div className="flex flex-col gap-2 overflow-auto">
-                    {filteredPlaces.map((r, i) => {
-                      const colors = TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
-                      return (
-                        <button
-                          key={`${i}`}
-                          onClick={() => handleSearchSelect(r)}
-                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
-                            searchPlaceId === r.id ? "text-white" : "text-black"
-                          }`}
-                          style={{
-                            backgroundColor:
-                              searchPlaceId === r.id
-                                ? colors.highlight
-                                : colors.base,
-                          }}
-                        >
-                          {r.data.nombre}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center text-sm text-gray-400">
-                    Elegí un tipo primero
-                  </div>
+            </div>
+          )}
+          {!onPinPlaced && (
+            <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
+              <span className="font-normal text-sm">Piso actual</span>
+              <div className="flex gap-2">
+                {(Object.entries(floors) as [FloorKey, FloorConfig][]).map(
+                  ([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setFloor(key);
+                        setSelectedRoom(null);
+                        setSearchType("");
+                        setSearchPlaceId("");
+                        highlightMesh(null);
+                      }}
+                      className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                        floor === key
+                          ? "bg-cyan-200 text-cyan-900"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ),
                 )}
               </div>
             </div>
-          </div>
-          <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
-            <span className="font-normal text-sm">Piso actual</span>
-            <div className="flex gap-2">
-              {(
-                Object.entries(FLOORS) as [
-                  FloorKey,
-                  (typeof FLOORS)[FloorKey],
-                ][]
-              ).map(([key, config]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setFloor(key);
-                    setSelectedRoom(null);
-                    setSearchType("");
-                    setSearchPlaceId("");
-                    highlightMesh(null);
-                  }}
-                  className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                    floor === key
-                      ? "bg-cyan-200 text-cyan-900"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  {config.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       )}
+
       <div ref={containerRef} className="relative w-full h-full">
         <canvas
           ref={canvasRef}
-          className={`w-full cursor-grab active:cursor-grabbing overflow-visible ${compact ? "" : "aspect-square"}`}
+          className={`w-full overflow-visible ${onPinPlaced ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"} ${compact ? "" : "aspect-square"}`}
           onClick={handleClick}
           onPointerMove={handlePointerMove}
+          onPointerLeave={() => {
+            // Limpiar el pin fantasma al salir del canvas
+            if (ghostPinRef.current && buildingGroupRef.current) {
+              buildingGroupRef.current.remove(ghostPinRef.current);
+              ghostPinRef.current.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                  child.geometry.dispose();
+                  (child.material as THREE.Material).dispose();
+                }
+              });
+              ghostPinRef.current = null;
+              needsRenderRef.current = true;
+            }
+          }}
         />
         {selectedRoom && (
           <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-200 p-4 min-w-[200px] flex flex-col items-center">
@@ -1124,12 +1379,12 @@ export default function MapaRaw({
               <span className="text-xs text-gray-800">
                 {TYPE_COLORS[selectedRoom.data.tipo]?.label ?? "Otro"}
                 {" - "}
-                {FLOORS[selectedRoom.data.piso as FloorKey]?.label}
+                {floors[selectedRoom.data.piso as FloorKey]?.label}
               </span>
             </div>
           </div>
         )}
-        {!compact && (
+        {!compact && !onPinPlaced && (
           <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full px-16">
             <div className="flex flex-wrap gap-3 items-center text-xs border border-gray-200 bg-white/50 rounded-2xl p-4 justify-center">
               {Object.entries(TYPE_COLORS)

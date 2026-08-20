@@ -39,6 +39,13 @@ export async function totemFetch<T>(
   return request<T>(url, options, "Totem");
 }
 
+export async function publicFetch<T>(
+  url: string,
+  options: RequestInit = {},
+): Promise<T> {
+  return request<T>(url, options);
+}
+
 export async function apiUpload<T>(url: string, file: File): Promise<T> {
   const token = getAdminToken();
   const formData = new FormData();
@@ -113,7 +120,7 @@ export class ApiError extends Error {
 async function request<T>(
   url: string,
   options: RequestInit,
-  scheme: "Bearer" | "Totem",
+  scheme?: "Bearer" | "Totem",
 ): Promise<T> {
   const token = scheme === "Totem" ? getTotemToken() : getAdminToken();
   const headers: Record<string, string> = {
@@ -121,7 +128,7 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
+  if (scheme && token) {
     headers["Authorization"] = `${scheme} ${token}`;
   }
 

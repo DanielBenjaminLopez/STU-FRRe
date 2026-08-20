@@ -29,7 +29,7 @@ export default function Encabezado() {
     <div className="flex items-center w-full justify-between">
       <img src={Logo} alt="Logo" className="w-80" draggable={false} />
       <div className="flex flex-col justify-start items-end">
-        <div className="text-lg font-normal bg-gray-100 px-4 py-2 rounded-4xl select-none">
+        <div className="text-lg font-normal bg-gray-100 border border-gray-200 px-4 py-1 rounded-4xl select-none">
           {time}
         </div>
         <div className="text-5xl font-semibold select-none">{greeting}</div>

@@ -3,6 +3,7 @@ import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
+import Avisos from "../../shared/components/widgets/Avisos";
 import {
   useTotemScale,
   TOTEM_WIDTH,
@@ -45,6 +46,7 @@ export default function TotemPreview() {
         }}
       >
         <div className="flex flex-col w-full h-full p-16 gap-16">
+          <Avisos />
           <Encabezado />
           <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
             {plantilla && plantilla.widgets.length > 0 ? (

@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, totemFetch } from "./client";
 
 export interface Aviso {
   id: number;
@@ -20,7 +20,7 @@ export async function fetchAvisos(): Promise<Aviso[]> {
 }
 
 export async function fetchAvisosActivos(): Promise<Aviso[]> {
-  return apiFetch<Aviso[]>("/api/avisos-activos/");
+  return totemFetch<Aviso[]>("/api/avisos-activos/");
 }
 
 export async function createAviso(data: Omit<Aviso, "id">): Promise<Aviso> {

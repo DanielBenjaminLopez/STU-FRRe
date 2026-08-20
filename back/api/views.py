@@ -26,6 +26,7 @@ from .models import (
     Plantilla,
     PlantillaWidget,
     Totem,
+    UbicacionMapa,
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
@@ -70,6 +71,7 @@ from .serializers import (
     PlantillaWidgetSerializer,
     TotemNuevoSerializer,
     TotemSerializer,
+    UbicacionMapaSerializer,
     VincularTotemSerializer,
     WidgetSerializer,
     validar_solapamiento_payload,
@@ -580,6 +582,24 @@ class EspacioListView(APIView):
         espacios = Espacio.objects.all().order_by("piso", "nombre")
         serializer = EspacioSerializer(espacios, many=True)
         return Response(serializer.data)
+
+
+class UbicacionMapaViewSet(viewsets.ModelViewSet):
+    """CRUD de ubicaciones del mapa SVG. Solo nombre y tipo son editables."""
+    serializer_class = UbicacionMapaSerializer
+    http_method_names = ['get', 'patch', 'head', 'options']
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminOrSecretaria()]
+
+    def get_queryset(self):
+        qs = UbicacionMapa.objects.all()
+        piso = self.request.query_params.get('piso')
+        if piso:
+            qs = qs.filter(piso=piso)
+        return qs
 
 
 class EventoCalendarioViewSet(RealtimeContentMixin, viewsets.ModelViewSet):

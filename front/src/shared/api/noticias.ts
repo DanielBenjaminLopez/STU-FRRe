@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch, publicFetch } from "./client";
 import { fetchEventos, type Evento } from "./eventos";
 
 export interface Noticia {
@@ -70,11 +70,11 @@ export async function fetchFeed(): Promise<ContenidoFeed[]> {
 }
 
 export async function fetchNoticias(): Promise<Noticia[]> {
-  return apiFetch<Noticia[]>("/api/noticias/");
+  return publicFetch<Noticia[]>("/api/noticias/");
 }
 
 export async function fetchLatestNoticia(): Promise<Noticia | null> {
-  return apiFetch<Noticia | null>("/api/noticias/latest/");
+  return publicFetch<Noticia | null>("/api/noticias/latest/");
 }
 
 export async function createNoticia(

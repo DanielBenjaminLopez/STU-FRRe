@@ -23,6 +23,7 @@ from .views import (
     TotemNewView,
     TotemMeView,
     TotemViewSet,
+    UbicacionMapaViewSet,
     VincularTotemView,
     WidgetViewSet,
 )
@@ -42,6 +43,7 @@ router.register('widgets', WidgetViewSet)
 router.register('plantillas', PlantillaViewSet)
 router.register('plantilla-widgets', PlantillaWidgetViewSet)
 router.register('calendario/eventos', EventoCalendarioViewSet)
+router.register('ubicaciones-mapa', UbicacionMapaViewSet, basename='ubicaciones-mapa')
 
 
 urlpatterns = [

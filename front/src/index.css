@@ -34,6 +34,31 @@ body {
   --color-green-200: #aae4c2;
 }
 
+.avisos-marquee {
+  display: flex;
+  width: max-content;
+}
+
+@keyframes avisos-bounce {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(var(--avisos-scroll-distance), 0, 0);
+  }
+}
+
+.avisos-marquee-overflowing {
+  animation: avisos-bounce 12s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avisos-marquee-overflowing {
+    animation-play-state: paused;
+  }
+}
+
 /* width */
 ::-webkit-scrollbar {
   width: 10px;

@@ -9,6 +9,7 @@ import NoticiasPage from "./pages/NoticiasPage";
 import CalendarioAdminPage from "./pages/CalendarioAdminPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
+import UbicacionesMapaPage from "./pages/UbicacionesMapaPage";
 
 export default function AdminRoutes() {
   return (
@@ -75,6 +76,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <PlantillasPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ubicaciones-mapa"
+        element={
+          <ProtectedRoute>
+            <UbicacionesMapaPage />
           </ProtectedRoute>
         }
       />
