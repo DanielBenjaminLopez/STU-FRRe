@@ -507,8 +507,8 @@ class AvisosActivosView(APIView):
 
     def get(self, request):
         hoy = timezone.now().date()
-        avisos = Suspension.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
-        serializer = SuspensionSerializer(avisos, many=True)
+        avisos = Aviso.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
+        serializer = AvisoSerializer(avisos, many=True)
         return Response(serializer.data)
 
 
