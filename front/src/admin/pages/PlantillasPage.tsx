@@ -74,7 +74,7 @@ function getCellFromEvent(
 
   const rect = gridEl.getBoundingClientRect();
   const scale = rect.width / (gridEl.offsetWidth || 1);
-  const gap = 16 * scale; // gap-4 = 16px, escalado con el canvas
+  const gap = 32 * scale; // gap-4 con --spacing 0.5rem (2x) = 32px, escalado con el canvas
   const cellW = (rect.width - (GRID_COLS - 1) * gap) / GRID_COLS;
   const cellH = (rect.height - (GRID_ROWS - 1) * gap) / GRID_ROWS;
 
@@ -118,7 +118,7 @@ function getGhostDimensions(
   if (!def) return null;
 
   const rect = gridEl.getBoundingClientRect();
-  const gap = 16; // gap-4 = 16px
+  const gap = 32; // gap-4 con --spacing 0.5rem (2x) = 32px
   const layoutW = rect.width / scale;
   const layoutH = rect.height / scale;
   const cellW = (layoutW - (GRID_COLS - 1) * gap) / GRID_COLS;
@@ -598,6 +598,7 @@ export default function PlantillasPage() {
                   height: dims.height,
                   transform: `scale(${canvasScale})`,
                   transformOrigin: "top left",
+                  willChange: "transform",
                   overflow: "hidden",
                 }}
               >

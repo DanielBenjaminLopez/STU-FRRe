@@ -122,11 +122,13 @@ export default function TemplateCanvas({
       />
 
       <div
-        className="origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden transition-colors border-gray-200"
+        className="totem-scale-stage bg-white border-2 border-dashed rounded-3xl overflow-hidden transition-colors border-gray-200"
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
           transform: `scale(${scale})`,
+          transformOrigin: "top center",
+          willChange: "transform",
         }}
       >
         <div className="flex flex-col w-full h-full p-16 gap-16">

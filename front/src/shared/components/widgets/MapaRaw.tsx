@@ -825,11 +825,11 @@ export default function MapaRaw({
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: window.devicePixelRatio < 2,
       alpha: true,
+      // antialias: window.devicePixelRatio < 2
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 0.7));
     // renderer.toneMapping = THREE.NoToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;
@@ -1225,7 +1225,7 @@ export default function MapaRaw({
           {/* Panel de búsqueda: solo en modo normal (no en editor de pin) */}
           {!onPinPlaced && (
             <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
-              <span className="text-center font-medium">Busqueda</span>
+              <span className="text-sm text-center font-medium">Busqueda</span>
               <div className="flex gap-4 overflow-hidden">
                 <div className="flex flex-col gap-2 flex-1">
                   <span className="text-sm font-medium text-gray-500 text-center">

@@ -33,16 +33,15 @@ export default function TotemPreview() {
     : null;
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full flex flex-col items-center justify-center overflow-hidden"
-    >
+    <div ref={containerRef} className="totem-scale-container">
       <div
-        className="shrink-0 bg-white border border-gray-200 rounded-3xl overflow-hidden"
+        className="totem-scale-stage bg-white border border-gray-200 rounded-3xl overflow-hidden"
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
           transform: `scale(${scale})`,
+          transformOrigin: "center center",
+          willChange: "transform",
         }}
       >
         <div className="flex flex-col w-full h-full p-16 gap-16">
