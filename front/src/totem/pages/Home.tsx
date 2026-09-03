@@ -143,22 +143,21 @@ export default function Home() {
   return (
     <TotemRealtimeProvider value={lastMessage}>
       <TotemPinProvider value={pinPosition}>
-        <div
-          ref={containerRef}
-          className="w-full h-full flex flex-col items-center justify-center overflow-hidden"
-        >
+        <div ref={containerRef} className="totem-scale-container">
           <div
-            className="shrink-0 bg-white overflow-hidden"
+            className="totem-scale-stage bg-white overflow-hidden"
             style={{
               width: TOTEM_WIDTH,
               height: TOTEM_HEIGHT,
               transform: `scale(${scale})`,
+              transformOrigin: "center center",
+              willChange: "transform",
             }}
           >
             <div className="flex flex-col w-full h-full p-16 gap-16">
               <Avisos />
               <Encabezado />
-              <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
+              <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-8">
                 {hasWidgets ? (
                   plantilla.widgets.map((w) => {
                     const Component = WIDGET_COMPONENTS[w.type];

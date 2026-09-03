@@ -53,6 +53,55 @@ body {
   will-change: transform;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+}
+
+/* === Totem scale: Opción A (JS) y Opción B (CSS-only) === */
+.totem-scale-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Variante CSS-only que habilita container queries */
+.totem-scale-container--css {
+  container-type: size;
+}
+
+.totem-scale-stage {
+  flex-shrink: 0;
+  overflow: hidden;
+  /* Opción A: optimización de capa compuesta para transform: scale() */
+  will-change: transform;
+  transform-origin: center center;
+}
+
+/* Opción B: CSS-only sin JS. Usa container queries (cqw/cqh) para
+   calcular scale = min(100cqw/2160px, 100cqh/3840px) de forma unitless.
+   No requiere ResizeObserver ni state de React. 4K nativo. */
+.totem-scale-stage--css {
+  transform: scale(min(calc(100cqw / 2160px), calc(100cqh / 3840px)));
+}
+
+@supports not (width: 100cqw) {
+  .totem-scale-stage--css {
+    /* Fallback viewport si no hay soporte para container queries */
+    transform: scale(min(calc(100vw / 2160px), calc(100vh / 3840px)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .avisos-marquee-overflowing {
     animation-play-state: paused;

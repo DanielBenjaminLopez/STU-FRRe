@@ -825,11 +825,10 @@ export default function MapaRaw({
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: window.devicePixelRatio < 2,
       alpha: true,
     });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 0.8));
     // renderer.toneMapping = THREE.NoToneMapping;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     rendererRef.current = renderer;

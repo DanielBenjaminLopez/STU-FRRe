@@ -64,8 +64,8 @@ vi.mock("../../../shared/hooks/useTotemScale", () => ({
     containerRef: { current: null },
     scale: 1,
   }),
-  TOTEM_WIDTH: 1080,
-  TOTEM_HEIGHT: 1920,
+  TOTEM_WIDTH: 2160,
+  TOTEM_HEIGHT: 3840,
 }));
 
 vi.mock("../../../shared/api/plantillas", () => ({

@@ -598,6 +598,7 @@ export default function PlantillasPage() {
                   height: dims.height,
                   transform: `scale(${canvasScale})`,
                   transformOrigin: "top left",
+                  willChange: "transform",
                   overflow: "hidden",
                 }}
               >
