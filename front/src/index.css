@@ -86,6 +86,37 @@ body,
   /* Opción A: optimización de capa compuesta para transform: scale() */
   will-change: transform;
   transform-origin: center center;
+  /* 4K 2x: sobreescribe variables Tailwind solo dentro del tótem/preview.
+     --spacing 0.25rem→0.5rem duplica p-*, m-*, gap-*, w-*, h-*, etc.
+     --text-* y --radius-* duplican tipografía y radios. No afecta admin. */
+  --spacing: 0.5rem;
+  --text-xs: 1.5rem;
+  --text-sm: 1.75rem;
+  --text-base: 2rem;
+  --text-lg: 2.25rem;
+  --text-xl: 2.5rem;
+  --text-2xl: 3rem;
+  --text-3xl: 3.75rem;
+  --text-4xl: 4.5rem;
+  --text-5xl: 6rem;
+  --text-6xl: 7.5rem;
+  --text-7xl: 9rem;
+  --text-8xl: 12rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+  --radius-4xl: 4rem;
+}
+
+/* Escala 2x para tamaños arbitrarios en px usados en widgets (gap-4=16px→32px ya cubierto por --spacing, pero text-[10px]/[17px] son px fijos) */
+.totem-scale-stage .text-\[10px\] {
+  font-size: 20px;
+}
+.totem-scale-stage .text-\[17px\] {
+  font-size: 34px;
 }
 
 /* Opción B: CSS-only sin JS. Usa container queries (cqw/cqh) para
