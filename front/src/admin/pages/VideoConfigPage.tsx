@@ -11,7 +11,7 @@ export default function VideoConfigPage() {
   const [intervalo, setIntervalo] = useState(60);
   const [activo, setActivo] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [success, setSuccess] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,12 +33,12 @@ export default function VideoConfigPage() {
   const handleSave = async () => {
     setSaving(true);
     setError(null);
-    setSaved(false);
+    setSuccess("");
     try {
       const updated = await updateConfigVideo({ intervalo, activo });
       setConfig(updated);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      setSuccess("Configuración guardada correctamente");
+      setTimeout(() => setSuccess(""), 3000);
     } catch {
       setError("Error al guardar");
     } finally {
@@ -75,7 +75,7 @@ export default function VideoConfigPage() {
               htmlFor="intervalo"
               className="block text-sm font-medium text-gray-700"
             >
-              Intervalo de inactividad (segundos)
+              Tiempo de inactividad antes de mostrar el video (segundos)
             </label>
             <input
               id="intervalo"
@@ -87,7 +87,8 @@ export default function VideoConfigPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-400">
-              Tiempo de inactividad antes de mostrar el video (10-600 segundos).
+              Cuánto esperar sin tocar la pantalla antes de reproducir el video
+              (10-600 segundos).
             </p>
           </div>
 
@@ -120,14 +121,18 @@ export default function VideoConfigPage() {
           >
             {saving ? "Guardando..." : "Guardar"}
           </button>
-
-          {saved && (
-            <span className="text-sm text-green-600">
-              Guardado correctamente
-            </span>
-          )}
-          {error && <span className="text-sm text-red-500">{error}</span>}
         </div>
+
+        {success && (
+          <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
+            {success}
+          </div>
+        )}
+        {error && (
+          <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
+            {error}
+          </div>
+        )}
       </div>
     </div>
   );

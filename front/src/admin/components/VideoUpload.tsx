@@ -98,8 +98,8 @@ export default function VideoUpload({
       {currentUrl && !uploading && (
         <div className="rounded-lg overflow-hidden border border-gray-200">
           <video
-            src={currentUrl}
-            className="w-full h-48 object-cover"
+            src={currentUrl.replace(/^https?:\/\/[^/]+/, "")}
+            className="mx-auto aspect-[9/16] object-cover h-64"
             controls
             playsInline
             muted
