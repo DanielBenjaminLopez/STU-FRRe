@@ -22,6 +22,9 @@ export interface Totem {
   pin_mapa_piso: "baja" | "primero" | "segundo" | null;
   pin_mapa_svg_x: number | null;
   pin_mapa_svg_y: number | null;
+  video_url: string | null;
+  video_intervalo: number;
+  video_activo: boolean;
 }
 
 export interface CreateTotemResponse {
@@ -92,4 +95,52 @@ export async function fetchEspacios(): Promise<Espacio[]> {
 
 export async function fetchTotemMe(): Promise<Totem> {
   return totemFetch<Totem>("/api/totems/me/");
+}
+
+export interface ConfiguracionVideo {
+  video_archivo: string | null;
+  video_url: string | null;
+  intervalo: number;
+  activo: boolean;
+}
+
+export async function fetchConfigVideo(): Promise<ConfiguracionVideo> {
+  return apiFetch<ConfiguracionVideo>("/api/config-video/");
+}
+
+export async function updateConfigVideo(
+  data: Partial<ConfiguracionVideo>,
+): Promise<ConfiguracionVideo> {
+  return apiFetch<ConfiguracionVideo>("/api/config-video/", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function uploadVideoArchivo(
+  archivo: File,
+): Promise<ConfiguracionVideo> {
+  const token = getAdminToken();
+  const formData = new FormData();
+  formData.append("video_archivo", archivo);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch("/api/config-video/", {
+    method: "PATCH",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const detail =
+      body?.video_archivo?.[0] || body?.detail || `Error ${response.status}`;
+    throw new Error(Array.isArray(detail) ? detail[0] : String(detail));
+  }
+
+  return response.json();
 }

@@ -10,6 +10,7 @@ import CalendarioAdminPage from "./pages/CalendarioAdminPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
 import UbicacionesMapaPage from "./pages/UbicacionesMapaPage";
+import VideoConfigPage from "./pages/VideoConfigPage";
 
 export default function AdminRoutes() {
   return (
@@ -84,6 +85,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <UbicacionesMapaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video"
+        element={
+          <ProtectedRoute>
+            <VideoConfigPage />
           </ProtectedRoute>
         }
       />

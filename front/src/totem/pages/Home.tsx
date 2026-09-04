@@ -7,6 +7,7 @@ import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
 import Avisos from "../../shared/components/widgets/Avisos";
+import VideoPanel from "../../shared/components/VideoPanel";
 import {
   useTotemScale,
   TOTEM_WIDTH,
@@ -41,6 +42,9 @@ export default function Home() {
   const [totem, setTotem] = useState<Totem | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState("");
+  const [modoVideo, setModoVideo] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const lastInteractionRef = useRef(0);
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
   const { lastMessage } = useTotemWebSocket(null, true);
@@ -90,9 +94,45 @@ export default function Home() {
   }, [lastMessage, load]);
 
   useEffect(() => {
+    lastInteractionRef.current = Date.now();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setChecking(false);
   }, []);
+
+  useEffect(() => {
+    if (!totem?.video_activo || !totem.video_url) return;
+
+    const checkInactivity = () => {
+      const elapsed = Date.now() - lastInteractionRef.current;
+      const intervalMs = (totem.video_intervalo || 60) * 1000;
+      if (!modoVideo && elapsed >= intervalMs) {
+        setAnimating(true);
+        setModoVideo(true);
+        setTimeout(() => setAnimating(false), 650);
+      }
+    };
+
+    const timer = setInterval(checkInactivity, 5000);
+    return () => clearInterval(timer);
+  }, [totem, modoVideo]);
+
+  const handleVideoEnded = useCallback(() => {
+    setAnimating(true);
+    lastInteractionRef.current = Date.now();
+    setModoVideo(false);
+    setTimeout(() => setAnimating(false), 650);
+  }, []);
+
+  const handleInteraction = useCallback(() => {
+    if (modoVideo) {
+      setAnimating(true);
+      lastInteractionRef.current = Date.now();
+      setModoVideo(false);
+      setTimeout(() => setAnimating(false), 650);
+    } else {
+      lastInteractionRef.current = Date.now();
+    }
+  }, [modoVideo]);
 
   if (checking) return null;
 
@@ -140,10 +180,17 @@ export default function Home() {
         }
       : null;
 
+  const showVideo = modoVideo && totem?.video_activo && !!totem.video_url;
+
   return (
     <TotemRealtimeProvider value={lastMessage}>
       <TotemPinProvider value={pinPosition}>
-        <div ref={containerRef} className="totem-scale-container">
+        <div
+          ref={containerRef}
+          className="totem-scale-container"
+          onTouchStart={handleInteraction}
+          onClick={handleInteraction}
+        >
           <div
             className="totem-scale-stage bg-white overflow-hidden"
             style={{
@@ -157,8 +204,15 @@ export default function Home() {
             <div className="flex flex-col w-full h-full p-16 gap-16">
               <Avisos />
               <Encabezado />
-              <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
-                {hasWidgets ? (
+              <div
+                className={`flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4 ${animating ? "animate-flip-in" : ""}`}
+              >
+                {showVideo ? (
+                  <VideoPanel
+                    url={totem.video_url!}
+                    onEnded={handleVideoEnded}
+                  />
+                ) : hasWidgets ? (
                   plantilla.widgets.map((w) => {
                     const Component = WIDGET_COMPONENTS[w.type];
                     if (!Component) return null;

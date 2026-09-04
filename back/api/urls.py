@@ -5,6 +5,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     AvisoViewSet,
     BulkCalendarView,
+    ConfiguracionVideoView,
     CustomTokenObtainPairView,
     EventoCalendarioViewSet,
     PlanMateriaViewSet,
@@ -50,6 +51,7 @@ urlpatterns = [
     path('totems/me/', TotemMeView.as_view(), name='totem_me'),
     path('totems/new/', TotemNewView.as_view(), name='totem_new'),
     path('totems/vincular/', VincularTotemView.as_view(), name='totem_vincular'),
+    path('config-video/', ConfiguracionVideoView.as_view(), name='config_video'),
     path('', include(router.urls)),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -5,6 +5,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     Aviso,
     Carrera,
+    ConfiguracionVideo,
     EventoCalendario,
     PlanMateria,
     Comision,
@@ -416,3 +417,19 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError(
                 {"detail": "Usuario o contraseña incorrectos."}
             )
+
+
+class ConfiguracionVideoSerializer(serializers.ModelSerializer):
+    video_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ConfiguracionVideo
+        fields = ['video_archivo', 'video_url', 'intervalo', 'activo']
+
+    def get_video_url(self, obj):
+        if obj.video_archivo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.video_archivo.url)
+            return obj.video_archivo.url
+        return None

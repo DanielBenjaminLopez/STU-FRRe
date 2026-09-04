@@ -10,6 +10,7 @@ const navItems = [
   { to: "/admin/avisos", label: "Avisos" },
   { to: "/admin/ubicaciones-mapa", label: "Mapas" },
   { to: "/admin/plantillas", label: "Plantillas" },
+  { to: "/admin/video", label: "Video" },
 ];
 
 export default function Sidebar() {

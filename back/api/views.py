@@ -3,7 +3,7 @@ from channels.layers import get_channel_layer
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -14,6 +14,7 @@ from .authentication import TotemToken
 from .models import (
     Aviso,
     Carrera,
+    ConfiguracionVideo,
     EventoCalendario,
     PlanMateria,
     Comision,
@@ -55,6 +56,7 @@ from .resources import HorarioCursadoResource, MesaExamenResource
 import tablib
 from .serializers import (
     AvisoSerializer,
+    ConfiguracionVideoSerializer,
     CustomTokenObtainPairSerializer,
     EventoCalendarioSerializer,
     PlanMateriaSerializer,
@@ -533,7 +535,14 @@ class TotemMeView(APIView):
         ).prefetch_related(
             'plantilla__widgets_posiciones__widget'
         ).get(pk=request.user.totem.id)
-        return Response(TotemSerializer(totem).data)
+        data = TotemSerializer(totem).data
+
+        config_video = ConfiguracionVideo.load()
+        data['video_url'] = config_video.video_archivo.url if config_video.activo and config_video.video_archivo else None
+        data['video_intervalo'] = config_video.intervalo
+        data['video_activo'] = config_video.activo
+
+        return Response(data)
 
 
 class TotemNewView(APIView):
@@ -657,3 +666,11 @@ class BulkCalendarView(APIView):
                 {'detail': f'Error al guardar eventos: {e}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class ConfiguracionVideoView(generics.RetrieveUpdateAPIView):
+    serializer_class = ConfiguracionVideoSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def get_object(self):
+        return ConfiguracionVideo.load()
