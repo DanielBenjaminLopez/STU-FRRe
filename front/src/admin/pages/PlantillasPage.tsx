@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useLocation } from "react-router";
 import {
   DndContext,
@@ -130,9 +136,72 @@ function getGhostDimensions(
   return { width, height };
 }
 
+interface DynamicPillInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+function DynamicPillInput({
+  value,
+  onChange,
+  onSave,
+  onCancel,
+}: DynamicPillInputProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const [width, setWidth] = useState<number>(0);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (spanRef.current) {
+      setWidth(Math.ceil(spanRef.current.getBoundingClientRect().width));
+    }
+  }, [value]);
+
+  return (
+    <div className="relative inline-flex items-center">
+      <span
+        ref={spanRef}
+        aria-hidden="true"
+        className="invisible absolute left-0 top-0 whitespace-pre text-sm font-medium pointer-events-none select-none"
+      >
+        {value || " "}
+      </span>
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onSave();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            onCancel();
+          }
+        }}
+        onBlur={onSave}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: width > 0 ? `${width + 4}px` : "auto" }}
+        className="bg-transparent text-sm font-medium outline-none p-0 text-inherit"
+        aria-label="Editar nombre de plantilla"
+      />
+    </div>
+  );
+}
+
 export default function PlantillasPage() {
   const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<WidgetType | null>(null);
   const [hoverCell, setHoverCell] = useState<{
@@ -159,6 +228,12 @@ export default function PlantillasPage() {
   );
 
   const selected = plantillas.find((p) => p.id === selectedId);
+  const isAplicada = Boolean(
+    selectedTotem &&
+    selected &&
+    !selected.isNew &&
+    selectedTotem.plantilla_id === Number(selected.id),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -209,6 +284,7 @@ export default function PlantillasPage() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedId(targetId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTotem?.plantilla_id, plantillas]);
 
   useEffect(() => {
@@ -219,7 +295,7 @@ export default function PlantillasPage() {
     ) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setToast(
-        "El tótem aún no tiene plantilla asignada. Creá una o seleccioná una y usá 'Cargar al tótem'.",
+        "El tótem aún no tiene plantilla asignada. Creá una o seleccioná una y usá 'Aplicar'.",
       );
     }
   }, [location.state, selectedTotem]);
@@ -238,12 +314,38 @@ export default function PlantillasPage() {
     [selectedId, markDirty],
   );
 
-  const handleNombreChange = useCallback(
-    (nombre: string) => {
-      updateSelectedPlantilla((p) => ({ ...p, nombre }));
+  const handleStartRename = useCallback((plantilla: Plantilla) => {
+    setSelectedId(plantilla.id);
+    setEditingId(plantilla.id);
+    setEditingName(plantilla.nombre);
+  }, []);
+
+  const handleSaveRename = useCallback(
+    (id: string) => {
+      setEditingId((currentEditingId) => {
+        if (currentEditingId === id) {
+          const trimmed = editingName.trim();
+          if (trimmed) {
+            setPlantillas((prev) =>
+              prev.map((p) => {
+                if (p.id === id && p.nombre !== trimmed) {
+                  markDirty(id);
+                  return { ...p, nombre: trimmed };
+                }
+                return p;
+              }),
+            );
+          }
+        }
+        return null;
+      });
     },
-    [updateSelectedPlantilla],
+    [editingName, markDirty],
   );
+
+  const handleCancelRename = useCallback(() => {
+    setEditingId(null);
+  }, []);
 
   const handleRemoveWidget = useCallback(
     (widgetId: string) => {
@@ -412,6 +514,7 @@ export default function PlantillasPage() {
       if (!target.isNew) {
         await deletePlantilla(Number(deletingId));
       }
+      setEditingId((cur) => (cur === deletingId ? null : cur));
       const next = plantillas.filter((p) => p.id !== deletingId);
       setPlantillas(next);
       if (selectedId === deletingId) {
@@ -430,7 +533,7 @@ export default function PlantillasPage() {
     const selected = plantillas.find((p) => p.id === selectedId);
     if (!selected || selected.isNew) return;
     if (dirtyIds[selected.id]) {
-      setToast("Guardá la plantilla antes de cargarla al tótem.");
+      setToast("Guardá la plantilla antes de aplicarla al tótem.");
       return;
     }
     try {
@@ -438,12 +541,12 @@ export default function PlantillasPage() {
         plantilla_id: Number(selected.id),
       });
       await refreshTotems();
-      setToast("Plantilla cargada al tótem correctamente");
+      setToast("Plantilla aplicada al tótem correctamente");
     } catch (err) {
       setToast(
         err instanceof Error
           ? err.message
-          : "No se pudo cargar la plantilla al tótem",
+          : "No se pudo aplicar la plantilla al tótem",
       );
     }
   }, [selectedTotem, plantillas, selectedId, dirtyIds, refreshTotems]);
@@ -491,8 +594,6 @@ export default function PlantillasPage() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <TemplateCanvas
               widgets={selected?.widgets ?? []}
-              nombre={selected?.nombre ?? ""}
-              onNombreChange={handleNombreChange}
               onRemoveWidget={handleRemoveWidget}
               onScaleChange={setCanvasScale}
               hoverCell={hoverCell}
@@ -502,38 +603,54 @@ export default function PlantillasPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-6 py-3 bg-white border-t border-gray-200">
+        <div className="flex items-center justify-between px-6 h-16 bg-white border-t border-gray-200 shrink-0">
           <div className="flex items-center gap-2">
             {plantillas.map((p) => (
-              <button
+              <div
                 key={p.id}
-                type="button"
+                role="button"
+                tabIndex={0}
+                aria-pressed={p.id === selectedId}
                 onClick={() => setSelectedId(p.id)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-colors flex items-center gap-1.5 ${
+                onDoubleClick={() => handleStartRename(p)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    if (editingId !== p.id) {
+                      setSelectedId(p.id);
+                    }
+                  }
+                }}
+                title={
+                  editingId === p.id ? undefined : "Doble clic para renombrar"
+                }
+                className={`group px-4 py-2 text-sm font-medium rounded-2xl transition-colors flex items-center gap-2 cursor-pointer select-none ${
                   p.id === selectedId
                     ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
-                {p.nombre}
-                {p.isNew && (
-                  <span
-                    className={`text-[10px] ${p.id === selectedId ? "text-cyan-300" : "text-cyan-600"}`}
-                  >
-                    nuevo
-                  </span>
+                {editingId === p.id ? (
+                  <DynamicPillInput
+                    value={editingName}
+                    onChange={setEditingName}
+                    onSave={() => handleSaveRename(p.id)}
+                    onCancel={handleCancelRename}
+                  />
+                ) : (
+                  <span>{p.nombre}</span>
                 )}
+
                 {dirtyIds[p.id] && (
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${p.id === selectedId ? "bg-amber-300" : "bg-amber-500"}`}
                   />
                 )}
-              </button>
+              </div>
             ))}
             <button
               type="button"
               onClick={handleCreatePlantilla}
-              className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-xl hover:border-gray-400 transition-colors"
+              className="px-3.5 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-2xl hover:border-gray-400 transition-colors"
             >
               +
             </button>
@@ -543,7 +660,7 @@ export default function PlantillasPage() {
             <button
               type="button"
               onClick={() => setDeletingId(selectedId)}
-              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+              className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-colors"
               title="Eliminar plantilla"
             >
               <svg
@@ -560,21 +677,37 @@ export default function PlantillasPage() {
                 />
               </svg>
             </button>
+            <div className="h-5 w-px bg-gray-200 mx-1" />
             <button
               type="button"
               onClick={handleCargarAlTotem}
-              disabled={!selectedTotem || !selected || selected.isNew}
-              className="px-4 py-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={
+                !selectedTotem || !selected || selected.isNew || isAplicada
+              }
+              title={
+                isAplicada
+                  ? "Esta plantilla ya está aplicada al tótem seleccionado"
+                  : !selectedTotem
+                    ? "Seleccioná un tótem primero"
+                    : selected?.isNew
+                      ? "Guardá la plantilla antes de aplicarla"
+                      : "Aplicar al tótem seleccionado"
+              }
+              className={`px-5 py-2 text-sm font-medium rounded-2xl border transition-colors ${
+                isAplicada
+                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-default"
+                  : "bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              }`}
             >
-              Cargar al tótem
+              {isAplicada ? "Aplicada" : "Aplicar"}
             </button>
             <button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-1.5 text-xs font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {saving ? "Guardando..." : "Guardar plantilla"}
+              {saving ? "Guardando..." : "Guardar"}
             </button>
           </div>
         </div>

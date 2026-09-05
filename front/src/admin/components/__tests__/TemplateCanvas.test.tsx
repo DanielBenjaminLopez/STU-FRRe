@@ -45,8 +45,6 @@ const mockWidgets: WidgetPlacement[] = [
 describe("TemplateCanvas", () => {
   const defaultProps = {
     widgets: [] as WidgetPlacement[],
-    nombre: "Test Plantilla",
-    onNombreChange: vi.fn(),
     onRemoveWidget: vi.fn(),
     hoverCell: null,
     activeType: null,
@@ -59,21 +57,6 @@ describe("TemplateCanvas", () => {
 
   afterEach(() => {
     cleanup();
-  });
-
-  it("renderiza el input del nombre de plantilla", () => {
-    render(<TemplateCanvas {...defaultProps} />);
-    expect(screen.getByDisplayValue("Test Plantilla")).toBeInTheDocument();
-  });
-
-  it("llama a onNombreChange al editar el nombre", () => {
-    const onNombreChange = vi.fn();
-    render(
-      <TemplateCanvas {...defaultProps} onNombreChange={onNombreChange} />,
-    );
-    const input = screen.getByDisplayValue("Test Plantilla");
-    fireEvent.change(input, { target: { value: "Nuevo nombre" } });
-    expect(onNombreChange).toHaveBeenCalledWith("Nuevo nombre");
   });
 
   it("renderiza el encabezado del totem", () => {

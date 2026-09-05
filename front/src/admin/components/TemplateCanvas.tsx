@@ -82,8 +82,6 @@ function PlacedWidget({ widget, onRemove }: PlacedWidgetProps) {
 
 interface TemplateCanvasProps {
   widgets: WidgetPlacement[];
-  nombre: string;
-  onNombreChange: (nombre: string) => void;
   onRemoveWidget: (id: string) => void;
   onScaleChange?: (scale: number) => void;
   hoverCell: { col: number; row: number } | null;
@@ -93,8 +91,6 @@ interface TemplateCanvasProps {
 
 export default function TemplateCanvas({
   widgets,
-  nombre,
-  onNombreChange,
   onRemoveWidget,
   onScaleChange,
   hoverCell,
@@ -113,14 +109,6 @@ export default function TemplateCanvas({
       ref={containerRef}
       className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
     >
-      <input
-        type="text"
-        value={nombre}
-        onChange={(e) => onNombreChange(e.target.value)}
-        className="text-xl font-semibold text-gray-900 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-gray-400 focus:outline-none transition-colors px-1 py-0.5 w-fit mb-2 shrink-0"
-        placeholder="Nombre plantilla"
-      />
-
       <div
         className="origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden transition-colors border-gray-200"
         style={{
