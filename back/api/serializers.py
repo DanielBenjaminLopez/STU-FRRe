@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -310,6 +311,10 @@ class TotemNuevoSerializer(serializers.Serializer):
     codigo_vinculacion = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
+        # Limpiar tótems no vinculados cuyo código haya expirado
+        limite_expiracion = timezone.now() - timedelta(hours=Totem.VINCULO_VIGENCIA_HORAS)
+        Totem.objects.filter(vinculado=False, codigo_creado_en__lt=limite_expiracion).delete()
+
         codigo = Totem.generar_codigo()
         totem = Totem.objects.create(
             codigo_vinculacion=codigo,

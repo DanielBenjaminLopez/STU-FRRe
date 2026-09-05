@@ -8,18 +8,12 @@ const {
   mockTotems,
   mockSelectedId,
   mockSetSelectedId,
-  mockNavigate,
 } = vi.hoisted(() => ({
   mockIsAuthenticated: vi.fn(),
   mockUser: vi.fn(),
   mockTotems: vi.fn(),
   mockSelectedId: vi.fn(),
   mockSetSelectedId: vi.fn(),
-  mockNavigate: vi.fn(),
-}));
-
-vi.mock("react-router", () => ({
-  useNavigate: () => mockNavigate,
 }));
 
 vi.mock("../../../shared/context/AuthContext", () => ({
@@ -117,7 +111,7 @@ describe("AdminHeader", () => {
     expect(screen.queryByText("Bienvenido,")).not.toBeInTheDocument();
   });
 
-  it("llama a setSelectedId y redirige a Inicio al cambiar el totem seleccionado", () => {
+  it("llama a setSelectedId al cambiar el totem seleccionado sin redirigir", () => {
     mockIsAuthenticated.mockReturnValue(true);
     mockUser.mockReturnValue({ username: "admin", is_superuser: true });
     mockTotems.mockReturnValue([
@@ -128,7 +122,6 @@ describe("AdminHeader", () => {
     render(<AdminHeader />);
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "2" } });
     expect(mockSetSelectedId).toHaveBeenCalledWith("2");
-    expect(mockNavigate).toHaveBeenCalledWith("/admin");
   });
 
   it("usa nombre del totem como label en el dropdown", () => {
@@ -141,5 +134,25 @@ describe("AdminHeader", () => {
     expect(
       screen.getByRole("option", { name: "Tótem Hall Central" }),
     ).toBeInTheDocument();
+  });
+
+  it("no muestra tótems no vinculados en el dropdown", () => {
+    mockIsAuthenticated.mockReturnValue(true);
+    mockUser.mockReturnValue({ username: "admin", is_superuser: true });
+    mockTotems.mockReturnValue([
+      { id: 1, nombre: "Tótem Principal", vinculado: true },
+      { id: 15, nombre: "", vinculado: false },
+      { id: 16, nombre: "Tótem #16", vinculado: false },
+    ]);
+    render(<AdminHeader />);
+    expect(
+      screen.getByRole("option", { name: "Tótem Principal" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Tótem #15" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Tótem #16" }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -513,11 +513,24 @@ class AvisosActivosView(APIView):
 
 
 class TotemViewSet(viewsets.ModelViewSet):
-    queryset = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
-        'plantilla__widgets_posiciones__widget'
-    ).all()
+    queryset = Totem.objects.all()
     serializer_class = TotemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def get_queryset(self):
+        qs = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
+            'plantilla__widgets_posiciones__widget'
+        )
+        vinculado = self.request.query_params.get('vinculado')
+        if vinculado is not None:
+            if vinculado.lower() in ('true', '1'):
+                return qs.filter(vinculado=True)
+            if vinculado.lower() in ('false', '0'):
+                return qs.filter(vinculado=False)
+            return qs.all()
+        if self.action == 'list':
+            return qs.filter(vinculado=True)
+        return qs.all()
 
     def perform_update(self, serializer):
         totem = serializer.save()
