@@ -15,7 +15,7 @@ import {
   fetchPlanMaterias,
   fetchEspaciosForSelect,
   importarMesasExamenCSV,
-  TURNOS,
+  getTurnoFromFecha,
   type MesaExamen,
   type PlanMateriaDTO,
 } from "../../shared/api/mesasExamen";
@@ -239,13 +239,6 @@ export default function MesasExamenPage() {
       type: "time",
       required: true,
     },
-    {
-      name: "turno",
-      label: "Turno",
-      type: "select",
-      required: true,
-      options: TURNOS.map((t) => ({ value: t.value, label: t.label })),
-    },
   ];
 
   function handleCreate() {
@@ -276,12 +269,16 @@ export default function MesasExamenPage() {
 
   async function handleSubmit(formData: Record<string, unknown>) {
     try {
+      const fecha = String(formData.fecha || "");
+      const autoTurno =
+        getTurnoFromFecha(fecha) || editingRow?.turno || "febrero";
+
       const payload = {
         plan_materia: Number(formData.plan_materia || formData.materia),
         espacio: Number(formData.espacio),
-        fecha: String(formData.fecha || ""),
+        fecha,
         hora: String(formData.hora || "08:00"),
-        turno: String(formData.turno || "febrero"),
+        turno: autoTurno,
       };
 
       if (editingRow) {
@@ -364,7 +361,6 @@ export default function MesasExamenPage() {
                     (editingRow.fecha_hora
                       ? editingRow.fecha_hora.split("T")[1]?.slice(0, 5)
                       : "08:00"),
-                  turno: editingRow.turno,
                 }
               : undefined
           }
