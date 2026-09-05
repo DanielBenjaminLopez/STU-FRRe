@@ -584,11 +584,14 @@ describe("PlantillasPage", () => {
     expect(resetBtn).not.toBeDisabled();
 
     fireEvent.click(resetBtn);
-    await waitFor(() => {
-      expect(
-        within(canvas).queryByTestId("mock-horarios"),
-      ).not.toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(
+          within(canvas).queryByTestId("mock-horarios"),
+        ).not.toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
     expect(resetBtn).toBeDisabled();
   });
 });

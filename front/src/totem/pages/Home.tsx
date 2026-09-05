@@ -52,6 +52,12 @@ export default function Home() {
       setTotem(me);
       setBlocked(false);
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Error de conexión";
+      if (message === "Tótem desactivado") {
+        setBlocked(true);
+        setBlockedMessage(message);
+        return;
+      }
       if (
         err instanceof ApiError &&
         (err.status === 401 || err.status === 403)
@@ -59,11 +65,7 @@ export default function Home() {
         navigate("/onboarding", { replace: true });
         return;
       }
-      const message = err instanceof Error ? err.message : "Error de conexión";
-      if (message === "Tótem desactivado") {
-        setBlocked(true);
-        setBlockedMessage(message);
-      } else if (!totemRef.current) {
+      if (!totemRef.current) {
         setBlocked(true);
         setBlockedMessage("Sin conexión con el servidor");
       }

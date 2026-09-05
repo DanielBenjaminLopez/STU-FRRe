@@ -140,6 +140,18 @@ describe("totem Home", () => {
     ).toBeInTheDocument();
   });
 
+  it("muestra la pantalla de fuera de servicio y no redirige cuando recibe ApiError 401 Tótem desactivado", async () => {
+    mockFetchTotemMe.mockRejectedValue(new ApiError("Tótem desactivado", 401));
+    render(<Home />);
+    expect(
+      await screen.findByText("Tótem fuera de servicio"),
+    ).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      "/onboarding",
+      expect.anything(),
+    );
+  });
+
   it("redirige a /onboarding cuando recibe 403", async () => {
     mockFetchTotemMe.mockRejectedValue(new ApiError("Forbidden", 403));
     render(<Home />);

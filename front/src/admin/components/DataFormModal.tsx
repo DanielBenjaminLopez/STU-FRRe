@@ -119,16 +119,9 @@ export default function DataFormModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-4xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-8 pt-8 pb-4">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-lg p-1"
-          >
-            &times;
-          </button>
+      <div className="bg-white rounded-4xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="px-8 pt-8 pb-3">
+          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
         </div>
 
         <form
@@ -137,12 +130,14 @@ export default function DataFormModal({
         >
           {fields.map((field) => (
             <label key={field.name} className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">
-                {field.label}
-                {field.required && (
-                  <span className="text-red-400 ml-0.5">*</span>
-                )}
-              </span>
+              {field.type !== "checkbox" && (
+                <span className="font-medium text-gray-700">
+                  {field.label}
+                  {field.required && (
+                    <span className="text-red-400 ml-0.5">*</span>
+                  )}
+                </span>
+              )}
 
               {field.type === "select" ? (
                 <select
@@ -171,16 +166,48 @@ export default function DataFormModal({
                   className="border border-gray-200 rounded-xl px-4 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10"
                 />
               ) : field.type === "checkbox" ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(formData[field.name])}
-                    onChange={(e) => handleChange(field.name, e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
-                  <span className="text-sm text-gray-500">
-                    {field.placeholder ?? "Sí"}
-                  </span>
+                <div className="flex items-center justify-between py-1 select-none">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-800 text-sm">
+                      {field.placeholder || field.label || "Activo"}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {formData[field.name]
+                        ? "Visible y habilitado"
+                        : "Inactivo y deshabilitado"}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={Boolean(formData[field.name])}
+                    onClick={() =>
+                      handleChange(field.name, !formData[field.name])
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
+                      formData[field.name]
+                        ? "bg-gray-900"
+                        : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        formData[field.name]
+                          ? "translate-x-5"
+                          : "translate-x-0"
+                      }`}
+                    />
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={Boolean(formData[field.name])}
+                      onChange={(e) =>
+                        handleChange(field.name, e.target.checked)
+                      }
+                      aria-label={field.placeholder || field.label}
+                    />
+                  </button>
                 </div>
               ) : (
                 <input
@@ -204,14 +231,14 @@ export default function DataFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
+              className="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 border border-gray-200 rounded-2xl transition-colors cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 border border-gray-900 rounded-2xl transition-colors cursor-pointer disabled:opacity-50"
             >
               {loading ? "Guardando..." : "Guardar"}
             </button>

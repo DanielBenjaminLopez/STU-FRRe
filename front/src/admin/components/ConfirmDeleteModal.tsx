@@ -36,14 +36,14 @@ export default function ConfirmDeleteModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
+            className="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 border border-gray-200 rounded-2xl transition-colors cursor-pointer"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-6 py-2 text-sm font-medium text-white bg-red-500 rounded-2xl hover:bg-red-600 transition-colors"
+            className="px-5 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 border border-red-500 hover:border-red-600 rounded-2xl transition-colors cursor-pointer"
           >
             Eliminar
           </button>
