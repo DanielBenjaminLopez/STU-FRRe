@@ -169,13 +169,17 @@ export default function TemplateCanvas({
       className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
     >
       <div
-        className={`origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden border-gray-200 transition-opacity duration-200 ${
+        
+        className={`totem-scale-stage bg-white border-2 border-dashed rounded-3xl overflow-hidden border-gray-200 transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
+        
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
           transform: `scale(${scale})`,
+          transformOrigin: "top center",
+          willChange: "transform",
         }}
       >
         <div className="flex flex-col w-full h-full p-16 gap-16">

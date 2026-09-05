@@ -50,8 +50,8 @@ function TestComponent({ onScale }: { onScale?: (s: number) => void }) {
 
 describe("useTotemScale", () => {
   it("exporta las dimensiones del totem", () => {
-    expect(TOTEM_WIDTH).toBe(1080);
-    expect(TOTEM_HEIGHT).toBe(1920);
+    expect(TOTEM_WIDTH).toBe(2160);
+    expect(TOTEM_HEIGHT).toBe(3840);
   });
 
   it("retorna un scale inicial", () => {

@@ -53,6 +53,86 @@ body {
   will-change: transform;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+}
+
+/* === Totem scale: Opción A (JS) y Opción B (CSS-only) === */
+.totem-scale-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Variante CSS-only que habilita container queries */
+.totem-scale-container--css {
+  container-type: size;
+}
+
+.totem-scale-stage {
+  flex-shrink: 0;
+  overflow: hidden;
+  /* Opción A: optimización de capa compuesta para transform: scale() */
+  will-change: transform;
+  transform-origin: center center;
+  /* 4K 2x: sobreescribe variables Tailwind solo dentro del tótem/preview.
+     --spacing 0.25rem→0.5rem duplica p-*, m-*, gap-*, w-*, h-*, etc.
+     --text-* y --radius-* duplican tipografía y radios. No afecta admin. */
+  --spacing: 0.5rem;
+  --text-xs: 1.5rem;
+  --text-sm: 1.75rem;
+  --text-base: 2rem;
+  --text-lg: 2.25rem;
+  --text-xl: 2.5rem;
+  --text-2xl: 3rem;
+  --text-3xl: 3.75rem;
+  --text-4xl: 4.5rem;
+  --text-5xl: 6rem;
+  --text-6xl: 7.5rem;
+  --text-7xl: 9rem;
+  --text-8xl: 12rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+  --radius-4xl: 4rem;
+}
+
+/* Escala 2x para tamaños arbitrarios en px usados en widgets (gap-4=16px→32px ya cubierto por --spacing, pero text-[10px]/[17px] son px fijos) */
+.totem-scale-stage .text-\[10px\] {
+  font-size: 20px;
+}
+.totem-scale-stage .text-\[17px\] {
+  font-size: 34px;
+}
+
+/* Opción B: CSS-only sin JS. Usa container queries (cqw/cqh) para
+   calcular scale = min(100cqw/2160px, 100cqh/3840px) de forma unitless.
+   No requiere ResizeObserver ni state de React. 4K nativo. */
+.totem-scale-stage--css {
+  transform: scale(min(calc(100cqw / 2160px), calc(100cqh / 3840px)));
+}
+
+@supports not (width: 100cqw) {
+  .totem-scale-stage--css {
+    /* Fallback viewport si no hay soporte para container queries */
+    transform: scale(min(calc(100vw / 2160px), calc(100vh / 3840px)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .avisos-marquee-overflowing {
     animation-play-state: paused;
