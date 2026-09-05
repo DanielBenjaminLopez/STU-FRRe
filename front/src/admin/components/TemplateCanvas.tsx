@@ -153,12 +153,14 @@ export default function TemplateCanvas({
   selectedWidgetId,
   onSelectWidget,
 }: TemplateCanvasProps) {
-  const { containerRef, scale } = useTotemScale();
+  const { containerRef, scale, isReady } = useTotemScale();
 
   useEffect(() => {
     onScaleChange?.(scale);
   }, [scale, onScaleChange]);
   const { setNodeRef } = useDroppable({ id: "canvas" });
+
+  const isVisible = isReady !== false;
 
   return (
     <div
@@ -167,7 +169,9 @@ export default function TemplateCanvas({
       className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
     >
       <div
-        className="origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden transition-colors border-gray-200"
+        className={`origin-top shrink-0 bg-white border-2 border-dashed rounded-3xl overflow-hidden border-gray-200 transition-opacity duration-200 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,

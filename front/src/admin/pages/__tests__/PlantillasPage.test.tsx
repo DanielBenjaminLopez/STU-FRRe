@@ -228,7 +228,9 @@ describe("PlantillasPage", () => {
   it("renderiza la paleta de widgets", async () => {
     render(<PlantillasPage />);
     await screen.findByText("Plantilla por defecto");
-    expect(screen.getByText("Agregar elementos")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Widgets" }),
+    ).toBeInTheDocument();
   });
 
   it("carga las plantillas desde la API y muestra su nombre", async () => {

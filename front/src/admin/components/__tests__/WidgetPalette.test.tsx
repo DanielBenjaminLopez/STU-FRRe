@@ -52,7 +52,12 @@ describe("WidgetPalette", () => {
         components={mockComponents}
       />,
     );
-    expect(screen.getByText("Agregar elementos")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Widgets" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Arrastrá los widgets a la plantilla"),
+    ).toBeInTheDocument();
   });
 
   it("renderiza los widgets del registry", () => {

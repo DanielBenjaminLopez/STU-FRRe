@@ -11,24 +11,31 @@ function calcScale(width: number, height: number): number {
 export function useTotemScale() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+  const [isReady, setIsReady] = useState(false);
 
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const { width, height } = el.getBoundingClientRect();
-    setScale(calcScale(width, height));
+    if (width > 0 && height > 0) {
+      setScale(calcScale(width, height));
+    }
+    setIsReady(true);
 
     const observer = new ResizeObserver(([entry]) => {
       const { width: w, height: h } = entry.contentRect;
-      setScale(calcScale(w, h));
+      if (w > 0 && h > 0) {
+        setScale(calcScale(w, h));
+        setIsReady(true);
+      }
     });
 
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  return { containerRef, scale };
+  return { containerRef, scale, isReady };
 }
 
 export { TOTEM_WIDTH, TOTEM_HEIGHT };
