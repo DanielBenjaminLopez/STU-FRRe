@@ -5,6 +5,7 @@ export interface Column<T> {
   label: string;
   render?: (value: T[keyof T], row: T) => React.ReactNode;
   sortable?: boolean;
+  align?: "left" | "center" | "right";
 }
 
 interface DataTableProps<T> {
@@ -95,24 +96,38 @@ export default function DataTable<T extends { id: number }>({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b-2 border-gray-100">
-              {columns.map((col) => (
-                <th
-                  key={String(col.key)}
-                  className={`px-4 py-3 text-left font-semibold text-gray-600 ${col.sortable !== false ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
-                  onClick={() =>
-                    col.sortable !== false ? handleSort(col.key) : undefined
-                  }
-                >
-                  <span className="flex items-center gap-1">
-                    {col.label}
-                    {sortKey === col.key && (
-                      <span className="text-xs">
-                        {sortDir === "asc" ? "\u2191" : "\u2193"}
-                      </span>
-                    )}
-                  </span>
-                </th>
-              ))}
+              {columns.map((col) => {
+                const alignClass =
+                  col.align === "center"
+                    ? "text-center"
+                    : col.align === "right"
+                      ? "text-right"
+                      : "text-left";
+                const justifyClass =
+                  col.align === "center"
+                    ? "justify-center"
+                    : col.align === "right"
+                      ? "justify-end"
+                      : "justify-start";
+                return (
+                  <th
+                    key={String(col.key)}
+                    className={`px-4 py-3 ${alignClass} font-semibold text-gray-600 ${col.sortable !== false ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
+                    onClick={() =>
+                      col.sortable !== false ? handleSort(col.key) : undefined
+                    }
+                  >
+                    <span className={`flex items-center gap-1 ${justifyClass}`}>
+                      {col.label}
+                      {sortKey === col.key && (
+                        <span className="text-xs">
+                          {sortDir === "asc" ? "\u2191" : "\u2193"}
+                        </span>
+                      )}
+                    </span>
+                  </th>
+                );
+              })}
               {(onEdit || onDelete) && (
                 <th className="px-4 py-3 text-right font-semibold text-gray-600 w-24">
                   Acciones
@@ -125,8 +140,25 @@ export default function DataTable<T extends { id: number }>({
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={`skeleton-${i}`} className="border-b border-gray-100">
                   {columns.map((col) => (
-                    <td key={String(col.key)} className="px-4 py-3">
-                      <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-3/4" />
+                    <td
+                      key={String(col.key)}
+                      className={`px-4 py-3 ${
+                        col.align === "center"
+                          ? "text-center"
+                          : col.align === "right"
+                            ? "text-right"
+                            : "text-left"
+                      }`}
+                    >
+                      <div
+                        className={`h-4 bg-gray-100 rounded-xl animate-pulse w-3/4 ${
+                          col.align === "center"
+                            ? "mx-auto"
+                            : col.align === "right"
+                              ? "ml-auto"
+                              : ""
+                        }`}
+                      />
                     </td>
                   ))}
                   {(onEdit || onDelete) && (
@@ -155,7 +187,16 @@ export default function DataTable<T extends { id: number }>({
                   className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors"
                 >
                   {columns.map((col) => (
-                    <td key={String(col.key)} className="px-4 py-3">
+                    <td
+                      key={String(col.key)}
+                      className={`px-4 py-3 ${
+                        col.align === "center"
+                          ? "text-center"
+                          : col.align === "right"
+                            ? "text-right"
+                            : ""
+                      }`}
+                    >
                       {col.render
                         ? col.render(row[col.key], row)
                         : String(row[col.key] ?? "")}

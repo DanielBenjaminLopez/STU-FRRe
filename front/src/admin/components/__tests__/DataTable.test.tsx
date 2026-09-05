@@ -144,4 +144,19 @@ describe("DataTable", () => {
     render(<DataTable data={mockData} columns={columns} />);
     expect(screen.queryByText("Acciones")).not.toBeInTheDocument();
   });
+
+  it("aplica clases de alineación cuando se especifica align", () => {
+    const alignedColumns: Column<TestRow>[] = [
+      { key: "nombre", label: "Nombre", align: "center" },
+      { key: "tipo", label: "Tipo", align: "right" },
+    ];
+    render(<DataTable data={mockData} columns={alignedColumns} />);
+    const thElements = screen.getAllByRole("columnheader");
+    expect(thElements[0]).toHaveClass("text-center");
+    expect(thElements[1]).toHaveClass("text-right");
+
+    const tdElements = screen.getAllByRole("cell");
+    expect(tdElements[0]).toHaveClass("text-center");
+    expect(tdElements[1]).toHaveClass("text-right");
+  });
 });

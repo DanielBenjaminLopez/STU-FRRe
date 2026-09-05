@@ -702,7 +702,6 @@ export default function MapaRaw({
   const [floorsData, setFloorsData] = useState<
     Record<FloorKey, Record<string, RoomData>>
   >({ baja: {}, primero: {}, segundo: {} });
-  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     fetchUbicacionesMapa()
@@ -723,11 +722,9 @@ export default function MapaRaw({
           }
         }
         setFloorsData(byFloor);
-        setDataLoaded(true);
       })
       .catch(() => {
         // Si falla la red, el mapa queda vacío pero funcional
-        setDataLoaded(true);
       });
   }, []);
 
@@ -1215,11 +1212,6 @@ export default function MapaRaw({
     <div
       className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
     >
-      {!dataLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/30 backdrop-blur-sm rounded-4xl z-10">
-          <span className="text-sm text-gray-500">Cargando mapa...</span>
-        </div>
-      )}
       {!compact && (
         <div className="w-full flex flex-col px-16 gap-4">
           {/* Panel de búsqueda: solo en modo normal (no en editor de pin) */}

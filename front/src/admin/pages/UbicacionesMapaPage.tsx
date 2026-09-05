@@ -205,7 +205,11 @@ export default function UbicacionesMapaPage() {
               </p>
             </div>
             <div className="text-sm text-gray-400">
-              {ubicaciones.length} ubicaciones en total
+              {loading ? (
+                <div className="h-4 w-32 bg-gray-100 rounded-lg animate-pulse" />
+              ) : (
+                `${ubicaciones.length} ubicaciones en total`
+              )}
             </div>
           </div>
 
@@ -225,7 +229,7 @@ export default function UbicacionesMapaPage() {
                   }}
                   className={`px-5 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                     activePiso === piso.key
-                      ? "bg-white text-gray-900 shadow-sm"
+                      ? "bg-white text-gray-900"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
@@ -237,7 +241,7 @@ export default function UbicacionesMapaPage() {
                         : "bg-gray-200 text-gray-500"
                     }`}
                   >
-                    {count}
+                    {loading ? "-" : count}
                   </span>
                 </button>
               );
@@ -263,82 +267,123 @@ export default function UbicacionesMapaPage() {
           </div>
 
           {/* Tabla */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-auto">
-            {loading ? (
-              <div className="flex items-center justify-center h-40 text-sm text-gray-400">
-                Cargando ubicaciones...
-              </div>
-            ) : error ? (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-auto">
+            {error ? (
               <div className="flex items-center justify-center h-40 text-sm text-red-500">
                 {error}
-              </div>
-            ) : ubicacionesPiso.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-sm text-gray-400">
-                {searchQuery
-                  ? "No se encontraron ubicaciones que coincidan."
-                  : "No hay ubicaciones para este piso."}
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left">
-                    <th className="px-6 py-3 font-medium text-gray-500 w-24">
+                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-center">
                       ID SVG
                     </th>
                     <th className="px-6 py-3 font-medium text-gray-500">
                       Nombre
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 w-40">
+                    <th className="px-6 py-3 font-medium text-gray-500 w-40 text-left">
                       Tipo
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-right">
+                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-center">
                       Acciones
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ubicacionesPiso.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td className="px-6 py-3">
-                        <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
-                          {u.svg_id}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 font-medium text-gray-900">
-                        {u.nombre}
-                      </td>
-                      <td className="px-6 py-3">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                          style={{
-                            backgroundColor:
-                              (TIPO_COLORS[u.tipo] ?? "#d1d5db") + "55",
-                            color: "#374151",
-                          }}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{
-                              backgroundColor: TIPO_COLORS[u.tipo] ?? "#d1d5db",
-                            }}
-                          />
-                          {u.tipo_display}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <button
-                          id={`edit-ubicacion-${u.id}`}
-                          onClick={() => setEditingItem(u)}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-                        >
-                          Editar
-                        </button>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr
+                        key={`skeleton-${i}`}
+                        className="border-b border-gray-50 last:border-0"
+                      >
+                        <td className="px-6 py-3 text-center">
+                          <div className="h-5 bg-gray-100 rounded-lg animate-pulse w-14 mx-auto" />
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-3/5" />
+                        </td>
+                        <td className="px-6 py-3 text-left">
+                          <div className="h-6 bg-gray-100 rounded-full animate-pulse w-24" />
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <div className="h-7 w-7 bg-gray-100 rounded-lg animate-pulse mx-auto" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : ubicacionesPiso.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-12 text-center text-gray-400"
+                      >
+                        {searchQuery
+                          ? "No se encontraron ubicaciones que coincidan."
+                          : "No hay ubicaciones para este piso."}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    ubicacionesPiso.map((u) => (
+                      <tr
+                        key={u.id}
+                        className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="px-6 py-3 text-center">
+                          <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
+                            {u.svg_id}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 font-medium text-gray-900">
+                          {u.nombre}
+                        </td>
+                        <td className="px-6 py-3 text-left">
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor:
+                                (TIPO_COLORS[u.tipo] ?? "#d1d5db") + "55",
+                              color: "#374151",
+                            }}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{
+                                backgroundColor:
+                                  TIPO_COLORS[u.tipo] ?? "#d1d5db",
+                              }}
+                            />
+                            {u.tipo_display}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <div className="flex justify-center">
+                            <button
+                              type="button"
+                              id={`edit-ubicacion-${u.id}`}
+                              onClick={() => setEditingItem(u)}
+                              className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                              title="Editar"
+                              aria-label="Editar ubicación"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             )}
@@ -417,7 +462,7 @@ export default function UbicacionesMapaPage() {
                     onClick={() => setEditorFloor(p.key as FloorKey)}
                     className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
                       editorFloor === p.key
-                        ? "bg-cyan-100 text-cyan-900 shadow-sm"
+                        ? "bg-cyan-100 text-cyan-900"
                         : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                     }`}
                   >

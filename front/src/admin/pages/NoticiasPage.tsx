@@ -26,6 +26,7 @@ const columns: Column<ContenidoFeed>[] = [
     key: "tipo",
     label: "Tipo",
     sortable: true,
+    align: "center",
     render: (val, row) => {
       if (val === "evento") {
         const tipoEvento = row.tipo_evento as string | undefined;
@@ -34,21 +35,14 @@ const columns: Column<ContenidoFeed>[] = [
           .filter(Boolean)
           .join(" · ");
         return (
-          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
             {label}
           </span>
         );
       }
-      const origen = row.origen as string | undefined;
       return (
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-            origen === "scraping"
-              ? "bg-blue-50 text-blue-600"
-              : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {origen === "scraping" ? "Scraping" : "Manual"}
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+          Noticia
         </span>
       );
     },
@@ -57,6 +51,7 @@ const columns: Column<ContenidoFeed>[] = [
     key: "fecha",
     label: "Fecha",
     sortable: true,
+    align: "center",
     render: (val) => {
       const d = new Date(String(val));
       return d.toLocaleDateString("es-ES");
@@ -65,13 +60,14 @@ const columns: Column<ContenidoFeed>[] = [
   {
     key: "imagen_url",
     label: "Imagen",
+    align: "center",
     render: (val) => {
       if (!val) return "-";
       return (
         <img
           src={String(val)}
           alt="Miniatura"
-          className="w-10 h-10 rounded-lg object-cover"
+          className="w-10 h-10 rounded-lg object-cover mx-auto"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
