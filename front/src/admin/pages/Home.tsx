@@ -112,8 +112,8 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-full">
-      <div className="flex-1 h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden">
+      <div className="flex-1 h-full overflow-hidden flex flex-col">
         <TotemPreview />
       </div>
 
