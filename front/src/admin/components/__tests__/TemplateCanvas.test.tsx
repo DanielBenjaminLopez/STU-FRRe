@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import TemplateCanvas from "../TemplateCanvas";
 import type { WidgetPlacement } from "../../pages/plantillas/types";
 import { WIDGET_REGISTRY } from "../../pages/plantillas/types";
@@ -45,8 +51,6 @@ const mockWidgets: WidgetPlacement[] = [
 describe("TemplateCanvas", () => {
   const defaultProps = {
     widgets: [] as WidgetPlacement[],
-    nombre: "Test Plantilla",
-    onNombreChange: vi.fn(),
     onRemoveWidget: vi.fn(),
     hoverCell: null,
     activeType: null,
@@ -61,21 +65,6 @@ describe("TemplateCanvas", () => {
     cleanup();
   });
 
-  it("renderiza el input del nombre de plantilla", () => {
-    render(<TemplateCanvas {...defaultProps} />);
-    expect(screen.getByDisplayValue("Test Plantilla")).toBeInTheDocument();
-  });
-
-  it("llama a onNombreChange al editar el nombre", () => {
-    const onNombreChange = vi.fn();
-    render(
-      <TemplateCanvas {...defaultProps} onNombreChange={onNombreChange} />,
-    );
-    const input = screen.getByDisplayValue("Test Plantilla");
-    fireEvent.change(input, { target: { value: "Nuevo nombre" } });
-    expect(onNombreChange).toHaveBeenCalledWith("Nuevo nombre");
-  });
-
   it("renderiza el encabezado del totem", () => {
     render(<TemplateCanvas {...defaultProps} />);
     expect(screen.getByTestId("mock-encabezado")).toBeInTheDocument();
@@ -86,22 +75,66 @@ describe("TemplateCanvas", () => {
     expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
   });
 
-  it("renderiza el botón de quitar widget", () => {
+  it("no muestra el botón de eliminar cuando el widget no está seleccionado", () => {
     render(<TemplateCanvas {...defaultProps} widgets={mockWidgets} />);
-    expect(screen.getByTitle("Quitar widget")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Eliminar widget")).not.toBeInTheDocument();
   });
 
-  it("llama a onRemoveWidget al hacer click en quitar", () => {
+  it("llama a onSelectWidget al hacer click en un widget", () => {
+    const onSelectWidget = vi.fn();
+    render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        onSelectWidget={onSelectWidget}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("mock-horarios"));
+    expect(onSelectWidget).toHaveBeenCalledWith("w1");
+  });
+
+  it("renderiza el botón de eliminar widget, estilo grayscale y overlay solo cuando está seleccionado", () => {
+    const { container } = render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        selectedWidgetId="w1"
+      />,
+    );
+    expect(screen.getByLabelText("Eliminar widget")).toBeInTheDocument();
+    expect(container.querySelector(".grayscale")).toBeInTheDocument();
+    expect(container.querySelector(".bg-black\\/25")).toBeInTheDocument();
+  });
+
+  it("llama a onRemoveWidget tras la animación al hacer click en eliminar", async () => {
     const onRemoveWidget = vi.fn();
     render(
       <TemplateCanvas
         {...defaultProps}
         widgets={mockWidgets}
+        selectedWidgetId="w1"
         onRemoveWidget={onRemoveWidget}
       />,
     );
-    fireEvent.click(screen.getByTitle("Quitar widget"));
-    expect(onRemoveWidget).toHaveBeenCalledWith("w1");
+    fireEvent.click(screen.getByLabelText("Eliminar widget"));
+    await waitFor(() => {
+      expect(onRemoveWidget).toHaveBeenCalledWith("w1");
+    });
+  });
+
+  it("llama a onSelectWidget con null al hacer click fuera del widget", () => {
+    const onSelectWidget = vi.fn();
+    const { container } = render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        selectedWidgetId="w1"
+        onSelectWidget={onSelectWidget}
+      />,
+    );
+    const canvas = container.querySelector("[data-canvas]");
+    if (canvas) fireEvent.click(canvas);
+    expect(onSelectWidget).toHaveBeenCalledWith(null);
   });
 
   it("tiene el atributo data-canvas en el contenedor", () => {
@@ -124,43 +157,42 @@ describe("TemplateCanvas", () => {
   });
 
   it("muestra preview de drop cuando hay hoverCell y activeType", () => {
-    const { container } = render(
+    render(
       <TemplateCanvas
         {...defaultProps}
         hoverCell={{ col: 0, row: 0 }}
         activeType="horarios"
       />,
     );
-    const grid = container.querySelector("[data-grid]");
-    const preview = grid?.querySelector("[data-testid='mock-horarios']");
-    expect(preview).toBeInTheDocument();
+    expect(screen.getByTestId("drop-indicator")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Zona para soltar Horarios"),
+    ).toBeInTheDocument();
   });
 
-  it("muestra preview del color correcto según el tipo de widget", () => {
-    const { container } = render(
+  it("muestra preview con la etiqueta y tamaño según el tipo de widget", () => {
+    render(
       <TemplateCanvas
         {...defaultProps}
         hoverCell={{ col: 0, row: 2 }}
         activeType="examenes"
       />,
     );
-    const grid = container.querySelector("[data-grid]");
-    const preview = grid?.querySelector("[data-testid='mock-examenes']");
-    expect(preview).toBeInTheDocument();
+    expect(screen.getByTestId("drop-indicator")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Zona para soltar Exámenes"),
+    ).toBeInTheDocument();
   });
 
   it("no muestra preview cuando hoverCell es null", () => {
-    const { container } = render(
+    render(
       <TemplateCanvas
         {...defaultProps}
         hoverCell={null}
         activeType="horarios"
       />,
     );
-    const grid = container.querySelector("[data-grid]");
-    const previews = grid?.querySelectorAll("[data-testid='mock-horarios']");
-    // Solo debe haber el widget colocado, no el preview
-    expect(previews?.length).toBe(0);
+    expect(screen.queryByTestId("drop-indicator")).not.toBeInTheDocument();
   });
 
   it("renderiza múltiples widgets", () => {

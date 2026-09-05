@@ -244,42 +244,65 @@ export function AdminCalendarSkeleton() {
 
 export function AdminTemplatesSkeleton() {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-3 w-64" />
-        </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-28 rounded-xl" />
-          <Skeleton className="h-9 w-32 rounded-xl" />
-        </div>
-      </div>
+    <div className="flex flex-col h-full bg-white">
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-72 shrink-0 bg-gray-50 border-r border-gray-200 p-5 flex flex-col gap-4">
-          <Skeleton className="h-4 w-36" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-2xl border border-gray-200 bg-white p-3 flex flex-col gap-3"
-            >
-              <Skeleton className="h-28 w-full rounded-xl" />
-              <Skeleton className="h-3 w-28" />
-            </div>
-          ))}
+        {/* Barra lateral de widgets */}
+        <div className="w-72 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-200 flex flex-col gap-1.5">
+            <Skeleton className="h-7 w-40 rounded-lg" />
+            <Skeleton className="h-3.5 w-52 rounded-md" />
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-2xl border border-gray-200 bg-white overflow-hidden flex flex-col"
+              >
+                <div className="h-36 bg-gray-50/50 p-3 flex items-center justify-center">
+                  <Skeleton className="w-full h-full rounded-xl" />
+                </div>
+                <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between">
+                  <Skeleton className="h-3.5 w-20 rounded-md" />
+                  <Skeleton className="h-3.5 w-8 rounded-md" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex-1 bg-gray-100 p-8 flex items-center justify-center">
-          <div className="w-full max-w-5xl aspect-video rounded-2xl bg-white border border-gray-200 p-6">
-            <Skeleton className="h-8 w-56 mb-6" />
-            <div className="grid grid-cols-4 grid-rows-6 gap-3 h-[calc(100%-3.5rem)]">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className={`rounded-xl ${i < 4 ? "col-span-2 row-span-2" : "col-span-1 row-span-2"}`}
-                />
-              ))}
+
+        {/* Canvas central: Tótem vertical (9:16) */}
+        <div className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4">
+          <div className="h-full aspect-[9/16] max-h-full bg-white border-2 border-dashed border-gray-200 rounded-3xl p-6 flex flex-col gap-6 overflow-hidden">
+            {/* Encabezado simulado del tótem */}
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <Skeleton className="h-8 w-28 rounded-lg" />
+              <div className="flex flex-col items-end gap-1">
+                <Skeleton className="h-5 w-20 rounded-md" />
+                <Skeleton className="h-3 w-16 rounded-md" />
+              </div>
+            </div>
+            {/* Grilla 4x6 simulada */}
+            <div className="flex-1 grid grid-cols-4 grid-rows-6 gap-3 min-h-0">
+              <Skeleton className="col-span-4 row-span-2 rounded-2xl" />
+              <Skeleton className="col-span-2 row-span-2 rounded-2xl" />
+              <Skeleton className="col-span-2 row-span-2 rounded-2xl" />
+              <Skeleton className="col-span-4 row-span-2 rounded-2xl" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Barra inferior: Pestañas de plantillas y botones de acción */}
+      <div className="flex items-center justify-between px-6 h-16 bg-white border-t border-gray-200 shrink-0">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-36 rounded-2xl" />
+          <Skeleton className="h-9 w-28 rounded-2xl" />
+          <Skeleton className="h-9 w-9 rounded-2xl" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-9 rounded-2xl" />
+          <Skeleton className="h-9 w-24 rounded-2xl" />
+          <Skeleton className="h-9 w-36 rounded-2xl" />
         </div>
       </div>
     </div>

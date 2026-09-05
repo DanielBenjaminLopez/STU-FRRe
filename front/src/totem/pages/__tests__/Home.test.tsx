@@ -56,6 +56,9 @@ function makeTotem(overrides: Partial<Totem> = {}): Totem {
     vinculado: true,
     plantilla_id: null,
     plantilla: null,
+    pin_mapa_piso: null,
+    pin_mapa_svg_x: null,
+    pin_mapa_svg_y: null,
     creado_en: "2026-01-01T00:00:00Z",
     ...overrides,
   };
