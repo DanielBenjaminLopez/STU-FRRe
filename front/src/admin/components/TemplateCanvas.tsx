@@ -109,7 +109,7 @@ const PlacedWidget = memo(function PlacedWidget({
           <button
             type="button"
             onClick={handleRemove}
-            className="pointer-events-auto w-12 h-12 rounded-full bg-gray-900 text-white shadow-2xl shadow-black/40 ring-4 ring-white/30 hover:bg-red-600 hover:shadow-red-500/40 hover:scale-110 hover:rotate-90 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none animate-widget-pop-in"
+            className="pointer-events-auto w-12 h-12 rounded-full bg-gray-900 text-white ring-4 ring-white/30 hover:bg-red-600 hover:scale-110 hover:rotate-90 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none animate-widget-pop-in"
             aria-label="Eliminar widget"
           >
             <svg
@@ -169,11 +169,9 @@ export default function TemplateCanvas({
       className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
     >
       <div
-        
         className={`totem-scale-stage bg-white border-2 border-dashed rounded-3xl overflow-hidden border-gray-200 transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
-        
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,

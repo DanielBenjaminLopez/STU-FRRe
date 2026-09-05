@@ -822,7 +822,7 @@ export default function PlantillasPage() {
             if (!RealWidget || !dims || !def) return null;
             return (
               <div
-                className="pointer-events-none rounded-4xl overflow-hidden opacity-90 transition-opacity grid"
+                className="totem-scale-stage pointer-events-none rounded-4xl overflow-hidden opacity-90 transition-opacity grid"
                 style={{
                   width: dims.width,
                   height: dims.height,
