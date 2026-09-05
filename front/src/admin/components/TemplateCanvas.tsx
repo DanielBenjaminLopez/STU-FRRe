@@ -42,7 +42,7 @@ function PlacedWidget({ widget, onRemove }: PlacedWidgetProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`relative group overflow-hidden w-full grid ${isDragging ? "ring-2 ring-cyan-400 ring-offset-1" : ""}`}
+      className={`relative group overflow-hidden w-full h-full grid ${isDragging ? "opacity-30" : ""}`}
       style={{
         gridColumn: `${widget.col + 1} / span ${widget.colSpan}`,
         gridRow: `${widget.row + 1} / span ${widget.rowSpan}`,
@@ -102,7 +102,7 @@ export default function TemplateCanvas({
   useEffect(() => {
     onScaleChange?.(scale);
   }, [scale, onScaleChange]);
-  const { setNodeRef, isOver } = useDroppable({ id: "canvas" });
+  const { setNodeRef } = useDroppable({ id: "canvas" });
 
   return (
     <div
@@ -123,13 +123,19 @@ export default function TemplateCanvas({
             ref={setNodeRef}
             data-canvas
             data-grid
-            className={`flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4 rounded-2xl transition-colors ${
-              isOver ? "ring-2 ring-cyan-300 bg-cyan-50/30" : ""
-            }`}
+            className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4 rounded-2xl transition-colors"
           >
-            {Array.from({ length: GRID_COLS * GRID_ROWS }).map((_, i) => (
-              <div key={`cell-${i}`} className="bg-gray-50/50 rounded-xl" />
-            ))}
+            {Array.from({ length: GRID_COLS * GRID_ROWS }).map((_, i) => {
+              const col = (i % GRID_COLS) + 1;
+              const row = Math.floor(i / GRID_COLS) + 1;
+              return (
+                <div
+                  key={`cell-${i}`}
+                  style={{ gridColumn: col, gridRow: row }}
+                  className="bg-gray-50/50 rounded-xl pointer-events-none"
+                />
+              );
+            })}
 
             {hoverCell &&
               activeType &&
@@ -138,7 +144,7 @@ export default function TemplateCanvas({
                 const def = registry[activeType];
                 return Ghost ? (
                   <div
-                    className="overflow-hidden opacity-60 grid"
+                    className="overflow-hidden opacity-60 grid rounded-4xl pointer-events-none"
                     style={{
                       gridColumn: `${hoverCell.col + 1} / span ${def.colSpan}`,
                       gridRow: `${hoverCell.row + 1} / span ${def.rowSpan}`,

@@ -317,7 +317,7 @@ describe("PlantillasPage", () => {
     );
     render(<PlantillasPage />);
     await screen.findByText("Plantilla por defecto");
-    fireEvent.click(screen.getByText("+"));
+    fireEvent.click(screen.getByRole("button", { name: "Nueva plantilla" }));
     expect(screen.getByText("Nueva plantilla")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Guardar"));
     await waitFor(() => {

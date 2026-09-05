@@ -74,6 +74,7 @@ function createEmptyPlantilla(): Plantilla {
 
 function getCellFromEvent(
   event: DragOverEvent,
+  pointerPos?: { x: number; y: number } | null,
 ): { col: number; row: number } | null {
   const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
   if (!gridEl) return null;
@@ -86,16 +87,18 @@ function getCellFromEvent(
 
   const pointer =
     event.activatorEvent instanceof PointerEvent ? event.activatorEvent : null;
-  if (!pointer) return null;
 
-  let pointerX = pointer.clientX + (event.delta?.x ?? 0);
-  let pointerY = pointer.clientY + (event.delta?.y ?? 0);
+  let pointerX =
+    pointerPos?.x ?? (pointer ? pointer.clientX + (event.delta?.x ?? 0) : null);
+  let pointerY =
+    pointerPos?.y ?? (pointer ? pointer.clientY + (event.delta?.y ?? 0) : null);
+  if (pointerX === null || pointerY === null) return null;
 
   // When moving an existing widget, preserve the point where it was grabbed
   // instead of treating that point as the widget's top-left corner.
   const initialRect = event.active.rect.current.initial;
   const widgetId = event.active.data.current?.widgetId;
-  if (widgetId && initialRect) {
+  if (widgetId && initialRect && pointer) {
     pointerX -= pointer.clientX - initialRect.left;
     pointerY -= pointer.clientY - initialRect.top;
   }
@@ -227,6 +230,20 @@ export default function PlantillasPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
+  const pointerPosRef = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    const handlePointerMove = (e: PointerEvent) => {
+      pointerPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("pointermove", handlePointerMove, {
+      passive: true,
+    });
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
+  }, []);
+
   const selected = plantillas.find((p) => p.id === selectedId);
   const isAplicada = Boolean(
     selectedTotem &&
@@ -357,9 +374,27 @@ export default function PlantillasPage() {
     [updateSelectedPlantilla],
   );
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    setHoverCell(getCellFromEvent(event));
-  }, []);
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const rawCell = getCellFromEvent(event, pointerPosRef.current);
+      if (!rawCell) {
+        setHoverCell(null);
+        return;
+      }
+      const widgetType = (event.active.data.current?.widgetType ??
+        event.active.data.current?.type) as WidgetType | undefined;
+      const def = widgetType ? effectiveRegistry[widgetType] : null;
+      if (def) {
+        setHoverCell({
+          col: Math.max(0, Math.min(rawCell.col, GRID_COLS - def.colSpan)),
+          row: Math.max(0, Math.min(rawCell.row, GRID_ROWS - def.rowSpan)),
+        });
+      } else {
+        setHoverCell(rawCell);
+      }
+    },
+    [effectiveRegistry],
+  );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -378,7 +413,7 @@ export default function PlantillasPage() {
       const def = effectiveRegistry[widgetType];
       if (!def) return;
 
-      const cell = getCellFromEvent(event);
+      const cell = getCellFromEvent(event, pointerPosRef.current);
       if (!cell) {
         setToast("Soltá el widget dentro de la grilla de la plantilla");
         return;
@@ -425,7 +460,16 @@ export default function PlantillasPage() {
   );
 
   const handleDragStart = useCallback(
-    (event: { active: { data: { current: unknown } } }) => {
+    (event: {
+      active: { data: { current: unknown } };
+      activatorEvent?: Event;
+    }) => {
+      if (event.activatorEvent instanceof PointerEvent) {
+        pointerPosRef.current = {
+          x: event.activatorEvent.clientX,
+          y: event.activatorEvent.clientY,
+        };
+      }
       const data = event.active.data.current as
         | Record<string, unknown>
         | undefined;
@@ -650,9 +694,23 @@ export default function PlantillasPage() {
             <button
               type="button"
               onClick={handleCreatePlantilla}
-              className="px-3.5 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-2xl hover:border-gray-400 transition-colors"
+              title="Nueva plantilla"
+              aria-label="Nueva plantilla"
+              className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-2xl transition-colors shrink-0"
             >
-              +
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
             </button>
           </div>
 
