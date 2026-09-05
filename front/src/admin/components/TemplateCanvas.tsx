@@ -31,6 +31,7 @@ interface PlacedWidgetProps {
   onRemove: (id: string) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  isClearing?: boolean;
 }
 
 const PlacedWidget = memo(function PlacedWidget({
@@ -38,6 +39,7 @@ const PlacedWidget = memo(function PlacedWidget({
   onRemove,
   isSelected = false,
   onSelect,
+  isClearing = false,
 }: PlacedWidgetProps) {
   const Component = WIDGET_COMPONENTS[widget.type];
   const [isRemoving, setIsRemoving] = useState(false);
@@ -74,7 +76,7 @@ const PlacedWidget = memo(function PlacedWidget({
       className={`relative overflow-hidden w-full h-full rounded-3xl cursor-pointer transition-all duration-200 ${
         isDragging ? "opacity-30" : ""
       } ${
-        isRemoving
+        isRemoving || isClearing
           ? "opacity-0 scale-90 pointer-events-none"
           : "opacity-100 scale-100"
       } ${isActuallySelected ? "z-20" : "z-0"}`}
@@ -141,6 +143,7 @@ interface TemplateCanvasProps {
   registry: Record<WidgetType, WidgetDefinition>;
   selectedWidgetId?: string | null;
   onSelectWidget?: (id: string | null) => void;
+  isClearing?: boolean;
 }
 
 export default function TemplateCanvas({
@@ -152,6 +155,7 @@ export default function TemplateCanvas({
   registry,
   selectedWidgetId,
   onSelectWidget,
+  isClearing,
 }: TemplateCanvasProps) {
   const { containerRef, scale, isReady } = useTotemScale();
 
@@ -225,6 +229,7 @@ export default function TemplateCanvas({
                 onRemove={onRemoveWidget}
                 isSelected={selectedWidgetId === w.id}
                 onSelect={(id) => onSelectWidget?.(id)}
+                isClearing={isClearing}
               />
             ))}
           </div>

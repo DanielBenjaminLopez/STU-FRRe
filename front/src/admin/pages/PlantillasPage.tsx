@@ -223,6 +223,16 @@ export default function PlantillasPage() {
   const [effectiveRegistry, setEffectiveRegistry] = useState<
     Record<WidgetType, WidgetDefinition>
   >({} as Record<WidgetType, WidgetDefinition>);
+  const [isClearing, setIsClearing] = useState(false);
+  const clearingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsClearing(false);
+    return () => {
+      if (clearingTimerRef.current) clearTimeout(clearingTimerRef.current);
+    };
+  }, [selectedId]);
 
   const { selectedTotem, refreshTotems } = useTotem();
   const location = useLocation();
@@ -496,13 +506,17 @@ export default function PlantillasPage() {
   }, []);
 
   const handleClearWidgets = useCallback(() => {
-    if (!selected || selected.widgets.length === 0) return;
-    updateSelectedPlantilla((p) => ({
-      ...p,
-      widgets: [],
-    }));
+    if (!selected || selected.widgets.length === 0 || isClearing) return;
+    setIsClearing(true);
     setSelectedWidgetId(null);
-  }, [selected, updateSelectedPlantilla]);
+    clearingTimerRef.current = setTimeout(() => {
+      updateSelectedPlantilla((p) => ({
+        ...p,
+        widgets: [],
+      }));
+      setIsClearing(false);
+    }, 200);
+  }, [selected, isClearing, updateSelectedPlantilla]);
 
   const handleCreatePlantilla = useCallback(() => {
     const newP = createEmptyPlantilla();
@@ -659,6 +673,7 @@ export default function PlantillasPage() {
               registry={effectiveRegistry}
               selectedWidgetId={selectedWidgetId}
               onSelectWidget={setSelectedWidgetId}
+              isClearing={isClearing}
             />
           </div>
         </div>
@@ -712,7 +727,7 @@ export default function PlantillasPage() {
               onClick={handleCreatePlantilla}
               title="Nueva plantilla"
               aria-label="Nueva plantilla"
-              className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-2xl transition-colors shrink-0"
+              className="w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-2xl transition-colors shrink-0 cursor-pointer"
             >
               <svg
                 className="w-3.5 h-3.5"
@@ -734,8 +749,10 @@ export default function PlantillasPage() {
             <button
               type="button"
               onClick={handleClearWidgets}
-              disabled={!selected || selected.widgets.length === 0}
-              className="p-2.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-2xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              disabled={
+                !selected || selected.widgets.length === 0 || isClearing
+              }
+              className="p-2.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-2xl transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               title="Limpiar planilla"
               aria-label="Limpiar planilla"
             >
@@ -756,7 +773,7 @@ export default function PlantillasPage() {
             <button
               type="button"
               onClick={() => setDeletingId(selectedId)}
-              className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-colors"
+              className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-colors cursor-pointer"
               title="Eliminar plantilla"
             >
               <svg
@@ -792,7 +809,7 @@ export default function PlantillasPage() {
               className={`px-5 py-2 text-sm font-medium rounded-2xl border transition-colors ${
                 isAplicada
                   ? "bg-gray-100 text-gray-400 border-gray-200 cursor-default"
-                  : "bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  : "bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border-gray-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               }`}
             >
               {isAplicada ? "Aplicada" : "Aplicar"}
@@ -801,7 +818,7 @@ export default function PlantillasPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {saving ? "Guardando..." : "Guardar"}
             </button>
