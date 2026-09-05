@@ -5,6 +5,7 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import PlantillasPage from "../PlantillasPage";
 import {
@@ -508,5 +509,82 @@ describe("PlantillasPage", () => {
     const btn = screen.getByText("Aplicada");
     expect(btn).toBeInTheDocument();
     expect(btn).toBeDisabled();
+  });
+
+  it("permite seleccionar un widget en el canvas y eliminarlo con el botón Eliminar", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+    expect(
+      within(canvas).queryByLabelText("Eliminar widget"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(widgetEl);
+    expect(
+      within(canvas).getByLabelText("Eliminar widget"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(canvas).getByLabelText("Eliminar widget"));
+    await waitFor(() => {
+      expect(
+        within(canvas).queryByTestId("mock-horarios"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("no elimina el widget al presionar la tecla Delete", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+
+    fireEvent.click(widgetEl);
+    await waitFor(() => {
+      expect(
+        within(canvas).getByLabelText("Eliminar widget"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(window, { key: "Delete" });
+    // Permanece en el documento porque solo se elimina tocando el botón
+    expect(within(canvas).getByTestId("mock-horarios")).toBeInTheDocument();
+  });
+
+  it("deselecciona el widget al hacer click en el canvas", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+
+    fireEvent.click(widgetEl);
+    await waitFor(() => {
+      expect(
+        within(canvas).getByLabelText("Eliminar widget"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(canvas);
+    await waitFor(() => {
+      expect(
+        within(canvas).queryByLabelText("Eliminar widget"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("permite limpiar todos los widgets de la plantilla al hacer click en el botón de reiniciar", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    expect(within(canvas).getByTestId("mock-horarios")).toBeInTheDocument();
+
+    const resetBtn = screen.getByLabelText("Limpiar planilla");
+    expect(resetBtn).not.toBeDisabled();
+
+    fireEvent.click(resetBtn);
+    expect(
+      within(canvas).queryByTestId("mock-horarios"),
+    ).not.toBeInTheDocument();
+    expect(resetBtn).toBeDisabled();
   });
 });

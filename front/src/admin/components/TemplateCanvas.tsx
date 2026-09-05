@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import type {
   WidgetPlacement,
@@ -29,53 +29,105 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
 interface PlacedWidgetProps {
   widget: WidgetPlacement;
   onRemove: (id: string) => void;
+  isSelected?: boolean;
+  onSelect?: (id: string) => void;
 }
 
-function PlacedWidget({ widget, onRemove }: PlacedWidgetProps) {
+function PlacedWidget({
+  widget,
+  onRemove,
+  isSelected = false,
+  onSelect,
+}: PlacedWidgetProps) {
   const Component = WIDGET_COMPONENTS[widget.type];
+  const [isRemoving, setIsRemoving] = useState(false);
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    };
+  }, []);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `placed-${widget.id}`,
     data: { widgetId: widget.id, widgetType: widget.type, type: widget.type },
   });
 
+  const isActuallySelected = isSelected && !isDragging;
+
+  const handleRemove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsRemoving(true);
+    removeTimerRef.current = setTimeout(() => {
+      onRemove(widget.id);
+    }, 180);
+  };
+
   return (
     <div
       ref={setNodeRef}
-      className={`relative group overflow-hidden w-full h-full grid ${isDragging ? "opacity-30" : ""}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.(widget.id);
+      }}
+      className={`relative overflow-hidden w-full h-full rounded-3xl cursor-pointer transition-all duration-200 ${
+        isDragging ? "opacity-30" : ""
+      } ${
+        isRemoving
+          ? "opacity-0 scale-90 pointer-events-none"
+          : "opacity-100 scale-100"
+      } ${isActuallySelected ? "z-20" : "z-0"}`}
       style={{
         gridColumn: `${widget.col + 1} / span ${widget.colSpan}`,
         gridRow: `${widget.row + 1} / span ${widget.rowSpan}`,
-        gridTemplateColumns: `repeat(${widget.colSpan}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${widget.rowSpan}, minmax(0, 1fr))`,
       }}
       {...listeners}
       {...attributes}
     >
-      <Component />
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove(widget.id);
+      <div
+        className={`w-full h-full grid transition-all duration-200 ${
+          isActuallySelected ? "grayscale" : ""
+        }`}
+        style={{
+          gridTemplateColumns: `repeat(${widget.colSpan}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${widget.rowSpan}, minmax(0, 1fr))`,
         }}
-        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/80 border border-gray-200 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:border-red-200 z-10"
-        title="Quitar widget"
       >
-        <svg
-          className="w-3.5 h-3.5 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </button>
+        <Component />
+      </div>
+
+      {isActuallySelected && !isRemoving && (
+        <div
+          className="absolute inset-0 bg-black/25 pointer-events-none z-10 transition-opacity duration-200"
+          aria-hidden="true"
+        />
+      )}
+
+      {isActuallySelected && !isRemoving && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="pointer-events-auto w-12 h-12 rounded-full bg-gray-900 text-white shadow-2xl shadow-black/40 ring-4 ring-white/30 hover:bg-red-600 hover:shadow-red-500/40 hover:scale-110 hover:rotate-90 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none animate-widget-pop-in"
+            aria-label="Eliminar widget"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -87,6 +139,8 @@ interface TemplateCanvasProps {
   hoverCell: { col: number; row: number } | null;
   activeType: WidgetType | null;
   registry: Record<WidgetType, WidgetDefinition>;
+  selectedWidgetId?: string | null;
+  onSelectWidget?: (id: string | null) => void;
 }
 
 export default function TemplateCanvas({
@@ -96,6 +150,8 @@ export default function TemplateCanvas({
   hoverCell,
   activeType,
   registry,
+  selectedWidgetId,
+  onSelectWidget,
 }: TemplateCanvasProps) {
   const { containerRef, scale } = useTotemScale();
 
@@ -107,6 +163,7 @@ export default function TemplateCanvas({
   return (
     <div
       ref={containerRef}
+      onClick={() => onSelectWidget?.(null)}
       className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
     >
       <div
@@ -158,7 +215,13 @@ export default function TemplateCanvas({
               })()}
 
             {widgets.map((w) => (
-              <PlacedWidget key={w.id} widget={w} onRemove={onRemoveWidget} />
+              <PlacedWidget
+                key={w.id}
+                widget={w}
+                onRemove={onRemoveWidget}
+                isSelected={selectedWidgetId === w.id}
+                onSelect={(id) => onSelectWidget?.(id)}
+              />
             ))}
           </div>
         </div>

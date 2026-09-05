@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import TemplateCanvas from "../TemplateCanvas";
 import type { WidgetPlacement } from "../../pages/plantillas/types";
 import { WIDGET_REGISTRY } from "../../pages/plantillas/types";
@@ -69,22 +75,66 @@ describe("TemplateCanvas", () => {
     expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
   });
 
-  it("renderiza el botón de quitar widget", () => {
+  it("no muestra el botón de eliminar cuando el widget no está seleccionado", () => {
     render(<TemplateCanvas {...defaultProps} widgets={mockWidgets} />);
-    expect(screen.getByTitle("Quitar widget")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Eliminar widget")).not.toBeInTheDocument();
   });
 
-  it("llama a onRemoveWidget al hacer click en quitar", () => {
+  it("llama a onSelectWidget al hacer click en un widget", () => {
+    const onSelectWidget = vi.fn();
+    render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        onSelectWidget={onSelectWidget}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("mock-horarios"));
+    expect(onSelectWidget).toHaveBeenCalledWith("w1");
+  });
+
+  it("renderiza el botón de eliminar widget, estilo grayscale y overlay solo cuando está seleccionado", () => {
+    const { container } = render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        selectedWidgetId="w1"
+      />,
+    );
+    expect(screen.getByLabelText("Eliminar widget")).toBeInTheDocument();
+    expect(container.querySelector(".grayscale")).toBeInTheDocument();
+    expect(container.querySelector(".bg-black\\/25")).toBeInTheDocument();
+  });
+
+  it("llama a onRemoveWidget tras la animación al hacer click en eliminar", async () => {
     const onRemoveWidget = vi.fn();
     render(
       <TemplateCanvas
         {...defaultProps}
         widgets={mockWidgets}
+        selectedWidgetId="w1"
         onRemoveWidget={onRemoveWidget}
       />,
     );
-    fireEvent.click(screen.getByTitle("Quitar widget"));
-    expect(onRemoveWidget).toHaveBeenCalledWith("w1");
+    fireEvent.click(screen.getByLabelText("Eliminar widget"));
+    await waitFor(() => {
+      expect(onRemoveWidget).toHaveBeenCalledWith("w1");
+    });
+  });
+
+  it("llama a onSelectWidget con null al hacer click fuera del widget", () => {
+    const onSelectWidget = vi.fn();
+    const { container } = render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        selectedWidgetId="w1"
+        onSelectWidget={onSelectWidget}
+      />,
+    );
+    const canvas = container.querySelector("[data-canvas]");
+    if (canvas) fireEvent.click(canvas);
+    expect(onSelectWidget).toHaveBeenCalledWith(null);
   });
 
   it("tiene el atributo data-canvas en el contenedor", () => {
