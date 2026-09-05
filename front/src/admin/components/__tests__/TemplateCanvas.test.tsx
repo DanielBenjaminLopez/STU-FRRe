@@ -157,43 +157,42 @@ describe("TemplateCanvas", () => {
   });
 
   it("muestra preview de drop cuando hay hoverCell y activeType", () => {
-    const { container } = render(
+    render(
       <TemplateCanvas
         {...defaultProps}
         hoverCell={{ col: 0, row: 0 }}
         activeType="horarios"
       />,
     );
-    const grid = container.querySelector("[data-grid]");
-    const preview = grid?.querySelector("[data-testid='mock-horarios']");
-    expect(preview).toBeInTheDocument();
+    expect(screen.getByTestId("drop-indicator")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Zona para soltar Horarios"),
+    ).toBeInTheDocument();
   });
 
-  it("muestra preview del color correcto según el tipo de widget", () => {
-    const { container } = render(
+  it("muestra preview con la etiqueta y tamaño según el tipo de widget", () => {
+    render(
       <TemplateCanvas
         {...defaultProps}
         hoverCell={{ col: 0, row: 2 }}
         activeType="examenes"
       />,
     );
-    const grid = container.querySelector("[data-grid]");
-    const preview = grid?.querySelector("[data-testid='mock-examenes']");
-    expect(preview).toBeInTheDocument();
+    expect(screen.getByTestId("drop-indicator")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Zona para soltar Exámenes"),
+    ).toBeInTheDocument();
   });
 
   it("no muestra preview cuando hoverCell es null", () => {
-    const { container } = render(
+    render(
       <TemplateCanvas
         {...defaultProps}
         hoverCell={null}
         activeType="horarios"
       />,
     );
-    const grid = container.querySelector("[data-grid]");
-    const previews = grid?.querySelectorAll("[data-testid='mock-horarios']");
-    // Solo debe haber el widget colocado, no el preview
-    expect(previews?.length).toBe(0);
+    expect(screen.queryByTestId("drop-indicator")).not.toBeInTheDocument();
   });
 
   it("renderiza múltiples widgets", () => {

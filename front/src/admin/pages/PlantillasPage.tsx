@@ -647,13 +647,7 @@ export default function PlantillasPage() {
         <div className="flex flex-1 overflow-hidden">
           <WidgetPalette
             widgets={Object.values(effectiveRegistry)}
-            components={{
-              horarios: Horarios,
-              examenes: Examenes,
-              calendario: Calendar,
-              mapa: Mapa,
-              noticias: Noticias,
-            }}
+            components={WIDGET_COMPONENTS}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
             <TemplateCanvas
@@ -818,25 +812,27 @@ export default function PlantillasPage() {
       <DragOverlay dropAnimation={null}>
         {activeType &&
           (() => {
-            const Ghost = WIDGET_COMPONENTS[activeType];
+            const RealWidget = WIDGET_COMPONENTS[activeType];
+            const def = effectiveRegistry[activeType];
             const dims = getGhostDimensions(
               canvasScale,
               activeType,
               effectiveRegistry,
             );
-            if (!Ghost || !dims) return null;
+            if (!RealWidget || !dims || !def) return null;
             return (
               <div
-                className="pointer-events-none"
+                className="pointer-events-none rounded-4xl overflow-hidden opacity-90 transition-opacity grid"
                 style={{
                   width: dims.width,
                   height: dims.height,
+                  gridTemplateColumns: `repeat(${def.colSpan}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${def.rowSpan}, minmax(0, 1fr))`,
                   transform: `scale(${canvasScale})`,
                   transformOrigin: "top left",
-                  overflow: "hidden",
                 }}
               >
-                <Ghost />
+                <RealWidget />
               </div>
             );
           })()}

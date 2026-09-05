@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, memo } from "react";
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import type {
   WidgetPlacement,
@@ -33,7 +33,7 @@ interface PlacedWidgetProps {
   onSelect?: (id: string) => void;
 }
 
-function PlacedWidget({
+const PlacedWidget = memo(function PlacedWidget({
   widget,
   onRemove,
   isSelected = false,
@@ -130,7 +130,7 @@ function PlacedWidget({
       )}
     </div>
   );
-}
+});
 
 interface TemplateCanvasProps {
   widgets: WidgetPlacement[];
@@ -197,21 +197,19 @@ export default function TemplateCanvas({
             {hoverCell &&
               activeType &&
               (() => {
-                const Ghost = WIDGET_COMPONENTS[activeType];
                 const def = registry[activeType];
-                return Ghost ? (
+                if (!def) return null;
+                return (
                   <div
-                    className="overflow-hidden opacity-60 grid rounded-4xl pointer-events-none"
+                    data-testid="drop-indicator"
+                    aria-label={`Zona para soltar ${def.label}`}
+                    className="overflow-hidden rounded-4xl border-2 border-dashed border-gray-400/80 bg-gray-900/5 pointer-events-none transition-all duration-75"
                     style={{
                       gridColumn: `${hoverCell.col + 1} / span ${def.colSpan}`,
                       gridRow: `${hoverCell.row + 1} / span ${def.rowSpan}`,
-                      gridTemplateColumns: `repeat(${def.colSpan}, minmax(0, 1fr))`,
-                      gridTemplateRows: `repeat(${def.rowSpan}, minmax(0, 1fr))`,
                     }}
-                  >
-                    <Ghost />
-                  </div>
-                ) : null;
+                  />
+                );
               })()}
 
             {widgets.map((w) => (
