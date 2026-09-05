@@ -168,7 +168,7 @@ export default function DataTable<T extends { id: number }>({
                           <button
                             type="button"
                             onClick={() => onEdit(row)}
-                            className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                             title="Editar"
                           >
                             <svg
@@ -190,7 +190,7 @@ export default function DataTable<T extends { id: number }>({
                           <button
                             type="button"
                             onClick={() => onDelete(row)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                             title="Eliminar"
                           >
                             <svg

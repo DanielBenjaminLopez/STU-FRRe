@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Button from "../../shared/components/ui/Button";
 
 export interface FormField {
   name: string;
@@ -185,17 +186,13 @@ export default function DataFormModal({
                       handleChange(field.name, !formData[field.name])
                     }
                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
-                      formData[field.name]
-                        ? "bg-gray-900"
-                        : "bg-gray-200"
+                      formData[field.name] ? "bg-gray-900" : "bg-gray-200"
                     }`}
                   >
                     <span
                       aria-hidden="true"
                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                        formData[field.name]
-                          ? "translate-x-5"
-                          : "translate-x-0"
+                        formData[field.name] ? "translate-x-5" : "translate-x-0"
                       }`}
                     />
                     <input
@@ -228,20 +225,12 @@ export default function DataFormModal({
           {error && <span className="text-red-500 text-sm">{error}</span>}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 border border-gray-200 rounded-2xl transition-colors cursor-pointer"
-            >
+            <Button variant="secondary" onClick={onClose}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 border border-gray-900 rounded-2xl transition-colors cursor-pointer disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={loading} variant="primary">
               {loading ? "Guardando..." : "Guardar"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

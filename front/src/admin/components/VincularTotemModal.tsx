@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTotem } from "../../shared/context/TotemContext";
 import { vincularTotem } from "../../shared/api/totems";
+import Button from "../../shared/components/ui/Button";
 
 interface VincularTotemModalProps {
   onClose: () => void;
@@ -102,20 +103,12 @@ export default function VincularTotemModal({
           {success && <span className="text-green-600 text-sm">{success}</span>}
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 border border-gray-200 rounded-2xl transition-colors cursor-pointer"
-            >
+            <Button variant="secondary" onClick={onClose}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 border border-gray-900 rounded-2xl transition-colors cursor-pointer disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={loading} variant="primary">
               {loading ? "Vinculando..." : "Vincular tótem"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

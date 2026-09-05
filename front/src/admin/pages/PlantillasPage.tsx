@@ -24,6 +24,7 @@ import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
 import { AdminTemplatesSkeleton } from "../../shared/components/ui/Skeleton";
+import Button from "../../shared/components/ui/Button";
 import { fetchWidgets } from "../../shared/api/widgets";
 import { updateTotem } from "../../shared/api/totems";
 import { useTotem } from "../../shared/context/TotemContext";
@@ -791,8 +792,8 @@ export default function PlantillasPage() {
               </svg>
             </button>
             <div className="h-5 w-px bg-gray-200 mx-1" />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={handleCargarAlTotem}
               disabled={
                 !selectedTotem || !selected || selected.isNew || isAplicada
@@ -806,22 +807,17 @@ export default function PlantillasPage() {
                       ? "Guardá la plantilla antes de aplicarla"
                       : "Aplicar al tótem seleccionado"
               }
-              className={`px-5 py-2 text-sm font-medium rounded-2xl border transition-colors ${
+              className={
                 isAplicada
-                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-default"
-                  : "bg-gray-100 text-gray-700 hover:text-gray-900 hover:bg-gray-200 border-gray-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              }`}
+                  ? "text-gray-400 cursor-default opacity-100 hover:bg-gray-100 hover:text-gray-400"
+                  : ""
+              }
             >
               {isAplicada ? "Aplicada" : "Aplicar"}
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            </Button>
+            <Button variant="primary" onClick={handleSave} disabled={saving}>
               {saving ? "Guardando..." : "Guardar"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

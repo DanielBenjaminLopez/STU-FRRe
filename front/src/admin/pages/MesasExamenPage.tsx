@@ -5,6 +5,7 @@ import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import ImportCsvModal from "../components/ImportCsvModal";
+import Button from "../../shared/components/ui/Button";
 import { fetchCarreras } from "../../shared/api/carreras";
 import {
   fetchMesasExamen,
@@ -323,13 +324,9 @@ export default function MesasExamenPage() {
         onCreate={handleCreate}
         createLabel="Nuevo"
       >
-        <button
-          type="button"
-          onClick={() => setShowImportModal(true)}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
-        >
+        <Button variant="primary" onClick={() => setShowImportModal(true)}>
           Importar
-        </button>
+        </Button>
       </PageHeader>
 
       <DataTable

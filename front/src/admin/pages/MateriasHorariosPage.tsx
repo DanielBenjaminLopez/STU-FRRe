@@ -3,6 +3,7 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
 import ImportCsvModal from "../components/ImportCsvModal";
+import Button from "../../shared/components/ui/Button";
 import { AdminSchedulesSkeleton } from "../../shared/components/ui/Skeleton";
 
 import {
@@ -296,12 +297,9 @@ function MateriasHorariosPage() {
             Gestión de comisiones y horarios por materia
           </p>
         </div>
-        <button
-          onClick={() => setShowImportModal(true)}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
-        >
+        <Button variant="primary" onClick={() => setShowImportModal(true)}>
           Importar
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 space-y-4">
@@ -341,8 +339,8 @@ function MateriasHorariosPage() {
                 filterCarrera === ""
                   ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                   : filterNivel === ""
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-black text-white border-black cursor-pointer"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
               }`}
             >
               Todos
@@ -357,8 +355,8 @@ function MateriasHorariosPage() {
                   filterCarrera === ""
                     ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                     : filterNivel === n.value
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                      ? "bg-black text-white border-black cursor-pointer"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
                 }`}
               >
                 {n.label}
@@ -375,8 +373,8 @@ function MateriasHorariosPage() {
               onClick={() => setFilterModalidad("")}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                 filterModalidad === ""
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  ? "bg-black text-white border-black cursor-pointer"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
               }`}
             >
               Todas
@@ -388,8 +386,8 @@ function MateriasHorariosPage() {
                 onClick={() => setFilterModalidad(m.value)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                   filterModalidad === m.value
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-black text-white border-black cursor-pointer"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
                 }`}
               >
                 {m.label}
@@ -542,7 +540,7 @@ function MateriaCard({
             e.stopPropagation();
             onDelete(pm.materia_nombre || `Materia #${pm.id}`);
           }}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
           title="Eliminar materia"
         >
           <svg
@@ -598,7 +596,7 @@ function MateriaCard({
                 <button
                   type="button"
                   onClick={handleAddComisionLocal}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800"
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800 cursor-pointer"
                 >
                   Agregar
                 </button>
@@ -608,7 +606,7 @@ function MateriaCard({
                     setShowAddComision(false);
                     setNewComisionNombre("");
                   }}
-                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -617,7 +615,7 @@ function MateriaCard({
               <button
                 type="button"
                 onClick={() => setShowAddComision(true)}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors cursor-pointer"
               >
                 <svg
                   className="w-4 h-4"
@@ -640,7 +638,7 @@ function MateriaCard({
               <button
                 type="button"
                 onClick={() => setShowAddHorario(!showAddHorario)}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors cursor-pointer"
               >
                 <svg
                   className="w-4 h-4"
@@ -795,14 +793,14 @@ function InlineAddHorario({
         <button
           type="button"
           onClick={handleSubmit}
-          className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+          className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800 cursor-pointer"
         >
           OK
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-gray-500 hover:text-gray-700 cursor-pointer"
         >
           Cancelar
         </button>
@@ -865,7 +863,7 @@ function ComisionBlock({
         <button
           type="button"
           onClick={() => onDelete(c.display_name || `Comisión ${c.nombre}`)}
-          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+          className="text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
         >
           Eliminar
         </button>
@@ -894,7 +892,7 @@ function ComisionBlock({
                     `${formatDia(g.dia_semana)} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
                   )
                 }
-                className="ml-auto text-gray-400 hover:text-red-500"
+                className="ml-auto text-gray-400 hover:text-red-500 cursor-pointer"
                 title="Eliminar horario"
               >
                 <svg
@@ -981,14 +979,14 @@ function ComisionBlock({
             <button
               type="button"
               onClick={handleAddHorarioLocal}
-              className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+              className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800 cursor-pointer"
             >
               OK
             </button>
             <button
               type="button"
               onClick={() => setShowAddHorario(false)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 cursor-pointer"
             >
               Cancelar
             </button>
@@ -998,7 +996,7 @@ function ComisionBlock({
         <button
           type="button"
           onClick={() => setShowAddHorario(true)}
-          className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-black transition-colors"
+          className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-black transition-colors cursor-pointer"
         >
           <svg
             className="w-3.5 h-3.5"

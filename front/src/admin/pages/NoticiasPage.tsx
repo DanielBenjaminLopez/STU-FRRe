@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import PageHeader from "../components/PageHeader";
 import NoticiasCarousel from "../components/NoticiasCarousel";
+import Button from "../../shared/components/ui/Button";
 import {
   fetchFeed,
   createNoticia,
@@ -367,38 +369,19 @@ export default function NoticiasPage() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Noticias y Eventos</h1>
-          <span className="text-sm text-gray-500">
-            Feed unificado de noticias y eventos
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSync}
-            disabled={syncing}
-            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 transition-colors disabled:opacity-50"
-          >
-            {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenCreate("evento")}
-            className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors"
-          >
-            Cargar evento
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenCreate("noticia")}
-            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-          >
-            Cargar noticia
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Noticias y Eventos"
+        subtitle="Feed unificado de noticias y eventos"
+        onCreate={() => handleOpenCreate("noticia")}
+        createLabel="Cargar noticia"
+      >
+        <Button variant="secondary" onClick={handleSync} disabled={syncing}>
+          {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
+        </Button>
+        <Button variant="secondary" onClick={() => handleOpenCreate("evento")}>
+          Cargar evento
+        </Button>
+      </PageHeader>
 
       {syncResult && (
         <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-2xl text-sm text-blue-600">

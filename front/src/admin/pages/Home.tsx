@@ -6,6 +6,7 @@ import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import VincularTotemModal from "../components/VincularTotemModal";
 import { deleteTotem, updateTotem, type Totem } from "../../shared/api/totems";
+import Button from "../../shared/components/ui/Button";
 import {
   fetchPlantillas,
   type PlantillaDTO,
@@ -101,16 +102,16 @@ export default function Home() {
           Tótems vinculados
         </h3>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          className="w-full mb-3"
           onClick={() => {
             setError("");
             setVincularOpen(true);
           }}
-          className="block w-full text-center px-4 py-2 text-sm font-medium text-white bg-gray-900 border border-gray-900 rounded-2xl hover:bg-gray-800 hover:border-gray-800 transition-colors cursor-pointer mb-3"
         >
           Nuevo tótem
-        </button>
+        </Button>
 
         {error && (
           <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600">
