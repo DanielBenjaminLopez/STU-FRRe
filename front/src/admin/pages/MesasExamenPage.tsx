@@ -332,8 +332,8 @@ export default function MesasExamenPage() {
         onEdit={handleEdit}
         onDelete={(row) => setDeletingRow(row)}
         isLoading={loading}
-        searchPlaceholder="Buscar"
-        hideCount
+        searchPlaceholder="Buscar mesa de examen..."
+        label="mesas de examen"
       />
 
       {showForm && (

@@ -138,4 +138,29 @@ describe("MesasExamenPage", () => {
       );
     });
   });
+
+  it("muestra la cantidad de mesas de examen en la esquina izquierda", async () => {
+    mockFetchMesas.mockResolvedValue([
+      {
+        id: 1,
+        materia_nombre: "Física I",
+        espacio_nombre: "Aula 2",
+        fecha: "2026-04-10",
+        turno: "abril",
+        llamado: 3,
+      } as never,
+      {
+        id: 2,
+        materia_nombre: "Química",
+        espacio_nombre: "Aula 3",
+        fecha: "2026-04-12",
+        turno: "abril",
+        llamado: 3,
+      } as never,
+    ]);
+
+    render(<MesasExamenPage />);
+
+    expect(await screen.findByText("2 mesas de examen")).toBeInTheDocument();
+  });
 });

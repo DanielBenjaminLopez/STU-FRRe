@@ -1,4 +1,4 @@
-import { apiFetch, publicFetch } from "./client";
+import { apiFetch, apiUpload, publicFetch } from "./client";
 import type { Espacio } from "./totems";
 
 export interface Evento {
@@ -48,4 +48,8 @@ export async function deleteEvento(id: number): Promise<void> {
 
 export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
   return apiFetch<Espacio[]>("/api/espacios/");
+}
+
+export async function uploadEventoImagen(file: File): Promise<{ url: string }> {
+  return apiUpload<{ url: string }>("/api/eventos/upload-imagen/", file);
 }

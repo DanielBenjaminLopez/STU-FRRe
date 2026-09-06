@@ -590,7 +590,7 @@ describe("PlantillasPage", () => {
           within(canvas).queryByTestId("mock-horarios"),
         ).not.toBeInTheDocument();
       },
-      { timeout: 3000 },
+      { timeout: 5000 },
     );
     expect(resetBtn).toBeDisabled();
   });

@@ -86,9 +86,23 @@ export default function EventSummary({
             <button
               type="button"
               onClick={() => onDeleteEvent(realIdx)}
-              className="text-gray-400 hover:text-red-500 transition-colors shrink-0 text-xs"
+              className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 cursor-pointer flex items-center justify-center"
+              aria-label="Eliminar evento"
+              title="Eliminar evento"
             >
-              ×
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.25}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
         );

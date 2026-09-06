@@ -249,6 +249,7 @@ class MesaExamenSerializer(serializers.ModelSerializer):
 
 class EventoSerializer(serializers.ModelSerializer):
     espacio_nombre = serializers.SerializerMethodField()
+    imagen_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
     
     class Meta:
         model = Evento

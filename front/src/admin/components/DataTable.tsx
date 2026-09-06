@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SearchInput from "../../shared/components/ui/SearchInput";
 
 export interface Column<T> {
   key: keyof T;
@@ -69,27 +70,11 @@ export default function DataTable<T extends { id: number }>({
             {filtered.length} {label}
           </span>
         )}
-        <div className="relative w-64">
-          <svg
-            className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="w-full border border-gray-200 rounded-2xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={searchPlaceholder}
+        />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">

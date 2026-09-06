@@ -14,6 +14,7 @@ import {
   createEvento,
   updateEvento,
   deleteEvento,
+  uploadEventoImagen,
   fetchEspaciosForSelect,
   TIPOS_EVENTO,
   type ContenidoFeed,
@@ -212,10 +213,13 @@ export default function NoticiasPage() {
       },
       {
         name: "imagen_url",
-        label: "URL de imagen (opcional)",
-        type: "text",
+        label: "Imagen del evento",
+        type: "image",
         required: false,
-        placeholder: "https://ejemplo.com/imagen.jpg",
+        onUpload: async (file: File) => {
+          const res = await uploadEventoImagen(file);
+          return res.url;
+        },
       },
       {
         name: "fecha_hora_inicio",
@@ -374,8 +378,8 @@ export default function NoticiasPage() {
         <Button variant="secondary" onClick={handleSync} disabled={syncing}>
           {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
         </Button>
-        <Button variant="secondary" onClick={() => handleOpenCreate("evento")}>
-          Cargar evento
+        <Button variant="primary" onClick={() => handleOpenCreate("evento")}>
+          Crear evento
         </Button>
       </PageHeader>
 

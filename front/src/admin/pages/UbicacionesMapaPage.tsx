@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import DataFormModal from "../components/DataFormModal";
 import type { FormField } from "../components/DataFormModal";
+import Button from "../../shared/components/ui/Button";
+import SearchInput from "../../shared/components/ui/SearchInput";
 import {
   fetchUbicacionesMapa,
   updateUbicacionMapa,
@@ -213,57 +215,57 @@ export default function UbicacionesMapaPage() {
             </div>
           </div>
 
-          {/* Tabs de pisos */}
-          <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 w-fit">
-            {PISOS.map((piso) => {
-              const count = ubicaciones.filter(
-                (u) => u.piso === piso.key,
-              ).length;
-              return (
-                <button
-                  key={piso.key}
-                  id={`tab-piso-${piso.key}`}
-                  onClick={() => {
-                    setActivePiso(piso.key);
-                    setSearchQuery("");
-                  }}
-                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                    activePiso === piso.key
-                      ? "bg-white text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {piso.label}
-                  <span
-                    className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+          {/* Selector de pisos y búsqueda unificados en una sola caja */}
+          <div className="flex items-center justify-between bg-gray-100 rounded-2xl p-1.5 gap-4">
+            <div className="flex gap-1">
+              {PISOS.map((piso) => {
+                const count = ubicaciones.filter(
+                  (u) => u.piso === piso.key,
+                ).length;
+                return (
+                  <button
+                    key={piso.key}
+                    id={`tab-piso-${piso.key}`}
+                    onClick={() => {
+                      setActivePiso(piso.key);
+                      setSearchQuery("");
+                    }}
+                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                       activePiso === piso.key
-                        ? "bg-gray-100 text-gray-600"
-                        : "bg-gray-200 text-gray-500"
+                        ? "bg-white text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    {loading ? "-" : count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    {piso.label}
+                    <span
+                      className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                        activePiso === piso.key
+                          ? "bg-gray-100 text-gray-600"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {loading ? "-" : count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Barra de búsqueda */}
-          <div className="flex items-center gap-3">
-            <input
-              id="search-ubicaciones"
-              type="text"
-              placeholder="Buscar por nombre o ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 w-72 bg-white"
-            />
-            {searchQuery && (
-              <span className="text-sm text-gray-400">
-                {ubicacionesPiso.length} resultado
-                {ubicacionesPiso.length !== 1 ? "s" : ""}
-              </span>
-            )}
+            {/* Barra de búsqueda a la derecha */}
+            <div className="flex items-center gap-2 pr-1">
+              {searchQuery && (
+                <span className="text-xs text-gray-500">
+                  {ubicacionesPiso.length} resultado
+                  {ubicacionesPiso.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              <SearchInput
+                id="search-ubicaciones"
+                placeholder="Buscar por nombre o ID..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+            </div>
           </div>
 
           {/* Tabla */}
@@ -338,20 +340,13 @@ export default function UbicacionesMapaPage() {
                         </td>
                         <td className="px-6 py-3 text-left">
                           <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
                             style={{
                               backgroundColor:
                                 (TIPO_COLORS[u.tipo] ?? "#d1d5db") + "55",
                               color: "#374151",
                             }}
                           >
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{
-                                backgroundColor:
-                                  TIPO_COLORS[u.tipo] ?? "#d1d5db",
-                              }}
-                            />
                             {u.tipo_display}
                           </span>
                         </td>
@@ -431,14 +426,14 @@ export default function UbicacionesMapaPage() {
                 <span className="text-sm text-red-500">{pinError}</span>
               )}
               {currentPinPosition && selectedTotem && (
-                <button
+                <Button
+                  variant="danger"
                   id="btn-limpiar-pin"
                   onClick={handleClearPin}
                   disabled={pinSaveStatus === "saving"}
-                  className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-200 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                 >
                   Limpiar pin
-                </button>
+                </Button>
               )}
             </div>
           </div>
