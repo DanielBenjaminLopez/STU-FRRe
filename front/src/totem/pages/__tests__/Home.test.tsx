@@ -56,6 +56,9 @@ function makeTotem(overrides: Partial<Totem> = {}): Totem {
     vinculado: true,
     plantilla_id: null,
     plantilla: null,
+    pin_mapa_piso: null,
+    pin_mapa_svg_x: null,
+    pin_mapa_svg_y: null,
     creado_en: "2026-01-01T00:00:00Z",
     ...overrides,
   };
@@ -135,6 +138,18 @@ describe("totem Home", () => {
     expect(
       await screen.findByText("Tótem fuera de servicio"),
     ).toBeInTheDocument();
+  });
+
+  it("muestra la pantalla de fuera de servicio y no redirige cuando recibe ApiError 401 Tótem desactivado", async () => {
+    mockFetchTotemMe.mockRejectedValue(new ApiError("Tótem desactivado", 401));
+    render(<Home />);
+    expect(
+      await screen.findByText("Tótem fuera de servicio"),
+    ).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      "/onboarding",
+      expect.anything(),
+    );
   });
 
   it("redirige a /onboarding cuando recibe 403", async () => {

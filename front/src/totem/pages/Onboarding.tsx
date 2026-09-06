@@ -56,6 +56,10 @@ export default function Onboarding() {
           err instanceof ApiError &&
           (err.status === 401 || err.status === 403)
         ) {
+          if (err.message === "Tótem desactivado") {
+            if (!cancelled) navigate("/", { replace: true });
+            return;
+          }
           clearTotemToken();
         }
         if (!cancelled) {

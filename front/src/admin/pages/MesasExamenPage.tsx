@@ -5,6 +5,7 @@ import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import ImportCsvModal from "../components/ImportCsvModal";
+import Button from "../../shared/components/ui/Button";
 import { fetchCarreras } from "../../shared/api/carreras";
 import {
   fetchMesasExamen,
@@ -14,7 +15,7 @@ import {
   fetchPlanMaterias,
   fetchEspaciosForSelect,
   importarMesasExamenCSV,
-  TURNOS,
+  getTurnoFromFecha,
   type MesaExamen,
   type PlanMateriaDTO,
 } from "../../shared/api/mesasExamen";
@@ -238,13 +239,6 @@ export default function MesasExamenPage() {
       type: "time",
       required: true,
     },
-    {
-      name: "turno",
-      label: "Turno",
-      type: "select",
-      required: true,
-      options: TURNOS.map((t) => ({ value: t.value, label: t.label })),
-    },
   ];
 
   function handleCreate() {
@@ -275,12 +269,16 @@ export default function MesasExamenPage() {
 
   async function handleSubmit(formData: Record<string, unknown>) {
     try {
+      const fecha = String(formData.fecha || "");
+      const autoTurno =
+        getTurnoFromFecha(fecha) || editingRow?.turno || "febrero";
+
       const payload = {
         plan_materia: Number(formData.plan_materia || formData.materia),
         espacio: Number(formData.espacio),
-        fecha: String(formData.fecha || ""),
+        fecha,
         hora: String(formData.hora || "08:00"),
-        turno: String(formData.turno || "febrero"),
+        turno: autoTurno,
       };
 
       if (editingRow) {
@@ -323,13 +321,9 @@ export default function MesasExamenPage() {
         onCreate={handleCreate}
         createLabel="Nuevo"
       >
-        <button
-          type="button"
-          onClick={() => setShowImportModal(true)}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
-        >
+        <Button variant="primary" onClick={() => setShowImportModal(true)}>
           Importar
-        </button>
+        </Button>
       </PageHeader>
 
       <DataTable
@@ -338,8 +332,8 @@ export default function MesasExamenPage() {
         onEdit={handleEdit}
         onDelete={(row) => setDeletingRow(row)}
         isLoading={loading}
-        searchPlaceholder="Buscar"
-        hideCount
+        searchPlaceholder="Buscar mesa de examen..."
+        label="mesas de examen"
       />
 
       {showForm && (
@@ -367,7 +361,6 @@ export default function MesasExamenPage() {
                     (editingRow.fecha_hora
                       ? editingRow.fecha_hora.split("T")[1]?.slice(0, 5)
                       : "08:00"),
-                  turno: editingRow.turno,
                 }
               : undefined
           }

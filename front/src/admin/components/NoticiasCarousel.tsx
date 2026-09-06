@@ -105,7 +105,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
         <button
           type="button"
           onClick={prev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
         >
           <svg
             className="w-5 h-5 text-white"
@@ -125,7 +125,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
         <button
           type="button"
           onClick={next}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
         >
           <svg
             className="w-5 h-5 text-white"
@@ -160,7 +160,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
           <button
             type="button"
             onClick={() => setSelected(item)}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-white mt-1 w-fit px-4 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-white mt-1 w-fit px-4 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-colors cursor-pointer"
           >
             Leer más
             <svg
@@ -185,7 +185,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
               key={`${n.tipo}-${n.id}`}
               type="button"
               onClick={() => setCurrent(i)}
-              className={`w-2 h-2 rounded-full transition-colors ${
+              className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
                 i === current ? "bg-white" : "bg-white/40"
               }`}
             />

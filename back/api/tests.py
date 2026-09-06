@@ -238,6 +238,38 @@ class TotemAPITestCase(TestCase):
             "horarios_totem_test",
         )
 
+    def test_listar_totems_solo_retorna_vinculados_por_defecto(self):
+        self.totem.vinculado = True
+        self.totem.save()
+        totem_no_vinculado = Totem.objects.create(
+            codigo_vinculacion="99999", vinculado=False
+        )
+
+        response = self.client.get("/api/totems/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [t["id"] for t in response.data]
+        self.assertIn(self.totem.id, ids)
+        self.assertNotIn(totem_no_vinculado.id, ids)
+
+    def test_listar_totems_con_filtro_vinculado(self):
+        self.totem.vinculado = True
+        self.totem.save()
+        totem_no_vinculado = Totem.objects.create(
+            codigo_vinculacion="99998", vinculado=False
+        )
+
+        # Filtro vinculados=false
+        res_no_vinc = self.client.get("/api/totems/?vinculado=false")
+        ids_no_vinc = [t["id"] for t in res_no_vinc.data]
+        self.assertIn(totem_no_vinculado.id, ids_no_vinc)
+        self.assertNotIn(self.totem.id, ids_no_vinc)
+
+        # Filtro vinculados=all
+        res_all = self.client.get("/api/totems/?vinculado=all")
+        ids_all = [t["id"] for t in res_all.data]
+        self.assertIn(self.totem.id, ids_all)
+        self.assertIn(totem_no_vinculado.id, ids_all)
+
     def test_no_se_puede_borrar_plantilla_asignada(self):
         url = f"/api/plantillas/{self.plantilla.id}/"
         response = self.client.delete(url)

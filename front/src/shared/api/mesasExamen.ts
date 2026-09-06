@@ -28,6 +28,62 @@ export const TURNOS = [
   { value: "diciembre", label: "Diciembre" },
 ] as const;
 
+export type TurnoMesa = (typeof TURNOS)[number]["value"];
+
+/**
+ * Determina automáticamente el turno de examen según la fecha seleccionada.
+ * Acepta formatos YYYY-MM-DD, YYYY-MM-DDTHH:mm y DD/MM/YYYY.
+ */
+export function getTurnoFromFecha(fechaStr: string): TurnoMesa | null {
+  if (!fechaStr) return null;
+  const cleanDate = fechaStr.split("T")[0].trim();
+  let month = 0;
+  let day = 0;
+
+  if (cleanDate.includes("-")) {
+    const parts = cleanDate.split("-");
+    if (parts.length >= 3) {
+      month = parseInt(parts[1], 10);
+      day = parseInt(parts[2], 10);
+    }
+  } else if (cleanDate.includes("/")) {
+    const parts = cleanDate.split("/");
+    if (parts.length >= 3) {
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+    }
+  }
+
+  if (isNaN(month) || month < 1 || month > 12) return null;
+
+  switch (month) {
+    case 1:
+    case 2:
+      return "febrero";
+    case 3:
+      return "marzo";
+    case 4:
+      return "abril";
+    case 5:
+      return day <= 15 ? "abril" : "junio";
+    case 6:
+      return "junio";
+    case 7:
+      return day <= 15 ? "junio" : "agosto";
+    case 8:
+      return "agosto";
+    case 9:
+      return "septiembre";
+    case 10:
+      return "octubre";
+    case 11:
+    case 12:
+      return "diciembre";
+    default:
+      return null;
+  }
+}
+
 export async function fetchMesasExamen(): Promise<MesaExamen[]> {
   return apiFetch<MesaExamen[]>("/api/mesas-examen/");
 }

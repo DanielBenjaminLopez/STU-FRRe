@@ -5,6 +5,7 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
 } from "@testing-library/react";
 import PlantillasPage from "../PlantillasPage";
 import {
@@ -15,7 +16,7 @@ import {
   replacePlantillaWidgets,
 } from "../../../shared/api/plantillas";
 import { fetchWidgets } from "../../../shared/api/widgets";
-import { updateTotem } from "../../../shared/api/totems";
+import { updateTotem, type Totem } from "../../../shared/api/totems";
 import type {
   PlantillaDTO,
   WidgetPosicionDTO,
@@ -173,6 +174,25 @@ function plantillaDTO(
   };
 }
 
+function mockTotem(overrides: Partial<Totem> = {}): Totem {
+  return {
+    id: 5,
+    nombre: "Kiosco",
+    espacio_id: null,
+    espacio_nombre: null,
+    activo: true,
+    config_pantalla: {},
+    vinculado: true,
+    plantilla_id: null,
+    plantilla: null,
+    pin_mapa_piso: null,
+    pin_mapa_svg_x: null,
+    pin_mapa_svg_y: null,
+    creado_en: "2026-01-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
 describe("PlantillasPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -207,14 +227,16 @@ describe("PlantillasPage", () => {
 
   it("renderiza la paleta de widgets", async () => {
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    expect(screen.getByText("Agregar elementos")).toBeInTheDocument();
+    await screen.findByText("Plantilla por defecto");
+    expect(
+      screen.getByRole("heading", { name: "Widgets" }),
+    ).toBeInTheDocument();
   });
 
   it("carga las plantillas desde la API y muestra su nombre", async () => {
     render(<PlantillasPage />);
     expect(
-      await screen.findByDisplayValue("Plantilla por defecto"),
+      await screen.findByText("Plantilla por defecto"),
     ).toBeInTheDocument();
     expect(mockFetchPlantillas).toHaveBeenCalled();
     expect(mockFetchWidgets).toHaveBeenCalled();
@@ -222,21 +244,56 @@ describe("PlantillasPage", () => {
 
   it("renderiza el botón de guardar plantilla", async () => {
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    expect(screen.getByText("Guardar plantilla")).toBeInTheDocument();
+    await screen.findByText("Plantilla por defecto");
+    expect(screen.getByText("Guardar")).toBeInTheDocument();
   });
 
-  it("permite cambiar el nombre de la plantilla", async () => {
+  it("permite cambiar el nombre de la plantilla con doble click en la píldora", async () => {
     render(<PlantillasPage />);
-    const input = await screen.findByDisplayValue("Plantilla por defecto");
+    const pill = await screen.findByText("Plantilla por defecto");
+    fireEvent.doubleClick(pill);
+    const input = screen.getByLabelText("Editar nombre de plantilla");
     fireEvent.change(input, { target: { value: "Mi Plantilla" } });
-    expect(screen.getByDisplayValue("Mi Plantilla")).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByText("Mi Plantilla")).toBeInTheDocument();
+  });
+
+  it("permite cambiar el nombre de la plantilla al hacer blur", async () => {
+    render(<PlantillasPage />);
+    const pill = await screen.findByText("Plantilla por defecto");
+    fireEvent.doubleClick(pill);
+    const input = screen.getByLabelText("Editar nombre de plantilla");
+    fireEvent.change(input, { target: { value: "Mi Plantilla 2" } });
+    fireEvent.blur(input);
+    expect(screen.getByText("Mi Plantilla 2")).toBeInTheDocument();
+  });
+
+  it("permite escribir caracteres consecutivos sin que se sobrescriban", async () => {
+    render(<PlantillasPage />);
+    const pill = await screen.findByText("Plantilla por defecto");
+    fireEvent.doubleClick(pill);
+    const input = screen.getByLabelText("Editar nombre de plantilla");
+    fireEvent.change(input, { target: { value: "A" } });
+    fireEvent.change(input, { target: { value: "AB" } });
+    fireEvent.change(input, { target: { value: "ABC" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(screen.getByText("ABC")).toBeInTheDocument();
+  });
+
+  it("cancela el cambio de nombre al presionar Escape", async () => {
+    render(<PlantillasPage />);
+    const pill = await screen.findByText("Plantilla por defecto");
+    fireEvent.doubleClick(pill);
+    const input = screen.getByLabelText("Editar nombre de plantilla");
+    fireEvent.change(input, { target: { value: "Nombre Cancelado" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.getByText("Plantilla por defecto")).toBeInTheDocument();
   });
 
   it("guarda los cambios de una plantilla existente al hacer click en guardar", async () => {
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    fireEvent.click(screen.getByText("Guardar plantilla"));
+    await screen.findByText("Plantilla por defecto");
+    fireEvent.click(screen.getByText("Guardar"));
     await waitFor(() => {
       expect(mockUpdatePlantilla).toHaveBeenCalledWith(1, {
         nombre: "Plantilla por defecto",
@@ -262,10 +319,10 @@ describe("PlantillasPage", () => {
       plantillaDTO(99, "Nueva plantilla"),
     );
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    fireEvent.click(screen.getByText("+"));
+    await screen.findByText("Plantilla por defecto");
+    fireEvent.click(screen.getByRole("button", { name: "Nueva plantilla" }));
     expect(screen.getByText("Nueva plantilla")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Guardar plantilla"));
+    fireEvent.click(screen.getByText("Guardar"));
     await waitFor(() => {
       expect(mockCreatePlantilla).toHaveBeenCalledWith({
         nombre: "Nueva plantilla",
@@ -280,8 +337,8 @@ describe("PlantillasPage", () => {
       new Error("El widget se superpone"),
     );
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    fireEvent.click(screen.getByText("Guardar plantilla"));
+    await screen.findByText("Plantilla por defecto");
+    fireEvent.click(screen.getByText("Guardar"));
     expect(
       await screen.findByText("El widget se superpone"),
     ).toBeInTheDocument();
@@ -289,7 +346,7 @@ describe("PlantillasPage", () => {
 
   it("elimina una plantilla tras confirmar", async () => {
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
+    await screen.findByText("Plantilla por defecto");
     fireEvent.click(screen.getByTitle("Eliminar plantilla"));
     expect(
       screen.getByText(/¿Estás seguro de que deseas eliminar/),
@@ -305,40 +362,22 @@ describe("PlantillasPage", () => {
       plantillaDTO(1, "Plantilla A"),
       plantillaDTO(2, "Plantilla B"),
     ]);
+    const totem = mockTotem({ id: 5, plantilla_id: 2 });
     mockUseTotem.mockReturnValue({
-      totems: [
-        {
-          id: 5,
-          nombre: "Kiosco",
-          espacio_id: null,
-          espacio_nombre: null,
-          activo: true,
-          config_pantalla: {},
-          vinculado: true,
-          plantilla_id: 2,
-          plantilla: null,
-          creado_en: "2026-01-01T00:00:00Z",
-        },
-      ],
+      totems: [totem],
       selectedId: "5",
-      selectedTotem: {
-        id: 5,
-        nombre: "Kiosco",
-        espacio_id: null,
-        espacio_nombre: null,
-        activo: true,
-        config_pantalla: {},
-        vinculado: true,
-        plantilla_id: 2,
-        plantilla: null,
-        creado_en: "2026-01-01T00:00:00Z",
-      },
+      selectedTotem: totem,
       setSelectedId: vi.fn(),
       refreshTotems: vi.fn(),
     });
     render(<PlantillasPage />);
-    const input = await screen.findByDisplayValue("Plantilla B");
-    expect(input).toBeInTheDocument();
+    await waitFor(async () => {
+      const pill = await screen.findByText("Plantilla B");
+      expect(pill.closest('[role="button"]')).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
   });
 
   it("usa la primera plantilla cuando el tótem no tiene plantilla asignada", async () => {
@@ -346,40 +385,20 @@ describe("PlantillasPage", () => {
       plantillaDTO(1, "Plantilla A"),
       plantillaDTO(2, "Plantilla B"),
     ]);
+    const totem = mockTotem({ id: 5, plantilla_id: null });
     mockUseTotem.mockReturnValue({
-      totems: [
-        {
-          id: 5,
-          nombre: "Kiosco",
-          espacio_id: null,
-          espacio_nombre: null,
-          activo: true,
-          config_pantalla: {},
-          vinculado: true,
-          plantilla_id: null,
-          plantilla: null,
-          creado_en: "2026-01-01T00:00:00Z",
-        },
-      ],
+      totems: [totem],
       selectedId: "5",
-      selectedTotem: {
-        id: 5,
-        nombre: "Kiosco",
-        espacio_id: null,
-        espacio_nombre: null,
-        activo: true,
-        config_pantalla: {},
-        vinculado: true,
-        plantilla_id: null,
-        plantilla: null,
-        creado_en: "2026-01-01T00:00:00Z",
-      },
+      selectedTotem: totem,
       setSelectedId: vi.fn(),
       refreshTotems: vi.fn(),
     });
     render(<PlantillasPage />);
-    const input = await screen.findByDisplayValue("Plantilla A");
-    expect(input).toBeInTheDocument();
+    const pill = await screen.findByText("Plantilla A");
+    expect(pill.closest('[role="button"]')).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("selecciona la plantilla del tótem al cambiar la selección en el header", async () => {
@@ -387,30 +406,8 @@ describe("PlantillasPage", () => {
       plantillaDTO(1, "Plantilla A"),
       plantillaDTO(2, "Plantilla B"),
     ]);
-    const totemA = {
-      id: 5,
-      nombre: "Kiosco",
-      espacio_id: null,
-      espacio_nombre: null,
-      activo: true,
-      config_pantalla: {},
-      vinculado: true,
-      plantilla_id: 1,
-      plantilla: null,
-      creado_en: "2026-01-01T00:00:00Z",
-    };
-    const totemB = {
-      id: 6,
-      nombre: "Oficina",
-      espacio_id: null,
-      espacio_nombre: null,
-      activo: true,
-      config_pantalla: {},
-      vinculado: true,
-      plantilla_id: 2,
-      plantilla: null,
-      creado_en: "2026-01-01T00:00:00Z",
-    };
+    const totemA = mockTotem({ id: 5, nombre: "Kiosco", plantilla_id: 1 });
+    const totemB = mockTotem({ id: 6, nombre: "Oficina", plantilla_id: 2 });
     mockUseTotem.mockReturnValue({
       totems: [totemA, totemB],
       selectedId: "5",
@@ -419,7 +416,7 @@ describe("PlantillasPage", () => {
       refreshTotems: vi.fn(),
     });
     const { rerender } = render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla A");
+    await screen.findByText("Plantilla A");
     mockUseTotem.mockReturnValue({
       totems: [totemA, totemB],
       selectedId: "6",
@@ -428,40 +425,22 @@ describe("PlantillasPage", () => {
       refreshTotems: vi.fn(),
     });
     rerender(<PlantillasPage />);
-    const input = await screen.findByDisplayValue("Plantilla B");
-    expect(input).toBeInTheDocument();
+    await waitFor(async () => {
+      const pill = await screen.findByText("Plantilla B");
+      expect(pill.closest('[role="button"]')).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+    });
   });
 
   it("muestra toast informativo al llegar desde el primer vínculo sin plantilla", async () => {
     mockFetchPlantillas.mockResolvedValue([plantillaDTO(1, "Plantilla A")]);
+    const totem = mockTotem({ id: 5, plantilla_id: null });
     mockUseTotem.mockReturnValue({
-      totems: [
-        {
-          id: 5,
-          nombre: "Kiosco",
-          espacio_id: null,
-          espacio_nombre: null,
-          activo: true,
-          config_pantalla: {},
-          vinculado: true,
-          plantilla_id: null,
-          plantilla: null,
-          creado_en: "2026-01-01T00:00:00Z",
-        },
-      ],
+      totems: [totem],
       selectedId: "5",
-      selectedTotem: {
-        id: 5,
-        nombre: "Kiosco",
-        espacio_id: null,
-        espacio_nombre: null,
-        activo: true,
-        config_pantalla: {},
-        vinculado: true,
-        plantilla_id: null,
-        plantilla: null,
-        creado_en: "2026-01-01T00:00:00Z",
-      },
+      selectedTotem: totem,
       setSelectedId: vi.fn(),
       refreshTotems: vi.fn(),
     });
@@ -470,19 +449,19 @@ describe("PlantillasPage", () => {
       pathname: "/admin/plantillas",
     } as ReturnType<typeof useLocation>);
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla A");
+    await screen.findByText("Plantilla A");
     expect(
       screen.getByText(/El tótem aún no tiene plantilla asignada/),
     ).toBeInTheDocument();
   });
 
-  it("muestra el botón Cargar al tótem", async () => {
+  it("muestra el botón Aplicar", async () => {
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    expect(screen.getByText("Cargar al tótem")).toBeInTheDocument();
+    await screen.findByText("Plantilla por defecto");
+    expect(screen.getByText("Aplicar")).toBeInTheDocument();
   });
 
-  it("deshabilita Cargar al tótem cuando no hay tótem seleccionado", async () => {
+  it("deshabilita Aplicar cuando no hay tótem seleccionado", async () => {
     mockUseTotem.mockReturnValue({
       totems: [],
       selectedId: "",
@@ -491,53 +470,128 @@ describe("PlantillasPage", () => {
       refreshTotems: vi.fn(),
     });
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    expect(screen.getByText("Cargar al tótem")).toBeDisabled();
+    await screen.findByText("Plantilla por defecto");
+    expect(screen.getByText("Aplicar")).toBeDisabled();
   });
 
-  it("asigna la plantilla al tótem al hacer click en Cargar al tótem", async () => {
+  it("asigna la plantilla al tótem al hacer click en Aplicar", async () => {
     const mockRefresh = vi.fn().mockResolvedValue(undefined);
+    const totem = mockTotem({ id: 5, plantilla_id: null });
     mockUseTotem.mockReturnValue({
-      totems: [
-        {
-          id: 5,
-          nombre: "Kiosco",
-          espacio_id: null,
-          espacio_nombre: null,
-          activo: true,
-          config_pantalla: {},
-          vinculado: true,
-          plantilla_id: null,
-          plantilla: null,
-          creado_en: "2026-01-01T00:00:00Z",
-        },
-      ],
+      totems: [totem],
       selectedId: "5",
-      selectedTotem: {
-        id: 5,
-        nombre: "Kiosco",
-        espacio_id: null,
-        espacio_nombre: null,
-        activo: true,
-        config_pantalla: {},
-        vinculado: true,
-        plantilla_id: null,
-        plantilla: null,
-        creado_en: "2026-01-01T00:00:00Z",
-      },
+      selectedTotem: totem,
       setSelectedId: vi.fn(),
       refreshTotems: mockRefresh,
     });
     mockUpdateTotem.mockResolvedValue({} as never);
     render(<PlantillasPage />);
-    await screen.findByDisplayValue("Plantilla por defecto");
-    fireEvent.click(screen.getByText("Cargar al tótem"));
+    await screen.findByText("Plantilla por defecto");
+    fireEvent.click(screen.getByText("Aplicar"));
     await waitFor(() => {
       expect(mockUpdateTotem).toHaveBeenCalledWith(5, { plantilla_id: 1 });
     });
     expect(mockRefresh).toHaveBeenCalled();
     expect(
-      await screen.findByText("Plantilla cargada al tótem correctamente"),
+      await screen.findByText("Plantilla aplicada al tótem correctamente"),
     ).toBeInTheDocument();
+  });
+
+  it("muestra Aplicada y deshabilitado si la plantilla ya está asignada al tótem", async () => {
+    const totem = mockTotem({ id: 5, plantilla_id: 1 });
+    mockUseTotem.mockReturnValue({
+      totems: [totem],
+      selectedId: "5",
+      selectedTotem: totem,
+      setSelectedId: vi.fn(),
+      refreshTotems: vi.fn(),
+    });
+    render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const btn = screen.getByText("Aplicada");
+    expect(btn).toBeInTheDocument();
+    expect(btn).toBeDisabled();
+  });
+
+  it("permite seleccionar un widget en el canvas y eliminarlo con el botón Eliminar", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+    expect(
+      within(canvas).queryByLabelText("Eliminar widget"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(widgetEl);
+    expect(
+      within(canvas).getByLabelText("Eliminar widget"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(canvas).getByLabelText("Eliminar widget"));
+    await waitFor(() => {
+      expect(
+        within(canvas).queryByTestId("mock-horarios"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("no elimina el widget al presionar la tecla Delete", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+
+    fireEvent.click(widgetEl);
+    await waitFor(() => {
+      expect(
+        within(canvas).getByLabelText("Eliminar widget"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.keyDown(window, { key: "Delete" });
+    // Permanece en el documento porque solo se elimina tocando el botón
+    expect(within(canvas).getByTestId("mock-horarios")).toBeInTheDocument();
+  });
+
+  it("deselecciona el widget al hacer click en el canvas", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+
+    fireEvent.click(widgetEl);
+    await waitFor(() => {
+      expect(
+        within(canvas).getByLabelText("Eliminar widget"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(canvas);
+    await waitFor(() => {
+      expect(
+        within(canvas).queryByLabelText("Eliminar widget"),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("permite limpiar todos los widgets de la plantilla al hacer click en el botón de reiniciar", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    expect(within(canvas).getByTestId("mock-horarios")).toBeInTheDocument();
+
+    const resetBtn = screen.getByLabelText("Limpiar planilla");
+    expect(resetBtn).not.toBeDisabled();
+
+    fireEvent.click(resetBtn);
+    await waitFor(
+      () => {
+        expect(
+          within(canvas).queryByTestId("mock-horarios"),
+        ).not.toBeInTheDocument();
+      },
+      { timeout: 5000 },
+    );
+    expect(resetBtn).toBeDisabled();
   });
 });

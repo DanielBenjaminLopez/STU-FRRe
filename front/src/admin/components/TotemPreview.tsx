@@ -25,26 +25,36 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
 };
 
 export default function TotemPreview() {
-  const { containerRef, scale } = useTotemScale();
+  const { containerRef, scale, isReady } = useTotemScale();
   const { selectedTotem } = useTotem();
 
   const plantilla = selectedTotem?.plantilla
     ? plantillaDTOToLocal(selectedTotem.plantilla)
     : null;
 
+  const isVisible = isReady !== false;
+
   return (
-    <div ref={containerRef} className="totem-scale-container">
+    <div
+      ref={containerRef}
+      className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
+    >
       <div
-        className="totem-scale-stage bg-white border border-gray-200 rounded-3xl overflow-hidden"
+        className={`totem-scale-stage bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm transition-opacity duration-200 ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
           transform: `scale(${scale})`,
-          transformOrigin: "center center",
+          transformOrigin: "top center",
           willChange: "transform",
         }}
       >
-        <div className="flex flex-col w-full h-full p-16 gap-16">
+        <div
+          key={selectedTotem?.id ?? "none"}
+          className="flex flex-col w-full h-full p-16 gap-16 relative animate-totem-switch"
+        >
           <Avisos />
           <Encabezado />
           <div className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
@@ -55,7 +65,7 @@ export default function TotemPreview() {
                 return (
                   <div
                     key={w.id}
-                    className="overflow-hidden grid"
+                    className="overflow-hidden grid rounded-3xl"
                     style={{
                       gridColumn: `${w.col + 1} / span ${w.colSpan}`,
                       gridRow: `${w.row + 1} / span ${w.rowSpan}`,

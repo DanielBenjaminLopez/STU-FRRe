@@ -23,7 +23,7 @@ export default function Mapa({
         />
       )}
 
-      <div className="col-span-2 row-span-2 bg-linear-to-br from-indigo-300/50 to-indigo-300/60 rounded-4xl flex flex-col gap-4 items-center p-8 overflow-hidden">
+      <div className="w-full h-full col-span-2 row-span-2 bg-linear-to-br from-indigo-300/50 to-indigo-300/60 rounded-4xl flex flex-col gap-4 items-center p-8 overflow-hidden">
         <div className="relative w-full flex flex-row gap-2 items-center">
           <span className="text-xl font-semibold">Mapa interactivo</span>
           <button

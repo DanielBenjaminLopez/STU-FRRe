@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import VincularTotem from "./pages/VincularTotem";
 import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
@@ -21,14 +20,6 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vincular"
-        element={
-          <ProtectedRoute>
-            <VincularTotem />
           </ProtectedRoute>
         }
       />

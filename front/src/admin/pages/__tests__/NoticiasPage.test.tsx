@@ -133,7 +133,7 @@ describe("NoticiasPage", () => {
       screen.getByRole("button", { name: /Sincronizar desde UTN/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Cargar evento/ }),
+      screen.getByRole("button", { name: /Crear evento/ }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Cargar noticia/ }),
@@ -186,7 +186,7 @@ describe("NoticiasPage", () => {
   it("abre modal de crear evento", async () => {
     render(<NoticiasPage />);
     await screen.findByTestId("count");
-    fireEvent.click(screen.getByText("Cargar evento"));
+    fireEvent.click(screen.getByRole("button", { name: "Crear evento" }));
     expect(
       screen.getByRole("heading", { name: "Crear evento" }),
     ).toBeInTheDocument();
