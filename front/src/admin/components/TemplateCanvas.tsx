@@ -31,6 +31,7 @@ interface PlacedWidgetProps {
   onRemove: (id: string) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  isClearing?: boolean;
 }
 
 const PlacedWidget = memo(function PlacedWidget({
@@ -38,6 +39,7 @@ const PlacedWidget = memo(function PlacedWidget({
   onRemove,
   isSelected = false,
   onSelect,
+  isClearing = false,
 }: PlacedWidgetProps) {
   const Component = WIDGET_COMPONENTS[widget.type];
   const [isRemoving, setIsRemoving] = useState(false);
@@ -74,7 +76,7 @@ const PlacedWidget = memo(function PlacedWidget({
       className={`relative overflow-hidden w-full h-full rounded-3xl cursor-pointer transition-all duration-200 ${
         isDragging ? "opacity-30" : ""
       } ${
-        isRemoving
+        isRemoving || isClearing
           ? "opacity-0 scale-90 pointer-events-none"
           : "opacity-100 scale-100"
       } ${isActuallySelected ? "z-20" : "z-0"}`}
@@ -109,7 +111,7 @@ const PlacedWidget = memo(function PlacedWidget({
           <button
             type="button"
             onClick={handleRemove}
-            className="pointer-events-auto w-12 h-12 rounded-full bg-gray-900 text-white shadow-2xl shadow-black/40 ring-4 ring-white/30 hover:bg-red-600 hover:shadow-red-500/40 hover:scale-110 hover:rotate-90 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none animate-widget-pop-in"
+            className="pointer-events-auto w-12 h-12 rounded-full bg-gray-900 text-white ring-4 ring-white/30 hover:bg-red-600 hover:scale-110 hover:rotate-90 active:scale-95 transition-all duration-300 flex items-center justify-center cursor-pointer select-none animate-widget-pop-in"
             aria-label="Eliminar widget"
           >
             <svg
@@ -141,6 +143,7 @@ interface TemplateCanvasProps {
   registry: Record<WidgetType, WidgetDefinition>;
   selectedWidgetId?: string | null;
   onSelectWidget?: (id: string | null) => void;
+  isClearing?: boolean;
 }
 
 export default function TemplateCanvas({
@@ -152,6 +155,7 @@ export default function TemplateCanvas({
   registry,
   selectedWidgetId,
   onSelectWidget,
+  isClearing,
 }: TemplateCanvasProps) {
   const { containerRef, scale, isReady } = useTotemScale();
 
@@ -169,11 +173,9 @@ export default function TemplateCanvas({
       className="flex-1 flex flex-col items-center justify-start overflow-hidden p-4"
     >
       <div
-        
         className={`totem-scale-stage bg-white border-2 border-dashed rounded-3xl overflow-hidden border-gray-200 transition-opacity duration-200 ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
-        
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,
@@ -227,6 +229,7 @@ export default function TemplateCanvas({
                 onRemove={onRemoveWidget}
                 isSelected={selectedWidgetId === w.id}
                 onSelect={(id) => onSelectWidget?.(id)}
+                isClearing={isClearing}
               />
             ))}
           </div>

@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import Login from "../Login";
 
 const { mockLogin, mockNavigate } = vi.hoisted(() => ({
@@ -32,9 +38,13 @@ describe("Login", () => {
 
   it("renderiza el formulario de login", () => {
     render(<Login />);
-    expect(screen.getByRole("textbox", { name: /usuario/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /usuario/i }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Contraseña")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /iniciar sesión/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /iniciar sesión/i }),
+    ).toBeInTheDocument();
   });
 
   it("renderiza el logo", () => {
@@ -131,5 +141,50 @@ describe("Login", () => {
     await waitFor(() => {
       expect(mockNavigate).not.toHaveBeenCalled();
     });
+  });
+
+  it("permite ver y ocultar la contraseña con el botón de ojo", () => {
+    render(<Login />);
+    const passwordInput = screen.getByLabelText("Contraseña");
+    const toggleBtn = screen.getByRole("button", { name: /ver contraseña/i });
+
+    expect(passwordInput).toHaveAttribute("type", "password");
+
+    // Click para ver contraseña
+    fireEvent.click(toggleBtn);
+    expect(passwordInput).toHaveAttribute("type", "text");
+    expect(
+      screen.getByRole("button", { name: /ocultar contraseña/i }),
+    ).toBeInTheDocument();
+
+    // Click para ocultar contraseña
+    fireEvent.click(
+      screen.getByRole("button", { name: /ocultar contraseña/i }),
+    );
+    expect(passwordInput).toHaveAttribute("type", "password");
+  });
+
+  it("el botón de ver/ocultar contraseña sigue disponible tras un error de login", async () => {
+    mockLogin.mockRejectedValue(new Error("Credenciales inválidas"));
+    render(<Login />);
+
+    fireEvent.change(screen.getByRole("textbox", { name: /usuario/i }), {
+      target: { value: "admin" },
+    });
+    fireEvent.change(screen.getByLabelText("Contraseña"), {
+      target: { value: "wrongpassword" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
+
+    expect(
+      await screen.findByText("Credenciales inválidas"),
+    ).toBeInTheDocument();
+
+    const passwordInput = screen.getByLabelText("Contraseña");
+    const toggleBtn = screen.getByRole("button", { name: /ver contraseña/i });
+    expect(toggleBtn).toBeInTheDocument();
+
+    fireEvent.click(toggleBtn);
+    expect(passwordInput).toHaveAttribute("type", "text");
   });
 });

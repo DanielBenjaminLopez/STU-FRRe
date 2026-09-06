@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import DataFormModal from "../components/DataFormModal";
 import type { FormField } from "../components/DataFormModal";
+import Button from "../../shared/components/ui/Button";
+import SearchInput from "../../shared/components/ui/SearchInput";
 import {
   fetchUbicacionesMapa,
   updateUbicacionMapa,
@@ -205,140 +207,178 @@ export default function UbicacionesMapaPage() {
               </p>
             </div>
             <div className="text-sm text-gray-400">
-              {ubicaciones.length} ubicaciones en total
+              {loading ? (
+                <div className="h-4 w-32 bg-gray-100 rounded-lg animate-pulse" />
+              ) : (
+                `${ubicaciones.length} ubicaciones en total`
+              )}
             </div>
           </div>
 
-          {/* Tabs de pisos */}
-          <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 w-fit">
-            {PISOS.map((piso) => {
-              const count = ubicaciones.filter(
-                (u) => u.piso === piso.key,
-              ).length;
-              return (
-                <button
-                  key={piso.key}
-                  id={`tab-piso-${piso.key}`}
-                  onClick={() => {
-                    setActivePiso(piso.key);
-                    setSearchQuery("");
-                  }}
-                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${
-                    activePiso === piso.key
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {piso.label}
-                  <span
-                    className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+          {/* Selector de pisos y búsqueda unificados en una sola caja */}
+          <div className="flex items-center justify-between bg-gray-100 rounded-2xl p-1.5 gap-4">
+            <div className="flex gap-1">
+              {PISOS.map((piso) => {
+                const count = ubicaciones.filter(
+                  (u) => u.piso === piso.key,
+                ).length;
+                return (
+                  <button
+                    key={piso.key}
+                    id={`tab-piso-${piso.key}`}
+                    onClick={() => {
+                      setActivePiso(piso.key);
+                      setSearchQuery("");
+                    }}
+                    className={`px-5 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer ${
                       activePiso === piso.key
-                        ? "bg-gray-100 text-gray-600"
-                        : "bg-gray-200 text-gray-500"
+                        ? "bg-white text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    {piso.label}
+                    <span
+                      className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
+                        activePiso === piso.key
+                          ? "bg-gray-100 text-gray-600"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
+                    >
+                      {loading ? "-" : count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
 
-          {/* Barra de búsqueda */}
-          <div className="flex items-center gap-3">
-            <input
-              id="search-ubicaciones"
-              type="text"
-              placeholder="Buscar por nombre o ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 w-72 bg-white"
-            />
-            {searchQuery && (
-              <span className="text-sm text-gray-400">
-                {ubicacionesPiso.length} resultado
-                {ubicacionesPiso.length !== 1 ? "s" : ""}
-              </span>
-            )}
+            {/* Barra de búsqueda a la derecha */}
+            <div className="flex items-center gap-2 pr-1">
+              {searchQuery && (
+                <span className="text-xs text-gray-500">
+                  {ubicacionesPiso.length} resultado
+                  {ubicacionesPiso.length !== 1 ? "s" : ""}
+                </span>
+              )}
+              <SearchInput
+                id="search-ubicaciones"
+                placeholder="Buscar por nombre o ID..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+              />
+            </div>
           </div>
 
           {/* Tabla */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-auto">
-            {loading ? (
-              <div className="flex items-center justify-center h-40 text-sm text-gray-400">
-                Cargando ubicaciones...
-              </div>
-            ) : error ? (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-auto">
+            {error ? (
               <div className="flex items-center justify-center h-40 text-sm text-red-500">
                 {error}
-              </div>
-            ) : ubicacionesPiso.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-sm text-gray-400">
-                {searchQuery
-                  ? "No se encontraron ubicaciones que coincidan."
-                  : "No hay ubicaciones para este piso."}
               </div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-left">
-                    <th className="px-6 py-3 font-medium text-gray-500 w-24">
+                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-center">
                       ID SVG
                     </th>
                     <th className="px-6 py-3 font-medium text-gray-500">
                       Nombre
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 w-40">
+                    <th className="px-6 py-3 font-medium text-gray-500 w-40 text-left">
                       Tipo
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-right">
+                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-center">
                       Acciones
                     </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ubicacionesPiso.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td className="px-6 py-3">
-                        <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
-                          {u.svg_id}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 font-medium text-gray-900">
-                        {u.nombre}
-                      </td>
-                      <td className="px-6 py-3">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                          style={{
-                            backgroundColor:
-                              (TIPO_COLORS[u.tipo] ?? "#d1d5db") + "55",
-                            color: "#374151",
-                          }}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full shrink-0"
-                            style={{
-                              backgroundColor: TIPO_COLORS[u.tipo] ?? "#d1d5db",
-                            }}
-                          />
-                          {u.tipo_display}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <button
-                          id={`edit-ubicacion-${u.id}`}
-                          onClick={() => setEditingItem(u)}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          Editar
-                        </button>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr
+                        key={`skeleton-${i}`}
+                        className="border-b border-gray-50 last:border-0"
+                      >
+                        <td className="px-6 py-3 text-center">
+                          <div className="h-5 bg-gray-100 rounded-lg animate-pulse w-14 mx-auto" />
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-3/5" />
+                        </td>
+                        <td className="px-6 py-3 text-left">
+                          <div className="h-6 bg-gray-100 rounded-full animate-pulse w-24" />
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <div className="h-7 w-7 bg-gray-100 rounded-lg animate-pulse mx-auto" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : ubicacionesPiso.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-12 text-center text-gray-400"
+                      >
+                        {searchQuery
+                          ? "No se encontraron ubicaciones que coincidan."
+                          : "No hay ubicaciones para este piso."}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    ubicacionesPiso.map((u) => (
+                      <tr
+                        key={u.id}
+                        className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                      >
+                        <td className="px-6 py-3 text-center">
+                          <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
+                            {u.svg_id}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 font-medium text-gray-900">
+                          {u.nombre}
+                        </td>
+                        <td className="px-6 py-3 text-left">
+                          <span
+                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor:
+                                (TIPO_COLORS[u.tipo] ?? "#d1d5db") + "55",
+                              color: "#374151",
+                            }}
+                          >
+                            {u.tipo_display}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3 text-center">
+                          <div className="flex justify-center">
+                            <button
+                              type="button"
+                              id={`edit-ubicacion-${u.id}`}
+                              onClick={() => setEditingItem(u)}
+                              className="p-1.5 text-gray-400 hover:text-black hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                              title="Editar"
+                              aria-label="Editar ubicación"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             )}
@@ -386,14 +426,14 @@ export default function UbicacionesMapaPage() {
                 <span className="text-sm text-red-500">{pinError}</span>
               )}
               {currentPinPosition && selectedTotem && (
-                <button
+                <Button
+                  variant="danger"
                   id="btn-limpiar-pin"
                   onClick={handleClearPin}
                   disabled={pinSaveStatus === "saving"}
-                  className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-red-200 disabled:opacity-50"
                 >
                   Limpiar pin
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -415,9 +455,9 @@ export default function UbicacionesMapaPage() {
                     key={p.key}
                     id={`pin-piso-${p.key}`}
                     onClick={() => setEditorFloor(p.key as FloorKey)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
+                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
                       editorFloor === p.key
-                        ? "bg-cyan-100 text-cyan-900 shadow-sm"
+                        ? "bg-cyan-100 text-cyan-900"
                         : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
                     }`}
                   >

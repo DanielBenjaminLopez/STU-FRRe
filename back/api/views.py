@@ -1,10 +1,15 @@
+import os
+import uuid
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -430,6 +435,37 @@ class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     serializer_class = EventoSerializer
     permission_classes = [AllowAny]
 
+    @action(detail=False, methods=['post'], url_path='upload-imagen', parser_classes=[MultiPartParser, FormParser])
+    def upload_imagen(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {"detail": "No se proporcionó ningún archivo de imagen."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+        if file_obj.content_type not in allowed_types:
+            return Response(
+                {"detail": "El archivo debe ser una imagen válida (JPEG, PNG, WebP, GIF, SVG)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if file_obj.size > 5 * 1024 * 1024:
+            return Response(
+                {"detail": "La imagen no puede superar los 5MB."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ext = os.path.splitext(file_obj.name)[1]
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        saved_path = default_storage.save(f"eventos/{unique_name}", file_obj)
+        url = default_storage.url(saved_path)
+        if not url.startswith('/') and not url.startswith('http'):
+            url = f"/{url}"
+
+        return Response({"url": url}, status=status.HTTP_200_OK)
+
 
 class AvisoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'avisos'
@@ -513,11 +549,24 @@ class AvisosActivosView(APIView):
 
 
 class TotemViewSet(viewsets.ModelViewSet):
-    queryset = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
-        'plantilla__widgets_posiciones__widget'
-    ).all()
+    queryset = Totem.objects.all()
     serializer_class = TotemSerializer
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+
+    def get_queryset(self):
+        qs = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
+            'plantilla__widgets_posiciones__widget'
+        )
+        vinculado = self.request.query_params.get('vinculado')
+        if vinculado is not None:
+            if vinculado.lower() in ('true', '1'):
+                return qs.filter(vinculado=True)
+            if vinculado.lower() in ('false', '0'):
+                return qs.filter(vinculado=False)
+            return qs.all()
+        if self.action == 'list':
+            return qs.filter(vinculado=True)
+        return qs.all()
 
     def perform_update(self, serializer):
         totem = serializer.save()

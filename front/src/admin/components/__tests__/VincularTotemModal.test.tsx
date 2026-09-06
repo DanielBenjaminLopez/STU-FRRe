@@ -6,7 +6,7 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react";
-import VincularTotem from "../VincularTotem";
+import VincularTotemModal from "../VincularTotemModal";
 
 const { mockVincularTotem, mockNavigate, mockRefresh, mockSetSelectedId } =
   vi.hoisted(() => ({
@@ -34,7 +34,9 @@ vi.mock("../../../shared/api/totems", () => ({
   vincularTotem: mockVincularTotem,
 }));
 
-describe("VincularTotem", () => {
+describe("VincularTotemModal", () => {
+  const mockOnClose = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -43,17 +45,20 @@ describe("VincularTotem", () => {
     cleanup();
   });
 
-  it("renderiza el formulario de vinculación", () => {
-    render(<VincularTotem />);
+  it("renderiza el formulario de vinculación dentro del modal", () => {
+    render(<VincularTotemModal onClose={mockOnClose} />);
+    expect(
+      screen.getByRole("heading", { name: "Vincular nuevo tótem" }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Código de vinculación")).toBeInTheDocument();
     expect(screen.getByLabelText("Nombre del tótem")).toBeInTheDocument();
   });
 
-  it("vincula el tótem, navega a plantillas con recienVinculado y setSelectedId", async () => {
+  it("vincula el tótem, navega a plantillas con recienVinculado, setSelectedId y cierra el modal", async () => {
     mockVincularTotem.mockResolvedValue({ id: 3 });
     mockRefresh.mockResolvedValue(undefined);
 
-    render(<VincularTotem />);
+    render(<VincularTotemModal onClose={mockOnClose} />);
 
     fireEvent.change(screen.getByLabelText("Código de vinculación"), {
       target: { value: "34735" },
@@ -74,19 +79,21 @@ describe("VincularTotem", () => {
     expect(mockRefresh).toHaveBeenCalled();
 
     await waitFor(
-      () =>
+      () => {
+        expect(mockOnClose).toHaveBeenCalled();
         expect(mockNavigate).toHaveBeenCalledWith("/admin/plantillas", {
           replace: true,
           state: { recienVinculado: true },
-        }),
+        });
+      },
       { timeout: 3000 },
     );
   });
 
-  it("muestra el error y no navega cuando la vinculación falla", async () => {
+  it("muestra el error y no cierra ni navega cuando la vinculación falla", async () => {
     mockVincularTotem.mockRejectedValue(new Error("Código inválido"));
 
-    render(<VincularTotem />);
+    render(<VincularTotemModal onClose={mockOnClose} />);
 
     fireEvent.change(screen.getByLabelText("Código de vinculación"), {
       target: { value: "99999" },
@@ -99,5 +106,18 @@ describe("VincularTotem", () => {
     expect(await screen.findByText("Código inválido")).toBeInTheDocument();
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
+  it("llama a onClose al presionar Cancelar", () => {
+    render(<VincularTotemModal onClose={mockOnClose} />);
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(mockOnClose).toHaveBeenCalled();
+  });
+
+  it("llama a onClose al presionar Escape", () => {
+    render(<VincularTotemModal onClose={mockOnClose} />);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(mockOnClose).toHaveBeenCalled();
   });
 });

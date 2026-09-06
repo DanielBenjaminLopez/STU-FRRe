@@ -21,6 +21,11 @@ body {
   font-family: "Manrope", sans-serif;
 }
 
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 @theme {
   --color-gray-100: #f5f5f7;
   --color-gray-200: #f3f3f3;
@@ -137,6 +142,11 @@ body,
   .avisos-marquee-overflowing {
     animation-play-state: paused;
   }
+  .animate-totem-switch,
+  .animate-widget-pop-in,
+  .animate-fade-in {
+    animation: none !important;
+  }
 }
 
 /* width */
@@ -209,4 +219,18 @@ body,
 
 .animate-fade-in {
   animation: fade-in 0.25s ease-out forwards;
+}
+
+@keyframes totem-switch {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-totem-switch {
+  animation: totem-switch 0.3s ease-in-out forwards;
+  will-change: opacity;
 }

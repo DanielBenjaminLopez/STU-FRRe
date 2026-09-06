@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import Button from "../../shared/components/ui/Button";
 import type { CsvImportResult } from "../../shared/api/horariosAdmin";
 
 interface ImportCsvModalProps {
@@ -258,22 +259,14 @@ export default function ImportCsvModal({
             )}
 
             <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-              >
+              <Button variant="secondary" onClick={onClose} disabled={loading}>
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
+                variant="primary"
                 disabled={!selectedFile || loading}
-                className={`px-4 py-2 text-sm font-medium text-white bg-black rounded-xl transition-colors flex items-center gap-2 ${
-                  !selectedFile || loading
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-800"
-                }`}
+                className="flex items-center gap-2"
               >
                 {loading && (
                   <svg
@@ -292,12 +285,12 @@ export default function ImportCsvModal({
                     <path
                       className="opacity-75"
                       fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
                 )}
                 {loading ? "Importando..." : "Importar"}
-              </button>
+              </Button>
             </div>
           </form>
         ) : (
@@ -531,20 +524,12 @@ export default function ImportCsvModal({
 
             {/* Pie de modal */}
             <div className="flex items-center justify-end gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-              >
+              <Button variant="secondary" onClick={onClose}>
                 Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleFinalize}
-                className="px-5 py-2 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-xl transition-colors"
-              >
+              </Button>
+              <Button variant="primary" onClick={handleFinalize}>
                 Aceptar
-              </button>
+              </Button>
             </div>
           </div>
         )}

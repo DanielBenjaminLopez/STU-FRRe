@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import PageHeader from "../components/PageHeader";
 import NoticiasCarousel from "../components/NoticiasCarousel";
+import Button from "../../shared/components/ui/Button";
 import {
   fetchFeed,
   createNoticia,
@@ -12,6 +14,7 @@ import {
   createEvento,
   updateEvento,
   deleteEvento,
+  uploadEventoImagen,
   fetchEspaciosForSelect,
   TIPOS_EVENTO,
   type ContenidoFeed,
@@ -24,6 +27,7 @@ const columns: Column<ContenidoFeed>[] = [
     key: "tipo",
     label: "Tipo",
     sortable: true,
+    align: "center",
     render: (val, row) => {
       if (val === "evento") {
         const tipoEvento = row.tipo_evento as string | undefined;
@@ -32,21 +36,14 @@ const columns: Column<ContenidoFeed>[] = [
           .filter(Boolean)
           .join(" · ");
         return (
-          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-600">
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
             {label}
           </span>
         );
       }
-      const origen = row.origen as string | undefined;
       return (
-        <span
-          className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-            origen === "scraping"
-              ? "bg-blue-50 text-blue-600"
-              : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {origen === "scraping" ? "Scraping" : "Manual"}
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+          Noticia
         </span>
       );
     },
@@ -55,6 +52,7 @@ const columns: Column<ContenidoFeed>[] = [
     key: "fecha",
     label: "Fecha",
     sortable: true,
+    align: "center",
     render: (val) => {
       const d = new Date(String(val));
       return d.toLocaleDateString("es-ES");
@@ -63,13 +61,14 @@ const columns: Column<ContenidoFeed>[] = [
   {
     key: "imagen_url",
     label: "Imagen",
+    align: "center",
     render: (val) => {
       if (!val) return "-";
       return (
         <img
           src={String(val)}
           alt="Miniatura"
-          className="w-10 h-10 rounded-lg object-cover"
+          className="w-10 h-10 rounded-lg object-cover mx-auto"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
@@ -214,10 +213,13 @@ export default function NoticiasPage() {
       },
       {
         name: "imagen_url",
-        label: "URL de imagen (opcional)",
-        type: "text",
+        label: "Imagen del evento",
+        type: "image",
         required: false,
-        placeholder: "https://ejemplo.com/imagen.jpg",
+        onUpload: async (file: File) => {
+          const res = await uploadEventoImagen(file);
+          return res.url;
+        },
       },
       {
         name: "fecha_hora_inicio",
@@ -367,38 +369,19 @@ export default function NoticiasPage() {
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Noticias y Eventos</h1>
-          <span className="text-sm text-gray-500">
-            Feed unificado de noticias y eventos
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSync}
-            disabled={syncing}
-            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-2xl hover:bg-blue-100 transition-colors disabled:opacity-50"
-          >
-            {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenCreate("evento")}
-            className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-2xl hover:bg-emerald-100 transition-colors"
-          >
-            Cargar evento
-          </button>
-          <button
-            type="button"
-            onClick={() => handleOpenCreate("noticia")}
-            className="px-4 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-          >
-            Cargar noticia
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Noticias y Eventos"
+        subtitle="Feed unificado de noticias y eventos"
+        onCreate={() => handleOpenCreate("noticia")}
+        createLabel="Cargar noticia"
+      >
+        <Button variant="secondary" onClick={handleSync} disabled={syncing}>
+          {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
+        </Button>
+        <Button variant="primary" onClick={() => handleOpenCreate("evento")}>
+          Crear evento
+        </Button>
+      </PageHeader>
 
       {syncResult && (
         <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-2xl text-sm text-blue-600">

@@ -43,7 +43,7 @@ export default function Sidebar() {
         <button
           type="button"
           onClick={logout}
-          className="w-full text-sm font-medium text-gray-400 hover:text-red-500 transition-colors text-center"
+          className="w-full text-sm font-medium text-gray-400 hover:text-red-500 transition-colors text-center cursor-pointer"
         >
           Cerrar sesión
         </button>

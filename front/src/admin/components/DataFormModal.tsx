@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Button from "../../shared/components/ui/Button";
+import ImageDropzone from "../../shared/components/ui/ImageDropzone";
 
 export interface FormField {
   name: string;
@@ -11,7 +13,8 @@ export interface FormField {
     | "datetime-local"
     | "time"
     | "date"
-    | "checkbox";
+    | "checkbox"
+    | "image";
   required?: boolean;
   options?: { value: string | number; label: string }[];
   placeholder?: string;
@@ -19,6 +22,7 @@ export interface FormField {
   defaultValue?: unknown;
   min?: number;
   max?: number;
+  onUpload?: (file: File) => Promise<string>;
 }
 
 interface DataFormModalProps {
@@ -119,102 +123,136 @@ export default function DataFormModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-4xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-8 pt-8 pb-4">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-lg p-1"
-          >
-            &times;
-          </button>
+      <div className="bg-white rounded-4xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="px-8 pt-8 pb-3">
+          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
         </div>
 
         <form
           onSubmit={handleSubmit}
           className="flex flex-col gap-4 px-8 pb-8 overflow-y-auto"
         >
-          {fields.map((field) => (
-            <label key={field.name} className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-gray-700">
-                {field.label}
-                {field.required && (
-                  <span className="text-red-400 ml-0.5">*</span>
-                )}
-              </span>
-
-              {field.type === "select" ? (
-                <select
+          {fields.map((field) =>
+            field.type === "image" ? (
+              <div key={field.name} className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-gray-700">
+                  {field.label}
+                  {field.required && (
+                    <span className="text-red-400 ml-0.5">*</span>
+                  )}
+                </span>
+                <ImageDropzone
                   value={String(formData[field.name] ?? "")}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  required={field.required}
-                  className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-                >
-                  <option value="">
-                    {field.placeholder ?? "Seleccionar..."}
-                  </option>
-                  {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "textarea" ? (
-                <textarea
-                  value={String(formData[field.name] ?? "")}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  required={field.required}
-                  placeholder={field.placeholder}
-                  readOnly={field.readOnly}
-                  rows={4}
-                  className="border border-gray-200 rounded-xl px-4 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10"
+                  onChange={(val) => handleChange(field.name, val)}
+                  onUpload={field.onUpload}
+                  disabled={loading}
                 />
-              ) : field.type === "checkbox" ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(formData[field.name])}
-                    onChange={(e) => handleChange(field.name, e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
-                  <span className="text-sm text-gray-500">
-                    {field.placeholder ?? "Sí"}
+              </div>
+            ) : (
+              <label key={field.name} className="flex flex-col gap-1 text-sm">
+                {field.type !== "checkbox" && (
+                  <span className="font-medium text-gray-700">
+                    {field.label}
+                    {field.required && (
+                      <span className="text-red-400 ml-0.5">*</span>
+                    )}
                   </span>
-                </div>
-              ) : (
-                <input
-                  type={field.type}
-                  value={String(formData[field.name] ?? "")}
-                  onChange={(e) => handleChange(field.name, e.target.value)}
-                  required={field.required}
-                  placeholder={field.placeholder}
-                  readOnly={field.readOnly}
-                  min={field.min}
-                  max={field.max}
-                  className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
-                />
-              )}
-            </label>
-          ))}
+                )}
+
+                {field.type === "select" ? (
+                  <select
+                    value={String(formData[field.name] ?? "")}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    required={field.required}
+                    className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
+                  >
+                    <option value="">
+                      {field.placeholder ?? "Seleccionar..."}
+                    </option>
+                    {field.options?.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : field.type === "textarea" ? (
+                  <textarea
+                    value={String(formData[field.name] ?? "")}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                    readOnly={field.readOnly}
+                    rows={4}
+                    className="border border-gray-200 rounded-xl px-4 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                ) : field.type === "checkbox" ? (
+                  <div className="flex items-center justify-between py-1 select-none">
+                    <div className="flex flex-col">
+                      <span className="font-medium text-gray-800 text-sm">
+                        {field.placeholder || field.label || "Activo"}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formData[field.name]
+                          ? "Visible y habilitado"
+                          : "Inactivo y deshabilitado"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={Boolean(formData[field.name])}
+                      onClick={() =>
+                        handleChange(field.name, !formData[field.name])
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
+                        formData[field.name] ? "bg-gray-900" : "bg-gray-200"
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                          formData[field.name]
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={Boolean(formData[field.name])}
+                        onChange={(e) =>
+                          handleChange(field.name, e.target.checked)
+                        }
+                        aria-label={field.placeholder || field.label}
+                      />
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    type={field.type}
+                    value={String(formData[field.name] ?? "")}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                    required={field.required}
+                    placeholder={field.placeholder}
+                    readOnly={field.readOnly}
+                    min={field.min}
+                    max={field.max}
+                    className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  />
+                )}
+              </label>
+            ),
+          )}
 
           {error && <span className="text-red-500 text-sm">{error}</span>}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-2xl transition-colors"
-            >
+            <Button variant="secondary" onClick={onClose}>
               Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors disabled:opacity-50"
-            >
+            </Button>
+            <Button type="submit" disabled={loading} variant="primary">
               {loading ? "Guardando..." : "Guardar"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

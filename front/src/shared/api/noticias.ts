@@ -117,6 +117,7 @@ export {
   createEvento,
   updateEvento,
   deleteEvento,
+  uploadEventoImagen,
   fetchEspaciosForSelect,
   TIPOS_EVENTO,
 } from "./eventos";
