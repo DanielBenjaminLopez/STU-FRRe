@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0023_totem_pin_mapa'),
+        ('api', '0024_alter_evento_imagen_url'),
     ]
 
     operations = [

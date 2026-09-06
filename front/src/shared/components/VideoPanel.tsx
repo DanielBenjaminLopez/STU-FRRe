@@ -12,8 +12,14 @@ export default function VideoPanel({ url, onEnded }: VideoPanelProps) {
     const video = videoRef.current;
     if (!video) return;
 
+    const onCanPlay = () => {
+      video.play().catch(() => {});
+    };
+
+    video.addEventListener("canplay", onCanPlay);
     video.load();
-    video.play().catch(() => {});
+
+    return () => video.removeEventListener("canplay", onCanPlay);
   }, [url]);
 
   return (

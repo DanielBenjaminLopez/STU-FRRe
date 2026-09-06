@@ -1,4 +1,4 @@
-import { apiFetch, totemFetch } from "./client";
+import { apiFetch, getAdminToken, totemFetch } from "./client";
 import type { PlantillaDTO } from "./plantillas";
 
 export interface Espacio {
@@ -98,28 +98,33 @@ export async function fetchTotemMe(): Promise<Totem> {
 }
 
 export interface ConfiguracionVideo {
-  video_archivo: string | null;
   video_url: string | null;
-  intervalo: number;
-  activo: boolean;
+  video_intervalo: number;
+  video_activo: boolean;
 }
 
-export async function fetchConfigVideo(): Promise<ConfiguracionVideo> {
-  return apiFetch<ConfiguracionVideo>("/api/config-video/");
+export async function fetchConfigVideo(
+  totemId: number,
+): Promise<ConfiguracionVideo> {
+  return apiFetch<ConfiguracionVideo>(`/api/totems/${totemId}/config-video/`, {
+    cache: "no-store",
+  });
 }
 
 export async function updateConfigVideo(
-  data: Partial<ConfiguracionVideo>,
-): Promise<ConfiguracionVideo> {
-  return apiFetch<ConfiguracionVideo>("/api/config-video/", {
+  totemId: number,
+  data: { video_intervalo?: number; video_activo?: boolean },
+): Promise<Totem> {
+  return apiFetch<Totem>(`/api/totems/${totemId}/config-video/`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
 export async function uploadVideoArchivo(
+  totemId: number,
   archivo: File,
-): Promise<ConfiguracionVideo> {
+): Promise<Totem> {
   const token = getAdminToken();
   const formData = new FormData();
   formData.append("video_archivo", archivo);
@@ -129,7 +134,7 @@ export async function uploadVideoArchivo(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch("/api/config-video/", {
+  const response = await fetch(`/api/totems/${totemId}/config-video/`, {
     method: "PATCH",
     headers,
     body: formData,

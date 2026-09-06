@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { motion, AnimatePresence } from "motion/react";
 import Encabezado from "../../shared/components/widgets/Encabezado";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
@@ -43,7 +44,6 @@ export default function Home() {
   const [blocked, setBlocked] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState("");
   const [modoVideo, setModoVideo] = useState(false);
-  const [animating, setAnimating] = useState(false);
   const lastInteractionRef = useRef(0);
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
@@ -108,9 +108,7 @@ export default function Home() {
       const elapsed = Date.now() - lastInteractionRef.current;
       const intervalMs = (totem.video_intervalo || 60) * 1000;
       if (!modoVideo && elapsed >= intervalMs) {
-        setAnimating(true);
         setModoVideo(true);
-        setTimeout(() => setAnimating(false), 650);
       }
     };
 
@@ -119,18 +117,14 @@ export default function Home() {
   }, [totem, modoVideo]);
 
   const handleVideoEnded = useCallback(() => {
-    setAnimating(true);
     lastInteractionRef.current = Date.now();
     setModoVideo(false);
-    setTimeout(() => setAnimating(false), 650);
   }, []);
 
   const handleInteraction = useCallback(() => {
     if (modoVideo) {
-      setAnimating(true);
       lastInteractionRef.current = Date.now();
       setModoVideo(false);
-      setTimeout(() => setAnimating(false), 650);
     } else {
       lastInteractionRef.current = Date.now();
     }
@@ -207,40 +201,77 @@ export default function Home() {
               <Avisos />
               <Encabezado />
               <div
-                className={`flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4 ${animating ? "animate-flip-in" : ""}`}
+                className="flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4"
+                style={{ perspective: "1200px" }}
               >
-                {showVideo ? (
-                  <VideoPanel
-                    url={totem.video_url!}
-                    onEnded={handleVideoEnded}
-                  />
-                ) : hasWidgets ? (
-                  plantilla.widgets.map((w) => {
-                    const Component = WIDGET_COMPONENTS[w.type];
-                    if (!Component) return null;
-                    return (
-                      <div
-                        key={w.id}
-                        className="overflow-hidden grid"
-                        style={{
-                          gridColumn: `${w.col + 1} / span ${w.colSpan}`,
-                          gridRow: `${w.row + 1} / span ${w.rowSpan}`,
-                          gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
-                          gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
-                        }}
-                      >
-                        <Component />
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="col-span-4 row-span-6 flex items-center justify-center p-8">
-                    <p className="text-gray-400 text-center text-lg leading-relaxed">
-                      Próximamente encontrarás aquí los horarios de cursada y
-                      novedades del campus.
-                    </p>
-                  </div>
-                )}
+                <AnimatePresence mode="wait">
+                  {showVideo ? (
+                    <motion.div
+                      key="video"
+                      className="col-span-4 row-span-6"
+                      initial={{ rotateY: -90, opacity: 0 }}
+                      animate={{ rotateY: 0, opacity: 1 }}
+                      exit={{ rotateY: 90, opacity: 0 }}
+                      transition={{
+                        duration: 0.6,
+                        ease: [0.4, 0, 0.2, 1],
+                      }}
+                    >
+                      <VideoPanel
+                        url={totem.video_url!}
+                        onEnded={handleVideoEnded}
+                      />
+                    </motion.div>
+                  ) : hasWidgets ? (
+                    <motion.div
+                      key="widgets"
+                      className="col-span-4 row-span-6 grid grid-cols-4 grid-rows-6 gap-4 min-h-0"
+                      initial={{ rotateY: -90, opacity: 0 }}
+                      animate={{ rotateY: 0, opacity: 1 }}
+                      exit={{ rotateY: 90, opacity: 0 }}
+                      transition={{
+                        duration: 0.6,
+                        ease: [0.4, 0, 0.2, 1],
+                      }}
+                    >
+                      {plantilla.widgets.map((w) => {
+                        const Component = WIDGET_COMPONENTS[w.type];
+                        if (!Component) return null;
+                        return (
+                          <div
+                            key={w.id}
+                            className="overflow-hidden grid"
+                            style={{
+                              gridColumn: `${w.col + 1} / span ${w.colSpan}`,
+                              gridRow: `${w.row + 1} / span ${w.rowSpan}`,
+                              gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
+                              gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
+                            }}
+                          >
+                            <Component />
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="empty"
+                      className="col-span-4 row-span-6 flex items-center justify-center p-8"
+                      initial={{ rotateY: -90, opacity: 0 }}
+                      animate={{ rotateY: 0, opacity: 1 }}
+                      exit={{ rotateY: 90, opacity: 0 }}
+                      transition={{
+                        duration: 0.6,
+                        ease: [0.4, 0, 0.2, 1],
+                      }}
+                    >
+                      <p className="text-gray-400 text-center text-lg leading-relaxed">
+                        Próximamente encontrarás aquí los horarios de cursada y
+                        novedades del campus.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>

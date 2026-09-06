@@ -6,7 +6,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     Aviso,
     Carrera,
-    ConfiguracionVideo,
     EventoCalendario,
     PlanMateria,
     Comision,
@@ -377,6 +376,7 @@ class TotemSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
     )
+    video_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Totem
@@ -385,11 +385,17 @@ class TotemSerializer(serializers.ModelSerializer):
             'config_pantalla', 'vinculado', 'activo',
             'plantilla_id', 'plantilla', 'creado_en',
             'pin_mapa_piso', 'pin_mapa_svg_x', 'pin_mapa_svg_y',
+            'video_archivo', 'video_url', 'video_intervalo', 'video_activo',
         ]
         read_only_fields = ['vinculado', 'creado_en']
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
+
+    def get_video_url(self, obj):
+        if obj.video_archivo:
+            return obj.video_archivo.url
+        return None
 
 
 class EventoCalendarioSerializer(serializers.ModelSerializer):
@@ -423,19 +429,3 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError(
                 {"detail": "Usuario o contraseña incorrectos."}
             )
-
-
-class ConfiguracionVideoSerializer(serializers.ModelSerializer):
-    video_url = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ConfiguracionVideo
-        fields = ['video_archivo', 'video_url', 'intervalo', 'activo']
-
-    def get_video_url(self, obj):
-        if obj.video_archivo:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.video_archivo.url)
-            return obj.video_archivo.url
-        return None
