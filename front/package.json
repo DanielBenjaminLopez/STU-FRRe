@@ -20,6 +20,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-dropzone": "^20.1.1",
+    "react-mk": "^2.0.0",
     "react-router": "^7.15.1",
     "sileo": "^0.1.5",
     "tailwindcss": "^4.3.0",

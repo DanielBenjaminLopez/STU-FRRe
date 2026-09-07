@@ -1,4 +1,4 @@
-import { apiFetch, totemFetch } from "./client";
+import { apiFetch, getAdminToken, totemFetch } from "./client";
 import type { PlantillaDTO } from "./plantillas";
 
 export interface Espacio {
@@ -22,6 +22,9 @@ export interface Totem {
   pin_mapa_piso: "baja" | "primero" | "segundo" | null;
   pin_mapa_svg_x: number | null;
   pin_mapa_svg_y: number | null;
+  video_url: string | null;
+  video_intervalo: number;
+  video_activo: boolean;
 }
 
 export interface CreateTotemResponse {
@@ -92,4 +95,57 @@ export async function fetchEspacios(): Promise<Espacio[]> {
 
 export async function fetchTotemMe(): Promise<Totem> {
   return totemFetch<Totem>("/api/totems/me/");
+}
+
+export interface ConfiguracionVideo {
+  video_url: string | null;
+  video_intervalo: number;
+  video_activo: boolean;
+}
+
+export async function fetchConfigVideo(
+  totemId: number,
+): Promise<ConfiguracionVideo> {
+  return apiFetch<ConfiguracionVideo>(`/api/totems/${totemId}/config-video/`, {
+    cache: "no-store",
+  });
+}
+
+export async function updateConfigVideo(
+  totemId: number,
+  data: { video_intervalo?: number; video_activo?: boolean },
+): Promise<Totem> {
+  return apiFetch<Totem>(`/api/totems/${totemId}/config-video/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function uploadVideoArchivo(
+  totemId: number,
+  archivo: File,
+): Promise<Totem> {
+  const token = getAdminToken();
+  const formData = new FormData();
+  formData.append("video_archivo", archivo);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`/api/totems/${totemId}/config-video/`, {
+    method: "PATCH",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const detail =
+      body?.video_archivo?.[0] || body?.detail || `Error ${response.status}`;
+    throw new Error(Array.isArray(detail) ? detail[0] : String(detail));
+  }
+
+  return response.json();
 }

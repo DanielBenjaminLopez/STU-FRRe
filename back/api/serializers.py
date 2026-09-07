@@ -376,6 +376,7 @@ class TotemSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
     )
+    video_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Totem
@@ -384,11 +385,17 @@ class TotemSerializer(serializers.ModelSerializer):
             'config_pantalla', 'vinculado', 'activo',
             'plantilla_id', 'plantilla', 'creado_en',
             'pin_mapa_piso', 'pin_mapa_svg_x', 'pin_mapa_svg_y',
+            'video_archivo', 'video_url', 'video_intervalo', 'video_activo',
         ]
         read_only_fields = ['vinculado', 'creado_en']
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
+
+    def get_video_url(self, obj):
+        if obj.video_archivo:
+            return obj.video_archivo.url
+        return None
 
 
 class EventoCalendarioSerializer(serializers.ModelSerializer):

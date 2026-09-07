@@ -7,9 +7,9 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -35,7 +35,7 @@ from .models import (
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
-from .realtime import notify_content, notify_totems
+from .realtime import notify_content, notify_totem, notify_totems
 
 
 class RealtimeContentMixin:
@@ -582,7 +582,31 @@ class TotemMeView(APIView):
         ).prefetch_related(
             'plantilla__widgets_posiciones__widget'
         ).get(pk=request.user.totem.id)
-        return Response(TotemSerializer(totem).data)
+        data = TotemSerializer(totem, context={'request': request}).data
+
+        return Response(data)
+
+
+class TotemConfigVideoView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get(self, request, pk):
+        totem = Totem.objects.get(pk=pk)
+        data = TotemSerializer(totem, context={'request': request}).data
+        return Response({
+            'video_url': data.get('video_url'),
+            'video_intervalo': totem.video_intervalo,
+            'video_activo': totem.video_activo,
+        })
+
+    def patch(self, request, pk):
+        totem = Totem.objects.get(pk=pk)
+        serializer = TotemSerializer(totem, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        transaction.on_commit(lambda: notify_totem(totem.id))
+        return Response(serializer.data)
 
 
 class TotemNewView(APIView):
@@ -706,3 +730,6 @@ class BulkCalendarView(APIView):
                 {'detail': f'Error al guardar eventos: {e}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+

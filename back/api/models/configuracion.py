@@ -3,6 +3,8 @@ import random
 from django.db import models
 from django.utils import timezone
 
+from ..validators import validar_video
+
 
 class Totem(models.Model):
     VINCULO_VIGENCIA_HORAS = 1
@@ -53,6 +55,18 @@ class Totem(models.Model):
         blank=True,
         help_text='Coordenada Y en el sistema de coordenadas del SVG del mapa.',
     )
+    video_archivo = models.FileField(
+        upload_to='totems/videos/',
+        null=True,
+        blank=True,
+        validators=[validar_video],
+        help_text='Video MP4 vertical para pantalla del tótem.',
+    )
+    video_intervalo = models.IntegerField(
+        default=60,
+        help_text='Segundos de inactividad antes de mostrar el video.',
+    )
+    video_activo = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['nombre']
@@ -153,6 +167,7 @@ class PlantillaWidget(models.Model):
 
     def __str__(self):
         return f"{self.widget.nombre} en {self.plantilla.nombre} ({self.col_pos}, {self.fila_pos})"
+
 
 
 
