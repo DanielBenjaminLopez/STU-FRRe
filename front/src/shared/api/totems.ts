@@ -149,3 +149,9 @@ export async function uploadVideoArchivo(
 
   return response.json();
 }
+
+export async function deleteVideoArchivo(totemId: number): Promise<void> {
+  return apiFetch<void>(`/api/totems/${totemId}/config-video/`, {
+    method: "DELETE",
+  });
+}

@@ -1,5 +1,6 @@
 import random
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -64,6 +65,7 @@ class Totem(models.Model):
     )
     video_intervalo = models.IntegerField(
         default=60,
+        validators=[MinValueValidator(10), MaxValueValidator(600)],
         help_text='Segundos de inactividad antes de mostrar el video.',
     )
     video_activo = models.BooleanField(default=False)
@@ -75,6 +77,21 @@ class Totem(models.Model):
 
     def __str__(self):
         return self.nombre or self.codigo_vinculacion or f'Tótem #{self.id}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old = Totem.objects.get(pk=self.pk)
+                if old.video_archivo and old.video_archivo != self.video_archivo:
+                    old.video_archivo.delete(save=False)
+            except Totem.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.video_archivo:
+            self.video_archivo.delete(save=False)
+        super().delete(*args, **kwargs)
 
     @classmethod
     def generar_codigo(cls) -> str:

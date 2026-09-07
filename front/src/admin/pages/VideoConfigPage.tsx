@@ -37,8 +37,29 @@ export default function VideoConfigPage() {
     refreshTotems().catch(() => {});
   };
 
+  const handleDeleted = () => {
+    if (config) {
+      setConfig({ ...config, video_url: null });
+    }
+    refreshTotems().catch(() => {});
+  };
+
+  const handleIntervaloChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    if (!Number.isFinite(val)) return;
+    setIntervalo(val);
+  };
+
+  const handleIntervaloBlur = () => {
+    setIntervalo((prev) => Math.min(600, Math.max(10, prev)));
+  };
+
   const handleSave = async () => {
     if (!totemId) return;
+    if (intervalo < 10 || intervalo > 600) {
+      setError("El intervalo debe estar entre 10 y 600 segundos");
+      return;
+    }
     setSaving(true);
     setError(null);
     setSuccess("");
@@ -82,6 +103,7 @@ export default function VideoConfigPage() {
                 totemId={totemId}
                 currentUrl={config?.video_url ?? null}
                 onUploaded={handleUploaded}
+                onDeleted={handleDeleted}
               />
             </div>
 
@@ -103,7 +125,8 @@ export default function VideoConfigPage() {
                   min={10}
                   max={600}
                   value={intervalo}
-                  onChange={(e) => setIntervalo(Number(e.target.value))}
+                  onChange={handleIntervaloChange}
+                  onBlur={handleIntervaloBlur}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
                 />
                 <p className="text-xs text-gray-400">
@@ -133,7 +156,10 @@ export default function VideoConfigPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              <Button onClick={handleSave} disabled={saving}>
+              <Button
+                onClick={handleSave}
+                disabled={saving || intervalo < 10 || intervalo > 600}
+              >
                 {saving ? "Guardando..." : "Guardar"}
               </Button>
             </div>
