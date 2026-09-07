@@ -11,6 +11,7 @@ import {
   fetchPlantillas,
   type PlantillaDTO,
 } from "../../shared/api/plantillas";
+import { sileo } from "sileo";
 
 export default function Home() {
   const { totems, selectedId, setSelectedId, refreshTotems } = useTotem();
@@ -19,7 +20,6 @@ export default function Home() {
   const [editing, setEditing] = useState<Totem | null>(null);
   const [deleting, setDeleting] = useState<Totem | null>(null);
   const [vincularOpen, setVincularOpen] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchPlantillas()
@@ -55,14 +55,12 @@ export default function Home() {
   ];
 
   function handleEdit(totem: Totem) {
-    setError("");
     setEditing(totem);
   }
 
   async function handleUpdate(data: Record<string, unknown>) {
     if (!editing) return;
     try {
-      setError("");
       await updateTotem(editing.id, {
         nombre: String(data.nombre ?? ""),
         activo: Boolean(data.activo),
@@ -71,23 +69,27 @@ export default function Home() {
       setEditing(null);
       await refreshTotems();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al guardar el tótem",
-      );
+      sileo.error({
+        title: "Error al guardar el tótem",
+        description:
+          err instanceof Error ? err.message : "Error al guardar el tótem",
+      });
     }
   }
 
   async function handleConfirmDelete() {
     if (!deleting) return;
     try {
-      setError("");
       await deleteTotem(deleting.id);
       setDeleting(null);
       await refreshTotems();
+      sileo.success({ title: "Tótem eliminado correctamente" });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al eliminar el tótem",
-      );
+      sileo.error({
+        title: "Error al eliminar el tótem",
+        description:
+          err instanceof Error ? err.message : "Error al eliminar el tótem",
+      });
     }
   }
 
@@ -106,18 +108,11 @@ export default function Home() {
           variant="primary"
           className="w-full mb-3"
           onClick={() => {
-            setError("");
             setVincularOpen(true);
           }}
         >
           Nuevo tótem
         </Button>
-
-        {error && (
-          <div className="mb-3 px-3 py-2 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600">
-            {error}
-          </div>
-        )}
 
         <div className="flex flex-col gap-2">
           {sortedTotems.map((t) => {
@@ -198,10 +193,7 @@ export default function Home() {
                   <button
                     type="button"
                     title="Eliminar"
-                    onClick={() => {
-                      setError("");
-                      setDeleting(t);
-                    }}
+                    onClick={() => setDeleting(t)}
                     className="flex-1 text-xs font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 py-2 transition-colors cursor-pointer"
                   >
                     Eliminar
@@ -230,7 +222,6 @@ export default function Home() {
           onSubmit={handleUpdate}
           onClose={() => {
             setEditing(null);
-            setError("");
           }}
         />
       )}

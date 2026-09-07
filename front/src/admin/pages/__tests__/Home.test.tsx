@@ -16,6 +16,7 @@ const {
   mockFetchPlantillas,
   mockUpdateTotem,
   mockDeleteTotem,
+  mockSileo,
 } = vi.hoisted(() => ({
   mockTotems: vi.fn(),
   mockSelectedId: vi.fn(),
@@ -24,6 +25,15 @@ const {
   mockFetchPlantillas: vi.fn(),
   mockUpdateTotem: vi.fn(),
   mockDeleteTotem: vi.fn(),
+  mockSileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("sileo", () => ({
+  sileo: mockSileo,
+  Toaster: () => null,
 }));
 
 vi.mock("../../../shared/context/TotemContext", () => ({
@@ -250,7 +260,7 @@ describe("Home", () => {
     expect(screen.getByText("Eliminar tótem")).toBeInTheDocument();
   });
 
-  it("actualiza el tótem y refresca la lista", async () => {
+  it("actualiza el tótem y refresca la lista sin toast de éxito", async () => {
     mockTotems.mockReturnValue([vinculado]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
@@ -258,9 +268,10 @@ describe("Home", () => {
     fireEvent.click(screen.getByText("Guardar"));
     await waitFor(() => expect(mockUpdateTotem).toHaveBeenCalled());
     expect(mockRefresh).toHaveBeenCalled();
+    expect(mockSileo.success).not.toHaveBeenCalled();
   });
 
-  it("elimina el tótem al confirmar y refresca la lista", async () => {
+  it("elimina el tótem al confirmar y refresca la lista con toast de éxito", async () => {
     mockTotems.mockReturnValue([vinculado]);
     mockSelectedId.mockReturnValue("1");
     render(<Home />);
@@ -269,5 +280,8 @@ describe("Home", () => {
     fireEvent.click(confirmButton);
     await waitFor(() => expect(mockDeleteTotem).toHaveBeenCalledWith(1));
     expect(mockRefresh).toHaveBeenCalled();
+    expect(mockSileo.success).toHaveBeenCalledWith({
+      title: "Tótem eliminado correctamente",
+    });
   });
 });

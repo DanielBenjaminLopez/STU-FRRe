@@ -54,12 +54,7 @@ export default function NoticiaDetailModal({
     : "text-blue-700 bg-blue-50";
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8">
       <div className="bg-white rounded-4xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         {noticia.imagen_url && (
           <div className="relative h-64 shrink-0 overflow-hidden">

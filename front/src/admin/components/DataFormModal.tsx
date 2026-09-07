@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 import Button from "../../shared/components/ui/Button";
 import ImageDropzone from "../../shared/components/ui/ImageDropzone";
 
@@ -56,7 +57,6 @@ export default function DataFormModal({
         ]),
       ),
   );
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -76,7 +76,6 @@ export default function DataFormModal({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -108,21 +107,18 @@ export default function DataFormModal({
       await onSubmit(cleaned);
       onClose();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al guardar los datos",
-      );
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error ? err.message : "Error al guardar los datos",
+      });
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-4xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-8 pt-8 pb-3">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
@@ -244,14 +240,12 @@ export default function DataFormModal({
             ),
           )}
 
-          {error && <span className="text-red-500 text-sm">{error}</span>}
-
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading} variant="primary">
-              {loading ? "Guardando..." : "Guardar"}
+              Guardar
             </Button>
           </div>
         </form>

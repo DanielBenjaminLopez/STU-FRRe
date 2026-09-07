@@ -8,13 +8,27 @@ import {
 } from "@testing-library/react";
 import VincularTotemModal from "../VincularTotemModal";
 
-const { mockVincularTotem, mockNavigate, mockRefresh, mockSetSelectedId } =
-  vi.hoisted(() => ({
-    mockVincularTotem: vi.fn(),
-    mockNavigate: vi.fn(),
-    mockRefresh: vi.fn(),
-    mockSetSelectedId: vi.fn(),
-  }));
+const {
+  mockVincularTotem,
+  mockNavigate,
+  mockRefresh,
+  mockSetSelectedId,
+  mockSileo,
+} = vi.hoisted(() => ({
+  mockVincularTotem: vi.fn(),
+  mockNavigate: vi.fn(),
+  mockRefresh: vi.fn(),
+  mockSetSelectedId: vi.fn(),
+  mockSileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("sileo", () => ({
+  sileo: mockSileo,
+  Toaster: () => null,
+}));
 
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
@@ -68,9 +82,11 @@ describe("VincularTotemModal", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Vincular tótem" }));
 
-    expect(
-      await screen.findByText("Tótem vinculado exitosamente"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.success).toHaveBeenCalledWith({
+        title: "Tótem vinculado exitosamente",
+      });
+    });
     expect(mockVincularTotem).toHaveBeenCalledWith({
       codigo_vinculacion: "34735",
       nombre: "Tótem Hall",
@@ -103,7 +119,12 @@ describe("VincularTotemModal", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Vincular tótem" }));
 
-    expect(await screen.findByText("Código inválido")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith({
+        title: "Error al vincular tótem",
+        description: "Código inválido",
+      });
+    });
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockOnClose).not.toHaveBeenCalled();
