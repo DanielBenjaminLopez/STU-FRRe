@@ -1,0 +1,90 @@
+carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,activo,plan_estudio
+Ingeniería Química,Álgebra,Curso 1,Aula 2.5,Lunes,08:30,12:25,TRUE,2023
+Ingeniería Química,Química,Curso 1,Aula 2.5,Martes,07:45,09:15,TRUE,2023
+Ingeniería Química,Ingeniería y Sociedad,Curso 1,Aula 2.5,Martes,09:15,12:25,TRUE,2023
+Ingeniería Química,Ingeniería y Sociedad,Curso 2,Aula 2.5,Martes,09:15,12:25,TRUE,2023
+Ingeniería Química,Fundamentos de Informática,Curso 1,Laboratorio informático 5,Martes,14:15,17:20,TRUE,2023
+Ingeniería Química,Fundamentos de Informática,Curso 1,Laboratorio informático 6,Martes,14:15,17:20,TRUE,2023
+Ingeniería Química,Análisis Matemático I,Curso 1,Aula 2.1,Miércoles,07:45,09:15,TRUE,2023
+Ingeniería Química,Análisis Matemático I,Curso 2,Aula 2.1,Miércoles,07:45,09:15,TRUE,2023
+Ingeniería Química,Química,Curso 1,,Miércoles,09:15,11:40,TRUE,2023
+Ingeniería Química,Química,Curso 1,,Miércoles,09:15,11:40,TRUE,2023
+Ingeniería Química,Análisis Matemático I,Curso 1,Aula 2.5,Jueves,07:45,10:00,TRUE,2023
+Ingeniería Química,Sistemas de Representación,Curso 1,Aula 2.6,Jueves,10:10,12:25,TRUE,2023
+Ingeniería Química,Física I,Curso 1,Aula 2.5,Viernes,07:45,10:55,TRUE,2023
+Ingeniería Química,Física I,Curso 2,Aula 2.5,Viernes,07:45,10:55,TRUE,2023
+Ingeniería Química,Química,Curso 2,Aula 2.1,Lunes,07:45,09:15,TRUE,2023
+Ingeniería Química,Álgebra,Curso 2,Aula 2.1,Lunes,09:15,12:25,TRUE,2023
+Ingeniería Química,Ingeniería y Sociedad,Curso 1,Aula 2.5,Martes,09:15,12:25,TRUE,2023
+Ingeniería Química,Ingeniería y Sociedad,Curso 2,Aula 2.5,Martes,09:15,12:25,TRUE,2023
+Ingeniería Química,Química,Curso 2,,Martes,15:50,18:05,TRUE,2023
+Ingeniería Química,Química,Curso 2,,Martes,15:50,18:05,TRUE,2023
+Ingeniería Química,Sistemas de Representación,Curso 2,Aula 2.6,Miércoles,09:15,12:25,TRUE,2023
+Ingeniería Química,Análisis Matemático I,Curso 2,Aula 2.1,Jueves,07:45,10:00,TRUE,2023
+Ingeniería Química,Fundamentos de Informática,Curso 2,Laboratorio informático 5,Jueves,10:10,13:10,TRUE,2023
+Ingeniería Química,Fundamentos de Informática,Curso 2,Laboratorio informático 6,Jueves,10:10,13:10,TRUE,2023
+Ingeniería Química,Probabilidad y Estadística,Curso 1,Aula 2.5,Lunes,13:30,18:05,TRUE,2023
+Ingeniería Química,Inglés I,Curso 1,,Lunes,19:40,22:45,TRUE,2023
+Ingeniería Química,Química Orgánica,Curso 1,,Martes,14:15,18:05,TRUE,2023
+Ingeniería Química,Física II,Curso 1,Aula 2.5,Martes,18:10,22:00,TRUE,2023
+Ingeniería Química,Introducción a Equipos y Procesos,Curso 1,Aula 2.5,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería Química,Introducción a Equipos y Procesos,Curso 1,Aula 2.6,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería Química,Física II,Curso 1,Aula 2.5,Miércoles,20:30,22:00,TRUE,2023
+Ingeniería Química,Química Orgánica,Curso 1,,Jueves,14:15,18:05,TRUE,2023
+Ingeniería Química,Legislación,Curso 1,Aula 2.5,Jueves,18:10,21:15,TRUE,2023
+Ingeniería Química,Física II,Curso 1,Aula 2.5,Viernes,19:40,22:00,TRUE,2023
+Ingeniería Química,Química Orgánica,Curso 2,,Martes,08:30,12:25,TRUE,2023
+Ingeniería Química,Probabilidad y Estadística,Curso 2,Aula 2.5,Lunes,13:30,18:05,TRUE,2023
+Ingeniería Química,Inglés I,Curso 2,,Lunes,19:40,22:45,TRUE,2023
+Ingeniería Química,Física II,Curso 2,Aula 2.5,Martes,18:10,22:00,TRUE,2023
+Ingeniería Química,Introducción a Equipos y Procesos,Curso 2,Aula 2.5,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería Química,Introducción a Equipos y Procesos,Curso 2,Aula 2.6,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería Química,Física II,Curso 2,Aula 2.5,Miércoles,20:30,22:00,TRUE,2023
+Ingeniería Química,Legislación,Curso 2,Aula 2.5,Jueves,18:10,21:15,TRUE,2023
+Ingeniería Química,Química Orgánica,Curso 2,,Viernes,14:15,18:05,TRUE,2023
+Ingeniería Química,Física II,Curso 2,Aula 2.5,Viernes,19:40,22:00,TRUE,2023
+Ingeniería Química,Físicoquímica,Curso 1,,Lunes,18:10,19:40,TRUE,2023
+Ingeniería Química,Físicoquímica,Curso 1,,Lunes,19:40,22:45,TRUE,2023
+Ingeniería Química,Fenómenos de Transporte,Curso 1,Aula 1.3,Martes,18:10,22:00,TRUE,2023
+Ingeniería Química,Matemática Superior Aplicada,Curso 1,Aula 1.2,Miércoles,15:50,18:05,TRUE,2023
+Ingeniería Química,Balance de Masa y Energía,Curso 1,Aula 1.5,Miércoles,18:10,20:25,TRUE,2023
+Ingeniería Química,Matemática Superior Aplicada,Curso 1,Aula 1.2,Jueves,15:50,18:05,TRUE,2023
+Ingeniería Química,Fenómenos de Transporte,Curso 1,Aula 1.3,Jueves,18:10,22:00,TRUE,2023
+Ingeniería Química,Físicoquímica,Curso 1,Aula 1.3,Viernes,18:10,19:40,TRUE,2023
+Ingeniería Química,Química Aplicada,Curso 1,Aula 1.3,Viernes,19:40,22:45,TRUE,2023
+Ingeniería Química,IRQUI,Curso 1,Aula 2.11,Lunes,17:20,19:40,TRUE,2023
+Ingeniería Química,Máquinas e Instalaciones Eléctricas ,Curso 1,Aula 2.11,Lunes,19:40,22:45,TRUE,2023
+Ingeniería Química,Organización Industrial,Curso 1,Aula 2.11,Martes,17:20,19:40,TRUE,2023
+Ingeniería Química,"Diseño, simulación, optimización y seguridad de procesos",Curso 1,Aula 2.11,Martes,19:40,22:45,TRUE,2023
+Ingeniería Química,Operaciones Unitarias II,Curso 1,,Miércoles,18:10,22:00,TRUE,2023
+Ingeniería Química,IRQUI,Curso 1,Aula 2.11,Jueves,18:10,20:25,TRUE,2023
+Ingeniería Química,Organización Industrial,Curso 1,Aula 2.11,Jueves,20:30,22:45,TRUE,2023
+Ingeniería Química,Operaciones Unitarias II,Curso 1,Aula 2.11,Viernes,18:10,22:00,TRUE,2023
+Ingeniería Química,IRQUI,Curso 1,Aula 2.11,Sábado,09:15,12:25,TRUE,2023
+Ingeniería Química,Proyecto Final,Curso 1,,Lunes,14:15,17:20,TRUE,2023
+Ingeniería Química,Mecánica Industrial,Curso 1,,Lunes,17:20,18:55,TRUE,2023
+Ingeniería Química,Calidad y Control Estadístico de Procesos,Curso 1,,Lunes,18:55,21:15,TRUE,2023
+Ingeniería Química,Práctica Supervisada,Curso 1,,Lunes,21:15,22:45,TRUE,2023
+Ingeniería Química,Administración de Negocios,Curso 1,,Martes,15:00,18:55,TRUE,2023
+Ingeniería Química,Ingeniería de las Instalaciones,Curso 1,,Martes,18:55,21:15,TRUE,2023
+Ingeniería Química,Ingeniería Ambiental,Curso 1,,Miércoles,14:15,18:55,TRUE,2023
+Ingeniería Química,Calidad y Control Estadístico de Procesos,Curso 1,,Miércoles,18:55,21:15,TRUE,2023
+Ingeniería Química,Energías Renovables,Curso 1,,Jueves,13:30,18:05,TRUE,2023
+Ingeniería Química,Métodos Tradicionales,Curso 1,,Jueves,18:10,22:45,TRUE,2023
+Ingeniería Química,Procedimientos y Normativas en Alimentos,Curso 1,,Jueves,13:30,17:20,TRUE,2023
+Ingeniería Química,Gestión de RRHH,Curso 1,,Jueves,18:10,22:00,TRUE,2023
+Ingeniería Química,Tecnología de los Alimentos,Curso 1,,Viernes,12:45,17:20,TRUE,2023
+Ingeniería Química,Ingeniería de las Instalaciones,Curso 1,,Viernes,17:20,19:40,TRUE,2023
+Ingeniería Química,Mecánica Industrial,Curso 1,,Viernes,19:40,22:45,TRUE,2023
+Ingeniería Química,Integración V,Curso 2,,Lunes,14:15,17:20,TRUE,1995
+Ingeniería Química,CEP,Curso 2,,Lunes,18:55,21:15,TRUE,1995
+Ingeniería Química,Práctica Supervisada,Curso 2,,Lunes,21:15,22:45,TRUE,1995
+Ingeniería Química,Administración de Negocios,Curso 2,,Martes,15:00,18:55,TRUE,1995
+Ingeniería Química,Ingeniería de las Instalaciones,Curso 2,,Martes,18:55,21:15,TRUE,1995
+Ingeniería Química,CEP,Curso 2,,Miércoles,18:55,21:15,TRUE,1995
+Ingeniería Química,Energías Renovables,Curso 2,,Jueves,13:30,18:05,TRUE,1995
+Ingeniería Química,Métodos Tradicionales,Curso 2,,Jueves,18:10,22:45,TRUE,1995
+Ingeniería Química,Procedimientos y Normativas en Alimentos,Curso 2,,Jueves,13:30,17:20,TRUE,1995
+Ingeniería Química,Gestión de RRHH,Curso 2,,Jueves,18:10,22:00,TRUE,1995
+Ingeniería Química,Tecnología de los Alimentos,Curso 2,,Viernes,12:45,17:20,TRUE,1995
+Ingeniería Química,Ingeniería de las Instalaciones,Curso 2,,Viernes,17:20,19:40,TRUE,1995

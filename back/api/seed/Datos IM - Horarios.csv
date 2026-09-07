@@ -1,0 +1,12 @@
+carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,activo,plan_estudio
+Ingeniería en Mecatrónica,Sistemas de Representación,Curso 1,,Lunes,13:30,18:05,TRUE,2001
+Ingeniería en Mecatrónica,Sistemas Digitales,Curso 1,,Martes,13:30,17:20,TRUE,2001
+Ingeniería en Mecatrónica,Electrotecnia I,Curso 1,,Miércoles,13:30,18:05,TRUE,2001
+Ingeniería en Mecatrónica,Mecatrónica I,Curso 1,,Viernes,15:50,18:05,TRUE,2001
+Ingeniería en Mecatrónica,Materiales,Curso 1,,Sábado,07:45,11:40,TRUE,2001
+Ingeniería en Mecatrónica,Tecnología de Fabricación,Curso 1,,Lunes,14:15,18:05,TRUE,2001
+Ingeniería en Mecatrónica,Mecatrónica II,Curso 1,,Martes,15:00,17:20,TRUE,2001
+Ingeniería en Mecatrónica,Automación Industrial,Curso 1,,Miércoles,14:15,18:05,TRUE,2001
+Ingeniería en Mecatrónica,Automación Industrial,Curso 1,,Jueves,13:30,15:45,TRUE,2001
+Ingeniería en Mecatrónica,Mecánica II,Curso 1,,Jueves,15:50,18:55,TRUE,2001
+Ingeniería en Mecatrónica,Gestión de la Calidad,Curso 1,,Viernes,13:30,18:05,TRUE,2001

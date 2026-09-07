@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from import_export import fields, resources, widgets
 from import_export.widgets import ForeignKeyWidget
 
@@ -64,36 +65,6 @@ class PlanMateriaResource(resources.ModelResource):
         )
 
 
-class ComisionResource(resources.ModelResource):
-    plan_materia = fields.Field(
-        column_name='plan_materia',
-        attribute='plan_materia',
-        widget=ForeignKeyWidget(PlanMateria, field='id'),
-    )
-
-    def before_import_row(self, row, **kwargs):
-        """Permite resolver el plan_materia si se ingresan las columnas 'carrera' y 'materia'."""
-        if not row.get('plan_materia'):
-            carrera_nombre = row.get('carrera')
-            materia_nombre = row.get('materia')
-            plan_estudio = row.get('plan_estudio', '2023')
-
-            if carrera_nombre and materia_nombre:
-                try:
-                    pm = PlanMateria.objects.get(
-                        carrera__nombre=carrera_nombre,
-                        materia__nombre=materia_nombre,
-                        plan_estudio=plan_estudio,
-                    )
-                    row['plan_materia'] = pm.id
-                except PlanMateria.DoesNotExist:
-                    pass
-
-    class Meta:
-        model = Comision
-        fields = ('id', 'plan_materia', 'nombre')
-
-
 def normalizar_dia_semana(dia_raw):
     if not dia_raw or not isinstance(dia_raw, str):
         return dia_raw
@@ -139,34 +110,135 @@ def validar_hora(hora_str, nombre_campo):
         raise ValidationError(f"Formato de hora inválido en '{nombre_campo}' ('{h_str}'). Debe ser HH:MM (ej: 08:00, 15:30).")
 
 
+def resolver_carrera(carrera_str):
+    if not carrera_str:
+        return None
+    c_str = str(carrera_str).strip()
+    car = Carrera.objects.filter(codigo__iexact=c_str).first()
+    if car:
+        return car
+    car = (
+        Carrera.objects.filter(nombre__iexact=c_str).first()
+        or Carrera.objects.filter(nombre__icontains=c_str).first()
+    )
+    if car:
+        return car
+
+    def sin_tildes(s):
+        return (
+            s.lower()
+            .replace('á', 'a')
+            .replace('é', 'e')
+            .replace('í', 'i')
+            .replace('ó', 'o')
+            .replace('ú', 'u')
+        )
+
+    c_limpio = sin_tildes(c_str)
+    for c in Carrera.objects.all():
+        c_nom = sin_tildes(c.nombre)
+        if c_nom == c_limpio or c_limpio in c_nom or c_nom in c_limpio or c.codigo.lower() == c_limpio:
+            return c
+    return None
+
+
 def resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw=None):
     if not carrera_nombre or not materia_nombre:
         return None
-    c_str = str(carrera_nombre).strip()
-    m_str = str(materia_nombre).strip()
+    raw_m = str(materia_nombre)
+    m_str = raw_m.strip()
 
-    qs = PlanMateria.objects.filter(
-        carrera__nombre__icontains=c_str,
-        materia__nombre__iexact=m_str,
+    m_filter = (
+        Q(materia__nombre__iexact=m_str)
+        | Q(materia__nombre__iexact=raw_m)
+        | Q(materia__nombre__istartswith=m_str)
     )
+
+    car = resolver_carrera(carrera_nombre)
+    if car:
+        qs = PlanMateria.objects.filter(carrera=car).filter(m_filter)
+    else:
+        c_str = str(carrera_nombre).strip()
+        qs = PlanMateria.objects.filter(
+            Q(carrera__nombre__icontains=c_str) | Q(carrera__codigo__iexact=c_str)
+        ).filter(m_filter)
+
     if not qs.exists():
-        # Fallback si el nombre de la carrera difiere ligeramente o es una sigla
-        qs = PlanMateria.objects.filter(materia__nombre__iexact=m_str)
+        qs = PlanMateria.objects.filter(m_filter)
 
     if plan_estudio_raw and str(plan_estudio_raw).strip():
         qs_plan = qs.filter(plan_estudio=str(plan_estudio_raw).strip())
         if qs_plan.exists():
             return qs_plan.first()
 
+    for preferido in ['2023', '2026', '2008', '1995']:
+        qs_pref = qs.filter(plan_estudio=preferido)
+        if qs_pref.exists():
+            return qs_pref.first()
+
     return qs.first()
 
 
 def resolver_comision(carrera_nombre, materia_nombre, comision_nombre, plan_estudio_raw=None):
-    pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw)
-    if not pm:
-        return None
     c_nom = str(comision_nombre).strip()
-    return Comision.objects.filter(plan_materia=pm, nombre__iexact=c_nom).first()
+    pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw)
+    if pm:
+        com = Comision.objects.filter(plan_materia=pm, nombre__iexact=c_nom).first()
+        if com:
+            return com
+        # Si en la base de datos la comisión tiene nombre vacío o hay una única comisión
+        coms = Comision.objects.filter(plan_materia=pm)
+        if coms.count() == 1:
+            return coms.first()
+
+    # Fallback: buscar la comisión en cualquier otro plan registrado de la misma materia
+    car = resolver_carrera(carrera_nombre)
+    m_str = str(materia_nombre).strip()
+    raw_m = str(materia_nombre)
+    m_filter = (
+        Q(plan_materia__materia__nombre__iexact=m_str)
+        | Q(plan_materia__materia__nombre__iexact=raw_m)
+        | Q(plan_materia__materia__nombre__istartswith=m_str)
+    )
+    qs = Comision.objects.filter(m_filter)
+    if car:
+        qs = qs.filter(plan_materia__carrera=car)
+    else:
+        c_str = str(carrera_nombre).strip()
+        qs = qs.filter(
+            Q(plan_materia__carrera__nombre__icontains=c_str) | Q(plan_materia__carrera__codigo__iexact=c_str)
+        )
+
+    com = qs.filter(nombre__iexact=c_nom).first()
+    if com:
+        return com
+    if qs.count() == 1:
+        return qs.first()
+    return None
+
+
+class ComisionResource(resources.ModelResource):
+    plan_materia = fields.Field(
+        column_name='plan_materia',
+        attribute='plan_materia',
+        widget=ForeignKeyWidget(PlanMateria, field='id'),
+    )
+
+    def before_import_row(self, row, **kwargs):
+        """Permite resolver el plan_materia si se ingresan las columnas 'carrera' y 'materia'."""
+        if not row.get('plan_materia'):
+            carrera_nombre = row.get('carrera')
+            materia_nombre = row.get('materia')
+            plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
+
+            if carrera_nombre and materia_nombre:
+                pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio)
+                if pm:
+                    row['plan_materia'] = pm.id
+
+    class Meta:
+        model = Comision
+        fields = ('id', 'plan_materia', 'nombre')
 
 
 class HorarioCursadoResource(resources.ModelResource):
@@ -429,22 +501,20 @@ class AvisoResource(resources.ModelResource):
             carrera = row.get('carrera')
             materia = row.get('materia')
             comision_nombre = row.get('comision_nombre') or row.get('nombre_comision')
-            plan_estudio = row.get('plan_estudio', '2023')
+            plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
             dia_semana = row.get('dia_semana')
 
             if carrera and materia and comision_nombre:
                 try:
-                    qs = HorarioCursado.objects.filter(
-                        comision__plan_materia__carrera__nombre=carrera,
-                        comision__plan_materia__materia__nombre=materia,
-                        comision__plan_materia__plan_estudio=plan_estudio,
-                        comision__nombre=comision_nombre,
-                    )
-                    if dia_semana:
-                        qs = qs.filter(dia_semana=dia_semana)
-                    horario = qs.first()
-                    if horario:
-                        row['horario_cursado'] = horario.id
+                    com = resolver_comision(carrera, materia, comision_nombre, plan_estudio)
+                    if com:
+                        qs = HorarioCursado.objects.filter(comision=com)
+                        if dia_semana:
+                            dia_norm = normalizar_dia_semana(dia_semana)
+                            qs = qs.filter(dia_semana=dia_norm)
+                        horario = qs.first()
+                        if horario:
+                            row['horario_cursado'] = horario.id
                 except Exception:
                     pass
 

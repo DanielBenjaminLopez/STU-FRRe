@@ -88,7 +88,8 @@ def load_seed(apps, schema_editor):
         comision = comisiones[
             (row["carrera"], row["materia"], row["comision_nombre"])
         ]
-        espacio = Espacio.objects.get(nombre=row["espacio"])
+        esp_nombre = (row.get("espacio") or "").strip()
+        espacio = Espacio.objects.filter(nombre=esp_nombre).first() if esp_nombre else None
         HorarioCursado.objects.update_or_create(
             comision=comision,
             espacio=espacio,
