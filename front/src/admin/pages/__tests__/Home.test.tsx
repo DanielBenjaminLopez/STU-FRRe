@@ -281,7 +281,7 @@ describe("Home", () => {
     await waitFor(() => expect(mockDeleteTotem).toHaveBeenCalledWith(1));
     expect(mockRefresh).toHaveBeenCalled();
     expect(mockSileo.success).toHaveBeenCalledWith({
-      title: "Tótem eliminado correctamente",
+      title: "Tótem eliminado",
     });
   });
 });

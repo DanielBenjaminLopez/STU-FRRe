@@ -44,7 +44,7 @@ export default function VincularTotemModal({
         codigo_vinculacion: codigo,
         nombre,
       });
-      sileo.success({ title: "Tótem vinculado exitosamente" });
+      sileo.success({ title: "Tótem vinculado" });
       setSelectedId(String(nuevo.id));
       refreshTotems().catch(() => {});
       setTimeout(() => {

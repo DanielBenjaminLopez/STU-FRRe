@@ -9,6 +9,17 @@ import {
 import NoticiasPage from "../NoticiasPage";
 import * as noticiasApi from "../../../shared/api/noticias";
 
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+import { sileo } from "sileo";
+
 vi.mock("../../../shared/api/noticias", () => ({
   fetchFeed: vi.fn(),
   createNoticia: vi.fn(),
@@ -161,9 +172,10 @@ describe("NoticiasPage", () => {
     await waitFor(() => {
       expect(mockSyncNoticias).toHaveBeenCalled();
     });
-    expect(
-      await screen.findByText("Sincronizados 5 items"),
-    ).toBeInTheDocument();
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Sincronización finalizada",
+      description: "Sincronizados 5 items",
+    });
   });
 
   it("muestra error al fallar sincronización", async () => {
@@ -171,7 +183,12 @@ describe("NoticiasPage", () => {
     render(<NoticiasPage />);
     await screen.findByTestId("count");
     fireEvent.click(screen.getByText("Sincronizar desde UTN"));
-    expect(await screen.findByText("Error de red")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith({
+        title: "Error al sincronizar",
+        description: "Error de red",
+      });
+    });
   });
 
   it("abre modal de crear noticia", async () => {
@@ -215,6 +232,9 @@ describe("NoticiasPage", () => {
     await waitFor(() => {
       expect(mockCreateNoticia).toHaveBeenCalled();
     });
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Noticia creada",
+    });
   });
 
   it("elimina una noticia tras confirmar", async () => {
@@ -232,6 +252,9 @@ describe("NoticiasPage", () => {
     await waitFor(() => {
       expect(mockDeleteNoticia).toHaveBeenCalledWith(1);
     });
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Noticia eliminada",
+    });
   });
 
   it("elimina un evento tras confirmar", async () => {
@@ -248,6 +271,9 @@ describe("NoticiasPage", () => {
 
     await waitFor(() => {
       expect(mockDeleteEvento).toHaveBeenCalledWith(2);
+    });
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Evento eliminado",
     });
   });
 
@@ -271,6 +297,11 @@ describe("NoticiasPage", () => {
   it("muestra error al cargar datos", async () => {
     mockFetchFeed.mockRejectedValue(new Error("Error de carga"));
     render(<NoticiasPage />);
-    expect(await screen.findByText("Error de carga")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith({
+        title: "Error al cargar datos",
+        description: "Error de carga",
+      });
+    });
   });
 });

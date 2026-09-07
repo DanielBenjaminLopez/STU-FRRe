@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(username, password);
-      sileo.success({ title: "Sesión iniciada correctamente" });
+      sileo.success({ title: "Sesión iniciada" });
       navigate("/admin/", { replace: true });
     } catch (err) {
       sileo.error({

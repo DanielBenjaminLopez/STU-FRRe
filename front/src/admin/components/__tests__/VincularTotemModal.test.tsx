@@ -84,7 +84,7 @@ describe("VincularTotemModal", () => {
 
     await waitFor(() => {
       expect(mockSileo.success).toHaveBeenCalledWith({
-        title: "Tótem vinculado exitosamente",
+        title: "Tótem vinculado",
       });
     });
     expect(mockVincularTotem).toHaveBeenCalledWith({

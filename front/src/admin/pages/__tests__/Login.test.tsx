@@ -87,7 +87,7 @@ describe("Login", () => {
       expect(mockLogin).toHaveBeenCalledWith("admin", "equipobat");
     });
     expect(mockSileo.success).toHaveBeenCalledWith({
-      title: "Sesión iniciada correctamente",
+      title: "Sesión iniciada",
     });
     expect(mockNavigate).toHaveBeenCalledWith("/admin/", { replace: true });
   });
@@ -148,7 +148,7 @@ describe("Login", () => {
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
     await waitFor(() => {
       expect(mockSileo.success).toHaveBeenCalledWith({
-        title: "Sesión iniciada correctamente",
+        title: "Sesión iniciada",
       });
     });
   });

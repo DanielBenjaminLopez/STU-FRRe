@@ -110,13 +110,13 @@ export default function CrudAdminPage<T extends { id: number }>({
         await update(editingRow.id as number, formData);
         if (notifyOnUpdate) {
           sileo.success({
-            title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} actualizado correctamente`,
+            title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} actualizado`,
           });
         }
       } else if (create) {
         await create(formData);
         sileo.success({
-          title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} creado correctamente`,
+          title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} creado`,
         });
       }
       setShowForm(false);
@@ -136,7 +136,7 @@ export default function CrudAdminPage<T extends { id: number }>({
       if (deletingRow && remove) {
         await remove(deletingRow.id as number);
         sileo.success({
-          title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} eliminado correctamente`,
+          title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} eliminado`,
         });
         await load();
       }

@@ -270,10 +270,10 @@ function MateriasHorariosPage() {
     try {
       if (deleteTarget.type === "materia") {
         await deletePlanMateria(deleteTarget.id as number);
-        sileo.success({ title: "Materia eliminada correctamente" });
+        sileo.success({ title: "Materia eliminada" });
       } else if (deleteTarget.type === "comision") {
         await deleteComision(deleteTarget.id as number);
-        sileo.success({ title: "Comisión eliminada correctamente" });
+        sileo.success({ title: "Comisión eliminada" });
       } else if (deleteTarget.type === "horario") {
         for (const id of deleteTarget.id as number[]) {
           await deleteHorario(id);

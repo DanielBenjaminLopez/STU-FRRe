@@ -10,6 +10,15 @@ import MesasExamenPage from "../MesasExamenPage";
 import * as mesasApi from "../../../shared/api/mesasExamen";
 import * as carrerasApi from "../../../shared/api/carreras";
 
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
 vi.mock("../../../shared/api/mesasExamen", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../../shared/api/mesasExamen")>();

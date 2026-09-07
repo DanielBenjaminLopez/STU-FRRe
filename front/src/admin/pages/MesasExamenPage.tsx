@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { sileo } from "sileo";
 
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
@@ -86,11 +87,6 @@ const columns: Column<MesaExamen>[] = [
 export default function MesasExamenPage() {
   const [data, setData] = useState<MesaExamen[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  void error;
-  void success;
 
   const [carreras, setCarreras] = useState<{ value: number; label: string }[]>(
     [],
@@ -109,7 +105,6 @@ export default function MesasExamenPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      setError("");
       const result = await fetchMesasExamen();
       const now = Date.now();
       setData(
@@ -125,9 +120,11 @@ export default function MesasExamenPage() {
         }),
       );
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al cargar los datos",
-      );
+      sileo.error({
+        title: "Error al cargar los datos",
+        description:
+          err instanceof Error ? err.message : "Error al cargar los datos",
+      });
     } finally {
       setLoading(false);
     }
@@ -283,18 +280,22 @@ export default function MesasExamenPage() {
 
       if (editingRow) {
         await updateMesaExamen(editingRow.id, payload);
-        setSuccess("Mesa de examen actualizada");
       } else {
         await createMesaExamen(payload as unknown as Omit<MesaExamen, "id">);
-        setSuccess("Mesa de examen creada");
+        sileo.success({ title: "Mesa de examen creada" });
       }
-      setTimeout(() => setSuccess(""), 3000);
       setShowForm(false);
       setEditingRow(null);
       setSelectedCarrera(null);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Error al guardar la mesa de examen",
+      });
     }
   }
 
@@ -302,12 +303,17 @@ export default function MesasExamenPage() {
     try {
       if (deletingRow) {
         await deleteMesaExamen(deletingRow.id);
-        setSuccess("Mesa de examen eliminada");
-        setTimeout(() => setSuccess(""), 3000);
+        sileo.success({ title: "Mesa de examen eliminada" });
         await loadData();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Error al eliminar la mesa de examen",
+      });
     } finally {
       setDeletingRow(null);
     }
@@ -389,9 +395,11 @@ export default function MesasExamenPage() {
           onClose={() => setShowImportModal(false)}
           onImport={importarMesasExamenCSV}
           onSuccess={(res) => {
-            setSuccess(res.detail || "Importación realizada exitosamente.");
+            sileo.success({
+              title: "Importación exitosa",
+              description: res.detail || "Importación realizada exitosamente.",
+            });
             loadData();
-            setTimeout(() => setSuccess(""), 4000);
           }}
         />
       )}

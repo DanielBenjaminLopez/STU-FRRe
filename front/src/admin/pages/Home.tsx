@@ -83,7 +83,7 @@ export default function Home() {
       await deleteTotem(deleting.id);
       setDeleting(null);
       await refreshTotems();
-      sileo.success({ title: "Tótem eliminado correctamente" });
+      sileo.success({ title: "Tótem eliminado" });
     } catch (err) {
       sileo.error({
         title: "Error al eliminar el tótem",
