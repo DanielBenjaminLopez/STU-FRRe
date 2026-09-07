@@ -1,0 +1,245 @@
+// =======================================================
+// DBML (Database Markup Language) para dbdiagram.io
+// Proyecto: STU-FRRe (Sistema de Tótems Universitarios)
+// =======================================================
+
+// -------------------------------------------------------
+// 1. MÓDULO ACADÉMICO
+// -------------------------------------------------------
+
+Table carrera {
+  id integer [pk, increment]
+  nombre varchar(200) [unique, not null]
+  codigo varchar(10) [unique, note: 'Código abreviado (ej: ISI, IEM, IQ)']
+  tipo varchar(15) [default: 'grado', note: 'grado, tecnica, posgrado, diplomatura']
+}
+
+Table materia {
+  id integer [pk, increment]
+  nombre varchar(200) [unique, not null]
+}
+
+Table plan_materia {
+  id integer [pk, increment]
+  carrera_id integer [not null]
+  materia_id integer [not null]
+  nivel varchar(10) [default: 'primero', note: 'primero, segundo, tercero, cuarto, quinto']
+  modalidad varchar(15) [default: 'cuatrimestral', note: 'anual, cuatrimestral']
+  cuatrimestre varchar(10) [null, note: 'primero, segundo']
+  plan_estudio varchar(4) [default: '2023', note: '2023, 2008']
+
+  indexes {
+    (carrera_id, materia_id, nivel, plan_estudio) [unique]
+  }
+}
+
+Table comision {
+  id integer [pk, increment]
+  plan_materia_id integer [not null]
+  nombre varchar(50) [not null, note: 'Ej: 1K01, 1K02, Única']
+
+  indexes {
+    (plan_materia_id, nombre) [unique]
+  }
+}
+
+Table horario_cursado {
+  id integer [pk, increment]
+  comision_id integer [null]
+  espacio_id integer [null]
+  dia_semana varchar(15) [not null, note: 'lunes, martes, miercoles, jueves, viernes, sabado']
+  hora_inicio time [not null]
+  hora_fin time [not null]
+  activo boolean [default: true]
+
+  indexes {
+    (comision_id, espacio_id, dia_semana, hora_inicio, hora_fin) [unique]
+  }
+}
+
+Table mesa_examen {
+  id integer [pk, increment]
+  plan_materia_id integer [null]
+  espacio_id integer [not null]
+  fecha date [not null]
+  hora time [not null]
+  turno varchar(15) [default: 'febrero', note: 'febrero, marzo, abril, junio, agosto, septiembre, octubre, diciembre']
+  activo boolean [default: true]
+
+  indexes {
+    (plan_materia_id, espacio_id, fecha, hora, turno) [unique]
+  }
+}
+
+// -------------------------------------------------------
+// 2. MÓDULO DE UBICACIONES Y MAPA
+// -------------------------------------------------------
+
+Table espacio {
+  id integer [pk, increment]
+  nombre varchar(150) [unique, not null]
+  tipo varchar(50) [not null, note: 'aula, laboratorio_informatico, secretaria, departamento, otro']
+  tipo_otro varchar(100) [note: 'Completar solo si tipo es otro']
+  piso varchar(20) [default: 'planta_baja', note: 'planta_baja, primer_piso, segundo_piso']
+}
+
+Table ubicacion_mapa {
+  id integer [pk, increment]
+  nombre varchar(150) [not null]
+  piso varchar(20) [not null, note: 'planta_baja, primer_piso, segundo_piso']
+  tipo varchar(50) [not null, note: 'aula, oficina, departamento, secretaria, laboratorio, servicio, escaleras, ascensor']
+  svg_id varchar(100) [unique, not null]
+  descripcion text
+}
+
+// -------------------------------------------------------
+// 3. MÓDULO DE CONFIGURACIÓN, TÓTEMS Y PLANTILLAS
+// -------------------------------------------------------
+
+Table totem {
+  id integer [pk, increment]
+  nombre varchar(150)
+  espacio_id integer [null]
+  codigo_vinculacion varchar(10) [unique, null]
+  vinculado boolean [default: false]
+  activo boolean [default: true]
+  plantilla_id integer [null]
+  config_pantalla jsonb
+  creado_en timestamp
+  codigo_creado_en timestamp [null]
+  pin_mapa_piso varchar(10) [null, note: 'baja, primero, segundo']
+  pin_mapa_svg_x float [null]
+  pin_mapa_svg_y float [null]
+}
+
+Table widget {
+  id integer [pk, increment]
+  nombre varchar(100) [not null]
+  tipo varchar(50) [unique, not null, note: 'horarios, examenes, noticias, avisos, etc.']
+  col_tam_default integer [default: 4]
+  fila_tam_default integer [default: 2]
+  activo boolean [default: true]
+  creado_en timestamp
+}
+
+Table plantilla {
+  id integer [pk, increment]
+  nombre varchar(100) [not null]
+  activa boolean [default: true]
+  creado_en timestamp
+}
+
+Table plantilla_widget {
+  id integer [pk, increment]
+  plantilla_id integer [not null]
+  widget_id integer [not null]
+  col_pos integer [not null]
+  fila_pos integer [not null]
+  col_tam integer [not null]
+  fila_tam integer [not null]
+}
+
+// -------------------------------------------------------
+// 4. MÓDULO DE EVENTOS, COMUNICACIÓN Y CALENDARIO
+// -------------------------------------------------------
+
+Table evento {
+  id integer [pk, increment]
+  titulo varchar(200) [not null]
+  tipo varchar(50) [not null, note: 'taller, curso, recreativo, charla, otro']
+  tipo_otro varchar(100)
+  descripcion text
+  fecha_hora_inicio timestamp [not null]
+  fecha_hora_fin timestamp [not null]
+  imagen_url varchar(500)
+  espacio_id integer [null]
+}
+
+Table aviso {
+  id integer [pk, increment]
+  horario_cursado_id integer [null]
+  evento_id integer [null]
+  fecha date [not null]
+  motivo varchar(300) [not null]
+  tipo varchar(50) [not null, note: 'paro, inasistencia, feriado, otro']
+  tipo_otro varchar(100)
+  creado_en timestamp
+}
+
+Table noticias {
+  id integer [pk, increment]
+  titulo varchar(200) [not null]
+  contenido text [not null]
+  fecha_publicacion timestamp [not null]
+  fecha_expiracion timestamp [null]
+  imagen_url varchar(500)
+  enlace varchar(500)
+  origen varchar(10) [default: 'manual', note: 'manual, scraping']
+}
+
+Table evento_calendario {
+  id integer [pk, increment]
+  titulo varchar(200) [not null]
+  tipo varchar(30) [not null, note: 'inicio_cuatrimestre, fin_cuatrimestre, mesa_examen, receso_invernal, feriado, otro']
+  fecha_inicio date [not null]
+  fecha_fin date [null]
+  todo_el_dia boolean [default: true]
+  color varchar(7)
+  descripcion text
+  documento_fuente varchar(255)
+  creado_en timestamp
+  actualizado_en timestamp
+}
+
+// -------------------------------------------------------
+// RELACIONES (CLAVES FORÁNEAS)
+// -------------------------------------------------------
+
+Ref: plan_materia.carrera_id > carrera.id [delete: restrict]
+Ref: plan_materia.materia_id > materia.id [delete: restrict]
+Ref: comision.plan_materia_id > plan_materia.id [delete: cascade]
+Ref: horario_cursado.comision_id > comision.id [delete: cascade]
+Ref: horario_cursado.espacio_id > espacio.id [delete: cascade]
+Ref: mesa_examen.plan_materia_id > plan_materia.id [delete: cascade]
+Ref: mesa_examen.espacio_id > espacio.id [delete: cascade]
+
+Ref: totem.espacio_id > espacio.id [delete: restrict]
+Ref: totem.plantilla_id > plantilla.id [delete: set null]
+Ref: plantilla_widget.plantilla_id > plantilla.id [delete: cascade]
+Ref: plantilla_widget.widget_id > widget.id [delete: cascade]
+
+Ref: evento.espacio_id > espacio.id [delete: cascade]
+Ref: aviso.horario_cursado_id > horario_cursado.id [delete: cascade]
+Ref: aviso.evento_id > evento.id [delete: cascade]
+
+// -------------------------------------------------------
+// GRUPOS DE TABLAS (TABLE GROUPS)
+// -------------------------------------------------------
+
+TableGroup Academico {
+  carrera
+  materia
+  plan_materia
+  comision
+  horario_cursado
+  mesa_examen
+}
+
+TableGroup Ubicaciones {
+  espacio
+  ubicacion_mapa
+}
+
+TableGroup Configuracion_Totems {
+  totem
+  widget
+  plantilla
+  plantilla_widget
+}
+
+TableGroup Comunicacion_Eventos {
+  evento
+  aviso
+  noticias
+  evento_calendario
+}
