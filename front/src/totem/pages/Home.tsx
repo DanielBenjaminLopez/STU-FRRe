@@ -208,7 +208,7 @@ export default function Home() {
                   {showVideo ? (
                     <motion.div
                       key="video"
-                      className="col-span-4 row-span-6"
+                      className="col-span-4 row-span-6 rounded-2xl"
                       initial={{ rotateY: -90, opacity: 0 }}
                       animate={{ rotateY: 0, opacity: 1 }}
                       exit={{ rotateY: 90, opacity: 0 }}
