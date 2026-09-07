@@ -22,6 +22,19 @@ import type {
   WidgetPosicionDTO,
 } from "../../../shared/api/plantillas";
 
+const { mockSileo } = vi.hoisted(() => ({
+  mockSileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+vi.mock("sileo", () => ({
+  sileo: mockSileo,
+}));
+
 vi.mock("@dnd-kit/core", () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -308,9 +321,7 @@ describe("PlantillasPage", () => {
         fila_tam: 2,
       },
     ]);
-    expect(
-      await screen.findByText("Plantilla guardada correctamente"),
-    ).toBeInTheDocument();
+    expect(mockSileo.success).not.toHaveBeenCalled();
   });
 
   it("crea y guarda una plantilla nueva", async () => {
@@ -328,6 +339,9 @@ describe("PlantillasPage", () => {
         nombre: "Nueva plantilla",
         activa: false,
       });
+      expect(mockSileo.success).toHaveBeenCalledWith({
+        title: "Plantilla creada",
+      });
     });
     expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(99, []);
   });
@@ -339,9 +353,14 @@ describe("PlantillasPage", () => {
     render(<PlantillasPage />);
     await screen.findByText("Plantilla por defecto");
     fireEvent.click(screen.getByText("Guardar"));
-    expect(
-      await screen.findByText("El widget se superpone"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al guardar",
+          description: "El widget se superpone",
+        }),
+      );
+    });
   });
 
   it("elimina una plantilla tras confirmar", async () => {
@@ -354,6 +373,9 @@ describe("PlantillasPage", () => {
     fireEvent.click(screen.getByText("Eliminar"));
     await waitFor(() => {
       expect(mockDeletePlantilla).toHaveBeenCalledWith(1);
+      expect(mockSileo.success).toHaveBeenCalledWith({
+        title: "Plantilla eliminada",
+      });
     });
   });
 
@@ -450,9 +472,11 @@ describe("PlantillasPage", () => {
     } as ReturnType<typeof useLocation>);
     render(<PlantillasPage />);
     await screen.findByText("Plantilla A");
-    expect(
-      screen.getByText(/El tótem aún no tiene plantilla asignada/),
-    ).toBeInTheDocument();
+    expect(mockSileo.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Sin plantilla asignada",
+      }),
+    );
   });
 
   it("muestra el botón Aplicar", async () => {
@@ -492,9 +516,11 @@ describe("PlantillasPage", () => {
       expect(mockUpdateTotem).toHaveBeenCalledWith(5, { plantilla_id: 1 });
     });
     expect(mockRefresh).toHaveBeenCalled();
-    expect(
-      await screen.findByText("Plantilla aplicada al tótem correctamente"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.success).toHaveBeenCalledWith({
+        title: "Plantilla aplicada al tótem",
+      });
+    });
   });
 
   it("muestra Aplicada y deshabilitado si la plantilla ya está asignada al tótem", async () => {

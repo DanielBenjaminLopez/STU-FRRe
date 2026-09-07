@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { useLocation } from "react-router";
+import { sileo } from "sileo";
 import {
   DndContext,
   DragOverlay,
@@ -214,7 +215,6 @@ export default function PlantillasPage() {
     row: number;
   } | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
-  const [toast, setToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [widgetIdByTipo, setWidgetIdByTipo] = useState<
@@ -282,8 +282,16 @@ export default function PlantillasPage() {
         setPlantillas(local);
         setSelectedId(local[0]?.id ?? "");
         setEffectiveRegistry(buildEffectiveRegistry(widgets));
-      } catch {
-        if (!cancelled) setToast("No se pudieron cargar las plantillas");
+      } catch (err) {
+        if (!cancelled) {
+          sileo.error({
+            title: "Error al cargar las plantillas",
+            description:
+              err instanceof Error
+                ? err.message
+                : "No se pudieron cargar las plantillas.",
+          });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -292,12 +300,6 @@ export default function PlantillasPage() {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(timer);
-  }, [toast]);
 
   useEffect(() => {
     if (plantillas.length === 0) return;
@@ -322,10 +324,11 @@ export default function PlantillasPage() {
       selectedTotem &&
       !selectedTotem.plantilla_id
     ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setToast(
-        "El tótem aún no tiene plantilla asignada. Creá una o seleccioná una y usá 'Aplicar'.",
-      );
+      sileo.info({
+        title: "Sin plantilla asignada",
+        description:
+          "Creá una plantilla o seleccioná una existente y usá 'Aplicar'.",
+      });
     }
   }, [location.state, selectedTotem]);
 
@@ -435,7 +438,10 @@ export default function PlantillasPage() {
 
       const cell = getCellFromEvent(event, pointerPosRef.current);
       if (!cell) {
-        setToast("Soltá el widget dentro de la grilla de la plantilla");
+        sileo.warning({
+          title: "Posición inválida",
+          description: "Soltá el widget dentro de la grilla de la plantilla.",
+        });
         return;
       }
 
@@ -450,7 +456,10 @@ export default function PlantillasPage() {
         : currentWidgets;
 
       if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan)) {
-        setToast("No hay espacio disponible en esa posición");
+        sileo.warning({
+          title: "Espacio no disponible",
+          description: "No hay espacio suficiente en esa posición.",
+        });
         return;
       }
 
@@ -533,6 +542,7 @@ export default function PlantillasPage() {
     const positions = plantillaToWidgetPositions(plantilla, widgetIdByTipo);
     setSaving(true);
     try {
+      const isNew = Boolean(plantilla.isNew);
       if (plantilla.isNew) {
         const dto = await createPlantilla({
           nombre: plantilla.nombre,
@@ -564,11 +574,17 @@ export default function PlantillasPage() {
         delete next[plantilla.id];
         return next;
       });
-      setToast("Plantilla guardada correctamente");
+      if (isNew) {
+        sileo.success({ title: "Plantilla creada" });
+      }
     } catch (err) {
-      setToast(
-        err instanceof Error ? err.message : "No se pudo guardar la plantilla",
-      );
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo guardar la plantilla",
+      });
     } finally {
       setSaving(false);
     }
@@ -599,10 +615,15 @@ export default function PlantillasPage() {
       if (selectedId === deletingId) {
         setSelectedId(next[0]?.id ?? "");
       }
+      sileo.success({ title: "Plantilla eliminada" });
     } catch (err) {
-      setToast(
-        err instanceof Error ? err.message : "No se pudo eliminar la plantilla",
-      );
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo eliminar la plantilla",
+      });
     }
     setDeletingId(null);
   }, [deletingId, plantillas, selectedId]);
@@ -612,7 +633,10 @@ export default function PlantillasPage() {
     const selected = plantillas.find((p) => p.id === selectedId);
     if (!selected || selected.isNew) return;
     if (dirtyIds[selected.id]) {
-      setToast("Guardá la plantilla antes de aplicarla al tótem.");
+      sileo.warning({
+        title: "Cambios sin guardar",
+        description: "Guardá la plantilla antes de aplicarla al tótem.",
+      });
       return;
     }
     try {
@@ -620,13 +644,15 @@ export default function PlantillasPage() {
         plantilla_id: Number(selected.id),
       });
       await refreshTotems();
-      setToast("Plantilla aplicada al tótem correctamente");
+      sileo.success({ title: "Plantilla aplicada al tótem" });
     } catch (err) {
-      setToast(
-        err instanceof Error
-          ? err.message
-          : "No se pudo aplicar la plantilla al tótem",
-      );
+      sileo.error({
+        title: "Error al aplicar plantilla",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo aplicar la plantilla al tótem",
+      });
     }
   }, [selectedTotem, plantillas, selectedId, dirtyIds, refreshTotems]);
 
@@ -816,7 +842,7 @@ export default function PlantillasPage() {
               {isAplicada ? "Aplicada" : "Aplicar"}
             </Button>
             <Button variant="primary" onClick={handleSave} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar"}
+              Guardar
             </Button>
           </div>
         </div>
@@ -862,12 +888,6 @@ export default function PlantillasPage() {
           onConfirm={handleDeletePlantilla}
           onClose={() => setDeletingId(null)}
         />
-      )}
-
-      {toast && (
-        <div className="fixed bottom-20 right-6 z-50 bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-2xl shadow-lg">
-          {toast}
-        </div>
       )}
     </DndContext>
   );

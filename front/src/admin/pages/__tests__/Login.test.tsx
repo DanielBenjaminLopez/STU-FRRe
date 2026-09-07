@@ -8,9 +8,18 @@ import {
 } from "@testing-library/react";
 import Login from "../Login";
 
-const { mockLogin, mockNavigate } = vi.hoisted(() => ({
+const { mockLogin, mockNavigate, mockSileo } = vi.hoisted(() => ({
   mockLogin: vi.fn(),
   mockNavigate: vi.fn(),
+  mockSileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock("sileo", () => ({
+  sileo: mockSileo,
+  Toaster: () => null,
 }));
 
 vi.mock("react-router", () => ({
@@ -77,6 +86,9 @@ describe("Login", () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith("admin", "equipobat");
     });
+    expect(mockSileo.success).toHaveBeenCalledWith({
+      title: "Sesión iniciada",
+    });
     expect(mockNavigate).toHaveBeenCalledWith("/admin/", { replace: true });
   });
 
@@ -90,9 +102,12 @@ describe("Login", () => {
       target: { value: "wrong" },
     });
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
-    expect(
-      await screen.findByText("Credenciales inválidas"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith({
+        title: "Error al iniciar sesión",
+        description: "Credenciales inválidas",
+      });
+    });
   });
 
   it("muestra error genérico cuando el error no es Error", async () => {
@@ -105,12 +120,15 @@ describe("Login", () => {
       target: { value: "pass" },
     });
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
-    expect(
-      await screen.findByText("Error al iniciar sesión"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith({
+        title: "Error al iniciar sesión",
+        description: "Error al iniciar sesión",
+      });
+    });
   });
 
-  it("limpia el error al enviar exitosamente después de un error", async () => {
+  it("muestra toast de error en fallo y luego permite iniciar sesión con éxito", async () => {
     mockLogin
       .mockRejectedValueOnce(new Error("Error anterior"))
       .mockResolvedValueOnce(undefined);
@@ -120,11 +138,18 @@ describe("Login", () => {
     fireEvent.change(usernameInput, { target: { value: "admin" } });
     fireEvent.change(passwordInput, { target: { value: "wrong" } });
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
-    await screen.findByText("Error anterior");
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith({
+        title: "Error al iniciar sesión",
+        description: "Error anterior",
+      });
+    });
     fireEvent.change(passwordInput, { target: { value: "correct" } });
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
     await waitFor(() => {
-      expect(screen.queryByText("Error anterior")).not.toBeInTheDocument();
+      expect(mockSileo.success).toHaveBeenCalledWith({
+        title: "Sesión iniciada",
+      });
     });
   });
 
@@ -176,9 +201,12 @@ describe("Login", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
-    expect(
-      await screen.findByText("Credenciales inválidas"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith({
+        title: "Error al iniciar sesión",
+        description: "Credenciales inválidas",
+      });
+    });
 
     const passwordInput = screen.getByLabelText("Contraseña");
     const toggleBtn = screen.getByRole("button", { name: /ver contraseña/i });

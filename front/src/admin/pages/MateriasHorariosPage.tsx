@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
@@ -74,12 +75,7 @@ function MateriasHorariosPage() {
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-
-  void error;
-  void success;
 
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
@@ -106,7 +102,6 @@ function MateriasHorariosPage() {
     async function init() {
       if (!active) return;
       setLoading(true);
-      setError("");
       try {
         const filters: {
           tipo?: string;
@@ -184,8 +179,14 @@ function MateriasHorariosPage() {
         });
 
         setData(result);
-      } catch {
-        if (active) setError("Error al cargar datos");
+      } catch (err) {
+        if (active) {
+          sileo.error({
+            title: "Error al cargar datos",
+            description:
+              err instanceof Error ? err.message : "Error al cargar los datos",
+          });
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -224,11 +225,13 @@ function MateriasHorariosPage() {
         hora_fin: "08:30",
         activo: true,
       });
-      setSuccess("Comisión creada");
-      setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear comisión");
+      sileo.error({
+        title: "Error al crear comisión",
+        description:
+          err instanceof Error ? err.message : "Error al crear la comisión",
+      });
     }
   }
 
@@ -252,11 +255,13 @@ function MateriasHorariosPage() {
           });
         }
       }
-      setSuccess("Horario agregado");
-      setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al agregar horario");
+      sileo.error({
+        title: "Error al agregar horario",
+        description:
+          err instanceof Error ? err.message : "Error al agregar el horario",
+      });
     }
   }
 
@@ -265,20 +270,22 @@ function MateriasHorariosPage() {
     try {
       if (deleteTarget.type === "materia") {
         await deletePlanMateria(deleteTarget.id as number);
-        setSuccess("Materia eliminada");
+        sileo.success({ title: "Materia eliminada" });
       } else if (deleteTarget.type === "comision") {
         await deleteComision(deleteTarget.id as number);
-        setSuccess("Comisión eliminada");
+        sileo.success({ title: "Comisión eliminada" });
       } else if (deleteTarget.type === "horario") {
         for (const id of deleteTarget.id as number[]) {
           await deleteHorario(id);
         }
-        setSuccess("Horario eliminado");
       }
-      setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error ? err.message : "Error al eliminar el elemento",
+      });
     } finally {
       setDeleteTarget(null);
     }
@@ -442,9 +449,11 @@ function MateriasHorariosPage() {
           onClose={() => setShowImportModal(false)}
           onImport={importarHorariosCSV}
           onSuccess={(res: CsvImportResult) => {
-            setSuccess(res.detail || "Importación realizada exitosamente.");
+            sileo.success({
+              title: "Importación exitosa",
+              description: res.detail || "Importación realizada exitosamente.",
+            });
             reload();
-            setTimeout(() => setSuccess(""), 4000);
           }}
         />
       )}

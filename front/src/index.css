@@ -234,3 +234,36 @@ body,
   animation: totem-switch 0.3s ease-in-out forwards;
   will-change: opacity;
 }
+
+/* Sileo Toast dark theme (#101828) */
+[data-sileo-viewport],
+[data-sileo-viewport] * {
+  font-family: "Manrope", sans-serif !important;
+}
+
+[data-sileo-viewport] {
+  --sileo-state-error: #f87171;
+  --sileo-state-success: #34d399;
+  --sileo-state-warning: #f0b968;
+  --sileo-state-info: #60a5fa;
+}
+
+[data-sileo-viewport] [data-sileo-pill],
+[data-sileo-viewport] [data-sileo-body] {
+  fill: #101828 !important;
+}
+
+[data-sileo-viewport] [data-sileo-title] {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sileo-viewport] [data-sileo-description] {
+  font-size: 0.8125rem !important;
+  line-height: 1.25rem !important;
+  color: #94a3b8 !important;
+  text-align: center !important;
+  padding: 0.75rem 1rem !important;
+}

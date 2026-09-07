@@ -43,6 +43,7 @@ const config = {
   update: updateAviso,
   remove: deleteAviso,
   getRowLabel: (row: Aviso) => `${row.tipo} - ${row.motivo}`,
+  notifyOnUpdate: false,
 };
 
 export default function AvisosPage() {
