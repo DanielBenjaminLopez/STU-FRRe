@@ -10,7 +10,7 @@ function App() {
         theme="light"
         options={{
           fill: "#101828",
-          duration: 2500,
+          duration: 3000,
         }}
       />
       <AppRoutes />

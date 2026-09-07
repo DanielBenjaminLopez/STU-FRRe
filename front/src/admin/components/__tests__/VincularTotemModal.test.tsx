@@ -80,7 +80,7 @@ describe("VincularTotemModal", () => {
     fireEvent.change(screen.getByLabelText("Nombre del tótem"), {
       target: { value: "Tótem Hall" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Vincular tótem" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vincular" }));
 
     await waitFor(() => {
       expect(mockSileo.success).toHaveBeenCalledWith({
@@ -117,7 +117,7 @@ describe("VincularTotemModal", () => {
     fireEvent.change(screen.getByLabelText("Nombre del tótem"), {
       target: { value: "Tótem Hall" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Vincular tótem" }));
+    fireEvent.click(screen.getByRole("button", { name: "Vincular" }));
 
     await waitFor(() => {
       expect(mockSileo.error).toHaveBeenCalledWith({

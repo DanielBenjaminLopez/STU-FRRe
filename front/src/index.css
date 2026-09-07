@@ -244,7 +244,7 @@ body,
 [data-sileo-viewport] {
   --sileo-state-error: #f87171;
   --sileo-state-success: #34d399;
-  --sileo-state-warning: #fbbf24;
+  --sileo-state-warning: #f0b968;
   --sileo-state-info: #60a5fa;
 }
 

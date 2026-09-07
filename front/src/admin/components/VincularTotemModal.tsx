@@ -114,7 +114,7 @@ export default function VincularTotemModal({
               Cancelar
             </Button>
             <Button type="submit" disabled={loading} variant="primary">
-              {loading ? "Vinculando..." : "Vincular tótem"}
+              Vincular
             </Button>
           </div>
         </form>
