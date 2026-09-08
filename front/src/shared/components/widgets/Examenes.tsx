@@ -27,7 +27,7 @@ function ExamenRow({ examen }: { examen: Examen }) {
       </div>
       <div className="flex gap-2">
         <div
-          className={`flex justify-center py-1 ${badgeColor} text-sm font-semibold w-14 rounded-2xl`}
+          className={`flex justify-center py-1 px-3 w-fit ${badgeColor} text-sm font-semibold rounded-2xl`}
         >
           {examen.carrera_codigo}
         </div>
