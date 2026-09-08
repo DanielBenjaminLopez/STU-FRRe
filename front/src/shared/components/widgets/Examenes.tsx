@@ -19,7 +19,7 @@ function ExamenRow({ examen }: { examen: Examen }) {
   return (
     <div className="flex flex-col justify-center gap-2 items-start w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
       <span className="text-xs font-medium">
-        {examen.hora_inicio} - {examen.hora_fin}
+        {examen.hora_inicio.slice(0, 5)} - {examen.hora_fin.slice(0, 5)}
       </span>
       <div className="flex text-sm overflow-hidden text-ellipsis text-nowrap font-normal gap-1">
         <span className="font-semibold">[{examen.comision}]</span>

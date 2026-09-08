@@ -41,11 +41,11 @@ function ClaseRow({ clase }: { clase: Clase }) {
   return (
     <div className="flex flex-col justify-center gap-2 items-start w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
       <span className="text-xs font-medium">
-        {clase.hora_inicio} - {clase.hora_fin}
+        {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
       </span>
-      <div className="flex text-sm overflow-hidden text-ellipsis text-nowrap font-normal gap-1">
-        <span className="font-semibold">[{clase.comision}]</span>
-        {clase.materia_nombre}
+      <div className="flex text-sm min-w-0 w-full font-normal gap-1">
+        <span className="font-semibold shrink-0">[{clase.comision}]</span>
+        <span className="truncate">{clase.materia_nombre}</span>
       </div>
       <div className="flex gap-2">
         <div
@@ -77,7 +77,7 @@ function ClaseList({
   }
 
   return (
-    <div className="w-full h-full flex flex-col gap-1 overflow-auto">
+    <div className="w-full h-full flex flex-col gap-1 overflow-y-auto overflow-x-hidden">
       {clases.map((clase) => (
         <ClaseRow key={clase.id} clase={clase} />
       ))}

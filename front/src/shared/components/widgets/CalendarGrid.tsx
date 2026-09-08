@@ -348,9 +348,9 @@ export default function CalendarGrid({
   const subtitulo = `Ciclo lectivo ${anio}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
-      <div className="flex flex-col bg-white/70 border border-gray-200 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl">
-        <div className="flex items-center justify-between p-8 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl">
+      <div className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl">
+        <div className="flex items-center justify-between p-8 border-b border-gray-200 bg-linear-to-br from-teal-300/50 to-teal-300/60">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">{title}</h1>
           </div>
@@ -407,7 +407,7 @@ export default function CalendarGrid({
 
                   return (
                     <div key={nombreMes} className="relative w-full h-full">
-                      <div className="rounded-2xl bg-white/50 border border-gray-200 px-2.5 py-3 text-center flex flex-col w-full h-full">
+                      <div className="rounded-2xl bg-white/50 backdrop-blur-md border border-gray-200 px-2.5 py-3 text-center flex flex-col w-full h-full">
                         <div className="mb-1.5 text-base font-bold text-slate-900">
                           {nombreMes}
                         </div>

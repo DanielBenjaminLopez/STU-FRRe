@@ -12,6 +12,7 @@ export default function HorariosFull({ onClose }: { onClose: () => void }) {
       error={error}
       onClose={onClose}
       loadingText="Cargando horarios..."
+      headerGradient="from-blue-300/50 to-blue-300/60"
     />
   );
 }

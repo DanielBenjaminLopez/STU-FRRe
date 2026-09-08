@@ -19,6 +19,7 @@ export interface ScheduleGridProps {
   error: string | null;
   onClose: () => void;
   loadingText?: string;
+  headerGradient?: string;
 }
 
 const HOURS_START = 8;
@@ -288,7 +289,8 @@ function TimeGrid({
                       {evt.item.materia_nombre}
                     </div>
                     <div className="text-[10px] text-gray-500 leading-tight">
-                      {evt.item.hora_inicio} - {evt.item.hora_fin}
+                      {evt.item.hora_inicio.slice(0, 5)} -{" "}
+                      {evt.item.hora_fin.slice(0, 5)}
                     </div>
                     <div className="text-[10px] text-gray-500 leading-tight truncate">
                       [{evt.item.comision}] · Aula {evt.item.aula}
@@ -342,7 +344,7 @@ function ListView({ items }: { items: ScheduleItem[] }) {
                   className={`flex items-start gap-3 p-3 rounded-2xl border ${colors.border} ${colors.bg}`}
                 >
                   <div className="shrink-0 text-xs font-semibold text-gray-500 mt-0.5 min-w-20">
-                    {item.hora_inicio} - {item.hora_fin}
+                    {item.hora_inicio.slice(0, 5)} - {item.hora_fin.slice(0, 5)}
                   </div>
                   <div className="flex flex-col gap-1 min-w-0">
                     <span
@@ -371,6 +373,7 @@ export default function ScheduleGrid({
   loading,
   error,
   onClose,
+  headerGradient,
 }: ScheduleGridProps) {
   const [view] = useState<ViewMode>("list");
   const [date, setDate] = useState(() => new Date());
@@ -431,10 +434,14 @@ export default function ScheduleGrid({
     });
   }
 
+  const gradientClass = headerGradient ?? "from-teal-300/50 to-teal-300/60";
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
-      <div className="flex flex-col bg-white/70 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl border border-gray-200">
-        <div className="flex items-center justify-between p-8 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl">
+      <div className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl">
+        <div
+          className={`flex items-center justify-between p-8 border-b border-gray-200 bg-linear-to-br ${gradientClass}`}
+        >
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">{title}</h1>
             <div className="flex items-center bg-gray-100 rounded-2xl p-1"></div>

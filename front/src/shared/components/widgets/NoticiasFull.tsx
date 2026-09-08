@@ -66,9 +66,9 @@ export default function NoticiasFull({ onClose }: { onClose: () => void }) {
   const { feed, loading, error } = useNoticias();
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
-      <div className="flex flex-col bg-white/70 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl">
-        <div className="flex items-center justify-between p-8 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl">
+      <div className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl">
+        <div className="flex items-center justify-between p-8 border-b border-gray-200 bg-linear-to-br from-purple-300/50 to-purple-300/60">
           <h1 className="text-xl font-semibold">Noticias y eventos</h1>
           <button
             type="button"

@@ -9,9 +9,9 @@ export default function MapaFull({
   pinPosition?: PinPosition | null;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full bg-black/50 p-8">
-      <div className="flex flex-col bg-white/70 backdrop-blur-md w-full h-full overflow-hidden rounded-4xl gap-8">
-        <div className="flex items-center justify-between p-8 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl">
+      <div className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl">
+        <div className="flex items-center justify-between p-8 border-b border-gray-200 bg-linear-to-br from-indigo-300/50 to-indigo-300/60">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">Mapa interactivo</h1>
           </div>

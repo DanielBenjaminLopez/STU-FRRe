@@ -12,6 +12,7 @@ export default function ExamenesFull({ onClose }: { onClose: () => void }) {
       error={error}
       onClose={onClose}
       loadingText="Cargando exámenes..."
+      headerGradient="from-green-300/50 to-green-300/60"
     />
   );
 }
