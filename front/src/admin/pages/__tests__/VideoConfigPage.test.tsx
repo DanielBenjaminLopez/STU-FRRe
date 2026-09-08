@@ -13,12 +13,14 @@ const {
   mockRefreshTotems,
   mockFetchConfigVideo,
   mockUpdateConfigVideo,
+  mockDeleteVideoArchivo,
   mockSileo,
 } = vi.hoisted(() => ({
   mockSelectedId: vi.fn(),
   mockRefreshTotems: vi.fn().mockResolvedValue(undefined),
   mockFetchConfigVideo: vi.fn(),
   mockUpdateConfigVideo: vi.fn(),
+  mockDeleteVideoArchivo: vi.fn(),
   mockSileo: {
     success: vi.fn(),
     error: vi.fn(),
@@ -41,6 +43,7 @@ vi.mock("../../../shared/context/TotemContext", () => ({
 vi.mock("../../../shared/api/totems", () => ({
   fetchConfigVideo: mockFetchConfigVideo,
   updateConfigVideo: mockUpdateConfigVideo,
+  deleteVideoArchivo: mockDeleteVideoArchivo,
 }));
 
 vi.mock("../../components/VideoUpload", () => ({
@@ -156,5 +159,102 @@ describe("VideoConfigPage", () => {
         }),
       );
     });
+  });
+
+  it("shows delete button and opens confirm modal when video exists", async () => {
+    mockSelectedId.mockReturnValue("1");
+    mockFetchConfigVideo.mockResolvedValue({
+      video_url: "http://example.com/video.mp4",
+      video_intervalo: 60,
+      video_activo: false,
+    });
+
+    render(<VideoConfigPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTitle("Eliminar video")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle("Eliminar video"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Eliminar video")).toBeInTheDocument();
+    });
+  });
+
+  it("shows sileo.success when deleting video succeeds", async () => {
+    mockSelectedId.mockReturnValue("1");
+    mockFetchConfigVideo.mockResolvedValue({
+      video_url: "http://example.com/video.mp4",
+      video_intervalo: 60,
+      video_activo: false,
+    });
+    mockDeleteVideoArchivo.mockResolvedValue(undefined);
+
+    render(<VideoConfigPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTitle("Eliminar video")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle("Eliminar video"));
+
+    const deleteButtons = screen.getAllByRole("button", { name: "Eliminar" });
+    const confirmBtn = deleteButtons[deleteButtons.length - 1];
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(mockDeleteVideoArchivo).toHaveBeenCalledWith(1);
+      expect(mockSileo.success).toHaveBeenCalledWith({
+        title: "Video eliminado",
+      });
+    });
+  });
+
+  it("shows sileo.error when deleting video fails", async () => {
+    mockSelectedId.mockReturnValue("1");
+    mockFetchConfigVideo.mockResolvedValue({
+      video_url: "http://example.com/video.mp4",
+      video_intervalo: 60,
+      video_activo: false,
+    });
+    mockDeleteVideoArchivo.mockRejectedValue(new Error("Network error"));
+
+    render(<VideoConfigPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTitle("Eliminar video")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle("Eliminar video"));
+
+    const deleteButtons = screen.getAllByRole("button", { name: "Eliminar" });
+    const confirmBtn = deleteButtons[deleteButtons.length - 1];
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al eliminar el video",
+        }),
+      );
+    });
+  });
+
+  it("does not show delete button when no video exists", async () => {
+    mockSelectedId.mockReturnValue("1");
+    mockFetchConfigVideo.mockResolvedValue({
+      video_url: null,
+      video_intervalo: 60,
+      video_activo: false,
+    });
+
+    render(<VideoConfigPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Archivo de video")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTitle("Eliminar video")).not.toBeInTheDocument();
   });
 });
