@@ -49,7 +49,7 @@ function ClaseRow({ clase }: { clase: Clase }) {
       </div>
       <div className="flex gap-2">
         <div
-          className={`flex justify-center py-1 ${badgeColor} ${badgeBorderColor} border text-sm font-semibold w-14 rounded-2xl`}
+          className={`flex justify-center py-1 px-3 w-fit ${badgeColor} ${badgeBorderColor} border text-sm font-semibold rounded-2xl`}
         >
           <span className={badgeTextColor}>{clase.carrera_codigo}</span>
         </div>
