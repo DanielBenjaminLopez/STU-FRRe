@@ -43,7 +43,7 @@ export default function Home() {
   const [totem, setTotem] = useState<Totem | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [blockedMessage, setBlockedMessage] = useState("");
-  const [modoVideo, setModoVideo] = useState(true);
+  const [modoVideo, setModoVideo] = useState(false);
   const lastInteractionRef = useRef(0);
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
