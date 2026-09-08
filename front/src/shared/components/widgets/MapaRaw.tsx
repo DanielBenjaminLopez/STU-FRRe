@@ -1210,14 +1210,114 @@ export default function MapaRaw({
 
   return (
     <div
-      className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4`}
+      className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4 ${compact || onPinPlaced ? "" : "py-6"}`}
     >
+      {/* 1. Referencias */}
+      {!compact && !onPinPlaced && (
+        <div className="w-full px-16">
+          <div className="flex flex-col gap-2 w-full p-4 bg-white/50 rounded-2xl border border-gray-200">
+            <span className="text-sm text-center font-medium">Referencias</span>
+            <div className="flex flex-wrap gap-3 items-center text-xs justify-center">
+              {Object.entries(TYPE_COLORS).map(([key, { base, label }]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: base }}
+                  />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Mapa */}
+      <div ref={containerRef} className="relative w-full h-full">
+        <canvas
+          ref={canvasRef}
+          className={`w-full overflow-visible ${onPinPlaced ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"} ${compact ? "" : "aspect-square"}`}
+          onClick={handleClick}
+          onPointerMove={handlePointerMove}
+          onPointerLeave={() => {
+            // Limpiar el pin fantasma al salir del canvas
+            if (ghostPinRef.current && buildingGroupRef.current) {
+              buildingGroupRef.current.remove(ghostPinRef.current);
+              ghostPinRef.current.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                  child.geometry.dispose();
+                  (child.material as THREE.Material).dispose();
+                }
+              });
+              ghostPinRef.current = null;
+              needsRenderRef.current = true;
+            }
+          }}
+        />
+        {selectedRoom && (
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-200 p-4 min-w-50 flex flex-col items-center">
+            <span className="text-xs font-normal text-center text-gray-600">
+              Está seleccionando
+            </span>
+            <div className="font-semibold text-black text-lg">
+              {selectedRoom.data.nombre}
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{
+                  backgroundColor:
+                    TYPE_COLORS[selectedRoom.data.tipo]?.base ??
+                    DEFAULT_COLOR.base,
+                }}
+              />
+              <span className="text-xs text-gray-800">
+                {TYPE_COLORS[selectedRoom.data.tipo]?.label ?? "Otro"}
+                {" - "}
+                {floors[selectedRoom.data.piso as FloorKey]?.label}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Selector de piso y 4. Búsqueda */}
       {!compact && (
         <div className="w-full flex flex-col px-16 gap-4">
+          {/* Selector de piso */}
+          {!onPinPlaced && (
+            <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
+              <span className="font-normal text-sm">Piso actual</span>
+              <div className="flex gap-2">
+                {(Object.entries(floors) as [FloorKey, FloorConfig][]).map(
+                  ([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setFloor(key);
+                        setSelectedRoom(null);
+                        setSearchType("");
+                        setSearchPlaceId("");
+                        highlightMesh(null);
+                      }}
+                      className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                        floor === key
+                          ? "bg-cyan-200 text-cyan-900"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {config.label}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Panel de búsqueda: solo en modo normal (no en editor de pin) */}
           {!onPinPlaced && (
             <div className="flex gap-2 w-full p-4 min-h-72 h-72 overflow-hidden flex-col bg-white/50 rounded-2xl border border-gray-200">
-              <span className="text-sm text-center font-medium">Busqueda</span>
+              <span className="text-sm text-center font-medium">Búsqueda</span>
               <div className="flex gap-4 overflow-hidden">
                 <div className="flex flex-col gap-2 flex-1">
                   <span className="text-sm font-medium text-gray-500 text-center">
@@ -1299,108 +1399,8 @@ export default function MapaRaw({
               </div>
             </div>
           )}
-          {!onPinPlaced && (
-            <div className="flex flex-row w-full justify-center gap-4 p-4 items-center bg-white/50 rounded-2xl border border-gray-200">
-              <span className="font-normal text-sm">Piso actual</span>
-              <div className="flex gap-2">
-                {(Object.entries(floors) as [FloorKey, FloorConfig][]).map(
-                  ([key, config]) => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        setFloor(key);
-                        setSelectedRoom(null);
-                        setSearchType("");
-                        setSearchPlaceId("");
-                        highlightMesh(null);
-                      }}
-                      className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                        floor === key
-                          ? "bg-cyan-200 text-cyan-900"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      {config.label}
-                    </button>
-                  ),
-                )}
-              </div>
-            </div>
-          )}
         </div>
       )}
-
-      <div ref={containerRef} className="relative w-full h-full">
-        <canvas
-          ref={canvasRef}
-          className={`w-full overflow-visible ${onPinPlaced ? "cursor-crosshair" : "cursor-grab active:cursor-grabbing"} ${compact ? "" : "aspect-square"}`}
-          onClick={handleClick}
-          onPointerMove={handlePointerMove}
-          onPointerLeave={() => {
-            // Limpiar el pin fantasma al salir del canvas
-            if (ghostPinRef.current && buildingGroupRef.current) {
-              buildingGroupRef.current.remove(ghostPinRef.current);
-              ghostPinRef.current.traverse((child) => {
-                if (child instanceof THREE.Mesh) {
-                  child.geometry.dispose();
-                  (child.material as THREE.Material).dispose();
-                }
-              });
-              ghostPinRef.current = null;
-              needsRenderRef.current = true;
-            }
-          }}
-        />
-        {selectedRoom && (
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-200 p-4 min-w-[200px] flex flex-col items-center">
-            <span className="text-xs font-normal text-center text-gray-600">
-              Está seleccionando
-            </span>
-            <div className="font-semibold text-black text-lg">
-              {selectedRoom.data.nombre}
-            </div>
-            <div className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{
-                  backgroundColor:
-                    TYPE_COLORS[selectedRoom.data.tipo]?.base ??
-                    DEFAULT_COLOR.base,
-                }}
-              />
-              <span className="text-xs text-gray-800">
-                {TYPE_COLORS[selectedRoom.data.tipo]?.label ?? "Otro"}
-                {" - "}
-                {floors[selectedRoom.data.piso as FloorKey]?.label}
-              </span>
-            </div>
-          </div>
-        )}
-        {!compact && !onPinPlaced && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full px-16">
-            <div className="flex flex-wrap gap-3 items-center text-xs border border-gray-200 bg-white/50 rounded-2xl p-4 justify-center">
-              {Object.entries(TYPE_COLORS)
-                .filter(([key]) => key !== "otro")
-                .map(([key, { base, label }]) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded"
-                      style={{ backgroundColor: base }}
-                    />
-                    <span>{label}</span>
-                  </div>
-                ))}
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: TYPE_COLORS.otro.base }}
-                />
-                <span>{TYPE_COLORS.otro.label}</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
