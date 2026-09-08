@@ -226,6 +226,9 @@ export default function VideoUpload({
         <p className="mt-1 text-xs text-gray-400">
           MP4, WebM o MOV (máximo 100MB)
         </p>
+        <p className="mt-1 text-xs text-amber-600">
+          El video debe tener orientación vertical (retrato).
+        </p>
       </div>
 
       <input
