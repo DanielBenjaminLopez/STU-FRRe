@@ -447,7 +447,7 @@ export default function ScheduleGrid({
       initial="initial"
       animate="animate"
       exit="exit"
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl"
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl"
     >
       <motion.div
         variants={overlayPanelVariants}
