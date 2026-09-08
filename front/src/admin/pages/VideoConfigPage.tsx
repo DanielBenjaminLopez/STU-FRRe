@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { sileo } from "sileo";
 import { useTotem } from "../../shared/context/TotemContext";
 import VideoUpload from "../components/VideoUpload";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import Button from "../../shared/components/ui/Button";
 import {
   fetchConfigVideo,
   updateConfigVideo,
+  deleteVideoArchivo,
   type ConfiguracionVideo,
 } from "../../shared/api/totems";
 
@@ -17,6 +19,8 @@ export default function VideoConfigPage() {
   const [intervalo, setIntervalo] = useState(60);
   const [activo, setActivo] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!totemId) return;
@@ -49,6 +53,25 @@ export default function VideoConfigPage() {
       setConfig({ ...config, video_url: null });
     }
     refreshTotems().catch(() => {});
+  };
+
+  const handleDelete = async () => {
+    if (!totemId) return;
+    setDeleting(true);
+    try {
+      await deleteVideoArchivo(totemId);
+      handleDeleted();
+      sileo.success({ title: "Video eliminado" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al eliminar";
+      sileo.error({
+        title: "Error al eliminar el video",
+        description: msg,
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   const handleIntervaloChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,14 +147,39 @@ export default function VideoConfigPage() {
       {totemId && (
         <div className="grid grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-6">
-            <h2 className="text-lg font-medium text-gray-900">
-              Archivo de video
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium text-gray-900">
+                Archivo de video
+              </h2>
+              {config?.video_url && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(true)}
+                  disabled={deleting}
+                  className="flex items-center gap-1.5 p-1.5 pr-2 text-sm text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={deleting ? "Eliminando..." : "Eliminar video"}
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  {deleting ? "Eliminando..." : "Eliminar"}
+                </button>
+              )}
+            </div>
             <VideoUpload
               totemId={totemId}
               currentUrl={config?.video_url ?? null}
               onUploaded={handleUploaded}
-              onDeleted={handleDeleted}
             />
           </div>
 
@@ -181,6 +229,15 @@ export default function VideoConfigPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showDeleteModal && (
+        <ConfirmDeleteModal
+          title="Eliminar video"
+          itemName="el video"
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteModal(false)}
+        />
       )}
     </div>
   );
