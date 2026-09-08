@@ -81,15 +81,15 @@ export default function VideoConfigPage() {
   };
 
   const handleIntervaloBlur = () => {
-    setIntervalo((prev) => Math.min(600, Math.max(10, prev)));
+    setIntervalo((prev) => Math.min(600, Math.max(60, prev)));
   };
 
   const handleSave = async () => {
     if (!totemId) return;
-    if (intervalo < 10 || intervalo > 600) {
+    if (intervalo < 60 || intervalo > 600) {
       sileo.error({
         title: "Error de validación",
-        description: "El intervalo debe estar entre 10 y 600 segundos",
+        description: "El intervalo debe estar entre 60 y 600 segundos",
       });
       return;
     }
@@ -205,7 +205,7 @@ export default function VideoConfigPage() {
               />
               <p className="text-xs text-gray-400">
                 Cuánto esperar sin tocar la pantalla antes de reproducir el
-                video (10-600 segundos).
+                video (60-600 segundos).
               </p>
             </div>
 
