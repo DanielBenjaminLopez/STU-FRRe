@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 import { useTotem } from "../../shared/context/TotemContext";
 import VideoUpload from "../components/VideoUpload";
 import Button from "../../shared/components/ui/Button";
@@ -16,8 +17,6 @@ export default function VideoConfigPage() {
   const [intervalo, setIntervalo] = useState(60);
   const [activo, setActivo] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!totemId) return;
@@ -27,7 +26,15 @@ export default function VideoConfigPage() {
         setIntervalo(c.video_intervalo);
         setActivo(c.video_activo);
       })
-      .catch(() => setError("Error al cargar configuración"));
+      .catch((err) => {
+        sileo.error({
+          title: "Error al cargar configuración",
+          description:
+            err instanceof Error
+              ? err.message
+              : "No se pudo obtener la configuración de video",
+        });
+      });
   }, [totemId]);
 
   const handleUploaded = (url: string) => {
@@ -37,11 +44,33 @@ export default function VideoConfigPage() {
     refreshTotems().catch(() => {});
   };
 
+  const handleDeleted = () => {
+    if (config) {
+      setConfig({ ...config, video_url: null });
+    }
+    refreshTotems().catch(() => {});
+  };
+
+  const handleIntervaloChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    if (!Number.isFinite(val)) return;
+    setIntervalo(val);
+  };
+
+  const handleIntervaloBlur = () => {
+    setIntervalo((prev) => Math.min(600, Math.max(10, prev)));
+  };
+
   const handleSave = async () => {
     if (!totemId) return;
+    if (intervalo < 10 || intervalo > 600) {
+      sileo.error({
+        title: "Error de validación",
+        description: "El intervalo debe estar entre 10 y 600 segundos",
+      });
+      return;
+    }
     setSaving(true);
-    setError(null);
-    setSuccess("");
     try {
       const updated = await updateConfigVideo(totemId, {
         video_intervalo: intervalo,
@@ -52,11 +81,16 @@ export default function VideoConfigPage() {
         video_intervalo: updated.video_intervalo,
         video_activo: updated.video_activo,
       });
-      setSuccess("Configuración guardada correctamente");
-      setTimeout(() => setSuccess(""), 3000);
+      sileo.success({ title: "Configuración guardada" });
       refreshTotems().catch(() => {});
-    } catch {
-      setError("Error al guardar");
+    } catch (err) {
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo guardar la configuración de video",
+      });
     } finally {
       setSaving(false);
     }
@@ -72,6 +106,12 @@ export default function VideoConfigPage() {
           </p>
         </div>
 
+        {!totemId && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Seleccioná un tótem en la barra superior para configurar su video.
+          </div>
+        )}
+
         {totemId && (
           <>
             <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-6">
@@ -82,6 +122,7 @@ export default function VideoConfigPage() {
                 totemId={totemId}
                 currentUrl={config?.video_url ?? null}
                 onUploaded={handleUploaded}
+                onDeleted={handleDeleted}
               />
             </div>
 
@@ -103,7 +144,8 @@ export default function VideoConfigPage() {
                   min={10}
                   max={600}
                   value={intervalo}
-                  onChange={(e) => setIntervalo(Number(e.target.value))}
+                  onChange={handleIntervaloChange}
+                  onBlur={handleIntervaloBlur}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 transition-all"
                 />
                 <p className="text-xs text-gray-400">
@@ -116,8 +158,8 @@ export default function VideoConfigPage() {
                 <button
                   type="button"
                   onClick={() => setActivo(!activo)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    activo ? "bg-blue-600" : "bg-gray-300"
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    activo ? "bg-[#101828]" : "bg-gray-300"
                   }`}
                 >
                   <span
@@ -133,22 +175,14 @@ export default function VideoConfigPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Guardando..." : "Guardar"}
+              <Button
+                onClick={handleSave}
+                disabled={saving || intervalo < 10 || intervalo > 600}
+              >
+                Guardar
               </Button>
             </div>
           </>
-        )}
-
-        {success && (
-          <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
-            {success}
-          </div>
-        )}
-        {error && (
-          <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-            {error}
-          </div>
         )}
       </div>
     </div>

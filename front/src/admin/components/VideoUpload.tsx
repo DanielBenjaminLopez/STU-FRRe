@@ -1,9 +1,13 @@
 import { useCallback, useRef, useState } from "react";
+import { sileo } from "sileo";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
+import { deleteVideoArchivo } from "../../shared/api/totems";
 
 interface VideoUploadProps {
   totemId: number;
   currentUrl: string | null;
   onUploaded: (url: string) => void;
+  onDeleted: () => void;
 }
 
 const ACCEPTED = "video/mp4,video/webm,video/quicktime";
@@ -13,12 +17,15 @@ export default function VideoUpload({
   totemId,
   currentUrl,
   onUploaded,
+  onDeleted,
 }: VideoUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const upload = useCallback(
     async (file: File) => {
@@ -26,11 +33,21 @@ export default function VideoUpload({
 
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
       if (!["mp4", "webm", "mov"].includes(ext)) {
-        setError("Formato no soportado. Use MP4, WebM o MOV.");
+        const msg = "Formato no soportado. Use MP4, WebM o MOV.";
+        setError(msg);
+        sileo.error({
+          title: "Formato no soportado",
+          description: "Use MP4, WebM o MOV.",
+        });
         return;
       }
       if (file.size > MAX_BYTES) {
-        setError("El video no debe superar 100MB.");
+        const msg = "El video no debe superar 100MB.";
+        setError(msg);
+        sileo.error({
+          title: "Archivo demasiado grande",
+          description: "El video no debe superar los 100MB.",
+        });
         return;
       }
 
@@ -76,14 +93,39 @@ export default function VideoUpload({
         );
 
         onUploaded(result.video_url);
+        sileo.success({ title: "Video subido" });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al subir");
+        const msg = err instanceof Error ? err.message : "Error al subir";
+        setError(msg);
+        sileo.error({
+          title: "Error al subir el video",
+          description: msg,
+        });
       } finally {
         setUploading(false);
       }
     },
     [totemId, onUploaded],
   );
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteVideoArchivo(totemId);
+      onDeleted();
+      sileo.success({ title: "Video eliminado" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al eliminar";
+      setError(msg);
+      sileo.error({
+        title: "Error al eliminar el video",
+        description: msg,
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
 
   const handleFile = (file: File | undefined) => {
     if (file) upload(file);
@@ -98,14 +140,40 @@ export default function VideoUpload({
   return (
     <div className="space-y-3">
       {currentUrl && !uploading && (
-        <div className="rounded-2xl overflow-hidden border border-gray-200">
-          <video
-            src={currentUrl}
-            className="mx-auto aspect-[9/16] object-cover h-64"
-            controls
-            playsInline
-            muted
-          />
+        <div className="space-y-3">
+          <div className="rounded-2xl overflow-hidden border border-gray-200">
+            <video
+              src={currentUrl}
+              className="mx-auto aspect-[9/16] object-cover h-64"
+              controls
+              playsInline
+              muted
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={deleting}
+              className="flex items-center gap-1.5 p-1.5 pr-2 text-sm text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              title={deleting ? "Eliminando..." : "Eliminar video"}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              {deleting ? "Eliminando..." : "Eliminar"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -169,6 +237,15 @@ export default function VideoUpload({
       />
 
       {error && <p className="text-sm text-red-500">{error}</p>}
+
+      {showDeleteModal && (
+        <ConfirmDeleteModal
+          title="Eliminar video"
+          itemName="el video"
+          onConfirm={handleDelete}
+          onClose={() => setShowDeleteModal(false)}
+        />
+      )}
     </div>
   );
 }

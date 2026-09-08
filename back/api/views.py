@@ -6,6 +6,7 @@ from channels.layers import get_channel_layer
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
@@ -592,7 +593,7 @@ class TotemConfigVideoView(APIView):
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get(self, request, pk):
-        totem = Totem.objects.get(pk=pk)
+        totem = get_object_or_404(Totem, pk=pk)
         data = TotemSerializer(totem, context={'request': request}).data
         return Response({
             'video_url': data.get('video_url'),
@@ -601,12 +602,19 @@ class TotemConfigVideoView(APIView):
         })
 
     def patch(self, request, pk):
-        totem = Totem.objects.get(pk=pk)
+        totem = get_object_or_404(Totem, pk=pk)
         serializer = TotemSerializer(totem, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        transaction.on_commit(lambda: notify_totem(totem.id))
+        if 'video_activo' in request.data or 'video_intervalo' in request.data:
+            transaction.on_commit(lambda: notify_totem(totem.id))
         return Response(serializer.data)
+
+    def delete(self, request, pk):
+        totem = get_object_or_404(Totem, pk=pk)
+        totem.video_archivo = None
+        totem.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TotemNewView(APIView):

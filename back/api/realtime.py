@@ -1,5 +1,9 @@
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+
+logger = logging.getLogger(__name__)
 
 CONTENT_GROUP = "totems_content"
 
@@ -9,10 +13,13 @@ def notify_totem(totem_id):
     channel_layer = get_channel_layer()
     if channel_layer is None:
         return
-    async_to_sync(channel_layer.group_send)(
-        f"totem_{totem_id}",
-        {"type": "configuracion_actualizada", "totem_id": totem_id},
-    )
+    try:
+        async_to_sync(channel_layer.group_send)(
+            f"totem_{totem_id}",
+            {"type": "configuracion_actualizada", "totem_id": totem_id},
+        )
+    except Exception:
+        logger.exception("Failed to notify totem %s", totem_id)
 
 
 def notify_totems(totem_ids):
