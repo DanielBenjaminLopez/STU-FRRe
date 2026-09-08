@@ -444,7 +444,6 @@ export default function ScheduleGrid({
         >
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">{title}</h1>
-            <div className="flex items-center bg-gray-100 rounded-2xl p-1"></div>
           </div>
 
           <div className="flex items-center gap-4">
