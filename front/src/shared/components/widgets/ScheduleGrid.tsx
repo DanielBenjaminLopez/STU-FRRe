@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
+import { motion } from "motion/react";
 import { ScheduleGridSkeleton } from "../ui/Skeleton";
+import {
+  overlayContainerVariants,
+  overlayPanelVariants,
+} from "./overlayMotion";
 
 export interface ScheduleItem {
   id: number;
@@ -437,8 +442,17 @@ export default function ScheduleGrid({
   const gradientClass = headerGradient ?? "from-teal-300/50 to-teal-300/60";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl">
-      <div className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl">
+    <motion.div
+      variants={overlayContainerVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl"
+    >
+      <motion.div
+        variants={overlayPanelVariants}
+        className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl"
+      >
         <div
           className={`flex items-center justify-between p-8 border-b border-gray-200 bg-linear-to-br ${gradientClass}`}
         >
@@ -586,7 +600,7 @@ export default function ScheduleGrid({
             <ListView items={filteredItems} />
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

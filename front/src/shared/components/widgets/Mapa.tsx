@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import MapaFull from "./MapaFull";
 import MapaRaw, { type PinPosition } from "./MapaRaw";
 import { useTotemPin } from "../../context/TotemPinContext";
@@ -16,12 +17,14 @@ export default function Mapa({
 
   return (
     <>
-      {showFull && (
-        <MapaFull
-          onClose={() => setShowFull(false)}
-          pinPosition={pinPosition}
-        />
-      )}
+      <AnimatePresence>
+        {showFull && (
+          <MapaFull
+            onClose={() => setShowFull(false)}
+            pinPosition={pinPosition}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="w-full h-full col-span-2 row-span-2 bg-linear-to-br from-indigo-300/50 to-indigo-300/60 rounded-4xl flex flex-col gap-4 items-center p-8 overflow-hidden">
         <div className="relative w-full flex flex-row gap-2 items-center">

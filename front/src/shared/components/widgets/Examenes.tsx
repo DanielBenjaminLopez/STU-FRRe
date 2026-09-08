@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { useExamenes } from "../../hooks/useExamenes";
 import type { Examen } from "../../api/examenes";
 import ExamenesFull from "./ExamenesFull";
@@ -81,7 +82,9 @@ export default function Examenes() {
 
   return (
     <>
-      {showFull && <ExamenesFull onClose={() => setShowFull(false)} />}
+      <AnimatePresence>
+        {showFull && <ExamenesFull onClose={() => setShowFull(false)} />}
+      </AnimatePresence>
       <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
         <div className="relative flex flex-row items-center gap-2 w-full justify-between">
           <span className="text-xl font-semibold">Horario de examenes</span>

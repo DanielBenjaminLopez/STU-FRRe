@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { useHorarios } from "../../hooks/useHorarios";
 import type { Clase } from "../../api/horarios";
 import HorariosFull from "./HorariosFull";
@@ -197,7 +198,9 @@ export default function Horarios() {
 
   return (
     <>
-      {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
+      <AnimatePresence>
+        {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
+      </AnimatePresence>
       <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
         <div className="relative flex flex-row items-center gap-2 w-full justify-between">
           <span className="text-xl font-semibold shrink-0">

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { AnimatePresence } from "motion/react";
 import { useNoticias } from "../../hooks/useNoticias";
 import NoticiasFull from "./NoticiasFull";
 import { NoticiaCarouselSkeleton } from "../ui/Skeleton";
@@ -45,7 +46,9 @@ export default function Noticias() {
 
   return (
     <>
-      {showFull && <NoticiasFull onClose={() => setShowFull(false)} />}
+      <AnimatePresence>
+        {showFull && <NoticiasFull onClose={() => setShowFull(false)} />}
+      </AnimatePresence>
 
       {loading && <NoticiaCarouselSkeleton />}
 

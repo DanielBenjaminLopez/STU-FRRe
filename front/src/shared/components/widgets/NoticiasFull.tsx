@@ -1,6 +1,11 @@
+import { motion } from "motion/react";
 import { useNoticias } from "../../hooks/useNoticias";
 import type { ContenidoFeed } from "../../api/noticias";
 import { NoticiaListSkeleton } from "../ui/Skeleton";
+import {
+  overlayContainerVariants,
+  overlayPanelVariants,
+} from "./overlayMotion";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -91,8 +96,17 @@ export default function NoticiasFull({ onClose }: { onClose: () => void }) {
   const { feed, loading, error } = useNoticias();
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl">
-      <div className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl">
+    <motion.div
+      variants={overlayContainerVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center w-full h-full rounded-4xl"
+    >
+      <motion.div
+        variants={overlayPanelVariants}
+        className="flex flex-col bg-white/80 border border-gray-200 backdrop-blur-2xl w-full h-full overflow-hidden rounded-4xl"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 bg-linear-to-br from-purple-300/50 to-purple-300/60">
           <div>
@@ -138,7 +152,7 @@ export default function NoticiasFull({ onClose }: { onClose: () => void }) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

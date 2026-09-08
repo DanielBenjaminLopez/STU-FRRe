@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { useCalendario } from "../../hooks/useCalendario";
 import CalendarFull from "./CalendarFull";
 import { MesGrilla, LeyendaCalendario } from "./CalendarGrid";
@@ -33,7 +34,9 @@ export default function Calendar() {
 
   return (
     <>
-      {showFull && <CalendarFull onClose={() => setShowFull(false)} />}
+      <AnimatePresence>
+        {showFull && <CalendarFull onClose={() => setShowFull(false)} />}
+      </AnimatePresence>
 
       <div className="w-full h-full col-span-2 row-span-2 bg-linear-to-br from-teal-300/50 to-teal-300/60 rounded-4xl flex flex-col gap-4 items-center p-8 overflow-hidden">
         <div className="relative w-full flex flex-row gap-2 items-center">
