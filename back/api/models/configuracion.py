@@ -65,7 +65,7 @@ class Totem(models.Model):
     )
     video_intervalo = models.IntegerField(
         default=60,
-        validators=[MinValueValidator(10), MaxValueValidator(600)],
+        validators=[MinValueValidator(60), MaxValueValidator(600)],
         help_text='Segundos de inactividad antes de mostrar el video.',
     )
     video_activo = models.BooleanField(default=False)
