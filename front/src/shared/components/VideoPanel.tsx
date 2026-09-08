@@ -15,38 +15,53 @@ export default function VideoPanel({ url, onEnded }: VideoPanelProps) {
     const video = videoRef.current;
     if (!video) return;
 
-    const onCanPlay = () => {
-      setDuration(video.duration);
+    const onLoadedMetadata = () => {
+      const d = video.duration;
+      if (!Number.isFinite(d) || d <= 0) return;
+      setDuration(d);
       video.play().catch(() => {});
     };
 
-    video.addEventListener("canplay", onCanPlay);
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
     video.load();
 
-    return () => video.removeEventListener("canplay", onCanPlay);
+    return () => video.removeEventListener("loadedmetadata", onLoadedMetadata);
   }, [url]);
 
   useEffect(() => {
-    if (duration <= 0) return;
+    if (!Number.isFinite(duration) || duration <= 0) return;
 
-    const showAt = duration * 0.5 * 1000;
-    const showCardTimer = setTimeout(() => setShowCard(true), showAt);
-    const hideTimer = setTimeout(() => setShowCard(false), showAt + 5000);
+    const video = videoRef.current;
+    if (!video) return;
+
+    let showTimer: ReturnType<typeof setTimeout>;
+    let hideTimer: ReturnType<typeof setTimeout>;
+
+    const onPlaying = () => {
+      const showAt = duration * 0.25 * 1000;
+      const hideAt = duration * 0.75 * 1000;
+      showTimer = setTimeout(() => setShowCard(true), showAt);
+      hideTimer = setTimeout(() => setShowCard(false), hideAt);
+    };
+
+    video.addEventListener("playing", onPlaying);
 
     return () => {
-      clearTimeout(showCardTimer);
+      video.removeEventListener("playing", onPlaying);
+      clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
   }, [duration]);
 
   return (
-    <div className="col-span-4 row-span-6 overflow-hidden rounded-2xl relative">
+    <div className="col-span-4 row-span-6 overflow-hidden rounded-2xl relative h-full w-full">
       <video
         ref={videoRef}
         className="w-full h-full object-cover"
         playsInline
         muted
         onEnded={onEnded}
+        onError={onEnded}
       >
         <source src={url} />
       </video>
