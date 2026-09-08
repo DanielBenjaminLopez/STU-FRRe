@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { sileo } from "sileo";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import { deleteVideoArchivo } from "../../shared/api/totems";
 
@@ -32,11 +33,21 @@ export default function VideoUpload({
 
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
       if (!["mp4", "webm", "mov"].includes(ext)) {
-        setError("Formato no soportado. Use MP4, WebM o MOV.");
+        const msg = "Formato no soportado. Use MP4, WebM o MOV.";
+        setError(msg);
+        sileo.error({
+          title: "Formato no soportado",
+          description: "Use MP4, WebM o MOV.",
+        });
         return;
       }
       if (file.size > MAX_BYTES) {
-        setError("El video no debe superar 100MB.");
+        const msg = "El video no debe superar 100MB.";
+        setError(msg);
+        sileo.error({
+          title: "Archivo demasiado grande",
+          description: "El video no debe superar los 100MB.",
+        });
         return;
       }
 
@@ -82,8 +93,14 @@ export default function VideoUpload({
         );
 
         onUploaded(result.video_url);
+        sileo.success({ title: "Video subido" });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al subir");
+        const msg = err instanceof Error ? err.message : "Error al subir";
+        setError(msg);
+        sileo.error({
+          title: "Error al subir el video",
+          description: msg,
+        });
       } finally {
         setUploading(false);
       }
@@ -96,8 +113,14 @@ export default function VideoUpload({
     try {
       await deleteVideoArchivo(totemId);
       onDeleted();
+      sileo.success({ title: "Video eliminado" });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      const msg = err instanceof Error ? err.message : "Error al eliminar";
+      setError(msg);
+      sileo.error({
+        title: "Error al eliminar el video",
+        description: msg,
+      });
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);

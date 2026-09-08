@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 import { useTotem } from "../../shared/context/TotemContext";
 import VideoUpload from "../components/VideoUpload";
 import Button from "../../shared/components/ui/Button";
@@ -16,8 +17,6 @@ export default function VideoConfigPage() {
   const [intervalo, setIntervalo] = useState(60);
   const [activo, setActivo] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!totemId) return;
@@ -27,7 +26,15 @@ export default function VideoConfigPage() {
         setIntervalo(c.video_intervalo);
         setActivo(c.video_activo);
       })
-      .catch(() => setError("Error al cargar configuración"));
+      .catch((err) => {
+        sileo.error({
+          title: "Error al cargar configuración",
+          description:
+            err instanceof Error
+              ? err.message
+              : "No se pudo obtener la configuración de video",
+        });
+      });
   }, [totemId]);
 
   const handleUploaded = (url: string) => {
@@ -57,12 +64,13 @@ export default function VideoConfigPage() {
   const handleSave = async () => {
     if (!totemId) return;
     if (intervalo < 10 || intervalo > 600) {
-      setError("El intervalo debe estar entre 10 y 600 segundos");
+      sileo.error({
+        title: "Error de validación",
+        description: "El intervalo debe estar entre 10 y 600 segundos",
+      });
       return;
     }
     setSaving(true);
-    setError(null);
-    setSuccess("");
     try {
       const updated = await updateConfigVideo(totemId, {
         video_intervalo: intervalo,
@@ -73,11 +81,16 @@ export default function VideoConfigPage() {
         video_intervalo: updated.video_intervalo,
         video_activo: updated.video_activo,
       });
-      setSuccess("Configuración guardada correctamente");
-      setTimeout(() => setSuccess(""), 3000);
+      sileo.success({ title: "Configuración guardada" });
       refreshTotems().catch(() => {});
-    } catch {
-      setError("Error al guardar");
+    } catch (err) {
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo guardar la configuración de video",
+      });
     } finally {
       setSaving(false);
     }
@@ -92,6 +105,12 @@ export default function VideoConfigPage() {
             Configurá el video que se muestra en el tótem cuando está inactivo.
           </p>
         </div>
+
+        {!totemId && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Seleccioná un tótem en la barra superior para configurar su video.
+          </div>
+        )}
 
         {totemId && (
           <>
@@ -139,8 +158,8 @@ export default function VideoConfigPage() {
                 <button
                   type="button"
                   onClick={() => setActivo(!activo)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    activo ? "bg-blue-600" : "bg-gray-300"
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${
+                    activo ? "bg-[#101828]" : "bg-gray-300"
                   }`}
                 >
                   <span
@@ -160,21 +179,10 @@ export default function VideoConfigPage() {
                 onClick={handleSave}
                 disabled={saving || intervalo < 10 || intervalo > 600}
               >
-                {saving ? "Guardando..." : "Guardar"}
+                Guardar
               </Button>
             </div>
           </>
-        )}
-
-        {success && (
-          <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
-            {success}
-          </div>
-        )}
-        {error && (
-          <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-            {error}
-          </div>
         )}
       </div>
     </div>
