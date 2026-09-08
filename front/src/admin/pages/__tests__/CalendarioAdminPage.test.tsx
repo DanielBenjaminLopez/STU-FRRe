@@ -9,6 +9,17 @@ import {
 import CalendarioAdminPage from "../CalendarioAdminPage";
 import * as calendarioAdminApi from "../../../shared/api/calendarioAdmin";
 
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+import { sileo } from "sileo";
+
 vi.mock("../../../shared/api/calendarioAdmin", () => ({
   fetchEventosCalendario: vi.fn(),
   bulkSaveCalendario: vi.fn(),
@@ -214,6 +225,11 @@ describe("CalendarioAdminPage", () => {
     await waitFor(() => {
       expect(mockBulkSave).toHaveBeenCalled();
     });
+    expect(sileo.success).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Calendario guardado",
+      }),
+    );
   });
 
   it("cierra modal al cancelar guardado", async () => {
@@ -234,9 +250,14 @@ describe("CalendarioAdminPage", () => {
   it("muestra error al cargar eventos", async () => {
     mockFetchEventos.mockRejectedValue(new Error("Error de red"));
     render(<CalendarioAdminPage />);
-    expect(
-      await screen.findByText("Error al cargar el calendario"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al cargar el calendario",
+          description: "Error de red",
+        }),
+      );
+    });
   });
 
   it("muestra error al guardar", async () => {
@@ -249,9 +270,14 @@ describe("CalendarioAdminPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /Guardar/ }));
     fireEvent.click(screen.getByText("confirm save"));
 
-    expect(
-      await screen.findByText("Error al guardar los eventos."),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al guardar",
+          description: "Error al guardar",
+        }),
+      );
+    });
   });
 
   it("cambia el año y recarga eventos", async () => {

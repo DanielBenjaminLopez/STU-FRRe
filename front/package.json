@@ -22,6 +22,7 @@
     "react-dropzone": "^20.1.1",
     "react-mk": "^2.0.0",
     "react-router": "^7.15.1",
+    "sileo": "^0.1.5",
     "tailwindcss": "^4.3.0",
     "temporal-polyfill": "^1.0.1",
     "three": "^0.185.1"

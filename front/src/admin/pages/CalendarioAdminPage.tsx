@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { sileo } from "sileo";
 import { AdminCalendarSkeleton } from "../../shared/components/ui/Skeleton";
 import AnnualCalendarGrid from "../components/calendario/AnnualCalendarGrid";
 import EventTypeSelector from "../components/calendario/EventTypeSelector";
@@ -44,15 +45,12 @@ export default function CalendarioAdminPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
       try {
         setLoading(true);
-        setError(null);
         const data = await fetchEventosCalendario();
         if (!mounted) return;
         const yearEvents = data.filter((e) => {
@@ -69,8 +67,16 @@ export default function CalendarioAdminPage() {
           descripcion: e.descripcion,
         }));
         setPending(loaded);
-      } catch {
-        if (mounted) setError("Error al cargar el calendario");
+      } catch (err) {
+        if (mounted) {
+          sileo.error({
+            title: "Error al cargar el calendario",
+            description:
+              err instanceof Error
+                ? err.message
+                : "Error al cargar el calendario",
+          });
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -84,17 +90,17 @@ export default function CalendarioAdminPage() {
   const toggleDay = useCallback(
     (date: string) => {
       if (!selectedTipo) return;
-      const existing = pending.find(
-        (e) =>
-          e.tipo === selectedTipo && e.fecha_inicio === date && !e.fecha_fin,
-      );
-      if (existing) {
-        setPending((prev) => prev.filter((e) => e !== existing));
-      } else {
-        setPending((prev) => [
-          ...prev.filter(
+      setPending((prev) => {
+        const exists = prev.some(
+          (e) => e.tipo === selectedTipo && e.fecha_inicio === date,
+        );
+        if (exists) {
+          return prev.filter(
             (e) => !(e.tipo === selectedTipo && e.fecha_inicio === date),
-          ),
+          );
+        }
+        return [
+          ...prev,
           {
             titulo: `${TIPO_LABELS[selectedTipo] || selectedTipo} - ${fmtDate(date)}`,
             tipo: selectedTipo,
@@ -104,10 +110,10 @@ export default function CalendarioAdminPage() {
             color: "",
             descripcion: "",
           },
-        ]);
-      }
+        ];
+      });
     },
-    [selectedTipo, pending],
+    [selectedTipo],
   );
 
   const handleRangeSelect = useCallback(
@@ -145,12 +151,18 @@ export default function CalendarioAdminPage() {
   const handleSave = useCallback(async () => {
     try {
       setSaving(true);
-      setError(null);
       await bulkSaveCalendario(pending, year);
-      setSuccess(`Se guardaron ${pending.length} eventos del año ${year}.`);
+      sileo.success({
+        title: "Calendario guardado",
+        description: `Se guardaron ${pending.length} eventos del año ${year}.`,
+      });
       setShowConfirm(false);
-    } catch {
-      setError("Error al guardar los eventos.");
+    } catch (err) {
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error ? err.message : "Error al guardar los eventos.",
+      });
     } finally {
       setSaving(false);
     }
@@ -200,23 +212,10 @@ export default function CalendarioAdminPage() {
             onClick={() => pending.length > 0 && setShowConfirm(true)}
             disabled={pending.length === 0 || saving}
           >
-            {saving
-              ? "Guardando..."
-              : `Guardar${pending.length > 0 ? ` (${pending.length})` : ""}`}
+            Guardar
           </Button>
         </div>
       </div>
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-2xl text-sm text-green-600">
-          {success}
-        </div>
-      )}
 
       <div className="flex-1 min-h-0 flex gap-6">
         <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3 items-center">

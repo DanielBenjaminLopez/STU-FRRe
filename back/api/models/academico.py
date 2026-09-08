@@ -54,8 +54,12 @@ class PlanMateria(models.Model):
     ]
 
     PLAN_ESTUDIO = [
+        ('2026', 'Plan 2026'),
         ('2023', 'Plan 2023'),
+        ('2010', 'Plan 2010'),
         ('2008', 'Plan 2008'),
+        ('2001', 'Plan 2001'),
+        ('1995', 'Plan 1995'),
     ]
 
     carrera = models.ForeignKey(

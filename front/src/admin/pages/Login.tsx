@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useAuth } from "../../shared/context/AuthContext";
 import Logo from "../../assets/logo_negro.webp";
 import Button from "../../shared/components/ui/Button";
+import { sileo } from "sileo";
 
 export default function Login() {
   const { login } = useAuth();
@@ -11,17 +12,20 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
     try {
       await login(username, password);
+      sileo.success({ title: "Sesión iniciada" });
       navigate("/admin/", { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+      sileo.error({
+        title: "Error al iniciar sesión",
+        description:
+          err instanceof Error ? err.message : "Error al iniciar sesión",
+      });
     } finally {
       setLoading(false);
     }
@@ -106,19 +110,13 @@ export default function Login() {
           </label>
         </div>
 
-        {error && (
-          <div className="w-full px-3.5 py-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 text-center">
-            {error}
-          </div>
-        )}
-
         <Button
           variant="primary"
           type="submit"
           disabled={loading}
           className="w-full h-10 text-sm font-medium"
         >
-          {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+          Iniciar sesión
         </Button>
       </form>
     </div>

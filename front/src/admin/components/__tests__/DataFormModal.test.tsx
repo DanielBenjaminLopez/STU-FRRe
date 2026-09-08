@@ -1,6 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import DataFormModal, { type FormField } from "../DataFormModal";
+
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+import { sileo } from "sileo";
 
 const mockFields: FormField[] = [
   { name: "nombre", label: "Nombre", type: "text", required: true },
@@ -120,7 +137,7 @@ describe("DataFormModal", () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it("cierra al hacer click en el backdrop", () => {
+  it("no cierra al hacer click en el backdrop", () => {
     const { container } = render(
       <DataFormModal
         title="Crear"
@@ -131,7 +148,7 @@ describe("DataFormModal", () => {
     );
     const backdrop = container.querySelector(".fixed.inset-0");
     fireEvent.click(backdrop!);
-    expect(mockOnClose).toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
   });
 
   it("llama a onSubmit con los datos del formulario", async () => {
@@ -156,7 +173,7 @@ describe("DataFormModal", () => {
     });
   });
 
-  it("muestra estado de carga durante el envío", async () => {
+  it("deshabilita el botón durante el envío manteniendo el texto Guardar", async () => {
     mockOnSubmit.mockImplementation(() => new Promise<void>(() => {}));
     render(
       <DataFormModal
@@ -170,9 +187,7 @@ describe("DataFormModal", () => {
       target: { value: "ISI" },
     });
     fireEvent.click(screen.getByText("Guardar"));
-    await screen.findByText("Guardando...");
-    expect(screen.getByText("Guardando...")).toBeInTheDocument();
-    const submitBtn = screen.getByRole("button", { name: "Guardando..." });
+    const submitBtn = screen.getByRole("button", { name: "Guardar" });
     expect(submitBtn).toBeDisabled();
   });
 
@@ -190,7 +205,14 @@ describe("DataFormModal", () => {
       target: { value: "ISI" },
     });
     fireEvent.click(screen.getByText("Guardar"));
-    expect(await screen.findByText("Error de red")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al guardar",
+          description: "Error de red",
+        }),
+      );
+    });
   });
 
   it("muestra error genérico cuando el error no es Error", async () => {
@@ -207,9 +229,14 @@ describe("DataFormModal", () => {
       target: { value: "ISI" },
     });
     fireEvent.click(screen.getByText("Guardar"));
-    expect(
-      await screen.findByText("Error al guardar los datos"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al guardar",
+          description: "Error al guardar los datos",
+        }),
+      );
+    });
   });
 
   it("renderiza con datos iniciales para edición", () => {

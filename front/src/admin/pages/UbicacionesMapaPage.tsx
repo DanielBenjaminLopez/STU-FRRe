@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { sileo } from "sileo";
 import DataFormModal from "../components/DataFormModal";
 import type { FormField } from "../components/DataFormModal";
 import Button from "../../shared/components/ui/Button";
@@ -65,8 +66,6 @@ const editFields: FormField[] = [
   },
 ];
 
-type SaveStatus = "idle" | "saving" | "saved" | "error";
-
 export default function UbicacionesMapaPage() {
   // --- Sección 1: Ubicaciones/polígonos ---
   const [activePiso, setActivePiso] = useState<PisoKey>("baja");
@@ -79,8 +78,7 @@ export default function UbicacionesMapaPage() {
   // --- Sección 2: Pin del tótem activo ---
   // El tótem activo viene del contexto del admin (selector superior de la página)
   const { selectedTotem, totems, refreshTotems } = useTotem();
-  const [pinSaveStatus, setPinSaveStatus] = useState<SaveStatus>("idle");
-  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinSaving, setPinSaving] = useState(false);
 
   // El piso del editor: arranca en el piso guardado del tótem (si tiene pin),
   // o en "baja" por defecto. El usuario puede sobreescribirlo manualmente.
@@ -96,8 +94,15 @@ export default function UbicacionesMapaPage() {
     try {
       const data = await fetchUbicacionesMapa();
       setUbicaciones(data);
-    } catch {
+    } catch (err) {
       setError("Error al cargar las ubicaciones del mapa.");
+      sileo.error({
+        title: "Error al cargar las ubicaciones",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudieron obtener las ubicaciones del mapa.",
+      });
     } finally {
       setLoading(false);
     }
@@ -112,10 +117,17 @@ export default function UbicacionesMapaPage() {
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (!cancelled) {
           setError("Error al cargar las ubicaciones del mapa.");
           setLoading(false);
+          sileo.error({
+            title: "Error al cargar las ubicaciones",
+            description:
+              err instanceof Error
+                ? err.message
+                : "No se pudieron obtener las ubicaciones del mapa.",
+          });
         }
       });
     return () => {
@@ -137,8 +149,7 @@ export default function UbicacionesMapaPage() {
   const handlePinPlaced = useCallback(
     async (pos: PinPosition) => {
       if (!selectedTotem) return;
-      setPinSaveStatus("saving");
-      setPinError(null);
+      setPinSaving(true);
       try {
         await updateTotemPinMapa(selectedTotem.id, {
           pin_mapa_piso: pos.floor,
@@ -146,11 +157,13 @@ export default function UbicacionesMapaPage() {
           pin_mapa_svg_y: pos.svgY,
         });
         await refreshTotems();
-        setPinSaveStatus("saved");
-        setTimeout(() => setPinSaveStatus("idle"), 2500);
-      } catch {
-        setPinSaveStatus("error");
-        setPinError("Error al guardar la posición. Intentá de nuevo.");
+      } catch (err) {
+        sileo.error({
+          title: "Error al guardar la posición",
+          description: err instanceof Error ? err.message : "Intentá de nuevo.",
+        });
+      } finally {
+        setPinSaving(false);
       }
     },
     [selectedTotem, refreshTotems],
@@ -158,16 +171,23 @@ export default function UbicacionesMapaPage() {
 
   const handleClearPin = useCallback(async () => {
     if (!selectedTotem) return;
-    setPinSaveStatus("saving");
-    setPinError(null);
+    setPinSaving(true);
     try {
       await updateTotemPinMapa(selectedTotem.id, null);
       await refreshTotems();
-      setPinSaveStatus("saved");
-      setTimeout(() => setPinSaveStatus("idle"), 2500);
-    } catch {
-      setPinSaveStatus("error");
-      setPinError("Error al limpiar la posición.");
+      sileo.success({
+        title: "Posición eliminada",
+      });
+    } catch (err) {
+      sileo.error({
+        title: "Error al limpiar la posición",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudo limpiar la posición.",
+      });
+    } finally {
+      setPinSaving(false);
     }
   }, [selectedTotem, refreshTotems]);
 
@@ -397,40 +417,14 @@ export default function UbicacionesMapaPage() {
               </p>
             </div>
 
-            {/* Feedback + limpiar */}
+            {/* Limpiar pin */}
             <div className="flex items-center gap-3">
-              {pinSaveStatus === "saving" && (
-                <span className="text-sm text-gray-400 animate-pulse">
-                  Guardando...
-                </span>
-              )}
-              {pinSaveStatus === "saved" && (
-                <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Guardado
-                </span>
-              )}
-              {pinSaveStatus === "error" && pinError && (
-                <span className="text-sm text-red-500">{pinError}</span>
-              )}
               {currentPinPosition && selectedTotem && (
                 <Button
                   variant="danger"
                   id="btn-limpiar-pin"
                   onClick={handleClearPin}
-                  disabled={pinSaveStatus === "saving"}
+                  disabled={pinSaving}
                 >
                   Limpiar pin
                 </Button>

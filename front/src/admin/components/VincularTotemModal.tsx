@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useTotem } from "../../shared/context/TotemContext";
 import { vincularTotem } from "../../shared/api/totems";
 import Button from "../../shared/components/ui/Button";
+import { sileo } from "sileo";
 
 interface VincularTotemModalProps {
   onClose: () => void;
@@ -15,8 +16,6 @@ export default function VincularTotemModal({
   const { refreshTotems, setSelectedId } = useTotem();
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -29,8 +28,15 @@ export default function VincularTotemModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+
+    if (codigo.length !== 5) {
+      sileo.error({
+        title: "Código inválido",
+        description: "El código de vinculación debe tener 5 dígitos.",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -38,7 +44,7 @@ export default function VincularTotemModal({
         codigo_vinculacion: codigo,
         nombre,
       });
-      setSuccess("Tótem vinculado exitosamente");
+      sileo.success({ title: "Tótem vinculado" });
       setSelectedId(String(nuevo.id));
       refreshTotems().catch(() => {});
       setTimeout(() => {
@@ -47,21 +53,20 @@ export default function VincularTotemModal({
           replace: true,
           state: { recienVinculado: true },
         });
-      }, 1500);
+      }, 1000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al vincular tótem");
+      sileo.error({
+        title: "Error al vincular tótem",
+        description:
+          err instanceof Error ? err.message : "Error al vincular tótem",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-4xl shadow-xl w-full max-w-md p-8 flex flex-col gap-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">
@@ -79,7 +84,12 @@ export default function VincularTotemModal({
             <input
               type="text"
               value={codigo}
-              onChange={(e) => setCodigo(e.target.value)}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "").slice(0, 5);
+                setCodigo(digits);
+              }}
+              maxLength={5}
+              inputMode="numeric"
               className="border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
               placeholder="Ej: 34735"
               required
@@ -99,15 +109,12 @@ export default function VincularTotemModal({
             />
           </label>
 
-          {error && <span className="text-red-500 text-sm">{error}</span>}
-          {success && <span className="text-green-600 text-sm">{success}</span>}
-
           <div className="flex items-center justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>
               Cancelar
             </Button>
             <Button type="submit" disabled={loading} variant="primary">
-              {loading ? "Vinculando..." : "Vincular tótem"}
+              Vincular
             </Button>
           </div>
         </form>

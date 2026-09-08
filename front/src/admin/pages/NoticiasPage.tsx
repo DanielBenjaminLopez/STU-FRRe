@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { sileo } from "sileo";
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
@@ -126,12 +127,10 @@ const noticiaFields: FormField[] = [
 export default function NoticiasPage() {
   const [feed, setFeed] = useState<ContenidoFeed[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<ContenidoFeed | null>(null);
   const [deletingRow, setDeletingRow] = useState<ContenidoFeed | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
   const [creatingType, setCreatingType] = useState<"noticia" | "evento" | null>(
     null,
   );
@@ -142,13 +141,14 @@ export default function NoticiasPage() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      setError("");
       const feedResult = await fetchFeed();
       setFeed(feedResult);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al cargar los datos",
-      );
+      sileo.error({
+        title: "Error al cargar datos",
+        description:
+          err instanceof Error ? err.message : "Error al cargar los datos",
+      });
     } finally {
       setLoading(false);
     }
@@ -175,21 +175,21 @@ export default function NoticiasPage() {
     };
   }, [load]);
 
-  useEffect(() => {
-    if (!syncResult) return;
-    const timer = setTimeout(() => setSyncResult(null), 5000);
-    return () => clearTimeout(timer);
-  }, [syncResult]);
-
   async function handleSync() {
     try {
       setSyncing(true);
-      setSyncResult(null);
       const result = await syncNoticias();
-      setSyncResult(result.detail);
+      sileo.success({
+        title: "Sincronización finalizada",
+        description: result.detail,
+      });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al sincronizar");
+      sileo.error({
+        title: "Error al sincronizar",
+        description:
+          err instanceof Error ? err.message : "Error al sincronizar noticias",
+      });
     } finally {
       setSyncing(false);
     }
@@ -290,10 +290,12 @@ export default function NoticiasPage() {
       await updateEvento(editingRow.id as number, formData);
     } else if (isCreatingEvento) {
       await createEvento(formData as Parameters<typeof createEvento>[0]);
+      sileo.success({ title: "Evento creado" });
     } else if (editingRow) {
       await updateNoticia(editingRow.id as number, formData);
     } else {
       await createNoticia(formData as Parameters<typeof createNoticia>[0]);
+      sileo.success({ title: "Noticia creada" });
     }
     setShowForm(false);
     setEditingRow(null);
@@ -306,16 +308,20 @@ export default function NoticiasPage() {
       if (!deletingRow) return;
       if (deletingRow.tipo === "evento") {
         await deleteEvento(deletingRow.id as number);
+        sileo.success({ title: "Evento eliminado" });
       } else {
         await deleteNoticia(deletingRow.id as number);
+        sileo.success({ title: "Noticia eliminada" });
       }
       await load();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : `Error al eliminar ${deletingRow?.tipo === "evento" ? "el evento" : "la noticia"}`,
-      );
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error
+            ? err.message
+            : `Error al eliminar ${deletingRow?.tipo === "evento" ? "el evento" : "la noticia"}`,
+      });
     } finally {
       setDeletingRow(null);
     }
@@ -382,18 +388,6 @@ export default function NoticiasPage() {
           Crear evento
         </Button>
       </PageHeader>
-
-      {syncResult && (
-        <div className="mb-4 px-4 py-3 bg-blue-50 border border-blue-200 rounded-2xl text-sm text-blue-600">
-          {syncResult}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-          {error}
-        </div>
-      )}
 
       {!loading && feed.length > 0 && (
         <div className="mb-6">
