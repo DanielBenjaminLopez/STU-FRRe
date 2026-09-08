@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import Typewriter, { Cursor } from "react-mk";
 
 interface VideoPanelProps {
   url: string;
@@ -55,7 +54,7 @@ export default function VideoPanel({ url, onEnded }: VideoPanelProps) {
       <AnimatePresence>
         {showCard && (
           <motion.div
-            className="absolute bottom-16 left-1/2 -translate-x-1/2 pointer-events-none"
+            className="absolute bottom-32 left-1/2 -translate-x-1/2 pointer-events-none"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
@@ -63,14 +62,7 @@ export default function VideoPanel({ url, onEnded }: VideoPanelProps) {
           >
             <div className="bg-white/70 backdrop-blur-md border border-gray-200 rounded-4xl px-10 py-6 whitespace-nowrap">
               <span className="text-4xl font-medium text-gray-700">
-                <Typewriter
-                  typeSpeed={[40, 70]}
-                  mistakeChance={0.04}
-                  loop={false}
-                >
-                  Tocá para interactuar
-                </Typewriter>
-                <Cursor blinkSpeed={530} />
+                Tocá para interactuar
               </span>
             </div>
           </motion.div>
