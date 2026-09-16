@@ -8,6 +8,7 @@ import {
 } from "../../shared/api/client";
 import { createTotem, fetchTotemMe } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
+import { TotemStageCSS } from "../../shared/components/TotemStage";
 
 const CODIGO_KEY = "totem_codigo_vinculacion";
 const TIMESTAMP_KEY = "totem_codigo_timestamp";
@@ -122,56 +123,63 @@ export default function Onboarding() {
 
   if (error) {
     return (
-      <div className="flex flex-col max-w-270 h-480 mx-auto border-x border-gray-200 p-16 gap-16">
-        <div className="flex flex-col justify-center items-center w-full gap-16">
-          <img src={Logo} alt="Logo" className="w-80" draggable={false} />
-          <span className="text-3xl text-red-500">{error}</span>
-          <button
-            onClick={handleReintentar}
-            className="bg-black text-white text-xl font-semibold px-8 py-3 rounded-2xl cursor-pointer"
-          >
-            Reintentar
-          </button>
+      <TotemStageCSS>
+        <div className="flex flex-col items-center justify-center w-full h-full p-16 gap-16">
+          <div className="flex flex-col justify-center items-center w-full gap-16">
+            <img src={Logo} alt="Logo" className="w-80" draggable={false} />
+            <span className="text-3xl text-red-500">{error}</span>
+            <button
+              onClick={handleReintentar}
+              className="bg-black text-white text-xl font-semibold px-8 py-3 rounded-2xl cursor-pointer"
+            >
+              Reintentar
+            </button>
+          </div>
         </div>
-      </div>
+      </TotemStageCSS>
     );
   }
 
   return (
-    <div className="flex flex-col max-w-270 h-480 mx-auto border-x border-gray-200 p-16 gap-16">
-      <div className="flex flex-col justify-center items-center w-full gap-16">
-        <img src={Logo} alt="Logo" className="w-80" draggable={false} />
-        <div className="flex flex-col items-center gap-4">
-          <span className="text-3xl">Su código de emparejamiento es:</span>
-          <span className="text-8xl font-bold">{codigo ?? "Cargando..."}</span>
-        </div>
+    <TotemStageCSS>
+      <div className="flex flex-col items-center justify-center w-full h-full p-16 gap-16">
+        <div className="flex flex-col justify-center items-center w-full gap-16">
+          <img src={Logo} alt="Logo" className="w-80" draggable={false} />
+          <div className="flex flex-col items-center gap-4">
+            <span className="text-3xl">Su código de emparejamiento es:</span>
+            <span className="text-8xl font-bold">
+              {codigo ?? "Cargando..."}
+            </span>
+          </div>
 
-        <div className="flex flex-col items-center gap-4 bg-gray-100 px-8 py-16 rounded-4xl max-w-175">
-          <span className="text-2xl">
-            Para vincular este tótem, siga los siguientes pasos:
-            <ol className="list-decimal ml-8">
-              <li>
-                Ingrese al <strong>panel de administración</strong> del Sistema
-                de Tótems Universitarios desde una PC o dispositivo móvil.
-              </li>
-              <li>
-                Seleccione <strong>Vincular nuevo tótem</strong>.
-              </li>
-              <li>
-                Escriba el <strong>código de emparejamiento</strong>{" "}
-                proporcionado.
-              </li>
-            </ol>
-          </span>
-        </div>
+          <div className="flex flex-col items-center gap-4 bg-gray-100 px-8 py-16 rounded-4xl max-w-175">
+            <span className="text-2xl">
+              Para vincular este tótem, siga los siguientes pasos:
+              <ol className="list-decimal ml-8">
+                <li>
+                  Ingrese al <strong>panel de administración</strong> del
+                  Sistema de Tótems Universitarios desde una PC o dispositivo
+                  móvil.
+                </li>
+                <li>
+                  Seleccione <strong>Vincular nuevo tótem</strong>.
+                </li>
+                <li>
+                  Escriba el <strong>código de emparejamiento</strong>{" "}
+                  proporcionado.
+                </li>
+              </ol>
+            </span>
+          </div>
 
-        <button
-          onClick={handleReintentar}
-          className="bg-black text-white text-xl font-semibold px-8 py-3 rounded-2xl cursor-pointer"
-        >
-          Regenerar código
-        </button>
+          <button
+            onClick={handleReintentar}
+            className="bg-black text-white text-xl font-semibold px-8 py-3 rounded-2xl cursor-pointer"
+          >
+            Regenerar código
+          </button>
+        </div>
       </div>
-    </div>
+    </TotemStageCSS>
   );
 }

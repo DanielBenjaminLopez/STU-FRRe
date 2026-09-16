@@ -201,6 +201,9 @@ function mockTotem(overrides: Partial<Totem> = {}): Totem {
     pin_mapa_piso: null,
     pin_mapa_svg_x: null,
     pin_mapa_svg_y: null,
+    video_url: null,
+    video_intervalo: 0,
+    video_activo: false,
     creado_en: "2026-01-01T00:00:00Z",
     ...overrides,
   };
