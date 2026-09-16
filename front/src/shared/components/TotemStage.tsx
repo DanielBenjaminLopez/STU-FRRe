@@ -16,14 +16,19 @@ import { TOTEM_WIDTH, TOTEM_HEIGHT } from "../hooks/useTotemScale";
 export function TotemStageCSS({
   children,
   className = "",
+  containerClassName = "",
 }: {
   children: React.ReactNode;
   className?: string;
+  containerClassName?: string;
 }) {
+  const bgClass = className.includes("bg-") ? "" : "bg-white";
   return (
-    <div className="totem-scale-container totem-scale-container--css">
+    <div
+      className={`totem-scale-container totem-scale-container--css ${containerClassName}`}
+    >
       <div
-        className={`totem-scale-stage totem-scale-stage--css bg-white overflow-hidden ${className}`}
+        className={`totem-scale-stage totem-scale-stage--css overflow-hidden ${bgClass} ${className}`}
         style={{
           width: TOTEM_WIDTH,
           height: TOTEM_HEIGHT,

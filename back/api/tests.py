@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from rest_framework import status
@@ -269,6 +270,16 @@ class TotemAPITestCase(TestCase):
         ids_all = [t["id"] for t in res_all.data]
         self.assertIn(self.totem.id, ids_all)
         self.assertIn(totem_no_vinculado.id, ids_all)
+
+    @patch("api.views.notify_totem_deleted")
+    def test_eliminar_totem_notifica_y_borra(self, mock_notify):
+        totem_id = self.totem.id
+        url = f"/api/totems/{totem_id}/"
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Totem.objects.filter(id=totem_id).exists())
+        mock_notify.assert_called_once_with(totem_id)
 
     def test_no_se_puede_borrar_plantilla_asignada(self):
         url = f"/api/plantillas/{self.plantilla.id}/"

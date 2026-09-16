@@ -36,7 +36,7 @@ from .models import (
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
-from .realtime import notify_content, notify_totem, notify_totems
+from .realtime import notify_content, notify_totem, notify_totems, notify_totem_deleted
 
 
 class RealtimeContentMixin:
@@ -572,6 +572,11 @@ class TotemViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         totem = serializer.save()
         transaction.on_commit(lambda: notify_totems([totem.id]))
+
+    def perform_destroy(self, instance):
+        totem_id = instance.id
+        instance.delete()
+        transaction.on_commit(lambda: notify_totem_deleted(totem_id))
 
 
 class TotemMeView(APIView):

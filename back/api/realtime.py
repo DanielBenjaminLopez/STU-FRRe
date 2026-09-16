@@ -27,6 +27,20 @@ def notify_totems(totem_ids):
         notify_totem(totem_id)
 
 
+def notify_totem_deleted(totem_id):
+    """Notify connected totem that it has been deleted/unlinked."""
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+    try:
+        async_to_sync(channel_layer.group_send)(
+            f"totem_{totem_id}",
+            {"type": "totem_eliminado", "totem_id": totem_id},
+        )
+    except Exception:
+        logger.exception("Failed to notify deleted totem %s", totem_id)
+
+
 def notify_content(resource):
     """Broadcast a public-data invalidation after a successful write."""
     channel_layer = get_channel_layer()
