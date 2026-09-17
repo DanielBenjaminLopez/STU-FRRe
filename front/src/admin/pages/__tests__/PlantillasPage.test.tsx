@@ -15,7 +15,7 @@ import {
   deletePlantilla,
   replacePlantillaWidgets,
 } from "../../../shared/api/plantillas";
-import { fetchWidgets } from "../../../shared/api/widgets";
+import { fetchWidgets, type WidgetDTO } from "../../../shared/api/widgets";
 import { updateTotem, type Totem } from "../../../shared/api/totems";
 import type {
   PlantillaDTO,
@@ -121,8 +121,9 @@ const mockDeletePlantilla = vi.mocked(deletePlantilla);
 const mockReplacePlantillaWidgets = vi.mocked(replacePlantillaWidgets);
 const mockFetchWidgets = vi.mocked(fetchWidgets);
 const mockUpdateTotem = vi.mocked(updateTotem);
+const mockRefreshTotems = vi.fn();
 
-const WIDGETS = [
+const WIDGETS: WidgetDTO[] = [
   {
     id: 1,
     nombre: "Horarios",
@@ -141,28 +142,10 @@ const WIDGETS = [
     activo: true,
     creado_en: "2026-01-01T00:00:00Z",
   },
-  {
-    id: 3,
-    nombre: "Calendario",
-    tipo: "calendario",
-    col_tam_default: 2,
-    fila_tam_default: 2,
-    activo: true,
-    creado_en: "2026-01-01T00:00:00Z",
-  },
-  {
-    id: 4,
-    nombre: "Mapa",
-    tipo: "mapa",
-    col_tam_default: 2,
-    fila_tam_default: 2,
-    activo: true,
-    creado_en: "2026-01-01T00:00:00Z",
-  },
 ];
 
-const HORARIO_POS = {
-  id: 11,
+const HORARIO_POS: WidgetPosicionDTO = {
+  id: 10,
   plantilla: 1,
   widget: 1,
   widget_nombre: "Horarios",
@@ -176,21 +159,21 @@ const HORARIO_POS = {
 function plantillaDTO(
   id: number,
   nombre: string,
-  widgetsPosiciones: WidgetPosicionDTO[] = [],
+  posiciones: WidgetPosicionDTO[] = [],
 ): PlantillaDTO {
   return {
     id,
     nombre,
     activa: false,
-    widgets_posiciones: widgetsPosiciones,
+    widgets_posiciones: posiciones,
     creado_en: "2026-01-01T00:00:00Z",
   };
 }
 
 function mockTotem(overrides: Partial<Totem> = {}): Totem {
   return {
-    id: 5,
-    nombre: "Kiosco",
+    id: 1,
+    nombre: "Tótem Principal",
     espacio_id: null,
     espacio_nombre: null,
     activo: true,
@@ -217,7 +200,7 @@ describe("PlantillasPage", () => {
       selectedId: "",
       selectedTotem: undefined,
       setSelectedId: vi.fn(),
-      refreshTotems: vi.fn(),
+      refreshTotems: mockRefreshTotems,
     });
     mockUseLocation.mockReturnValue({
       state: null,
@@ -324,6 +307,7 @@ describe("PlantillasPage", () => {
         fila_tam: 2,
       },
     ]);
+    expect(mockRefreshTotems).toHaveBeenCalled();
     expect(mockSileo.success).not.toHaveBeenCalled();
   });
 
@@ -347,6 +331,19 @@ describe("PlantillasPage", () => {
       });
     });
     expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(99, []);
+  });
+
+  it("al crear una plantilla con el botón (+), activa el modo edición con el nombre seleccionado", async () => {
+    render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    fireEvent.click(screen.getByRole("button", { name: "Nueva plantilla" }));
+
+    const input = screen.getByLabelText(
+      "Editar nombre de plantilla",
+    ) as HTMLInputElement;
+    expect(input).toBeInTheDocument();
+    expect(input.value).toBe("Nueva plantilla");
+    expect(document.activeElement).toBe(input);
   });
 
   it("muestra el error del backend al fallar el guardado", async () => {

@@ -550,6 +550,8 @@ export default function PlantillasPage() {
     setPlantillas((prev) => [...prev, newP]);
     setSelectedId(newP.id);
     setDirtyIds((prev) => ({ ...prev, [newP.id]: true }));
+    setEditingId(newP.id);
+    setEditingName(newP.nombre);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -575,7 +577,6 @@ export default function PlantillasPage() {
           await updateTotem(selectedTotem.id, {
             plantilla_id: Number(saved.id),
           });
-          await refreshTotems();
         }
       } else {
         const id = Number(plantilla.id);
@@ -586,6 +587,7 @@ export default function PlantillasPage() {
           prev.map((p) => (p.id === plantilla.id ? saved : p)),
         );
       }
+      await refreshTotems();
       setDirtyIds((prev) => {
         const next = { ...prev };
         delete next[plantilla.id];
