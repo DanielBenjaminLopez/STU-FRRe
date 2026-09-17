@@ -381,6 +381,7 @@ class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
         'espacio',
     ).all()
     serializer_class = MesaExamenSerializer
+    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['post'], url_path='importar-csv')
     def importar_csv(self, request):

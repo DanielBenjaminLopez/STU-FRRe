@@ -241,10 +241,19 @@ class MesaExamenSerializer(serializers.ModelSerializer):
     dia_semana = serializers.CharField(read_only=True)
     materia_nombre = serializers.CharField(source='plan_materia.materia.__str__', read_only=True)
     espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+    carrera_codigo = serializers.SerializerMethodField()
 
     class Meta:
         model = MesaExamen
-        fields = ['id', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo']
+        fields = [
+            'id', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre',
+            'carrera_codigo', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo',
+        ]
+
+    def get_carrera_codigo(self, obj):
+        if obj.plan_materia and obj.plan_materia.carrera and obj.plan_materia.carrera.codigo:
+            return obj.plan_materia.carrera.codigo
+        return ""
 
 
 class EventoSerializer(serializers.ModelSerializer):

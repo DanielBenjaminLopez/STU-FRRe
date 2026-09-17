@@ -26,19 +26,27 @@ function ExamenRow({ examen }: { examen: Examen }) {
       </span>
       <div
         className="text-sm font-normal min-w-0 w-full line-clamp-2 break-words"
-        title={`[${examen.comision}] ${examen.materia_nombre}`}
+        title={
+          examen.comision
+            ? `[${examen.comision}] ${examen.materia_nombre}`
+            : examen.materia_nombre
+        }
       >
-        <span className="font-semibold mr-1.5 shrink-0">
-          [{examen.comision}]
-        </span>
+        {examen.comision && (
+          <span className="font-semibold mr-1.5 shrink-0">
+            [{examen.comision}]
+          </span>
+        )}
         <span>{examen.materia_nombre}</span>
       </div>
       <div className="flex flex-wrap gap-2 max-w-full">
-        <div
-          className={`flex justify-center py-1 px-3 w-fit max-w-full ${badgeColor} text-sm font-semibold rounded-2xl shrink-0`}
-        >
-          <span className="truncate">{examen.carrera_codigo}</span>
-        </div>
+        {examen.carrera_codigo && (
+          <div
+            className={`flex justify-center py-1 px-3 w-fit max-w-full ${badgeColor} text-sm font-semibold rounded-2xl shrink-0`}
+          >
+            <span className="truncate">{examen.carrera_codigo}</span>
+          </div>
+        )}
         {examen.aula && (
           <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit max-w-full shrink-0">
             <span className="font-semibold truncate">Aula {examen.aula}</span>

@@ -1,5 +1,4 @@
-// When backend endpoint is ready, import apiFetch and use it in fetchExamenes:
-// import { apiFetch } from "./client";
+import { totemFetch } from "./client";
 
 export interface Examen {
   id: number;
@@ -10,174 +9,47 @@ export interface Examen {
   hora_fin: string;
   dia_semana: string;
   aula: string;
+  fecha?: string;
 }
 
-function generateMockExamenes(): Examen[] {
-  const dias = ["lunes", "martes", "miercoles", "jueves", "viernes"];
-  let id = 1;
+interface MesaExamenBackend {
+  id: number;
+  plan_materia?: number | null;
+  espacio?: number | null;
+  materia_nombre?: string;
+  espacio_nombre?: string;
+  carrera_codigo?: string;
+  fecha?: string;
+  hora?: string;
+  turno?: string;
+  llamado?: number;
+  dia_semana?: string;
+  activo?: boolean;
+}
 
-  const examenesPorDia: Array<{
-    carrera_codigo: string;
-    comision: string;
-    materia_nombre: string;
-    hora_inicio: string;
-    hora_fin: string;
-    aula: string;
-  }>[] = [
-    // lunes
-    [
-      {
-        carrera_codigo: "ISI",
-        comision: "K2.1",
-        materia_nombre: "Algoritmos y Estructuras de Datos",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.1",
-      },
-      {
-        carrera_codigo: "IEM",
-        comision: "K2.1",
-        materia_nombre: "Algoritmos y Estructuras de Datos",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.2",
-      },
-      {
-        carrera_codigo: "IQ",
-        comision: "K3.2",
-        materia_nombre: "Análisis Matemático II",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.3",
-      },
-    ],
-    // martes
-    [
-      {
-        carrera_codigo: "ISI",
-        comision: "K2.1",
-        materia_nombre: "Análisis Matemático II",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.3",
-      },
-      {
-        carrera_codigo: "LAR",
-        comision: "L1.1",
-        materia_nombre: "Derecho Constitucional",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.8",
-      },
-      {
-        carrera_codigo: "IEM",
-        comision: "M1.1",
-        materia_nombre: "Termodinámica",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.9",
-      },
-    ],
-    // miércoles
-    [
-      {
-        carrera_codigo: "IEM",
-        comision: "K2.1",
-        materia_nombre: "Algoritmos y Estructuras de Datos",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.2",
-      },
-      {
-        carrera_codigo: "ISI",
-        comision: "K2.1",
-        materia_nombre: "Sistemas Operativos",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.4",
-      },
-      {
-        carrera_codigo: "IQ",
-        comision: "K3.2",
-        materia_nombre: "Análisis Matemático II",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.6",
-      },
-    ],
-    // jueves
-    [
-      {
-        carrera_codigo: "ISI",
-        comision: "K3.1",
-        materia_nombre: "Base de Datos I",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.8",
-      },
-      {
-        carrera_codigo: "IQ",
-        comision: "Q1.3",
-        materia_nombre: "Química General",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.9",
-      },
-      {
-        carrera_codigo: "LAR",
-        comision: "L1.1",
-        materia_nombre: "Derecho Civil",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.10",
-      },
-    ],
-    // viernes
-    [
-      {
-        carrera_codigo: "ISI",
-        comision: "K2.1",
-        materia_nombre: "Algoritmos y Estructuras de Datos",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.2",
-      },
-      {
-        carrera_codigo: "IEM",
-        comision: "K2.1",
-        materia_nombre: "Ingeniería de Software",
-        hora_inicio: "08:00",
-        hora_fin: "10:00",
-        aula: "1.4",
-      },
-      {
-        carrera_codigo: "LAR",
-        comision: "L1.1",
-        materia_nombre: "Filosofía del Derecho",
-        hora_inicio: "14:00",
-        hora_fin: "16:00",
-        aula: "1.6",
-      },
-    ],
-  ];
-
-  const examenes: Examen[] = [];
-  for (let i = 0; i < dias.length; i++) {
-    for (const h of examenesPorDia[i]) {
-      examenes.push({ id: id++, ...h, dia_semana: dias[i] });
-    }
-  }
-  return examenes;
+function calculateHoraFin(horaInicio: string): string {
+  const [h, m] = horaInicio.split(":").map(Number);
+  if (isNaN(h)) return "10:00";
+  const endH = Math.min(23, h + 2);
+  return `${endH.toString().padStart(2, "0")}:${(m || 0).toString().padStart(2, "0")}`;
 }
 
 export async function fetchExamenes(): Promise<Examen[]> {
-  // TODO: Cambiar esto por una llamada a la API
-  // 1. Uncomment the import at the top:
-  //    import { apiFetch } from "./client";
-  // 2. Replace the body with:
-  //    return apiFetch<Examen[]>("/api/examenes/");
-
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(generateMockExamenes()), 400);
-  });
+  const data = await totemFetch<MesaExamenBackend[]>("/api/mesas-examen/");
+  return data
+    .filter((m) => m.activo !== false)
+    .map((m) => {
+      const horaInicio = m.hora ? m.hora.slice(0, 5) : "08:00";
+      return {
+        id: m.id,
+        carrera_codigo: m.carrera_codigo || "",
+        comision: m.llamado ? `${m.llamado}° llamado` : "",
+        materia_nombre: m.materia_nombre || "",
+        hora_inicio: horaInicio,
+        hora_fin: calculateHoraFin(horaInicio),
+        dia_semana: m.dia_semana || "",
+        aula: m.espacio_nombre || "",
+        fecha: m.fecha,
+      };
+    });
 }

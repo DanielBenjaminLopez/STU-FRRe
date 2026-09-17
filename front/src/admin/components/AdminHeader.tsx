@@ -17,7 +17,7 @@ export default function AdminHeader() {
       : [{ value: "", label: "Sin tótems" }];
 
   return (
-    <header className="relative z-50 flex items-center justify-between px-8 h-18 bg-white border-b border-gray-200 shrink-0">
+    <header className="relative z-30 flex items-center justify-between px-8 h-18 bg-white border-b border-gray-200 shrink-0">
       <div className="flex items-center">
         <img src={Logo} alt="Logo UTN" className="h-10" draggable={false} />
       </div>
