@@ -554,45 +554,46 @@ export default function PlantillasPage() {
     setEditingName(newP.nombre);
   }, []);
 
-  const handleSave = useCallback(async () => {
-    const plantilla = plantillas.find((p) => p.id === selectedId);
-    if (!plantilla || saving) return;
-
-    const positions = plantillaToWidgetPositions(plantilla, widgetIdByTipo);
-    setSaving(true);
-    try {
-      const isNew = Boolean(plantilla.isNew);
+  const savePlantillaHelper = useCallback(
+    async (plantilla: Plantilla): Promise<Plantilla> => {
+      const positions = plantillaToWidgetPositions(plantilla, widgetIdByTipo);
+      let saved: Plantilla;
       if (plantilla.isNew) {
         const dto = await createPlantilla({
           nombre: plantilla.nombre,
           activa: false,
         });
         const updatedDto = await replacePlantillaWidgets(dto.id, positions);
-        const saved = plantillaDTOToLocal(updatedDto);
-        setPlantillas((prev) =>
-          prev.map((p) => (p.id === plantilla.id ? saved : p)),
-        );
-        setSelectedId(saved.id);
-        if (selectedTotem) {
-          await updateTotem(selectedTotem.id, {
-            plantilla_id: Number(saved.id),
-          });
-        }
+        saved = plantillaDTOToLocal(updatedDto);
       } else {
         const id = Number(plantilla.id);
         await updatePlantilla(id, { nombre: plantilla.nombre });
         const dto = await replacePlantillaWidgets(id, positions);
-        const saved = plantillaDTOToLocal(dto);
-        setPlantillas((prev) =>
-          prev.map((p) => (p.id === plantilla.id ? saved : p)),
-        );
+        saved = plantillaDTOToLocal(dto);
       }
-      await refreshTotems();
+      setPlantillas((prev) =>
+        prev.map((p) => (p.id === plantilla.id ? saved : p)),
+      );
+      setSelectedId(saved.id);
       setDirtyIds((prev) => {
         const next = { ...prev };
         delete next[plantilla.id];
         return next;
       });
+      return saved;
+    },
+    [widgetIdByTipo],
+  );
+
+  const handleSave = useCallback(async () => {
+    const plantilla = plantillas.find((p) => p.id === selectedId);
+    if (!plantilla || saving) return;
+
+    setSaving(true);
+    try {
+      const isNew = Boolean(plantilla.isNew);
+      await savePlantillaHelper(plantilla);
+      await refreshTotems();
       if (isNew) {
         sileo.success({ title: "Plantilla creada" });
       }
@@ -607,14 +608,7 @@ export default function PlantillasPage() {
     } finally {
       setSaving(false);
     }
-  }, [
-    plantillas,
-    selectedId,
-    saving,
-    widgetIdByTipo,
-    selectedTotem,
-    refreshTotems,
-  ]);
+  }, [plantillas, selectedId, saving, savePlantillaHelper, refreshTotems]);
 
   const handleDeletePlantilla = useCallback(async () => {
     if (!deletingId) return;
@@ -666,17 +660,16 @@ export default function PlantillasPage() {
   const handleCargarAlTotem = useCallback(async () => {
     if (!selectedTotem) return;
     const selected = plantillas.find((p) => p.id === selectedId);
-    if (!selected || selected.isNew) return;
-    if (dirtyIds[selected.id]) {
-      sileo.warning({
-        title: "Cambios sin guardar",
-        description: "Guardá la plantilla antes de aplicarla al tótem.",
-      });
-      return;
-    }
+    if (!selected || saving) return;
+
+    setSaving(true);
     try {
+      let targetPlantilla = selected;
+      if (selected.isNew || dirtyIds[selected.id]) {
+        targetPlantilla = await savePlantillaHelper(selected);
+      }
       await updateTotem(selectedTotem.id, {
-        plantilla_id: Number(selected.id),
+        plantilla_id: Number(targetPlantilla.id),
       });
       await refreshTotems();
       sileo.success({ title: "Plantilla aplicada al tótem" });
@@ -688,8 +681,18 @@ export default function PlantillasPage() {
             ? err.message
             : "No se pudo aplicar la plantilla al tótem",
       });
+    } finally {
+      setSaving(false);
     }
-  }, [selectedTotem, plantillas, selectedId, dirtyIds, refreshTotems]);
+  }, [
+    selectedTotem,
+    plantillas,
+    selectedId,
+    saving,
+    dirtyIds,
+    savePlantillaHelper,
+    refreshTotems,
+  ]);
 
   if (loading) {
     return <AdminTemplatesSkeleton />;
@@ -838,29 +841,20 @@ export default function PlantillasPage() {
               </svg>
             </button>
             <div className="h-5 w-px bg-gray-200 mx-1" />
-            <Button
-              variant="secondary"
-              onClick={handleCargarAlTotem}
-              disabled={
-                !selectedTotem || !selected || selected.isNew || isAplicada
-              }
-              title={
-                isAplicada
-                  ? "Esta plantilla ya está aplicada al tótem seleccionado"
-                  : !selectedTotem
+            {!isAplicada && (
+              <Button
+                variant="secondary"
+                onClick={handleCargarAlTotem}
+                disabled={!selectedTotem || !selected || saving}
+                title={
+                  !selectedTotem
                     ? "Seleccioná un tótem primero"
-                    : selected?.isNew
-                      ? "Guardá la plantilla antes de aplicarla"
-                      : "Aplicar al tótem seleccionado"
-              }
-              className={
-                isAplicada
-                  ? "text-gray-400 cursor-default opacity-100 hover:bg-gray-100 hover:text-gray-400"
-                  : ""
-              }
-            >
-              {isAplicada ? "Aplicada" : "Aplicar"}
-            </Button>
+                    : "Aplicar al tótem seleccionado"
+                }
+              >
+                Aplicar
+              </Button>
+            )}
             <Button variant="primary" onClick={handleSave} disabled={saving}>
               Guardar
             </Button>

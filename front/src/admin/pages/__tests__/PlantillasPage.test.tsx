@@ -524,7 +524,7 @@ describe("PlantillasPage", () => {
     });
   });
 
-  it("muestra Aplicada y deshabilitado si la plantilla ya está asignada al tótem", async () => {
+  it("no muestra el botón Aplicar si la plantilla ya está asignada al tótem seleccionado", async () => {
     const totem = mockTotem({ id: 5, plantilla_id: 1 });
     mockUseTotem.mockReturnValue({
       totems: [totem],
@@ -535,9 +535,39 @@ describe("PlantillasPage", () => {
     });
     render(<PlantillasPage />);
     await screen.findByText("Plantilla por defecto");
-    const btn = screen.getByText("Aplicada");
-    expect(btn).toBeInTheDocument();
-    expect(btn).toBeDisabled();
+    expect(screen.queryByText("Aplicar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Aplicada")).not.toBeInTheDocument();
+  });
+
+  it("guarda automáticamente y aplica al tótem en un solo clic si la plantilla tenía cambios pendientes", async () => {
+    const mockRefresh = vi.fn().mockResolvedValue(undefined);
+    const totem = mockTotem({ id: 5, plantilla_id: null });
+    mockUseTotem.mockReturnValue({
+      totems: [totem],
+      selectedId: "5",
+      selectedTotem: totem,
+      setSelectedId: vi.fn(),
+      refreshTotems: mockRefresh,
+    });
+    mockUpdateTotem.mockResolvedValue({} as never);
+    render(<PlantillasPage />);
+    const pill = await screen.findByText("Plantilla por defecto");
+    fireEvent.doubleClick(pill);
+    const input = screen.getByLabelText("Editar nombre de plantilla");
+    fireEvent.change(input, { target: { value: "Plantilla Modificada" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    fireEvent.click(screen.getByText("Aplicar"));
+    await waitFor(() => {
+      expect(mockUpdatePlantilla).toHaveBeenCalledWith(1, {
+        nombre: "Plantilla Modificada",
+      });
+      expect(mockUpdateTotem).toHaveBeenCalledWith(5, { plantilla_id: 1 });
+    });
+    expect(mockRefresh).toHaveBeenCalled();
+    expect(mockSileo.success).toHaveBeenCalledWith({
+      title: "Plantilla aplicada al tótem",
+    });
   });
 
   it("permite seleccionar un widget en el canvas y eliminarlo con el botón Eliminar", async () => {
