@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { ScheduleGridSkeleton } from "../ui/Skeleton";
+import Select from "../ui/Select";
 import {
   overlayContainerVariants,
   overlayPanelVariants,
@@ -25,6 +26,7 @@ export interface ScheduleGridProps {
   onClose: () => void;
   loadingText?: string;
   headerGradient?: string;
+  colorVariant?: "blue" | "green" | "gray";
 }
 
 const HOURS_START = 8;
@@ -379,6 +381,7 @@ export default function ScheduleGrid({
   error,
   onClose,
   headerGradient,
+  colorVariant = "blue",
 }: ScheduleGridProps) {
   const [view] = useState<ViewMode>("list");
   const [date, setDate] = useState(() => new Date());
@@ -561,18 +564,20 @@ export default function ScheduleGrid({
                   <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     Comisión
                   </span>
-                  <select
+                  <Select
+                    colorVariant={colorVariant}
                     value={selectedComision}
-                    onChange={(e) => setSelectedComision(e.target.value)}
-                    className="px-3 py-1 h-full text-sm font-medium border border-gray-200 rounded-2xl bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-colors cursor-pointer"
-                  >
-                    <option value="">Todas</option>
-                    {uniqueComisionesForCarrera.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setSelectedComision}
+                    options={[
+                      { value: "", label: "Todas" },
+                      ...uniqueComisionesForCarrera.map((c) => ({
+                        value: c,
+                        label: c,
+                      })),
+                    ]}
+                    placeholder="Todas"
+                    aria-label="Filtrar por comisión"
+                  />
                 </div>
               </>
             )}

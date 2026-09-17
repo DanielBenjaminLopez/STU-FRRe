@@ -75,6 +75,7 @@ describe("AdminHeader", () => {
       { id: 2, nombre: "Tótem Hall", vinculado: true },
     ]);
     render(<AdminHeader />);
+    fireEvent.click(screen.getByRole("combobox"));
     expect(
       screen.getByRole("option", { name: "Tótem Aula 1A" }),
     ).toBeInTheDocument();
@@ -88,6 +89,7 @@ describe("AdminHeader", () => {
     mockUser.mockReturnValue({ username: "admin", is_superuser: true });
     mockTotems.mockReturnValue([]);
     render(<AdminHeader />);
+    fireEvent.click(screen.getByRole("combobox"));
     expect(
       screen.getByRole("option", { name: "Sin tótems" }),
     ).toBeInTheDocument();
@@ -120,7 +122,8 @@ describe("AdminHeader", () => {
     ]);
     mockSelectedId.mockReturnValue("1");
     render(<AdminHeader />);
-    fireEvent.change(screen.getByRole("combobox"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("combobox"));
+    fireEvent.click(screen.getByRole("option", { name: "Tótem B" }));
     expect(mockSetSelectedId).toHaveBeenCalledWith("2");
   });
 
@@ -131,6 +134,7 @@ describe("AdminHeader", () => {
       { id: 1, nombre: "Tótem Hall Central", vinculado: true },
     ]);
     render(<AdminHeader />);
+    fireEvent.click(screen.getByRole("combobox"));
     expect(
       screen.getByRole("option", { name: "Tótem Hall Central" }),
     ).toBeInTheDocument();
@@ -145,6 +149,7 @@ describe("AdminHeader", () => {
       { id: 16, nombre: "Tótem #16", vinculado: false },
     ]);
     render(<AdminHeader />);
+    fireEvent.click(screen.getByRole("combobox"));
     expect(
       screen.getByRole("option", { name: "Tótem Principal" }),
     ).toBeInTheDocument();

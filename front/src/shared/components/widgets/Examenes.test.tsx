@@ -137,4 +137,49 @@ describe("Examenes", () => {
     render(<Examenes />);
     expect(screen.getByText("Ver horario completo")).toBeInTheDocument();
   });
+
+  it("muestra el selector de carreras cuando hay carreras disponibles", () => {
+    mockUseExamenes.mockReturnValue({
+      ahora: [mockExamenAhora],
+      siguiente: [mockExamenSiguiente],
+      uniqueCarreras: ["ISI", "IEM"],
+      loading: false,
+      error: null,
+    });
+    render(<Examenes />);
+    expect(
+      screen.getByRole("button", { name: /filtrar exámenes por carrera/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Todas")).toBeInTheDocument();
+  });
+
+  it("renderiza correctamente un examen con nombre largo sin romper el diseño", () => {
+    const examenLargo: Examen = {
+      id: 99,
+      carrera_codigo: "TUOMRE",
+      comision: "Curso 1",
+      materia_nombre:
+        "Generación, Transmisión y Distribución de la Energía Eléctrica II",
+      hora_inicio: "17:20",
+      hora_fin: "20:10",
+      dia_semana: "martes",
+      aula: "12",
+    };
+    mockUseExamenes.mockReturnValue({
+      ahora: [],
+      siguiente: [examenLargo],
+      uniqueCarreras: ["TUOMRE"],
+      loading: false,
+      error: null,
+    });
+    render(<Examenes />);
+    expect(
+      screen.getByText(
+        "Generación, Transmisión y Distribución de la Energía Eléctrica II",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\[Curso 1\]/)).toBeInTheDocument();
+    expect(screen.getByText("TUOMRE")).toBeInTheDocument();
+    expect(screen.getByText("Aula 12")).toBeInTheDocument();
+  });
 });

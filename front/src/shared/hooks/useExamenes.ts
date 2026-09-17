@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Examen } from "../api/examenes";
 import { fetchExamenes } from "../api/examenes";
 import { useTotemRealtime } from "../context/TotemRealtimeContext";
@@ -83,5 +83,10 @@ export function useExamenes() {
     return now < start;
   });
 
-  return { ahora, siguiente, todas, loading, error };
+  const uniqueCarreras = useMemo(
+    () => [...new Set(todas.map((c) => c.carrera_codigo))].sort(),
+    [todas],
+  );
+
+  return { ahora, siguiente, todas, uniqueCarreras, loading, error };
 }

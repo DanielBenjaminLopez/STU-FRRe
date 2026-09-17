@@ -1,55 +1,53 @@
 import { useAuth } from "../../shared/context/AuthContext";
 import { useTotem } from "../../shared/context/TotemContext";
 import Logo from "../../assets/logo_negro.webp";
+import Select from "../../shared/components/ui/Select";
 
 export default function AdminHeader() {
   const { user, isAuthenticated } = useAuth();
   const { totems, selectedId, setSelectedId } = useTotem();
 
+  const vinculados = totems.filter((t) => t.vinculado);
+  const totemOptions =
+    vinculados.length > 0
+      ? vinculados.map((t) => ({
+          value: String(t.id),
+          label: t.nombre || `Tótem #${t.id}`,
+        }))
+      : [{ value: "", label: "Sin tótems" }];
+
   return (
-    <header className="flex items-center justify-between px-8 py-4 bg-white border-b border-gray-200 shrink-0">
-      <img src={Logo} alt="Logo UTN" className="h-10" draggable={false} />
+    <header className="relative z-50 flex items-center justify-between px-8 h-18 bg-white border-b border-gray-200 shrink-0">
+      <div className="flex items-center">
+        <img src={Logo} alt="Logo UTN" className="h-10" draggable={false} />
+      </div>
 
       {isAuthenticated && (
         <>
-          <div className="relative">
-            <select
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+            <Select
+              role="combobox"
+              align="center"
+              colorVariant="gray"
               value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="appearance-none px-4 py-2 pr-10 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-2xl cursor-pointer focus:outline-none focus:ring-2 focus:ring-black/10"
-            >
-              {totems
-                .filter((t) => t.vinculado)
-                .map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nombre || `Tótem #${t.id}`}
-                  </option>
-                ))}
-              {totems.filter((t) => t.vinculado).length === 0 && (
-                <option value="">Sin tótems</option>
-              )}
-            </select>
-            <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+              onChange={setSelectedId}
+              options={totemOptions}
+              placeholder={
+                vinculados.length > 0 ? "Seleccionar tótem" : "Sin tótems"
+              }
+              triggerClassName="px-4 py-2 font-medium"
+              aria-label="Seleccionar tótem"
+            />
           </div>
 
-          <span className="text-sm text-gray-500">
-            Bienvenido,{" "}
-            <span className="font-semibold text-gray-900">
-              {user?.username}
+          <div className="flex items-center">
+            <span className="text-sm text-gray-500">
+              Bienvenido,{" "}
+              <span className="font-semibold text-gray-900">
+                {user?.username}
+              </span>
             </span>
-          </span>
+          </div>
         </>
       )}
     </header>
