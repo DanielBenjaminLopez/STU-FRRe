@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Examen } from "../api/examenes";
 import { fetchExamenes } from "../api/examenes";
 import { useTotemRealtime } from "../context/TotemRealtimeContext";
@@ -19,6 +19,14 @@ function getTodayDayName(): string {
 function getMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
   return h * 60 + m;
+}
+
+function getTodayDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function useExamenes() {
@@ -58,7 +66,7 @@ export function useExamenes() {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, [relevantEvent]);
+  }, [relevantEvent, realtimeEvent?.type]);
 
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);
@@ -66,7 +74,10 @@ export function useExamenes() {
   }, []);
 
   const today = getTodayDayName();
-  const examenesHoy = todas.filter((c) => c.dia_semana === today);
+  const todayDate = getTodayDateString();
+  const examenesHoy = todas.filter((c) =>
+    c.fecha ? c.fecha === todayDate : c.dia_semana === today,
+  );
 
   const now = getMinutes(
     `${new Date().getHours().toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
@@ -83,5 +94,11 @@ export function useExamenes() {
     return now < start;
   });
 
-  return { ahora, siguiente, todas, loading, error };
+  const uniqueCarreras = useMemo(
+    () =>
+      [...new Set(todas.map((c) => c.carrera_codigo).filter(Boolean))].sort(),
+    [todas],
+  );
+
+  return { ahora, siguiente, todas, uniqueCarreras, loading, error };
 }

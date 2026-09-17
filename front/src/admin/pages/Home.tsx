@@ -22,12 +22,13 @@ export default function Home() {
   const [vincularOpen, setVincularOpen] = useState(false);
 
   useEffect(() => {
+    void refreshTotems();
     fetchPlantillas()
       .catch(() => [])
       .then((plantillasResult) => {
         setPlantillas(plantillasResult as PlantillaDTO[]);
       });
-  }, []);
+  }, [refreshTotems]);
 
   const sortedTotems = [...totems]
     .filter((t) => t.vinculado)

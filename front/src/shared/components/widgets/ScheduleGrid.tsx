@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { ScheduleGridSkeleton } from "../ui/Skeleton";
+import Select from "../ui/Select";
 import {
   overlayContainerVariants,
   overlayPanelVariants,
 } from "./overlayMotion";
+import { formatAula } from "../../utils/formatAula";
 
 export interface ScheduleItem {
   id: number;
@@ -23,8 +25,8 @@ export interface ScheduleGridProps {
   loading: boolean;
   error: string | null;
   onClose: () => void;
-  loadingText?: string;
   headerGradient?: string;
+  colorVariant?: "blue" | "green" | "gray";
 }
 
 const HOURS_START = 8;
@@ -286,7 +288,7 @@ function TimeGrid({
                       left: `${evt.left}%`,
                       width: `${evt.width - 1}%`,
                     }}
-                    title={`${evt.item.carrera_codigo} - ${evt.item.materia_nombre}\n[${evt.item.comision}] - Aula ${evt.item.aula}`}
+                    title={`${evt.item.carrera_codigo} - ${evt.item.materia_nombre}\n${evt.item.comision ? `[${evt.item.comision}] - ` : ""}${formatAula(evt.item.aula)}`}
                   >
                     <div
                       className={`text-xs font-semibold leading-tight ${colors.text} truncate`}
@@ -298,7 +300,8 @@ function TimeGrid({
                       {evt.item.hora_fin.slice(0, 5)}
                     </div>
                     <div className="text-[10px] text-gray-500 leading-tight truncate">
-                      [{evt.item.comision}] · Aula {evt.item.aula}
+                      {evt.item.comision ? `[${evt.item.comision}] · ` : ""}
+                      {formatAula(evt.item.aula)}
                     </div>
                   </div>
                 );
@@ -358,8 +361,8 @@ function ListView({ items }: { items: ScheduleItem[] }) {
                       {item.materia_nombre}
                     </span>
                     <span className="text-xs text-gray-500">
-                      [{item.comision}] · Aula {item.aula} ·{" "}
-                      {item.carrera_codigo}
+                      {item.comision ? `[${item.comision}] · ` : ""}
+                      {formatAula(item.aula)} · {item.carrera_codigo}
                     </span>
                   </div>
                 </div>
@@ -379,6 +382,7 @@ export default function ScheduleGrid({
   error,
   onClose,
   headerGradient,
+  colorVariant = "blue",
 }: ScheduleGridProps) {
   const [view] = useState<ViewMode>("list");
   const [date, setDate] = useState(() => new Date());
@@ -561,18 +565,20 @@ export default function ScheduleGrid({
                   <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
                     Comisión
                   </span>
-                  <select
+                  <Select
+                    colorVariant={colorVariant}
                     value={selectedComision}
-                    onChange={(e) => setSelectedComision(e.target.value)}
-                    className="px-3 py-1 h-full text-sm font-medium border border-gray-200 rounded-2xl bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-colors cursor-pointer"
-                  >
-                    <option value="">Todas</option>
-                    {uniqueComisionesForCarrera.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setSelectedComision}
+                    options={[
+                      { value: "", label: "Todas" },
+                      ...uniqueComisionesForCarrera.map((c) => ({
+                        value: c,
+                        label: c,
+                      })),
+                    ]}
+                    placeholder="Todas"
+                    aria-label="Filtrar por comisión"
+                  />
                 </div>
               </>
             )}

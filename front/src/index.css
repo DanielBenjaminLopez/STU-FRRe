@@ -242,6 +242,7 @@ body,
 }
 
 [data-sileo-viewport] {
+  z-index: 9999 !important;
   --sileo-state-error: #f87171;
   --sileo-state-success: #34d399;
   --sileo-state-warning: #f0b968;

@@ -1,11 +1,58 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { fetchExamenes } from "../examenes";
 
+vi.mock("../client", () => ({
+  totemFetch: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      plan_materia: 1,
+      espacio: 1,
+      materia_nombre: "Algoritmos y Estructuras de Datos",
+      espacio_nombre: "Aula 1.1",
+      carrera_codigo: "ISI",
+      fecha: "2026-09-21",
+      hora: "08:00:00",
+      turno: "septiembre",
+      llamado: 1,
+      dia_semana: "lunes",
+      activo: true,
+    },
+    {
+      id: 2,
+      plan_materia: 2,
+      espacio: 2,
+      materia_nombre: "Física II",
+      espacio_nombre: "Aula 1.2",
+      carrera_codigo: "IEM",
+      fecha: "2026-09-22",
+      hora: "10:00:00",
+      turno: "septiembre",
+      llamado: 1,
+      dia_semana: "martes",
+      activo: true,
+    },
+    {
+      id: 3,
+      plan_materia: 3,
+      espacio: 3,
+      materia_nombre: "Inactiva",
+      espacio_nombre: "Aula 1.3",
+      carrera_codigo: "IQ",
+      fecha: "2026-09-23",
+      hora: "14:00:00",
+      turno: "septiembre",
+      llamado: 1,
+      dia_semana: "miercoles",
+      activo: false,
+    },
+  ]),
+}));
+
 describe("fetchExamenes", () => {
-  it("retorna un array de exámenes", async () => {
+  it("retorna un array de exámenes activos mapeados", async () => {
     const examenes = await fetchExamenes();
     expect(Array.isArray(examenes)).toBe(true);
-    expect(examenes.length).toBeGreaterThan(0);
+    expect(examenes.length).toBe(2);
   });
 
   it("cada examen tiene los campos requeridos", async () => {
@@ -22,17 +69,19 @@ describe("fetchExamenes", () => {
     }
   });
 
-  it("retorna exámenes con días de la semana válidos", async () => {
+  it("mapea los campos correctamente", async () => {
     const examenes = await fetchExamenes();
-    const diasValidos = ["lunes", "martes", "miercoles", "jueves", "viernes"];
-    for (const examen of examenes) {
-      expect(diasValidos).toContain(examen.dia_semana);
-    }
-  });
-
-  it("retorna al menos un examen", async () => {
-    const examenes = await fetchExamenes();
-    expect(examenes.length).toBeGreaterThanOrEqual(1);
+    expect(examenes[0]).toEqual({
+      id: 1,
+      carrera_codigo: "ISI",
+      comision: "1° llamado",
+      materia_nombre: "Algoritmos y Estructuras de Datos",
+      hora_inicio: "08:00",
+      hora_fin: "10:00",
+      dia_semana: "lunes",
+      aula: "Aula 1.1",
+      fecha: "2026-09-21",
+    });
   });
 
   it("los ids son únicos", async () => {

@@ -238,6 +238,8 @@ export default function PlantillasPage() {
   const { selectedTotem, refreshTotems } = useTotem();
   const location = useLocation();
 
+  const hasNotifiedRef = useRef(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -279,8 +281,22 @@ export default function PlantillasPage() {
         }
         const local = dtos.map(plantillaDTOToLocal);
         setWidgetIdByTipo(byTipo);
-        setPlantillas(local);
-        setSelectedId(local[0]?.id ?? "");
+        if (local.length === 0) {
+          const initial = createEmptyPlantilla();
+          setPlantillas([initial]);
+          setSelectedId(initial.id);
+          setDirtyIds({ [initial.id]: true });
+          if (!hasNotifiedRef.current) {
+            hasNotifiedRef.current = true;
+            sileo.info({
+              title: "Creá tu plantilla",
+              description: "Arrastrá widgets al lienzo y guardá para comenzar.",
+            });
+          }
+        } else {
+          setPlantillas(local);
+          setSelectedId(local[0]?.id ?? "");
+        }
         setEffectiveRegistry(buildEffectiveRegistry(widgets));
       } catch (err) {
         if (!cancelled) {
@@ -322,12 +338,13 @@ export default function PlantillasPage() {
     if (
       location.state?.recienVinculado &&
       selectedTotem &&
-      !selectedTotem.plantilla_id
+      !selectedTotem.plantilla_id &&
+      !hasNotifiedRef.current
     ) {
+      hasNotifiedRef.current = true;
       sileo.info({
-        title: "Sin plantilla asignada",
-        description:
-          "Creá una plantilla o seleccioná una existente y usá 'Aplicar'.",
+        title: "Creá tu plantilla",
+        description: "Arrastrá widgets al lienzo y guardá para comenzar.",
       });
     }
   }, [location.state, selectedTotem]);
@@ -533,47 +550,50 @@ export default function PlantillasPage() {
     setPlantillas((prev) => [...prev, newP]);
     setSelectedId(newP.id);
     setDirtyIds((prev) => ({ ...prev, [newP.id]: true }));
+    setEditingId(newP.id);
+    setEditingName(newP.nombre);
   }, []);
 
-  const handleSave = useCallback(async () => {
-    const plantilla = plantillas.find((p) => p.id === selectedId);
-    if (!plantilla || saving) return;
-
-    const positions = plantillaToWidgetPositions(plantilla, widgetIdByTipo);
-    setSaving(true);
-    try {
-      const isNew = Boolean(plantilla.isNew);
+  const savePlantillaHelper = useCallback(
+    async (plantilla: Plantilla): Promise<Plantilla> => {
+      const positions = plantillaToWidgetPositions(plantilla, widgetIdByTipo);
+      let saved: Plantilla;
       if (plantilla.isNew) {
         const dto = await createPlantilla({
           nombre: plantilla.nombre,
           activa: false,
         });
         const updatedDto = await replacePlantillaWidgets(dto.id, positions);
-        const saved = plantillaDTOToLocal(updatedDto);
-        setPlantillas((prev) =>
-          prev.map((p) => (p.id === plantilla.id ? saved : p)),
-        );
-        setSelectedId(saved.id);
-        if (selectedTotem) {
-          await updateTotem(selectedTotem.id, {
-            plantilla_id: Number(saved.id),
-          });
-          await refreshTotems();
-        }
+        saved = plantillaDTOToLocal(updatedDto);
       } else {
         const id = Number(plantilla.id);
         await updatePlantilla(id, { nombre: plantilla.nombre });
         const dto = await replacePlantillaWidgets(id, positions);
-        const saved = plantillaDTOToLocal(dto);
-        setPlantillas((prev) =>
-          prev.map((p) => (p.id === plantilla.id ? saved : p)),
-        );
+        saved = plantillaDTOToLocal(dto);
       }
+      setPlantillas((prev) =>
+        prev.map((p) => (p.id === plantilla.id ? saved : p)),
+      );
+      setSelectedId(saved.id);
       setDirtyIds((prev) => {
         const next = { ...prev };
         delete next[plantilla.id];
         return next;
       });
+      return saved;
+    },
+    [widgetIdByTipo],
+  );
+
+  const handleSave = useCallback(async () => {
+    const plantilla = plantillas.find((p) => p.id === selectedId);
+    if (!plantilla || saving) return;
+
+    setSaving(true);
+    try {
+      const isNew = Boolean(plantilla.isNew);
+      await savePlantillaHelper(plantilla);
+      await refreshTotems();
       if (isNew) {
         sileo.success({ title: "Plantilla creada" });
       }
@@ -588,14 +608,7 @@ export default function PlantillasPage() {
     } finally {
       setSaving(false);
     }
-  }, [
-    plantillas,
-    selectedId,
-    saving,
-    widgetIdByTipo,
-    selectedTotem,
-    refreshTotems,
-  ]);
+  }, [plantillas, selectedId, saving, savePlantillaHelper, refreshTotems]);
 
   const handleDeletePlantilla = useCallback(async () => {
     if (!deletingId) return;
@@ -611,9 +624,25 @@ export default function PlantillasPage() {
       }
       setEditingId((cur) => (cur === deletingId ? null : cur));
       const next = plantillas.filter((p) => p.id !== deletingId);
-      setPlantillas(next);
-      if (selectedId === deletingId) {
-        setSelectedId(next[0]?.id ?? "");
+      if (next.length === 0) {
+        const fresh = createEmptyPlantilla();
+        setPlantillas([fresh]);
+        setSelectedId(fresh.id);
+        setDirtyIds({ [fresh.id]: true });
+        sileo.info({
+          title: "Creá tu plantilla",
+          description: "Arrastrá widgets al lienzo y guardá para comenzar.",
+        });
+      } else {
+        setPlantillas(next);
+        if (selectedId === deletingId) {
+          setSelectedId(next[0]?.id ?? "");
+        }
+        setDirtyIds((prev) => {
+          const updated = { ...prev };
+          delete updated[deletingId];
+          return updated;
+        });
       }
       sileo.success({ title: "Plantilla eliminada" });
     } catch (err) {
@@ -631,17 +660,16 @@ export default function PlantillasPage() {
   const handleCargarAlTotem = useCallback(async () => {
     if (!selectedTotem) return;
     const selected = plantillas.find((p) => p.id === selectedId);
-    if (!selected || selected.isNew) return;
-    if (dirtyIds[selected.id]) {
-      sileo.warning({
-        title: "Cambios sin guardar",
-        description: "Guardá la plantilla antes de aplicarla al tótem.",
-      });
-      return;
-    }
+    if (!selected || saving) return;
+
+    setSaving(true);
     try {
+      let targetPlantilla = selected;
+      if (selected.isNew || dirtyIds[selected.id]) {
+        targetPlantilla = await savePlantillaHelper(selected);
+      }
       await updateTotem(selectedTotem.id, {
-        plantilla_id: Number(selected.id),
+        plantilla_id: Number(targetPlantilla.id),
       });
       await refreshTotems();
       sileo.success({ title: "Plantilla aplicada al tótem" });
@@ -653,26 +681,21 @@ export default function PlantillasPage() {
             ? err.message
             : "No se pudo aplicar la plantilla al tótem",
       });
+    } finally {
+      setSaving(false);
     }
-  }, [selectedTotem, plantillas, selectedId, dirtyIds, refreshTotems]);
+  }, [
+    selectedTotem,
+    plantillas,
+    selectedId,
+    saving,
+    dirtyIds,
+    savePlantillaHelper,
+    refreshTotems,
+  ]);
 
   if (loading) {
     return <AdminTemplatesSkeleton />;
-  }
-
-  if (plantillas.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <p className="text-gray-500">Todavía no hay plantillas</p>
-        <button
-          type="button"
-          onClick={handleCreatePlantilla}
-          className="px-5 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
-        >
-          Crear plantilla
-        </button>
-      </div>
-    );
   }
 
   return (
@@ -818,29 +841,20 @@ export default function PlantillasPage() {
               </svg>
             </button>
             <div className="h-5 w-px bg-gray-200 mx-1" />
-            <Button
-              variant="secondary"
-              onClick={handleCargarAlTotem}
-              disabled={
-                !selectedTotem || !selected || selected.isNew || isAplicada
-              }
-              title={
-                isAplicada
-                  ? "Esta plantilla ya está aplicada al tótem seleccionado"
-                  : !selectedTotem
+            {!isAplicada && (
+              <Button
+                variant="secondary"
+                onClick={handleCargarAlTotem}
+                disabled={!selectedTotem || !selected || saving}
+                title={
+                  !selectedTotem
                     ? "Seleccioná un tótem primero"
-                    : selected?.isNew
-                      ? "Guardá la plantilla antes de aplicarla"
-                      : "Aplicar al tótem seleccionado"
-              }
-              className={
-                isAplicada
-                  ? "text-gray-400 cursor-default opacity-100 hover:bg-gray-100 hover:text-gray-400"
-                  : ""
-              }
-            >
-              {isAplicada ? "Aplicada" : "Aplicar"}
-            </Button>
+                    : "Aplicar al tótem seleccionado"
+                }
+              >
+                Aplicar
+              </Button>
+            )}
             <Button variant="primary" onClick={handleSave} disabled={saving}>
               Guardar
             </Button>

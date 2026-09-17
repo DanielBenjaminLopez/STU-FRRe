@@ -9,17 +9,23 @@ import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
 import Avisos from "../../shared/components/widgets/Avisos";
 import VideoPanel from "../../shared/components/VideoPanel";
+import Logo from "../../assets/logo_negro.webp";
 import {
   useTotemScale,
   TOTEM_WIDTH,
   TOTEM_HEIGHT,
 } from "../../shared/hooks/useTotemScale";
+import { TotemStageCSS } from "../../shared/components/TotemStage";
 import {
   plantillaDTOToLocal,
   type WidgetType,
   type Plantilla,
 } from "../../admin/pages/plantillas/types";
-import { ApiError, getTotemToken } from "../../shared/api/client";
+import {
+  ApiError,
+  getTotemToken,
+  clearTotemToken,
+} from "../../shared/api/client";
 import { fetchTotemMe, type Totem } from "../../shared/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext";
@@ -47,7 +53,7 @@ export default function Home() {
   const lastInteractionRef = useRef(0);
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
-  const { lastMessage } = useTotemWebSocket(null, true);
+  const { lastMessage, rejected } = useTotemWebSocket(null, true);
 
   const load = useCallback(async () => {
     try {
@@ -66,6 +72,9 @@ export default function Home() {
         err instanceof ApiError &&
         (err.status === 401 || err.status === 403)
       ) {
+        clearTotemToken();
+        localStorage.removeItem("totem_codigo_vinculacion");
+        localStorage.removeItem("totem_codigo_timestamp");
         navigate("/onboarding", { replace: true });
         return;
       }
@@ -88,12 +97,20 @@ export default function Home() {
   }, [navigate, load]);
 
   useEffect(() => {
+    if (lastMessage?.type === "totem_eliminado" || rejected) {
+      clearTotemToken();
+      localStorage.removeItem("totem_codigo_vinculacion");
+      localStorage.removeItem("totem_codigo_timestamp");
+      navigate("/onboarding", { replace: true });
+      return;
+    }
+
     if (lastMessage?.type === "configuracion_actualizada") {
       // The message invalidates the cached configuration; fetch the source of truth.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       load();
     }
-  }, [lastMessage, load]);
+  }, [lastMessage, rejected, load, navigate]);
 
   useEffect(() => {
     lastInteractionRef.current = Date.now();
@@ -134,29 +151,25 @@ export default function Home() {
 
   if (blocked) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-black text-white p-8">
-        <svg
-          className="w-16 h-16 text-gray-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <p className="text-2xl font-semibold text-gray-300">
-          Tótem fuera de servicio
-        </p>
-        <p className="text-sm text-gray-500">
-          {blockedMessage === "Tótem desactivado"
-            ? "Este tótem fue desactivado. Contactá a administración."
-            : "No se pudo conectar con el servidor. Se reintentará automáticamente."}
-        </p>
-      </div>
+      <TotemStageCSS>
+        <div className="flex flex-col items-center justify-center w-full h-full p-16 gap-16">
+          <div className="flex flex-col justify-center items-center w-full gap-12">
+            <img src={Logo} alt="Logo" className="w-80" draggable={false} />
+
+            <h1 className="text-4xl font-bold text-gray-900 text-center">
+              Tótem fuera de servicio
+            </h1>
+
+            <div className="flex flex-col items-center gap-4 bg-gray-100 px-12 py-10 rounded-4xl max-w-175 text-center">
+              <p className="text-xl text-gray-600 font-medium">
+                {blockedMessage === "Tótem desactivado"
+                  ? "Este tótem fue desactivado. Contactá a administración."
+                  : "No se pudo conectar con el servidor. Se reintentará automáticamente."}
+              </p>
+            </div>
+          </div>
+        </div>
+      </TotemStageCSS>
     );
   }
 

@@ -4,6 +4,9 @@ import { useHorarios } from "../../hooks/useHorarios";
 import type { Clase } from "../../api/horarios";
 import HorariosFull from "./HorariosFull";
 import { ClaseListSkeleton } from "../ui/Skeleton";
+import Select from "../ui/Select";
+import VerButton from "../ui/VerButton";
+import { formatAula } from "../../utils/formatAula";
 
 const badgeColors: Record<string, string> = {
   ISI: "bg-cyan-100",
@@ -40,23 +43,34 @@ function ClaseRow({ clase }: { clase: Clase }) {
     badgeBorderColors[clase.carrera_codigo] ?? defaultBadgeBorderColor;
 
   return (
-    <div className="flex flex-col justify-center gap-2 items-start w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
-      <span className="text-xs font-medium">
-        {clase.hora_inicio.slice(0, 5)} - {clase.hora_fin.slice(0, 5)}
+    <div className="flex flex-col justify-center gap-2 items-start w-full min-w-0 max-w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
+      <span className="text-xs font-medium shrink-0">
+        {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
       </span>
-      <div className="flex text-sm min-w-0 w-full font-normal gap-1">
-        <span className="font-semibold shrink-0">[{clase.comision}]</span>
-        <span className="truncate">{clase.materia_nombre}</span>
+      <div
+        className="text-sm font-normal min-w-0 w-full line-clamp-2 break-words"
+        title={`[${clase.comision}] ${clase.materia_nombre}`}
+      >
+        <span className="font-semibold mr-1.5 shrink-0">
+          [{clase.comision}]
+        </span>
+        <span>{clase.materia_nombre}</span>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2 max-w-full">
         <div
-          className={`flex justify-center py-1 px-3 w-fit ${badgeColor} ${badgeBorderColor} border text-sm font-semibold rounded-2xl`}
+          className={`flex justify-center py-1 px-3 w-fit max-w-full ${badgeColor} ${badgeBorderColor} border text-sm font-semibold rounded-2xl shrink-0`}
         >
-          <span className={badgeTextColor}>{clase.carrera_codigo}</span>
+          <span className={`${badgeTextColor} truncate`}>
+            {clase.carrera_codigo}
+          </span>
         </div>
-        <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit">
-          <span className="font-semibold">{clase.aula}</span>
-        </div>
+        {clase.aula && (
+          <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit max-w-full shrink-0">
+            <span className="font-semibold truncate">
+              {formatAula(clase.aula)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -78,60 +92,10 @@ function ClaseList({
   }
 
   return (
-    <div className="w-full h-full flex flex-col gap-1 overflow-y-auto overflow-x-hidden">
+    <div className="w-full min-w-0 h-full flex flex-col gap-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
       {clases.map((clase) => (
         <ClaseRow key={clase.id} clase={clase} />
       ))}
-    </div>
-  );
-}
-
-function VerButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="shadow-xs text-sm font-medium bg-white/50 border border-gray-200 px-8 py-1 rounded-2xl"
-    >
-      Ver horario completo
-    </button>
-  );
-}
-
-function CarreraFilter({
-  carreras,
-  selected,
-  onSelect,
-}: {
-  carreras: string[];
-  selected: string | null;
-  onSelect: (codigo: string | null) => void;
-}) {
-  return (
-    <div className="flex items-center gap-1.5 flex-wrap justify-center">
-      {carreras.map((c) => {
-        const isActive = selected === c;
-        const bg = isActive
-          ? (badgeColors[c] ?? defaultBadgeColor)
-          : "bg-white";
-        const border = isActive
-          ? (badgeBorderColors[c] ?? defaultBadgeBorderColor)
-          : "border-gray-200";
-        const text = isActive
-          ? (badgeTextColors[c] ?? defaultBadgeTextColor)
-          : "text-gray-400";
-
-        return (
-          <button
-            key={c}
-            type="button"
-            onClick={() => onSelect(isActive ? null : c)}
-            className={`px-2.5 py-1 text-xs font-medium rounded-full border transition-colors ${bg} ${border} ${text}`}
-          >
-            {c}
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -202,25 +166,37 @@ export default function Horarios() {
         {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
       </AnimatePresence>
       <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-        <div className="relative flex flex-row items-center gap-2 w-full justify-between">
+        <div className="relative flex flex-row items-center justify-between w-full">
           <span className="text-xl font-semibold shrink-0">
             Horario general
           </span>
-          <CarreraFilter
-            carreras={uniqueCarreras}
-            selected={selectedCarrera}
-            onSelect={handleSelect}
-          />
-          <VerButton onClick={() => setShowFull(true)} />
+          <div className="flex items-center gap-3">
+            {uniqueCarreras.length > 0 && (
+              <Select
+                align="center"
+                colorVariant="blue"
+                value={selectedCarrera ?? ""}
+                onChange={(val) => handleSelect(val ? val : null)}
+                options={[
+                  { value: "", label: "Todas" },
+                  ...uniqueCarreras.map((c) => ({ value: c, label: c })),
+                ]}
+                placeholder="Todas"
+                triggerClassName="px-6"
+                aria-label="Filtrar horarios por carrera"
+              />
+            )}
+            <VerButton onClick={() => setShowFull(true)} />
+          </div>
         </div>
         {!loading && error && (
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-red-400 text-sm">{error}</span>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-4 w-full h-full overflow-hidden">
-          <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
-            <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 w-full h-full min-w-0 overflow-hidden">
+          <div className="flex flex-col w-full min-w-0 justify-center items-center gap-2 overflow-hidden">
+            <div className="w-full min-w-0 bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
               <span className="text-base font-normal flex flex-col">
                 Cursando ahora
               </span>
@@ -236,8 +212,8 @@ export default function Horarios() {
               )}
             </div>
           </div>
-          <div className="flex flex-col w-full justify-center items-center gap-2 overflow-hidden">
-            <div className="w-full bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+          <div className="flex flex-col w-full min-w-0 justify-center items-center gap-2 overflow-hidden">
+            <div className="w-full min-w-0 bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
               <span className="text-base font-normal flex flex-col">
                 A continuación
               </span>

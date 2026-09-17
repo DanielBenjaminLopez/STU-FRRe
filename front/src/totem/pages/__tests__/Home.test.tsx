@@ -4,12 +4,18 @@ import Home from "../Home";
 import { fetchTotemMe } from "../../../shared/api/totems";
 import { ApiError } from "../../../shared/api/client";
 import type { Totem } from "../../../shared/api/totems";
+import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
 
 vi.mock("../../../shared/api/totems", () => ({
   fetchTotemMe: vi.fn(),
 }));
 
+vi.mock("../../../shared/hooks/useTotemWebSocket", () => ({
+  useTotemWebSocket: vi.fn(),
+}));
+
 const mockFetchTotemMe = vi.mocked(fetchTotemMe);
+const mockUseTotemWebSocket = vi.mocked(useTotemWebSocket);
 
 const mockNavigate = vi.fn();
 vi.mock("react-router", () => ({
@@ -59,9 +65,25 @@ function makeTotem(overrides: Partial<Totem> = {}): Totem {
     pin_mapa_piso: null,
     pin_mapa_svg_x: null,
     pin_mapa_svg_y: null,
+    video_url: null,
+    video_intervalo: 0,
+    video_activo: false,
     creado_en: "2026-01-01T00:00:00Z",
     ...overrides,
   };
+}
+
+function setupWs(
+  overrides: { lastMessage?: unknown; rejected?: boolean } = {},
+) {
+  mockUseTotemWebSocket.mockReturnValue({
+    lastMessage: (overrides.lastMessage ?? null) as {
+      type: string;
+      [key: string]: unknown;
+    } | null,
+    isConnected: true,
+    rejected: overrides.rejected ?? false,
+  });
 }
 
 describe("totem Home", () => {
@@ -69,6 +91,7 @@ describe("totem Home", () => {
     vi.clearAllMocks();
     localStorage.clear();
     localStorage.setItem("auth_token", "totem-token");
+    setupWs();
   });
 
   afterEach(() => {
@@ -152,13 +175,38 @@ describe("totem Home", () => {
     );
   });
 
-  it("redirige a /onboarding cuando recibe 403", async () => {
+  it("redirige a /onboarding y limpia el token cuando recibe 403", async () => {
     mockFetchTotemMe.mockRejectedValue(new ApiError("Forbidden", 403));
     render(<Home />);
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
         replace: true,
       });
+      expect(localStorage.getItem("auth_token")).toBeNull();
+    });
+  });
+
+  it("redirige a /onboarding y limpia el token cuando recibe mensaje websocket totem_eliminado", async () => {
+    setupWs({ lastMessage: { type: "totem_eliminado", totem_id: 1 } });
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
+        replace: true,
+      });
+      expect(localStorage.getItem("auth_token")).toBeNull();
+    });
+  });
+
+  it("redirige a /onboarding y limpia el token cuando el websocket es rechazado", async () => {
+    setupWs({ rejected: true });
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
+        replace: true,
+      });
+      expect(localStorage.getItem("auth_token")).toBeNull();
     });
   });
 });

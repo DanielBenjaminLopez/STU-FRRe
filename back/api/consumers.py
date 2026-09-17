@@ -96,3 +96,10 @@ class TotemConfigConsumer(AsyncWebsocketConsumer):
             'type': 'contenido_actualizado',
             'resource': event['resource'],
         }))
+
+    async def totem_eliminado(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'totem_eliminado',
+            'totem_id': event['totem_id'],
+        }))
+        await self.close(code=4403)

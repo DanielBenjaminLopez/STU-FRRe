@@ -143,4 +143,49 @@ describe("Horarios", () => {
     render(<Horarios />);
     expect(screen.getByText("Ver horario completo")).toBeInTheDocument();
   });
+
+  it("muestra el selector de carreras cuando hay carreras disponibles", () => {
+    mockUseHorarios.mockReturnValue({
+      ahora: [mockClaseAhora],
+      siguiente: [mockClaseSiguiente],
+      uniqueCarreras: ["ISI", "IEM"],
+      loading: false,
+      error: null,
+    });
+    render(<Horarios />);
+    expect(
+      screen.getByRole("button", { name: /filtrar horarios por carrera/i }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("ISI").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renderiza correctamente una materia con nombre largo sin romper el diseño", () => {
+    const claseLarga: Clase = {
+      id: 99,
+      carrera_codigo: "TUOMRE",
+      comision: "Curso 1",
+      materia_nombre:
+        "Generación, Transmisión y Distribución de la Energía Eléctrica II",
+      hora_inicio: "17:20",
+      hora_fin: "20:10",
+      dia_semana: "martes",
+      aula: "12",
+    };
+    mockUseHorarios.mockReturnValue({
+      ahora: [],
+      siguiente: [claseLarga],
+      uniqueCarreras: ["TUOMRE"],
+      loading: false,
+      error: null,
+    });
+    render(<Horarios />);
+    expect(
+      screen.getByText(
+        "Generación, Transmisión y Distribución de la Energía Eléctrica II",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/\[Curso 1\]/)).toBeInTheDocument();
+    expect(screen.getAllByText("TUOMRE").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Aula 12")).toBeInTheDocument();
+  });
 });
