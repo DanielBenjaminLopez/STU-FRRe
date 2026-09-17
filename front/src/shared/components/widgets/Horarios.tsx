@@ -6,6 +6,7 @@ import HorariosFull from "./HorariosFull";
 import { ClaseListSkeleton } from "../ui/Skeleton";
 import Select from "../ui/Select";
 import VerButton from "../ui/VerButton";
+import { formatAula } from "../../utils/formatAula";
 
 const badgeColors: Record<string, string> = {
   ISI: "bg-cyan-100",
@@ -65,7 +66,9 @@ function ClaseRow({ clase }: { clase: Clase }) {
         </div>
         {clase.aula && (
           <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit max-w-full shrink-0">
-            <span className="font-semibold truncate">{clase.aula}</span>
+            <span className="font-semibold truncate">
+              {formatAula(clase.aula)}
+            </span>
           </div>
         )}
       </div>

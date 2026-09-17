@@ -186,6 +186,6 @@ describe("Horarios", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/\[Curso 1\]/)).toBeInTheDocument();
     expect(screen.getAllByText("TUOMRE").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("Aula 12")).toBeInTheDocument();
   });
 });

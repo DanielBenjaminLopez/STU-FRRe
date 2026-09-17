@@ -45,7 +45,7 @@ export function useNoticias() {
       clearInterval(refreshTimer);
       clearInterval(tickTimer);
     };
-  }, [relevantEvent]);
+  }, [relevantEvent, realtimeEvent?.type]);
 
   return { feed, loading, error };
 }

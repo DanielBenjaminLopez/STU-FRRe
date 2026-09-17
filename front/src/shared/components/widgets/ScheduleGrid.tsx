@@ -6,6 +6,7 @@ import {
   overlayContainerVariants,
   overlayPanelVariants,
 } from "./overlayMotion";
+import { formatAula } from "../../utils/formatAula";
 
 export interface ScheduleItem {
   id: number;
@@ -24,7 +25,6 @@ export interface ScheduleGridProps {
   loading: boolean;
   error: string | null;
   onClose: () => void;
-  loadingText?: string;
   headerGradient?: string;
   colorVariant?: "blue" | "green" | "gray";
 }
@@ -288,7 +288,7 @@ function TimeGrid({
                       left: `${evt.left}%`,
                       width: `${evt.width - 1}%`,
                     }}
-                    title={`${evt.item.carrera_codigo} - ${evt.item.materia_nombre}\n[${evt.item.comision}] - Aula ${evt.item.aula}`}
+                    title={`${evt.item.carrera_codigo} - ${evt.item.materia_nombre}\n${evt.item.comision ? `[${evt.item.comision}] - ` : ""}${formatAula(evt.item.aula)}`}
                   >
                     <div
                       className={`text-xs font-semibold leading-tight ${colors.text} truncate`}
@@ -300,7 +300,8 @@ function TimeGrid({
                       {evt.item.hora_fin.slice(0, 5)}
                     </div>
                     <div className="text-[10px] text-gray-500 leading-tight truncate">
-                      [{evt.item.comision}] · Aula {evt.item.aula}
+                      {evt.item.comision ? `[${evt.item.comision}] · ` : ""}
+                      {formatAula(evt.item.aula)}
                     </div>
                   </div>
                 );
@@ -360,8 +361,8 @@ function ListView({ items }: { items: ScheduleItem[] }) {
                       {item.materia_nombre}
                     </span>
                     <span className="text-xs text-gray-500">
-                      [{item.comision}] · Aula {item.aula} ·{" "}
-                      {item.carrera_codigo}
+                      {item.comision ? `[${item.comision}] · ` : ""}
+                      {formatAula(item.aula)} · {item.carrera_codigo}
                     </span>
                   </div>
                 </div>
