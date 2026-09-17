@@ -477,7 +477,8 @@ describe("PlantillasPage", () => {
     await screen.findByText("Plantilla A");
     expect(mockSileo.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: "Sin plantilla asignada",
+        title: "Creá tu plantilla",
+        description: "Arrastrá widgets al lienzo y guardá para comenzar.",
       }),
     );
   });
@@ -622,5 +623,46 @@ describe("PlantillasPage", () => {
       { timeout: 5000 },
     );
     expect(resetBtn).toBeDisabled();
+  });
+
+  it("cuando no hay plantillas en el backend, inicializa directamente el editor con una plantilla en borrador y muestra un toast informativo", async () => {
+    mockFetchPlantillas.mockResolvedValue([]);
+    render(<PlantillasPage />);
+
+    expect(
+      screen.queryByText("Todavía no hay plantillas"),
+    ).not.toBeInTheDocument();
+    expect(await screen.findByText("Nueva plantilla")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Widgets" }),
+    ).toBeInTheDocument();
+    expect(mockSileo.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Creá tu plantilla",
+        description: "Arrastrá widgets al lienzo y guardá para comenzar.",
+      }),
+    );
+  });
+
+  it("cuando se elimina la única plantilla existente, crea automáticamente un borrador nuevo y muestra toast", async () => {
+    render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+
+    fireEvent.click(screen.getByTitle("Eliminar plantilla"));
+    fireEvent.click(screen.getByText("Eliminar"));
+
+    await waitFor(() => {
+      expect(mockDeletePlantilla).toHaveBeenCalledWith(1);
+    });
+
+    expect(await screen.findByText("Nueva plantilla")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Todavía no hay plantillas"),
+    ).not.toBeInTheDocument();
+    expect(mockSileo.info).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Creá tu plantilla",
+      }),
+    );
   });
 });
