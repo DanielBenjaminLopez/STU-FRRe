@@ -440,7 +440,7 @@ export default function HorariosScheduleGrid({
               }}
               options={carreras.map((value) => ({
                 value,
-                label: carreraNames.get(value) || value,
+                label: value,
               }))}
               placeholder="Carrera"
               aria-label="Seleccionar carrera"
