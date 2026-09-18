@@ -188,13 +188,14 @@ class MateriaSerializer(serializers.ModelSerializer):
 
         
 class PlanMateriaSerializer(serializers.ModelSerializer):
-    carrera_nombre = serializers.CharField(source='carrera.__str__', read_only=True)
+    carrera_nombre = serializers.CharField(source='carrera.nombre', read_only=True)
+    carrera_codigo = serializers.CharField(source='carrera.codigo', read_only=True)
     materia_nombre = serializers.CharField(source='materia.__str__', read_only=True)
     carrera_tipo = serializers.CharField(source='carrera.tipo', read_only=True)
     
     class Meta:
         model = PlanMateria
-        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'carrera_tipo', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
+        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'carrera_codigo', 'materia_nombre', 'carrera_tipo', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
 
 
 class ComisionSerializer(serializers.ModelSerializer):
@@ -214,9 +215,11 @@ class ComisionSerializer(serializers.ModelSerializer):
 
         
 class HorarioCursadoSerializer(serializers.ModelSerializer):
+    plan_materia = serializers.IntegerField(source='comision.plan_materia.id', read_only=True)
     materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
     espacio_nombre = serializers.SerializerMethodField()
     carrera_codigo = serializers.CharField(source='comision.plan_materia.carrera.codigo', read_only=True)
+    nivel = serializers.CharField(source='comision.plan_materia.nivel', read_only=True)
     comision_nombre = serializers.CharField(source='comision.nombre', read_only=True)
     espacio = serializers.PrimaryKeyRelatedField(
         queryset=Espacio.objects.all(),
@@ -230,8 +233,8 @@ class HorarioCursadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = HorarioCursado
         fields = [
-            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre',
-            'carrera_codigo', 'comision_nombre', 'dia_semana',
+            'id', 'comision', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre',
+            'carrera_codigo', 'nivel', 'comision_nombre', 'dia_semana',
             'hora_inicio', 'hora_fin', 'activo',
         ]
 
