@@ -322,7 +322,7 @@ class TotemNuevoSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         # Limpiar tótems no vinculados cuyo código haya expirado
-        limite_expiracion = timezone.now() - timedelta(hours=Totem.VINCULO_VIGENCIA_HORAS)
+        limite_expiracion = timezone.now() - timedelta(minutes=Totem.VINCULO_VIGENCIA_MINUTOS)
         Totem.objects.filter(vinculado=False, codigo_creado_en__lt=limite_expiracion).delete()
 
         codigo = Totem.generar_codigo()

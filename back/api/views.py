@@ -37,6 +37,7 @@ from .models import (
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
 from .realtime import notify_content, notify_totem, notify_totems, notify_totem_deleted
+from .throttling import TotemNewRateThrottle
 
 
 class RealtimeContentMixin:
@@ -625,6 +626,7 @@ class TotemConfigVideoView(APIView):
 
 class TotemNewView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [TotemNewRateThrottle]
 
     def post(self, request):
         serializer = TotemNuevoSerializer(data={})

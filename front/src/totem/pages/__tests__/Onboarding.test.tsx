@@ -69,6 +69,7 @@ describe("Onboarding", () => {
 
     await waitFor(() => {
       expect(screen.getByText("XYZ789")).toBeInTheDocument();
+      expect(screen.getByText(/Expira en/i)).toBeInTheDocument();
     });
 
     expect(

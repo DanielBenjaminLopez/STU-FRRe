@@ -203,6 +203,38 @@ class TotemModelTest(TestCase):
         totem = Totem.objects.create(activo=False)
         self.assertFalse(totem.activo)
 
+    def test_codigo_valido_expira_a_los_5_minutos(self):
+        from datetime import timedelta
+        from django.utils import timezone
+
+        totem_expirado = Totem.objects.create(
+            codigo_vinculacion="12345",
+            codigo_creado_en=timezone.now() - timedelta(minutes=6),
+            vinculado=False,
+        )
+        self.assertFalse(totem_expirado.codigo_valido)
+
+        totem_valido = Totem.objects.create(
+            codigo_vinculacion="54321",
+            codigo_creado_en=timezone.now() - timedelta(minutes=4),
+            vinculado=False,
+        )
+        self.assertTrue(totem_valido.codigo_valido)
+
+
+class TotemSecurityTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_rate_limiting_crear_totem(self):
+        url = "/api/totems/new/"
+        for _ in range(10):
+            response = self.client.post(url)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response_11 = self.client.post(url)
+        self.assertEqual(response_11.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
 
 class TotemAPITestCase(TestCase):
     def setUp(self):
