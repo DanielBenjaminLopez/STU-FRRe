@@ -9,41 +9,76 @@ Esta guía explica paso a paso cómo configurar una **computadora** conectada al
 ### 1.1. Flags y Parámetros del Navegador
 El Modo Kiosco de Google Chrome o Microsoft Edge bloquea la barra de direcciones, pestañas, menús contextuales y combinaciones habituales de teclas.
 
-El comando de lanzamiento recomendado es:
-
-```cmd
-chrome.exe --kiosk --disable-pinch --overscroll-history-navigation=0 --noerrdialogs --disable-infobars --disable-features=TranslateUI --disable-notifications --check-for-update-interval=31536000 "http://localhost:5173"
-```
-
-**Explicación de los modificadores:**
+**Explicación de los modificadores principales:**
 - `--kiosk`: Fuerza la ventana en pantalla completa sin barra de títulos, URL ni botones de cierre.
+- `--edge-kiosk-type=fullscreen`: Obligatorio en Microsoft Edge para pantalla completa estricta.
+- `--user-data-dir="<ruta>"`: *(Recomendado para pruebas)* Crea un perfil temporal aislado para que no interfiera ni comparta sesión con tus ventanas abiertas del navegador habitual.
 - `--disable-pinch`: Deshabilita el zoom por pellizco en pantallas táctiles.
 - `--overscroll-history-navigation=0`: Evita que gestos táctiles de deslizamiento hacia los bordes naveguen adelante o atrás en el historial.
 - `--noerrdialogs`: Suprime ventanas modales de error si la conexión titubea momentáneamente.
-- `--disable-infobars`: Oculta carteles informativos (como "Chrome se está controlando por software de prueba").
+- `--disable-infobars`: Oculta carteles informativos.
 - `--disable-notifications`: Bloquea cualquier solicitud de notificaciones emergentes.
 
 ---
 
-### 1.2. Script de Arranque Automático (.bat)
+### 1.2. Pruebas Rápidas en Desarrollo (PowerShell / CMD)
 
-Para facilitar la ejecución al iniciar el equipo:
+Dado que en Windows los ejecutables de navegadores no suelen estar en el `PATH` de PowerShell, se debe especificar la ruta completa entre comillas utilizando el operador de ejecución `&`:
+
+#### Desde PowerShell:
+
+- **Con Microsoft Edge:**
+  ```powershell
+  & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --kiosk "http://localhost:5173" --edge-kiosk-type=fullscreen --user-data-dir="$env:TEMP\kiosk_test"
+  ```
+- **Con Google Chrome:**
+  ```powershell
+  & "C:\Program Files\Google\Chrome\Application\chrome.exe" --kiosk "http://localhost:5173" --user-data-dir="$env:TEMP\kiosk_test" --disable-pinch --overscroll-history-navigation=0 --noerrdialogs --disable-infobars
+  ```
+
+#### Desde CMD o el diálogo Ejecutar (`Win + R`):
+
+- **Con Microsoft Edge:**
+  ```cmd
+  msedge.exe --kiosk "http://localhost:5173" --edge-kiosk-type=fullscreen --user-data-dir="%TEMP%\kiosk_test"
+  ```
+- **Con Google Chrome:**
+  ```cmd
+  chrome.exe --kiosk "http://localhost:5173" --user-data-dir="%TEMP%\kiosk_test" --disable-pinch --overscroll-history-navigation=0 --noerrdialogs --disable-infobars
+  ```
+
+---
+
+### 1.3. Script de Arranque Automático para el Tótem (.bat)
+
+Para que el tótem inicie automáticamente de forma desatendida al encender el equipo:
 
 1. Crear una carpeta en `C:\Totem\`.
-2. Crear un archivo llamado `iniciar_totem.bat` con el siguiente contenido:
+2. Crear un archivo llamado `iniciar_totem.bat` con el siguiente contenido (detecta automáticamente Chrome o Edge):
 
 ```bat
 @echo off
 timeout /t 5 /nobreak >nul
 
-:: Ruta al ejecutable de Chrome (o msedge.exe)
-set CHROME="C:\Program Files\Google\Chrome\Application\chrome.exe"
-if not exist %CHROME% set CHROME="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-
 :: URL del Tótem (ajustar IP o dominio si el servidor está en otra máquina)
 set URL="http://localhost:5173"
 
-start "" %CHROME% --kiosk --disable-pinch --overscroll-history-navigation=0 --noerrdialogs --disable-infobars --disable-features=TranslateUI --disable-notifications %URL%
+:: Detectar ejecutable (Chrome o Edge)
+set BROWSER="C:\Program Files\Google\Chrome\Application\chrome.exe"
+if not exist %BROWSER% set BROWSER="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+if not exist %BROWSER% set BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+if not exist %BROWSER% set BROWSER="C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+
+:: Flags comunes
+set FLAGS=--kiosk --disable-pinch --overscroll-history-navigation=0 --noerrdialogs --disable-infobars --disable-features=TranslateUI --disable-notifications --check-for-update-interval=31536000
+
+:: Añadir flag especial si es Microsoft Edge
+echo %BROWSER% | findstr /i "msedge.exe" >nul
+if %errorlevel% equ 0 (
+    set FLAGS=%FLAGS% --edge-kiosk-type=fullscreen
+)
+
+start "" %BROWSER% %FLAGS% %URL%
 ```
 
 3. Presionar las teclas `Win + R`, escribir `shell:startup` y presionar Enter.
@@ -51,7 +86,7 @@ start "" %CHROME% --kiosk --disable-pinch --overscroll-history-navigation=0 --no
 
 ---
 
-### 1.3. Configuración de Energía y Pantalla en Windows
+### 1.4. Configuración de Energía y Pantalla en Windows
 
 Para asegurar que la pantalla del tótem permanezca encendida permanentemente:
 
@@ -67,7 +102,7 @@ Para asegurar que la pantalla del tótem permanezca encendida permanentemente:
 
 ---
 
-### 1.4. Inicio de Sesión Automático (Auto-Login en Windows)
+### 1.5. Inicio de Sesión Automático (Auto-Login en Windows)
 Ante un corte de energía o reinicio de la PC, el equipo debe iniciar sesión automáticamente sin solicitar contraseña:
 
 1. Presionar `Win + R`, escribir `netplwiz` y presionar Enter.
@@ -131,8 +166,11 @@ Si la pantalla es táctil o no se desea ver el puntero sobre la interfaz:
 
 ## 3. Procedimiento de Salida o Mantenimiento
 
-Para cerrar el Modo Kiosco y realizar mantenimiento en la computadora:
+Para salir del Modo Kiosco o acceder al sistema operativo:
 
-- **Windows:** Presionar `Alt + F4` o `Ctrl + W` para cerrar la ventana del navegador. Para abrir el Administrador de Tareas, presionar `Ctrl + Shift + Esc`.
-- **Linux:** Presionar `Alt + F4` o cambiar a una terminal virtual con `Ctrl + Alt + F3`.
+- **Cerrar el kiosco inmediatamente:** Presionar `Alt + F4` o `Ctrl + W`.
+- **Cambiar de ventana sin cerrar:** Presionar `Alt + Tab` o pulsar la tecla `Windows` para abrir la barra de tareas.
+- **Forzar cierre / Abrir Administrador de Tareas:** Presionar `Ctrl + Shift + Esc`.
+- **Si se utilizó pantalla completa manual (`F11`):** Presionar `F11` o `Esc` para salir del modo fullscreen.
+- **En Linux:** Presionar `Alt + F4` o cambiar a una terminal virtual con `Ctrl + Alt + F3`.
 
