@@ -8,7 +8,7 @@ from ..validators import validar_video
 
 
 class Totem(models.Model):
-    VINCULO_VIGENCIA_HORAS = 1
+    VINCULO_VIGENCIA_MINUTOS = 5
 
     nombre = models.CharField(max_length=150, blank=True, default='')
     espacio = models.ForeignKey(
@@ -107,7 +107,7 @@ class Totem(models.Model):
         if self.vinculado:
             return False
         vigencia = timezone.now() - self.codigo_creado_en
-        return vigencia.total_seconds() < self.VINCULO_VIGENCIA_HORAS * 3600
+        return vigencia.total_seconds() < self.VINCULO_VIGENCIA_MINUTOS * 60
 
 
 class Widget(models.Model):
