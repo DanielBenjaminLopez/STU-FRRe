@@ -1,11 +1,11 @@
 import { useHorarios } from "../../hooks/useHorarios";
-import ScheduleGrid from "./ScheduleGrid";
+import HorariosScheduleGrid from "./HorariosScheduleGrid";
 
 export default function HorariosFull({ onClose }: { onClose: () => void }) {
   const { todas, loading, error } = useHorarios();
 
   return (
-    <ScheduleGrid
+    <HorariosScheduleGrid
       title="Horario"
       items={todas}
       loading={loading}

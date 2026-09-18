@@ -12,6 +12,12 @@ vi.mock("../../hooks/useHorarios", () => ({
 const mockClaseAhora: Clase = {
   id: 1,
   carrera_codigo: "ISI",
+  carrera_nombre: "Ingeniería en Sistemas de Información",
+  plan_materia: 1,
+  comision_id: 1,
+  nivel: "primero",
+  modalidad: "anual",
+  cuatrimestre: "",
   comision: "K2.1",
   materia_nombre: "Algoritmos y Estructuras de Datos",
   hora_inicio: "08:00",
@@ -23,6 +29,12 @@ const mockClaseAhora: Clase = {
 const mockClaseSiguiente: Clase = {
   id: 2,
   carrera_codigo: "IEM",
+  carrera_nombre: "Ingeniería Electromecánica",
+  plan_materia: 2,
+  comision_id: 2,
+  nivel: "segundo",
+  modalidad: "cuatrimestral",
+  cuatrimestre: "primero",
   comision: "M1.1",
   materia_nombre: "Física II",
   hora_inicio: "10:00",
@@ -163,6 +175,13 @@ describe("Horarios", () => {
     const claseLarga: Clase = {
       id: 99,
       carrera_codigo: "TUOMRE",
+      carrera_nombre:
+        "Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Eléctricas",
+      plan_materia: 99,
+      comision_id: 99,
+      nivel: "tercero",
+      modalidad: "anual",
+      cuatrimestre: "",
       comision: "Curso 1",
       materia_nombre:
         "Generación, Transmisión y Distribución de la Energía Eléctrica II",
