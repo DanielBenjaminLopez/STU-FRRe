@@ -65,7 +65,7 @@ describe("HorariosFull", () => {
     expect(screen.getByText("Seleccioná una carrera")).toBeInTheDocument();
     expect(screen.queryByText("09:15")).not.toBeInTheDocument();
 
-    select("Seleccionar carrera", "Ingeniería en Sistemas de Información");
+    select("Seleccionar carrera", "ISI");
     select("Seleccionar nivel", "1ro");
 
     expect(

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { AnimatePresence } from "motion/react";
-import { useNoticias } from "../../hooks/useNoticias";
-import NoticiasFull from "./NoticiasFull";
-import { NoticiaCarouselSkeleton } from "../ui/Skeleton";
+import { useNovedades } from "../../hooks/useNoticias";
+import NovedadesFull from "./NovedadesFull";
+import { NovedadesCarouselSkeleton } from "../ui/Skeleton";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -15,8 +15,8 @@ function formatDate(dateStr: string): string {
 
 const AUTO_ROTATE_MS = 10000;
 
-export default function Noticias() {
-  const { feed, loading, error } = useNoticias({ filter: "scraping" });
+export default function Novedades() {
+  const { feed, loading, error } = useNovedades();
   const [showFull, setShowFull] = useState(false);
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -203,21 +203,15 @@ export default function Noticias() {
   return (
     <>
       <AnimatePresence>
-        {showFull && (
-          <NoticiasFull
-            onClose={() => setShowFull(false)}
-            filter="scraping"
-            title="Noticias"
-          />
-        )}
+        {showFull && <NovedadesFull onClose={() => setShowFull(false)} />}
       </AnimatePresence>
 
-      {loading && <NoticiaCarouselSkeleton />}
+      {loading && <NovedadesCarouselSkeleton />}
 
       {!loading && error && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="flex flex-col gap-2 w-full justify-between">
-            <span className="text-xl font-semibold">Noticias</span>
+            <span className="text-xl font-semibold">Eventos</span>
           </div>
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-red-400 text-sm">{error}</span>
@@ -226,13 +220,13 @@ export default function Noticias() {
       )}
 
       {!loading && !error && feed.length === 0 && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
           <div className="flex flex-col gap-2 w-full justify-between">
-            <span className="text-xl font-semibold">Noticias</span>
+            <span className="text-xl font-semibold">Eventos</span>
           </div>
           <div className="flex items-center justify-center w-full h-full">
             <span className="text-sm text-gray-500 font-medium">
-              No hay noticias recientes
+              No hay eventos recientes
             </span>
           </div>
         </div>
@@ -275,8 +269,13 @@ export default function Noticias() {
             className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             {extendedFeed.map((item, index) => {
-              const badgeLabel = "UTN FRRe";
-              const badgeColor = "bg-blue-500/80";
+              const badgeLabel =
+                item.tipo === "evento"
+                  ? (item.tipo_evento ?? "Evento")
+                  : "Novedad";
+
+              const badgeColor =
+                item.tipo === "evento" ? "bg-amber-500/90" : "bg-purple-500/80";
 
               const key =
                 feed.length > 1 && index === 0
@@ -301,18 +300,42 @@ export default function Noticias() {
                       }}
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-linear-to-br from-purple-400 to-purple-600 pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-br from-amber-400 to-amber-600 pointer-events-none" />
                   )}
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/70 pointer-events-none" />
 
                   <div className="absolute bottom-4 left-0 right-0 z-10 px-16 pb-8 flex flex-col gap-2 pointer-events-none">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`inline-flex items-center justify-center h-6 px-3 text-xs font-semibold text-white rounded-full backdrop-blur-sm shadow-xs border border-transparent ${badgeColor}`}
                       >
                         {badgeLabel}
                       </span>
+                      {item.espacio_nombre && (
+                        <span className="inline-flex items-center justify-center gap-1.5 h-6 px-3 text-xs font-semibold text-amber-950 rounded-full backdrop-blur-md bg-amber-200/90 border border-amber-300/50 shadow-xs">
+                          <svg
+                            className="w-3 h-3 text-amber-900/80 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          {item.espacio_nombre}
+                        </span>
+                      )}
                       <span className="text-xs text-white/70">
                         {formatDate(item.fecha)}
                       </span>
@@ -336,7 +359,7 @@ export default function Noticias() {
             <button
               type="button"
               onClick={handlePrev}
-              aria-label="Noticia anterior"
+              aria-label="Publicación anterior"
               className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 active:bg-white/50 backdrop-blur-md border border-white/20 text-white shadow-lg cursor-pointer transition-all pointer-events-auto"
             >
               <svg
@@ -360,7 +383,7 @@ export default function Noticias() {
             <button
               type="button"
               onClick={handleNext}
-              aria-label="Siguiente noticia"
+              aria-label="Siguiente publicación"
               className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/35 active:bg-white/50 backdrop-blur-md border border-white/20 text-white shadow-lg cursor-pointer transition-all pointer-events-auto"
             >
               <svg
@@ -380,33 +403,37 @@ export default function Noticias() {
           )}
 
           {/* Dots Indicator */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 pointer-events-auto">
-            {feed.map((item, i) => (
-              <button
-                key={`${item.tipo}-${item.id}`}
-                type="button"
-                onClick={() => handleDotClick(i)}
-                aria-label={`Ir a noticia ${i + 1}`}
-                className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
-                  i === current ? "bg-white" : "bg-white/40"
-                }`}
-              />
-            ))}
-          </div>
+          {feed.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 pointer-events-auto">
+              {feed.map((item, i) => (
+                <button
+                  key={`${item.tipo}-${item.id}`}
+                  type="button"
+                  onClick={() => handleDotClick(i)}
+                  aria-label={`Ir a publicación ${i + 1}`}
+                  className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
+                    i === current ? "bg-white" : "bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Title Header */}
           <div className="absolute top-8 left-8 z-20 flex flex-col gap-2 justify-between pointer-events-none">
-            <span className="text-xl text-white font-semibold">Noticias</span>
+            <span className="text-xl text-white font-semibold">Eventos</span>
           </div>
 
           {/* Button Ver todas */}
-          <button
-            type="button"
-            onClick={() => setShowFull(true)}
-            className="absolute top-8 right-8 z-20 shadow-xs text-sm font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border border-white/20 px-4 py-1 rounded-2xl transition-colors cursor-pointer pointer-events-auto"
-          >
-            Ver todas
-          </button>
+          {feed.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setShowFull(true)}
+              className="absolute top-8 right-8 z-20 shadow-xs text-sm font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border border-white/20 px-4 py-1 rounded-2xl transition-colors cursor-pointer pointer-events-auto"
+            >
+              Ver todas
+            </button>
+          )}
         </div>
       )}
     </>

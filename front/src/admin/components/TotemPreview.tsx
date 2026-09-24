@@ -15,6 +15,7 @@ import {
   type WidgetType,
 } from "../pages/plantillas/types";
 import Noticias from "../../shared/components/widgets/Noticias";
+import Novedades from "../../shared/components/widgets/Novedades";
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
@@ -22,6 +23,7 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   calendario: Calendar,
   mapa: Mapa,
   noticias: Noticias,
+  novedades: Novedades,
 };
 
 export default function TotemPreview() {

@@ -31,15 +31,38 @@ const columns: Column<ContenidoFeed>[] = [
     align: "center",
     render: (val, row) => {
       if (val === "evento") {
-        const tipoEvento = row.tipo_evento as string | undefined;
+        const tipoEvento = (row.tipo_evento as string) || "Evento";
         const espacio = row.espacio_nombre as string | undefined;
-        const label = ["Evento", tipoEvento, espacio]
-          .filter(Boolean)
-          .join(" · ");
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
-            {label}
-          </span>
+          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+              {tipoEvento}
+            </span>
+            {espacio && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                <svg
+                  className="w-3 h-3 text-gray-500 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {espacio}
+              </span>
+            )}
+          </div>
         );
       }
       return (
@@ -263,12 +286,7 @@ export default function NoticiasPage() {
       const dInicio = new Date(inicio);
       const dFin = new Date(fin);
       if (dFin <= dInicio) {
-        return "La fecha de fin debe ser posterior a la fecha de inicio";
-      }
-      const diffMs = dFin.getTime() - dInicio.getTime();
-      const diffDias = diffMs / (1000 * 60 * 60 * 24);
-      if (diffDias < 1) {
-        return "El evento debe tener una duración mínima de 1 día";
+        return "La fecha y hora de fin debe ser posterior a la fecha y hora de inicio";
       }
     }
     return null;

@@ -118,7 +118,7 @@ class PlantillaViewSet(viewsets.ModelViewSet):
 
     def _notify_assigned_totems(self, plantilla):
         notify_totems(
-            plantilla.totems.filter(vinculado=True).values_list('id', flat=True)
+            plantilla.totems.values_list('id', flat=True)
         )
 
     def destroy(self, request, *args, **kwargs):

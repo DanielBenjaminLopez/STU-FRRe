@@ -7,6 +7,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
+import Novedades from "../../shared/components/widgets/Novedades";
 import Avisos from "../../shared/components/widgets/Avisos";
 import VideoPanel from "../../shared/components/VideoPanel";
 import Logo from "../../assets/logo_negro.webp";
@@ -41,6 +42,7 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   calendario: Calendar,
   mapa: Mapa,
   noticias: Noticias,
+  novedades: Novedades,
 };
 
 export default function Home() {

@@ -34,16 +34,16 @@ const mockFeed: ContenidoFeed[] = [
     fecha: "2026-09-10T12:00:00Z",
     imagen_url: "https://example.com/noticia1.jpg",
     tipo: "noticia",
-    origen: "manual",
+    origen: "scraping",
   },
   {
     id: 2,
-    titulo: "Hackathon Regional 2026",
+    titulo: "Jornadas de Investigación 2026",
     contenido: "Inscripciones abiertas para estudiantes de ingeniería.",
     fecha: "2026-09-15T12:00:00Z",
     imagen_url: "",
-    tipo: "evento",
-    tipo_evento: "Hackathon",
+    tipo: "noticia",
+    origen: "scraping",
   },
 ];
 
@@ -101,9 +101,9 @@ describe("Noticias", () => {
       0,
     );
     expect(
-      screen.getAllByText("Hackathon Regional 2026").length,
+      screen.getAllByText("Jornadas de Investigación 2026").length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText("Noticias y eventos")).toBeInTheDocument();
+    expect(screen.getByText("Noticias")).toBeInTheDocument();
     expect(screen.getByText("Ver todas")).toBeInTheDocument();
   });
 
