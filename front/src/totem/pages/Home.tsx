@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
+<<<<<<< HEAD
 import Encabezado from "../../shared/components/widgets/Encabezado";
 import Horarios from "../../shared/components/widgets/Horarios";
 import Examenes from "../../shared/components/widgets/Examenes";
@@ -10,6 +11,9 @@ import Noticias from "../../shared/components/widgets/Noticias";
 import Novedades from "../../shared/components/widgets/Novedades";
 import Avisos from "../../shared/components/widgets/Avisos";
 import { useAvisos } from "../../shared/hooks/useAvisos";
+=======
+import { Avisos, Encabezado } from "../../features/layout";
+>>>>>>> 6532e56 (Realizar migracion inicial a arquitectura por features)
 import VideoPanel from "../../shared/components/VideoPanel";
 import Logo from "../../assets/logo_negro.webp";
 import {
@@ -20,31 +24,21 @@ import {
 import { TotemStageCSS } from "../../shared/components/TotemStage";
 import {
   plantillaDTOToLocal,
-  type WidgetType,
   type Plantilla,
-} from "../../admin/pages/plantillas/types";
+} from "../../features/widgets/placement";
 import {
   ApiError,
   getTotemToken,
   clearTotemToken,
 } from "../../shared/api/client";
-import { fetchTotemMe, type Totem } from "../../shared/api/totems";
+import { fetchTotemMe, type Totem } from "../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext";
 import { TotemPinProvider } from "../../shared/context/TotemPinContext";
-import type { PinPosition } from "../../shared/components/widgets/MapaRaw";
-import type { FloorKey } from "../../shared/components/widgets/MapaRaw";
+import type { PinPosition, FloorKey } from "../../features/mapa";
+import { WIDGET_COMPONENTS } from "../../features/widgets";
 
 const POLLING_MS = 5 * 60_000;
-
-const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
-  horarios: Horarios,
-  examenes: Examenes,
-  calendario: Calendar,
-  mapa: Mapa,
-  noticias: Noticias,
-  novedades: Novedades,
-};
 
 export default function Home() {
   const navigate = useNavigate();

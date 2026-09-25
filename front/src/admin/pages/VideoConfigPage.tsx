@@ -9,7 +9,7 @@ import {
   updateConfigVideo,
   deleteVideoArchivo,
   type ConfiguracionVideo,
-} from "../../shared/api/totems";
+} from "../../features/totems/api/totems";
 
 export default function VideoConfigPage() {
   const { selectedId, refreshTotems } = useTotem();

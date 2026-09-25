@@ -14,13 +14,16 @@ import {
   updatePlantilla,
   deletePlantilla,
   replacePlantillaWidgets,
-} from "../../../shared/api/plantillas";
-import { fetchWidgets, type WidgetDTO } from "../../../shared/api/widgets";
-import { updateTotem, type Totem } from "../../../shared/api/totems";
+} from "../../../features/widgets/api/plantillas";
+import {
+  fetchWidgets,
+  type WidgetDTO,
+} from "../../../features/widgets/api/widgets";
+import { updateTotem, type Totem } from "../../../features/totems/api/totems";
 import type {
   PlantillaDTO,
   WidgetPosicionDTO,
-} from "../../../shared/api/plantillas";
+} from "../../../features/widgets/api/plantillas";
 
 const { mockSileo } = vi.hoisted(() => ({
   mockSileo: {
@@ -57,19 +60,19 @@ vi.mock("@dnd-kit/core", () => ({
   })),
 }));
 
-vi.mock("../../../shared/components/widgets/Horarios", () => ({
+vi.mock("../../../features/horarios/components/Horarios", () => ({
   default: () => <div data-testid="mock-horarios">Horarios widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Examenes", () => ({
+vi.mock("../../../features/examenes/components/Examenes", () => ({
   default: () => <div data-testid="mock-examenes">Examenes widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Encabezado", () => ({
+vi.mock("../../../features/layout/components/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Mapa", () => ({
+vi.mock("../../../features/mapa/components/Mapa", () => ({
   default: () => <div data-testid="mock-mapa">Mapa widget</div>,
 }));
 
@@ -82,7 +85,7 @@ vi.mock("../../../shared/hooks/useTotemScale", () => ({
   TOTEM_HEIGHT: 3840,
 }));
 
-vi.mock("../../../shared/api/plantillas", () => ({
+vi.mock("../../../features/widgets/api/plantillas", () => ({
   fetchPlantillas: vi.fn(),
   createPlantilla: vi.fn(),
   updatePlantilla: vi.fn(),
@@ -90,11 +93,11 @@ vi.mock("../../../shared/api/plantillas", () => ({
   replacePlantillaWidgets: vi.fn(),
 }));
 
-vi.mock("../../../shared/api/widgets", () => ({
+vi.mock("../../../features/widgets/api/widgets", () => ({
   fetchWidgets: vi.fn(),
 }));
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   updateTotem: vi.fn(),
 }));
 

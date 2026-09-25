@@ -7,8 +7,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import TemplateCanvas from "../TemplateCanvas";
-import type { WidgetPlacement } from "../../pages/plantillas/types";
-import { WIDGET_REGISTRY } from "../../pages/plantillas/types";
+import type { WidgetPlacement } from "../../../features/widgets/placement";
+import { WIDGET_REGISTRY } from "../../../features/widgets/placement";
 
 vi.mock("@dnd-kit/core", () => ({
   useDroppable: vi.fn(() => ({
@@ -23,15 +23,15 @@ vi.mock("@dnd-kit/core", () => ({
   })),
 }));
 
-vi.mock("../../../shared/components/widgets/Encabezado", () => ({
+vi.mock("../../../features/layout/components/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Horarios", () => ({
+vi.mock("../../../features/horarios/components/Horarios", () => ({
   default: () => <div data-testid="mock-horarios">Horarios widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Examenes", () => ({
+vi.mock("../../../features/examenes/components/Examenes", () => ({
   default: () => <div data-testid="mock-examenes">Examenes widget</div>,
 }));
 

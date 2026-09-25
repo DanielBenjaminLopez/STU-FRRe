@@ -9,12 +9,12 @@ import {
   updateUbicacionMapa,
   type UbicacionMapa,
   type PisoKey,
-} from "../../shared/api/ubicacionesMapa";
-import { updateTotemPinMapa } from "../../shared/api/totems";
+} from "../../features/mapa/api/ubicacionesMapa";
+import { updateTotemPinMapa } from "../../features/totems/api/totems";
 import MapaRaw, {
   type PinPosition,
-} from "../../shared/components/widgets/MapaRaw";
-import type { FloorKey } from "../../shared/components/widgets/MapaRaw";
+} from "../../features/mapa/components/MapaRaw";
+import type { FloorKey } from "../../features/mapa/components/MapaRaw";
 import { useTotem } from "../../shared/context/TotemContext";
 
 const PISOS: { key: PisoKey; label: string }[] = [

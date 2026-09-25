@@ -41,16 +41,16 @@ vi.mock("../../../shared/context/TotemContext", () => ({
   }),
 }));
 
-vi.mock("../../../shared/api/ubicacionesMapa", () => ({
+vi.mock("../../../features/mapa/api/ubicacionesMapa", () => ({
   fetchUbicacionesMapa: mockFetchUbicaciones,
   updateUbicacionMapa: mockUpdateUbicacion,
 }));
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   updateTotemPinMapa: mockUpdateTotemPinMapa,
 }));
 
-vi.mock("../../../shared/components/widgets/MapaRaw", () => ({
+vi.mock("../../../features/mapa/components/MapaRaw", () => ({
   default: ({
     onPinPlaced,
   }: {

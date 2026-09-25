@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import NoticiasPage from "../NoticiasPage";
-import * as noticiasApi from "../../../shared/api/noticias";
+import * as noticiasApi from "../../../features/noticias/api/noticias";
 
 vi.mock("sileo", () => ({
   sileo: {
@@ -20,7 +20,7 @@ vi.mock("sileo", () => ({
 
 import { sileo } from "sileo";
 
-vi.mock("../../../shared/api/noticias", () => ({
+vi.mock("../../../features/noticias/api/noticias", () => ({
   fetchNoticias: vi.fn(),
   createNoticia: vi.fn(),
   updateNoticia: vi.fn(),

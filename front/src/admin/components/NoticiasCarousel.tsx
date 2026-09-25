@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { ContenidoFeed } from "../../shared/api/noticias";
+import type { ContenidoFeed } from "../../features/noticias/api/noticias";
 import NoticiaDetailModal from "./NoticiaDetailModal";
 
 const ROTATION_INTERVAL = 5000;

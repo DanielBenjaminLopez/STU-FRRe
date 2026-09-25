@@ -44,7 +44,7 @@ vi.mock("../../../shared/context/TotemContext", () => ({
   }),
 }));
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   vincularTotem: mockVincularTotem,
 }));
 

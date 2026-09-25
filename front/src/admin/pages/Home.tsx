@@ -5,12 +5,16 @@ import TotemPreview from "../components/TotemPreview";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import VincularTotemModal from "../components/VincularTotemModal";
-import { deleteTotem, updateTotem, type Totem } from "../../shared/api/totems";
+import {
+  deleteTotem,
+  updateTotem,
+  type Totem,
+} from "../../features/totems/api/totems";
 import Button from "../../shared/components/ui/Button";
 import {
   fetchPlantillas,
   type PlantillaDTO,
-} from "../../shared/api/plantillas";
+} from "../../features/widgets/api/plantillas";
 import { sileo } from "sileo";
 
 export default function Home() {

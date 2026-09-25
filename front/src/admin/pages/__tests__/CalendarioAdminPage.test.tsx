@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import CalendarioAdminPage from "../CalendarioAdminPage";
-import * as calendarioAdminApi from "../../../shared/api/calendarioAdmin";
+import * as calendarioAdminApi from "../../../features/calendario/api/calendarioAdmin";
 
 vi.mock("sileo", () => ({
   sileo: {
@@ -20,7 +20,7 @@ vi.mock("sileo", () => ({
 
 import { sileo } from "sileo";
 
-vi.mock("../../../shared/api/calendarioAdmin", () => ({
+vi.mock("../../../features/calendario/api/calendarioAdmin", () => ({
   fetchEventosCalendario: vi.fn(),
   bulkSaveCalendario: vi.fn(),
 }));
