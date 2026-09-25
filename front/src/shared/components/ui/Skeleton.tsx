@@ -146,11 +146,11 @@ export function NoticiaListSkeleton({ count = 3 }: { count?: number }) {
 
 export function NoticiaCarouselSkeleton() {
   return (
-    <div className="col-span-4 row-span-2 relative rounded-4xl overflow-hidden bg-linear-to-br from-purple-400 to-purple-600">
+    <div className="w-full h-full col-span-4 row-span-2 relative rounded-4xl overflow-hidden bg-linear-to-br from-purple-400 to-purple-600">
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/70" />
       <div className="absolute bottom-4 left-0 right-0 z-10 p-6 flex flex-col gap-2">
         <div className="flex gap-2 items-center">
-          <Skeleton className="h-5 w-16 rounded-full bg-white/20" />
+          <Skeleton className="h-6 w-20 rounded-full bg-white/20" />
           <Skeleton className="h-3 w-20 bg-white/20" />
         </div>
         <Skeleton className="h-6 w-3/4 bg-white/20" />
@@ -163,6 +163,31 @@ export function NoticiaCarouselSkeleton() {
       </div>
       <div className="absolute top-8 left-8 z-20">
         <Skeleton className="h-5 w-40 bg-white/20" />
+      </div>
+      <Skeleton className="absolute top-8 right-8 z-20 h-8 w-24 rounded-2xl bg-white/20" />
+    </div>
+  );
+}
+
+export function NovedadesCarouselSkeleton() {
+  return (
+    <div className="w-full h-full col-span-4 row-span-2 relative rounded-4xl overflow-hidden bg-linear-to-br from-amber-300 to-amber-500">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/70" />
+      <div className="absolute bottom-4 left-0 right-0 z-10 p-6 flex flex-col gap-2">
+        <div className="flex gap-2 items-center">
+          <Skeleton className="h-6 w-20 rounded-full bg-white/20" />
+          <Skeleton className="h-3 w-20 bg-white/20" />
+        </div>
+        <Skeleton className="h-6 w-3/4 bg-white/20" />
+        <Skeleton className="h-4 w-1/2 bg-white/20" />
+      </div>
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+        <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
+        <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
+        <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
+      </div>
+      <div className="absolute top-8 left-8 z-20">
+        <Skeleton className="h-5 w-48 bg-white/20" />
       </div>
       <Skeleton className="absolute top-8 right-8 z-20 h-8 w-24 rounded-2xl bg-white/20" />
     </div>

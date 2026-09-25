@@ -24,6 +24,7 @@ export interface ContenidoFeed {
   espacio_nombre?: string;
   origen?: string;
   enlace?: string;
+  destacado?: boolean;
 }
 
 function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
@@ -40,8 +41,25 @@ function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
   };
 }
 
+const TIPO_EVENTO_MAP: Record<string, string> = {
+  taller: "Taller",
+  curso: "Curso",
+  recreativo: "Recreativo",
+  charla: "Charla",
+  otro: "Otro",
+};
+
+function formatTipoEvento(raw?: string): string {
+  if (!raw) return "Evento";
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+  if (TIPO_EVENTO_MAP[lower]) return TIPO_EVENTO_MAP[lower];
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 function mapEventoToFeed(e: Evento): ContenidoFeed {
-  const tipoLabel = e.tipo === "otro" && e.tipo_otro ? e.tipo_otro : e.tipo;
+  const rawTipo = e.tipo === "otro" && e.tipo_otro ? e.tipo_otro : e.tipo;
+  const tipoLabel = formatTipoEvento(rawTipo);
   return {
     id: e.id,
     titulo: e.titulo,
@@ -51,6 +69,7 @@ function mapEventoToFeed(e: Evento): ContenidoFeed {
     tipo: "evento",
     tipo_evento: tipoLabel,
     espacio_nombre: e.espacio_nombre || undefined,
+    destacado: Boolean(e.destacado),
   };
 }
 
@@ -63,6 +82,39 @@ export async function fetchFeed(): Promise<ContenidoFeed[]> {
     ...noticias.map(mapNoticiaToFeed),
     ...eventos.map(mapEventoToFeed),
   ];
+  feed.sort(
+    (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+  );
+  return feed;
+}
+
+export async function fetchFeedScraping(): Promise<ContenidoFeed[]> {
+  const noticias = await fetchNoticias();
+  const feed = noticias
+    .filter((n) => n.origen === "scraping")
+    .map(mapNoticiaToFeed);
+  feed.sort(
+    (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+  );
+  return feed;
+}
+
+export async function fetchFeedCreados(): Promise<ContenidoFeed[]> {
+  const [noticias, eventos] = await Promise.all([
+    fetchNoticias(),
+    fetchEventos(),
+  ]);
+  const feed = [
+    ...noticias.filter((n) => n.origen === "manual").map(mapNoticiaToFeed),
+    ...eventos.map(mapEventoToFeed),
+  ];
+
+  // Si hay algún evento destacado, el widget debe mostrar ÚNICAMENTE ese evento
+  const eventoDestacado = feed.find((item) => item.destacado);
+  if (eventoDestacado) {
+    return [eventoDestacado];
+  }
+
   feed.sort(
     (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
   );
@@ -112,13 +164,3 @@ export async function syncNoticias(): Promise<SyncResult> {
     method: "POST",
   });
 }
-
-export {
-  createEvento,
-  updateEvento,
-  deleteEvento,
-  uploadEventoImagen,
-  fetchEspaciosForSelect,
-  TIPOS_EVENTO,
-} from "./eventos";
-export type { Evento } from "./eventos";

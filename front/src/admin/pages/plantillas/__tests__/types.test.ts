@@ -1,21 +1,23 @@
 import { describe, it, expect } from "vitest";
-import { checkCollision, type WidgetPlacement } from "../types";
+import {
+  checkCollision,
+  WIDGET_REGISTRY,
+  type WidgetType,
+  type WidgetPlacement,
+} from "../types";
 
 function makeWidget(
-  type: "horarios" | "examenes" | "calendario" | "mapa",
+  type: WidgetType,
   col: number,
   row: number,
   id = "test",
   colSpan?: number,
   rowSpan?: number,
 ): WidgetPlacement {
-  const defaults = {
-    horarios: [4, 2],
-    examenes: [4, 2],
-    calendario: [2, 2],
-    mapa: [2, 2],
-  };
-  const [dCol, dRow] = defaults[type];
+  const [dCol, dRow] = [
+    WIDGET_REGISTRY[type]?.colSpan ?? 4,
+    WIDGET_REGISTRY[type]?.rowSpan ?? 2,
+  ];
   return {
     id,
     type,
@@ -99,5 +101,12 @@ describe("checkCollision", () => {
     expect(checkCollision(widgets, 0, 4, 4, 2)).toBe(true);
     expect(checkCollision(widgets, 0, 0, 4, 2)).toBe(true);
     expect(checkCollision(widgets, 0, 2, 4, 2)).toBe(true);
+  });
+
+  it("registra novedades con colSpan 4 y rowSpan 2", () => {
+    expect(WIDGET_REGISTRY.novedades).toBeDefined();
+    expect(WIDGET_REGISTRY.novedades.label).toBe("Eventos");
+    expect(WIDGET_REGISTRY.novedades.colSpan).toBe(4);
+    expect(WIDGET_REGISTRY.novedades.rowSpan).toBe(2);
   });
 });

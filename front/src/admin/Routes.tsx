@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
+import EventosPage from "./pages/EventosPage";
 import CalendarioAdminPage from "./pages/CalendarioAdminPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
@@ -44,6 +45,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <NoticiasPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/eventos"
+        element={
+          <ProtectedRoute>
+            <EventosPage />
           </ProtectedRoute>
         }
       />

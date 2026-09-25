@@ -57,16 +57,14 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
 
   const badgeLabel =
     item.tipo === "evento"
-      ? ["Evento", item.tipo_evento, item.espacio_nombre]
-          .filter(Boolean)
-          .join(" · ")
+      ? (item.tipo_evento ?? "Evento")
       : item.origen === "scraping"
         ? "UTN FRRe"
         : "Manual";
 
   const badgeColor =
     item.tipo === "evento"
-      ? "bg-green-500/80"
+      ? "bg-amber-500/90"
       : item.origen === "scraping"
         ? "bg-blue-500/80"
         : "bg-gray-500/80";
@@ -143,12 +141,36 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`px-2 py-0.5 text-xs font-medium text-white rounded-full backdrop-blur-sm ${badgeColor}`}
+              className={`inline-flex items-center justify-center h-6 px-3 text-xs font-semibold text-white rounded-full backdrop-blur-sm shadow-xs border border-transparent ${badgeColor}`}
             >
               {badgeLabel}
             </span>
+            {item.espacio_nombre && (
+              <span className="inline-flex items-center justify-center gap-1.5 h-6 px-3 text-xs font-semibold text-amber-950 rounded-full backdrop-blur-md bg-amber-200/90 border border-amber-300/50 shadow-xs">
+                <svg
+                  className="w-3 h-3 text-amber-900/80 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {item.espacio_nombre}
+              </span>
+            )}
             <span className="text-xs text-white/70">
               {formatDate(item.fecha)}
             </span>

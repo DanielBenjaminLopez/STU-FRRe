@@ -9,7 +9,8 @@ export type WidgetType =
   | "examenes"
   | "calendario"
   | "mapa"
-  | "noticias";
+  | "noticias"
+  | "novedades";
 
 export interface WidgetDefinition {
   type: WidgetType;
@@ -54,6 +55,13 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     colSpan: 4,
     rowSpan: 2,
     color: "from-purple-100 to-purple-200",
+  },
+  novedades: {
+    type: "novedades",
+    label: "Eventos",
+    colSpan: 4,
+    rowSpan: 2,
+    color: "from-amber-100 to-amber-200",
   },
 };
 

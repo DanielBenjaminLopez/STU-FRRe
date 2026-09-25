@@ -262,13 +262,14 @@ class MesaExamenSerializer(serializers.ModelSerializer):
 class EventoSerializer(serializers.ModelSerializer):
     espacio_nombre = serializers.SerializerMethodField()
     imagen_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    espacio = serializers.CharField(max_length=200, required=False, allow_blank=True, default='')
     
     class Meta:
         model = Evento
-        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre']
+        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre', 'destacado']
         
     def get_espacio_nombre(self, obj):
-        return str(obj.espacio) if obj.espacio else None
+        return obj.espacio or None
 
 
 class AvisoSerializer(serializers.ModelSerializer):

@@ -17,6 +17,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
+import Novedades from "../../shared/components/widgets/Novedades";
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   horarios: Horarios,
@@ -24,6 +25,7 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   calendario: Calendar,
   mapa: Mapa,
   noticias: Noticias,
+  novedades: Novedades,
 };
 
 interface PlacedWidgetProps {
@@ -209,11 +211,18 @@ export default function TemplateCanvas({
               (() => {
                 const def = registry[activeType];
                 if (!def) return null;
+                const isNovedades = activeType === "novedades";
+                const isNoticias = activeType === "noticias";
+                const indicatorClass = isNovedades
+                  ? "border-amber-400 bg-amber-300/30"
+                  : isNoticias
+                    ? "border-purple-400 bg-purple-300/30"
+                    : "border-gray-400/80 bg-gray-900/5";
                 return (
                   <div
                     data-testid="drop-indicator"
                     aria-label={`Zona para soltar ${def.label}`}
-                    className="overflow-hidden rounded-4xl border-2 border-dashed border-gray-400/80 bg-gray-900/5 pointer-events-none transition-all duration-75"
+                    className={`overflow-hidden rounded-4xl border-2 border-dashed pointer-events-none transition-all duration-75 ${indicatorClass}`}
                     style={{
                       gridColumn: `${hoverCell.col + 1} / span ${def.colSpan}`,
                       gridRow: `${hoverCell.row + 1} / span ${def.rowSpan}`,

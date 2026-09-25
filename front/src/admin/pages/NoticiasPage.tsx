@@ -1,60 +1,61 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { sileo } from "sileo";
 import DataTable, { type Column } from "../components/DataTable";
-import DataFormModal from "../components/DataFormModal";
+import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import NoticiasCarousel from "../components/NoticiasCarousel";
 import Button from "../../shared/components/ui/Button";
 import {
-  fetchFeed,
+  fetchNoticias,
   createNoticia,
   updateNoticia,
   deleteNoticia,
   syncNoticias,
-  createEvento,
-  updateEvento,
-  deleteEvento,
-  uploadEventoImagen,
-  fetchEspaciosForSelect,
-  TIPOS_EVENTO,
+  type Noticia,
   type ContenidoFeed,
 } from "../../shared/api/noticias";
-import type { FormField } from "../components/DataFormModal";
 
-const columns: Column<ContenidoFeed>[] = [
+const columns: Column<Noticia>[] = [
   { key: "titulo", label: "Título", sortable: true },
   {
-    key: "tipo",
-    label: "Tipo",
+    key: "origen",
+    label: "Origen",
     sortable: true,
     align: "center",
-    render: (val, row) => {
-      if (val === "evento") {
-        const tipoEvento = row.tipo_evento as string | undefined;
-        const espacio = row.espacio_nombre as string | undefined;
-        const label = ["Evento", tipoEvento, espacio]
-          .filter(Boolean)
-          .join(" · ");
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
-            {label}
-          </span>
-        );
-      }
+    render: (val) => {
+      const isScraping = val === "scraping";
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-          Noticia
+        <span
+          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            isScraping
+              ? "bg-blue-50 text-blue-700"
+              : "bg-purple-50 text-purple-700"
+          }`}
+        >
+          {isScraping ? "Scraping" : "Manual"}
         </span>
       );
     },
   },
   {
-    key: "fecha",
-    label: "Fecha",
+    key: "fecha_publicacion",
+    label: "Fecha de publicación",
     sortable: true,
     align: "center",
     render: (val) => {
+      if (!val) return "-";
+      const d = new Date(String(val));
+      return d.toLocaleDateString("es-ES");
+    },
+  },
+  {
+    key: "fecha_expiracion",
+    label: "Fecha de expiración",
+    sortable: true,
+    align: "center",
+    render: (val) => {
+      if (!val) return "-";
       const d = new Date(String(val));
       return d.toLocaleDateString("es-ES");
     },
@@ -82,9 +83,6 @@ const columns: Column<ContenidoFeed>[] = [
 const now = new Date();
 const oneYear = new Date(now);
 oneYear.setFullYear(oneYear.getFullYear() + 1);
-
-const oneHourLater = new Date(now);
-oneHourLater.setHours(oneHourLater.getHours() + 1);
 
 const noticiaFields: FormField[] = [
   { name: "titulo", label: "Título", type: "text", required: true },
@@ -125,27 +123,21 @@ const noticiaFields: FormField[] = [
 ];
 
 export default function NoticiasPage() {
-  const [feed, setFeed] = useState<ContenidoFeed[]>([]);
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingRow, setEditingRow] = useState<ContenidoFeed | null>(null);
-  const [deletingRow, setDeletingRow] = useState<ContenidoFeed | null>(null);
+  const [editingRow, setEditingRow] = useState<Noticia | null>(null);
+  const [deletingRow, setDeletingRow] = useState<Noticia | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [creatingType, setCreatingType] = useState<"noticia" | "evento" | null>(
-    null,
-  );
-  const [espacios, setEspacios] = useState<{ value: number; label: string }[]>(
-    [],
-  );
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const feedResult = await fetchFeed();
-      setFeed(feedResult);
+      const data = await fetchNoticias();
+      setNoticias(data);
     } catch (err) {
       sileo.error({
-        title: "Error al cargar datos",
+        title: "Error al cargar noticias",
         description:
           err instanceof Error ? err.message : "Error al cargar los datos",
       });
@@ -159,14 +151,6 @@ export default function NoticiasPage() {
     async function init() {
       if (active) {
         await load();
-        fetchEspaciosForSelect()
-          .then((e) => {
-            if (active)
-              setEspacios(
-                e.map((esp) => ({ value: esp.id, label: esp.nombre })),
-              );
-          })
-          .catch(() => {});
       }
     }
     init();
@@ -195,56 +179,6 @@ export default function NoticiasPage() {
     }
   }
 
-  function getEventoFields(): FormField[] {
-    return [
-      { name: "titulo", label: "Título", type: "text", required: true },
-      {
-        name: "tipo",
-        label: "Tipo",
-        type: "select",
-        required: true,
-        options: TIPOS_EVENTO.map((t) => ({ value: t.value, label: t.label })),
-      },
-      {
-        name: "descripcion",
-        label: "Descripción",
-        type: "textarea",
-        required: false,
-      },
-      {
-        name: "imagen_url",
-        label: "Imagen del evento",
-        type: "image",
-        required: false,
-        onUpload: async (file: File) => {
-          const res = await uploadEventoImagen(file);
-          return res.url;
-        },
-      },
-      {
-        name: "fecha_hora_inicio",
-        label: "Fecha y hora inicio",
-        type: "datetime-local",
-        required: true,
-        defaultValue: now.toISOString().slice(0, 16),
-      },
-      {
-        name: "fecha_hora_fin",
-        label: "Fecha y hora fin",
-        type: "datetime-local",
-        required: true,
-        defaultValue: oneHourLater.toISOString().slice(0, 16),
-      },
-      {
-        name: "espacio",
-        label: "Espacio",
-        type: "select",
-        required: false,
-        options: espacios,
-      },
-    ];
-  }
-
   function validateNoticia(data: Record<string, unknown>): string | null {
     const pub = data.fecha_publicacion as string | undefined;
     const exp = data.fecha_expiracion as string | undefined;
@@ -256,176 +190,120 @@ export default function NoticiasPage() {
     return null;
   }
 
-  function validateEvento(data: Record<string, unknown>): string | null {
-    const inicio = data.fecha_hora_inicio as string | undefined;
-    const fin = data.fecha_hora_fin as string | undefined;
-    if (inicio && fin) {
-      const dInicio = new Date(inicio);
-      const dFin = new Date(fin);
-      if (dFin <= dInicio) {
-        return "La fecha de fin debe ser posterior a la fecha de inicio";
-      }
-      const diffMs = dFin.getTime() - dInicio.getTime();
-      const diffDias = diffMs / (1000 * 60 * 60 * 24);
-      if (diffDias < 1) {
-        return "El evento debe tener una duración mínima de 1 día";
-      }
-    }
-    return null;
-  }
-
   async function handleSubmit(formData: Record<string, unknown>) {
-    const isEditingEvento = editingRow?.tipo === "evento";
-    const isCreatingEvento = creatingType === "evento";
+    const validationError = validateNoticia(formData);
+    if (validationError) throw new Error(validationError);
 
-    if (isEditingEvento || isCreatingEvento) {
-      const validationError = validateEvento(formData);
-      if (validationError) throw new Error(validationError);
-    } else {
-      const validationError = validateNoticia(formData);
-      if (validationError) throw new Error(validationError);
-    }
-
-    if (isEditingEvento && editingRow) {
-      await updateEvento(editingRow.id as number, formData);
-    } else if (isCreatingEvento) {
-      await createEvento(formData as Parameters<typeof createEvento>[0]);
-      sileo.success({ title: "Evento creado" });
-    } else if (editingRow) {
-      await updateNoticia(editingRow.id as number, formData);
+    if (editingRow) {
+      await updateNoticia(editingRow.id, formData);
+      sileo.success({ title: "Noticia actualizada" });
     } else {
       await createNoticia(formData as Parameters<typeof createNoticia>[0]);
       sileo.success({ title: "Noticia creada" });
     }
     setShowForm(false);
     setEditingRow(null);
-    setCreatingType(null);
     await load();
   }
 
   async function handleConfirmDelete() {
     try {
       if (!deletingRow) return;
-      if (deletingRow.tipo === "evento") {
-        await deleteEvento(deletingRow.id as number);
-        sileo.success({ title: "Evento eliminado" });
-      } else {
-        await deleteNoticia(deletingRow.id as number);
-        sileo.success({ title: "Noticia eliminada" });
-      }
+      await deleteNoticia(deletingRow.id);
+      sileo.success({ title: "Noticia eliminada" });
       await load();
     } catch (err) {
       sileo.error({
         title: "Error al eliminar",
         description:
-          err instanceof Error
-            ? err.message
-            : `Error al eliminar ${deletingRow?.tipo === "evento" ? "el evento" : "la noticia"}`,
+          err instanceof Error ? err.message : "Error al eliminar la noticia",
       });
     } finally {
       setDeletingRow(null);
     }
   }
 
-  function handleOpenCreate(type: "noticia" | "evento") {
+  function handleOpenCreate() {
     setEditingRow(null);
-    setCreatingType(type);
     setShowForm(true);
   }
 
-  function handleOpenEdit(row: ContenidoFeed) {
-    setCreatingType(null);
+  function handleOpenEdit(row: Noticia) {
     setEditingRow(row);
     setShowForm(true);
   }
 
   function getInitialData(): Record<string, unknown> | undefined {
     if (!editingRow) return undefined;
-    if (editingRow.tipo === "evento") {
-      return {
-        titulo: editingRow.titulo,
-        tipo: editingRow.tipo_evento ?? "",
-        descripcion: editingRow.contenido ?? "",
-        imagen_url: editingRow.imagen_url ?? "",
-        fecha_hora_inicio: editingRow.fecha?.slice(0, 16) ?? "",
-        fecha_hora_fin: "",
-        espacio: "",
-      };
-    }
     return {
       titulo: editingRow.titulo,
       contenido: editingRow.contenido,
       imagen_url: editingRow.imagen_url,
       enlace: editingRow.enlace ?? "",
-      fecha_publicacion: editingRow.fecha?.slice(0, 16) ?? "",
+      fecha_publicacion: editingRow.fecha_publicacion?.slice(0, 16) ?? "",
       fecha_expiracion: editingRow.fecha_expiracion?.slice(0, 16) ?? null,
     };
   }
 
-  function getFormTitle(): string {
-    if (creatingType === "evento") return "Crear evento";
-    if (creatingType === "noticia") return "Crear noticia";
-    if (editingRow?.tipo === "evento") return "Editar evento";
-    return "Editar noticia";
-  }
-
-  const isEventoForm =
-    creatingType === "evento" || editingRow?.tipo === "evento";
-  const currentFields = isEventoForm ? getEventoFields() : noticiaFields;
+  const feedForCarousel = useMemo<ContenidoFeed[]>(() => {
+    return noticias.map((n) => ({
+      id: n.id,
+      titulo: n.titulo,
+      contenido: n.contenido,
+      fecha: n.fecha_publicacion,
+      fecha_expiracion: n.fecha_expiracion,
+      imagen_url: n.imagen_url,
+      tipo: "noticia",
+      origen: n.origen,
+      enlace: n.enlace,
+    }));
+  }, [noticias]);
 
   return (
     <div className="p-8">
       <PageHeader
-        title="Noticias y Eventos"
-        subtitle="Feed unificado de noticias y eventos"
-        onCreate={() => handleOpenCreate("noticia")}
+        title="Noticias"
+        subtitle="Gestión de noticias institucionales y sincronización con UTN"
+        onCreate={handleOpenCreate}
         createLabel="Cargar noticia"
       >
         <Button variant="secondary" onClick={handleSync} disabled={syncing}>
           {syncing ? "Sincronizando..." : "Sincronizar desde UTN"}
         </Button>
-        <Button variant="primary" onClick={() => handleOpenCreate("evento")}>
-          Crear evento
-        </Button>
       </PageHeader>
 
-      {!loading && feed.length > 0 && (
+      {!loading && feedForCarousel.length > 0 && (
         <div className="mb-6">
-          <NoticiasCarousel noticias={feed} />
+          <NoticiasCarousel noticias={feedForCarousel} />
         </div>
       )}
 
       <DataTable
-        data={feed}
+        data={noticias}
         columns={columns}
         onEdit={handleOpenEdit}
-        onDelete={(row) => setDeletingRow(row as ContenidoFeed)}
+        onDelete={(row) => setDeletingRow(row as Noticia)}
         isLoading={loading}
-        searchPlaceholder="Buscar noticia o evento..."
+        searchPlaceholder="Buscar noticia..."
         label="noticias"
       />
 
       {showForm && (
         <DataFormModal
-          title={getFormTitle()}
-          fields={currentFields}
+          title={editingRow ? "Editar noticia" : "Crear noticia"}
+          fields={noticiaFields}
           initialData={getInitialData()}
           onSubmit={handleSubmit}
           onClose={() => {
             setShowForm(false);
             setEditingRow(null);
-            setCreatingType(null);
           }}
         />
       )}
 
       {deletingRow && (
         <ConfirmDeleteModal
-          title={
-            deletingRow.tipo === "evento"
-              ? "Eliminar evento"
-              : "Eliminar noticia"
-          }
+          title="Eliminar noticia"
           itemName={String(deletingRow.titulo ?? "")}
           onConfirm={handleConfirmDelete}
           onClose={() => setDeletingRow(null)}

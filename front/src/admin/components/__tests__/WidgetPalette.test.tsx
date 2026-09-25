@@ -27,6 +27,9 @@ function MockMapa() {
 function MockNoticias() {
   return <div data-testid="mock-noticias">Noticias</div>;
 }
+function MockNovedades() {
+  return <div data-testid="mock-novedades">Eventos</div>;
+}
 
 const mockComponents = {
   horarios: MockHorarios,
@@ -34,6 +37,7 @@ const mockComponents = {
   calendario: MockCalendario,
   mapa: MockMapa,
   noticias: MockNoticias,
+  novedades: MockNovedades,
 };
 
 describe("WidgetPalette", () => {
@@ -72,6 +76,7 @@ describe("WidgetPalette", () => {
     expect(screen.getByText("Calendario")).toBeInTheDocument();
     expect(screen.getByText("Mapa")).toBeInTheDocument();
     expect(screen.getByText("Noticias")).toBeInTheDocument();
+    expect(screen.getByText("Eventos")).toBeInTheDocument();
   });
 
   it("muestra el tamaño de cada widget", () => {
@@ -81,7 +86,7 @@ describe("WidgetPalette", () => {
         components={mockComponents}
       />,
     );
-    expect(screen.getAllByText(/4×2/)).toHaveLength(3);
+    expect(screen.getAllByText(/4×2/)).toHaveLength(4);
     expect(screen.getAllByText(/2×2/)).toHaveLength(2);
   });
 

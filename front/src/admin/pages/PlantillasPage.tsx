@@ -24,6 +24,7 @@ import Examenes from "../../shared/components/widgets/Examenes";
 import Calendar from "../../shared/components/widgets/Calendar";
 import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
+import Novedades from "../../shared/components/widgets/Novedades";
 import { AdminTemplatesSkeleton } from "../../shared/components/ui/Skeleton";
 import Button from "../../shared/components/ui/Button";
 import { fetchWidgets } from "../../shared/api/widgets";
@@ -56,6 +57,7 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   calendario: Calendar,
   mapa: Mapa,
   noticias: Noticias,
+  novedades: Novedades,
 };
 
 function makeId(): string {
@@ -556,7 +558,22 @@ export default function PlantillasPage() {
 
   const savePlantillaHelper = useCallback(
     async (plantilla: Plantilla): Promise<Plantilla> => {
-      const positions = plantillaToWidgetPositions(plantilla, widgetIdByTipo);
+      let currentMap = widgetIdByTipo;
+      if (plantilla.widgets.some((w) => currentMap[w.type] == null)) {
+        try {
+          const freshWidgets = await fetchWidgets();
+          const freshMap: Partial<Record<WidgetType, number>> = {};
+          for (const w of freshWidgets) {
+            if (w.tipo in WIDGET_REGISTRY)
+              freshMap[w.tipo as WidgetType] = w.id;
+          }
+          setWidgetIdByTipo(freshMap);
+          currentMap = freshMap;
+        } catch {
+          // ignore error fetching fresh widgets
+        }
+      }
+      const positions = plantillaToWidgetPositions(plantilla, currentMap);
       let saved: Plantilla;
       if (plantilla.isNew) {
         const dto = await createPlantilla({
@@ -592,7 +609,12 @@ export default function PlantillasPage() {
     setSaving(true);
     try {
       const isNew = Boolean(plantilla.isNew);
-      await savePlantillaHelper(plantilla);
+      const saved = await savePlantillaHelper(plantilla);
+      if (selectedTotem) {
+        await updateTotem(selectedTotem.id, {
+          plantilla_id: Number(saved.id),
+        });
+      }
       await refreshTotems();
       if (isNew) {
         sileo.success({ title: "Plantilla creada" });
@@ -608,7 +630,14 @@ export default function PlantillasPage() {
     } finally {
       setSaving(false);
     }
-  }, [plantillas, selectedId, saving, savePlantillaHelper, refreshTotems]);
+  }, [
+    plantillas,
+    selectedId,
+    saving,
+    savePlantillaHelper,
+    refreshTotems,
+    selectedTotem,
+  ]);
 
   const handleDeletePlantilla = useCallback(async () => {
     if (!deletingId) return;
@@ -875,7 +904,13 @@ export default function PlantillasPage() {
             if (!RealWidget || !dims || !def) return null;
             return (
               <div
-                className="totem-scale-stage pointer-events-none rounded-4xl overflow-hidden opacity-90 transition-opacity grid"
+                className={`totem-scale-stage pointer-events-none rounded-4xl overflow-hidden opacity-90 transition-opacity grid ${
+                  activeType === "novedades"
+                    ? "bg-amber-300"
+                    : activeType === "noticias"
+                      ? "bg-purple-300"
+                      : ""
+                }`}
                 style={{
                   width: dims.width,
                   height: dims.height,
