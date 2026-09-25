@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import MesasExamenPage from "../MesasExamenPage";
-import * as mesasApi from "../../../shared/api/mesasExamen";
+import * as mesasApi from "../../../features/examenes/api/mesasExamen";
 import * as carrerasApi from "../../../shared/api/carreras";
 
 vi.mock("sileo", () => ({
@@ -19,20 +19,25 @@ vi.mock("sileo", () => ({
   },
 }));
 
-vi.mock("../../../shared/api/mesasExamen", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("../../../shared/api/mesasExamen")>();
-  return {
-    ...actual,
-    fetchMesasExamen: vi.fn(),
-    createMesaExamen: vi.fn(),
-    updateMesaExamen: vi.fn(),
-    deleteMesaExamen: vi.fn(),
-    fetchPlanMaterias: vi.fn(),
-    fetchEspaciosForSelect: vi.fn(),
-    importarMesasExamenCSV: vi.fn(),
-  };
-});
+vi.mock(
+  "../../../features/examenes/api/mesasExamen",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("../../../features/examenes/api/mesasExamen")
+      >();
+    return {
+      ...actual,
+      fetchMesasExamen: vi.fn(),
+      createMesaExamen: vi.fn(),
+      updateMesaExamen: vi.fn(),
+      deleteMesaExamen: vi.fn(),
+      fetchPlanMaterias: vi.fn(),
+      fetchEspaciosForSelect: vi.fn(),
+      importarMesasExamenCSV: vi.fn(),
+    };
+  },
+);
 
 vi.mock("../../../shared/api/carreras", () => ({
   fetchCarreras: vi.fn(),

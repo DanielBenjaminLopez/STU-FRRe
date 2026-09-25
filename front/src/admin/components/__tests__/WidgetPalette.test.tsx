@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import WidgetPalette from "../WidgetPalette";
-import { WIDGET_REGISTRY } from "../../pages/plantillas/types";
+import { WIDGET_REGISTRY } from "../../../features/widgets/placement";
 
 vi.mock("@dnd-kit/core", () => ({
   useDraggable: vi.fn(() => ({

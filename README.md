@@ -136,6 +136,7 @@ docker compose up -d
 Para consultar guías técnicas y operativas detalladas, revisar los documentos en la carpeta [`docs/`](docs/):
 
 - [Arquitectura y Configuración](docs/arquitectura-y-configuracion.md): Stack técnico, capas, Docker y variables.
+- [Arquitectura por Features](docs/arquitectura-features.md): Organización modular del frontend y backend.
 - [Catálogo de Endpoints de la API](docs/api-endpoints.md): Referencia rápida en tablas de rutas REST y WebSockets.
 - [Modelos de Base de Datos](docs/modelos-base-de-datos.md): Esquema relacional y Diagrama Entidad-Relación (DER).
 - [Guía de Carga de Datos CSV](docs/carga-datos-csv.md): Preparación en Excel y carga masiva en el sistema.

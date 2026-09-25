@@ -7,7 +7,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import EventosPage from "../EventosPage";
-import * as eventosApi from "../../../shared/api/eventos";
+import * as eventosApi from "../../../features/noticias/api/eventos";
 
 vi.mock("sileo", () => ({
   sileo: {
@@ -20,7 +20,7 @@ vi.mock("sileo", () => ({
 
 import { sileo } from "sileo";
 
-vi.mock("../../../shared/api/eventos", () => ({
+vi.mock("../../../features/noticias/api/eventos", () => ({
   fetchEventos: vi.fn(),
   createEvento: vi.fn(),
   updateEvento: vi.fn(),

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import Button from "../../shared/components/ui/Button";
-import type { ContenidoFeed } from "../../shared/api/noticias";
+import type { ContenidoFeed } from "../../features/noticias/api/noticias";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);

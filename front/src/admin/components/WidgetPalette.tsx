@@ -1,6 +1,9 @@
 import type { ComponentType } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import type { WidgetType, WidgetDefinition } from "../pages/plantillas/types";
+import type {
+  WidgetType,
+  WidgetDefinition,
+} from "../../features/widgets/placement";
 
 interface WidgetCardProps {
   widget: WidgetDefinition;

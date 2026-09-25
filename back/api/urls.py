@@ -2,6 +2,16 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from .features.plantillas.api import PlantillaViewSet, PlantillaWidgetViewSet
+from .features.totems.api import (
+    TotemConfigVideoView,
+    TotemMeView,
+    TotemNewView,
+    TotemViewSet,
+    VincularTotemView,
+)
+from .features.widgets.api import WidgetViewSet
+
 from .views import (
     AvisoViewSet,
     BulkCalendarView,
@@ -18,15 +28,7 @@ from .views import (
     MeView,
     MesaExamenViewSet,
     NoticiasViewSet,
-    PlantillaViewSet,
-    PlantillaWidgetViewSet,
-    TotemConfigVideoView,
-    TotemNewView,
-    TotemMeView,
-    TotemViewSet,
     UbicacionMapaViewSet,
-    VincularTotemView,
-    WidgetViewSet,
 )
 
 router = DefaultRouter()

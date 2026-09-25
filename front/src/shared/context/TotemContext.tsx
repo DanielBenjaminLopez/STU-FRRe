@@ -6,7 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { fetchTotems, type Totem } from "../api/totems";
+import { fetchTotems, type Totem } from "../../features/totems/api/totems";
 import { useAuth } from "./AuthContext";
 
 interface TotemState {

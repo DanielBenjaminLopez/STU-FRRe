@@ -19,7 +19,7 @@ import {
   getTurnoFromFecha,
   type MesaExamen,
   type PlanMateriaDTO,
-} from "../../shared/api/mesasExamen";
+} from "../../features/examenes/api/mesasExamen";
 
 const columns: Column<MesaExamen>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },

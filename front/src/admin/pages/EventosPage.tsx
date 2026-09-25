@@ -13,7 +13,7 @@ import {
   uploadEventoImagen,
   TIPOS_EVENTO,
   type Evento,
-} from "../../shared/api/eventos";
+} from "../../features/noticias/api/eventos";
 
 const TIPO_LABELS: Record<string, string> = {
   taller: "Taller",

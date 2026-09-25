@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import Button from "../../shared/components/ui/Button";
-import type { CsvImportResult } from "../../shared/api/horariosAdmin";
+import type { CsvImportResult } from "../../features/horarios/api/horariosAdmin";
 
 interface ImportCsvModalProps {
   title: string;

@@ -7,10 +7,10 @@ import {
   fireEvent,
 } from "@testing-library/react";
 import Onboarding from "../Onboarding";
-import { createTotem, fetchTotemMe } from "../../../shared/api/totems";
+import { createTotem, fetchTotemMe } from "../../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   createTotem: vi.fn(),
   fetchTotemMe: vi.fn(),
 }));

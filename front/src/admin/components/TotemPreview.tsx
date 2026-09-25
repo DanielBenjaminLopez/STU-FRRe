@@ -1,30 +1,12 @@
-import Encabezado from "../../shared/components/widgets/Encabezado";
-import Horarios from "../../shared/components/widgets/Horarios";
-import Examenes from "../../shared/components/widgets/Examenes";
-import Calendar from "../../shared/components/widgets/Calendar";
-import Mapa from "../../shared/components/widgets/Mapa";
-import Avisos from "../../shared/components/widgets/Avisos";
+import { Avisos, Encabezado } from "../../features/layout";
 import {
   useTotemScale,
   TOTEM_WIDTH,
   TOTEM_HEIGHT,
 } from "../../shared/hooks/useTotemScale";
 import { useTotem } from "../../shared/context/TotemContext";
-import {
-  plantillaDTOToLocal,
-  type WidgetType,
-} from "../pages/plantillas/types";
-import Noticias from "../../shared/components/widgets/Noticias";
-import Novedades from "../../shared/components/widgets/Novedades";
-
-const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
-  horarios: Horarios,
-  examenes: Examenes,
-  calendario: Calendar,
-  mapa: Mapa,
-  noticias: Noticias,
-  novedades: Novedades,
-};
+import { plantillaDTOToLocal } from "../../features/widgets/placement";
+import { WIDGET_COMPONENTS } from "../../features/widgets";
 
 export default function TotemPreview() {
   const { containerRef, scale, isReady } = useTotemScale();

@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import Home from "../Home";
-import { fetchTotemMe } from "../../../shared/api/totems";
+import { fetchTotemMe } from "../../../features/totems/api/totems";
 import { ApiError } from "../../../shared/api/client";
-import type { Totem } from "../../../shared/api/totems";
+import type { Totem } from "../../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   fetchTotemMe: vi.fn(),
 }));
 
@@ -22,23 +22,23 @@ vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../../shared/components/widgets/Horarios", () => ({
+vi.mock("../../../features/horarios/components/Horarios", () => ({
   default: () => <div data-testid="mock-horarios">Horarios widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Examenes", () => ({
+vi.mock("../../../features/examenes/components/Examenes", () => ({
   default: () => <div data-testid="mock-examenes">Examenes widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Calendar", () => ({
+vi.mock("../../../features/calendario/components/Calendar", () => ({
   default: () => <div data-testid="mock-calendario">Calendario widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Mapa", () => ({
+vi.mock("../../../features/mapa/components/Mapa", () => ({
   default: () => <div data-testid="mock-mapa">Mapa widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Encabezado", () => ({
+vi.mock("../../../features/layout/components/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
 

@@ -14,7 +14,7 @@ import {
   syncNoticias,
   type Noticia,
   type ContenidoFeed,
-} from "../../shared/api/noticias";
+} from "../../features/noticias/api/noticias";
 
 const columns: Column<Noticia>[] = [
   { key: "titulo", label: "Título", sortable: true },

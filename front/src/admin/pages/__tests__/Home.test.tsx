@@ -66,12 +66,12 @@ vi.mock("react-router", async () => {
   };
 });
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   updateTotem: mockUpdateTotem,
   deleteTotem: mockDeleteTotem,
 }));
 
-vi.mock("../../../shared/api/plantillas", () => ({
+vi.mock("../../../features/widgets/api/plantillas", () => ({
   fetchPlantillas: mockFetchPlantillas,
 }));
 

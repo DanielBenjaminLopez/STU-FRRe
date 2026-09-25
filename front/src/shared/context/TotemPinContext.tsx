@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import type { PinPosition } from "../components/widgets/MapaRaw";
+import type { PinPosition } from "../../features/mapa/components/MapaRaw";
 
 const TotemPinContext = createContext<PinPosition | null>(null);
 
