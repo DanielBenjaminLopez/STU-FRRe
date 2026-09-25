@@ -23,6 +23,7 @@ export interface FormField {
   defaultValue?: unknown;
   min?: number;
   max?: number;
+  half?: boolean;
   onUpload?: (file: File) => Promise<string>;
 }
 
@@ -37,7 +38,16 @@ interface DataFormModalProps {
     value: unknown,
     setFormData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
   ) => void;
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
 }
+
+const MAX_WIDTH_CLASSES: Record<string, string> = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
+  "2xl": "max-w-2xl",
+};
 
 export default function DataFormModal({
   title,
@@ -46,6 +56,7 @@ export default function DataFormModal({
   onSubmit,
   onClose,
   onChange,
+  maxWidth = "md",
 }: DataFormModalProps) {
   const [formData, setFormData] = useState<Record<string, unknown>>(
     () =>
@@ -119,18 +130,27 @@ export default function DataFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-4xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        className={`bg-white rounded-4xl shadow-xl w-full ${
+          MAX_WIDTH_CLASSES[maxWidth] || "max-w-md"
+        } max-h-[90vh] overflow-hidden flex flex-col`}
+      >
         <div className="px-8 pt-8 pb-3">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-4 px-8 pb-8 overflow-y-auto"
+          className="grid grid-cols-2 gap-4 px-8 pb-8 overflow-y-auto"
         >
           {fields.map((field) =>
             field.type === "image" ? (
-              <div key={field.name} className="flex flex-col gap-1 text-sm">
+              <div
+                key={field.name}
+                className={`flex flex-col gap-1 text-sm ${
+                  field.half ? "col-span-1" : "col-span-2"
+                }`}
+              >
                 <span className="font-medium text-gray-700">
                   {field.label}
                   {field.required && (
@@ -145,7 +165,12 @@ export default function DataFormModal({
                 />
               </div>
             ) : (
-              <label key={field.name} className="flex flex-col gap-1 text-sm">
+              <label
+                key={field.name}
+                className={`flex flex-col gap-1 text-sm ${
+                  field.half ? "col-span-1" : "col-span-2"
+                }`}
+              >
                 {field.type !== "checkbox" && (
                   <span className="font-medium text-gray-700">
                     {field.label}
@@ -240,7 +265,7 @@ export default function DataFormModal({
             ),
           )}
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="col-span-2 flex justify-end gap-3 pt-2">
             <Button variant="secondary" onClick={onClose}>
               Cancelar
             </Button>

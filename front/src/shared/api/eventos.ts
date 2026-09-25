@@ -1,5 +1,4 @@
 import { apiFetch, apiUpload, publicFetch } from "./client";
-import type { Espacio } from "./totems";
 
 export interface Evento {
   id: number;
@@ -10,8 +9,9 @@ export interface Evento {
   fecha_hora_inicio: string;
   fecha_hora_fin: string;
   imagen_url: string;
-  espacio: number | null;
+  espacio: string | null;
   espacio_nombre: string | null;
+  destacado?: boolean;
 }
 
 export const TIPOS_EVENTO = [
@@ -46,10 +46,12 @@ export async function deleteEvento(id: number): Promise<void> {
   await apiFetch(`/api/eventos/${id}/`, { method: "DELETE" });
 }
 
-export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
-  return apiFetch<Espacio[]>("/api/espacios/");
-}
-
 export async function uploadEventoImagen(file: File): Promise<{ url: string }> {
   return apiUpload<{ url: string }>("/api/eventos/upload-imagen/", file);
+}
+
+export async function toggleDestacadoEvento(id: number): Promise<Evento> {
+  return apiFetch<Evento>(`/api/eventos/${id}/toggle-destacado/`, {
+    method: "POST",
+  });
 }

@@ -434,9 +434,35 @@ class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 
 class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'eventos'
-    queryset = Evento.objects.select_related('espacio').all()
+    queryset = Evento.objects.all()
     serializer_class = EventoSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            instance = serializer.save()
+            if instance.destacado:
+                Evento.objects.exclude(id=instance.id).filter(destacado=True).update(destacado=False)
+        self._notify_content()
+
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            instance = serializer.save()
+            if instance.destacado:
+                Evento.objects.exclude(id=instance.id).filter(destacado=True).update(destacado=False)
+        self._notify_content()
+
+    @action(detail=True, methods=['post'], url_path='toggle-destacado')
+    def toggle_destacado(self, request, pk=None):
+        with transaction.atomic():
+            evento = self.get_object()
+            nuevo_estado = not evento.destacado
+            if nuevo_estado:
+                Evento.objects.filter(destacado=True).update(destacado=False)
+            evento.destacado = nuevo_estado
+            evento.save(update_fields=['destacado'])
+        self._notify_content()
+        return Response(self.get_serializer(evento).data)
 
     @action(detail=False, methods=['post'], url_path='upload-imagen', parser_classes=[MultiPartParser, FormParser])
     def upload_imagen(self, request):

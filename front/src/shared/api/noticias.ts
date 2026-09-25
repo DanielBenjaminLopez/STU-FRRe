@@ -24,6 +24,7 @@ export interface ContenidoFeed {
   espacio_nombre?: string;
   origen?: string;
   enlace?: string;
+  destacado?: boolean;
 }
 
 function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
@@ -68,6 +69,7 @@ function mapEventoToFeed(e: Evento): ContenidoFeed {
     tipo: "evento",
     tipo_evento: tipoLabel,
     espacio_nombre: e.espacio_nombre || undefined,
+    destacado: Boolean(e.destacado),
   };
 }
 
@@ -106,6 +108,13 @@ export async function fetchFeedCreados(): Promise<ContenidoFeed[]> {
     ...noticias.filter((n) => n.origen === "manual").map(mapNoticiaToFeed),
     ...eventos.map(mapEventoToFeed),
   ];
+
+  // Si hay algún evento destacado, el widget debe mostrar ÚNICAMENTE ese evento
+  const eventoDestacado = feed.find((item) => item.destacado);
+  if (eventoDestacado) {
+    return [eventoDestacado];
+  }
+
   feed.sort(
     (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
   );
@@ -155,13 +164,3 @@ export async function syncNoticias(): Promise<SyncResult> {
     method: "POST",
   });
 }
-
-export {
-  createEvento,
-  updateEvento,
-  deleteEvento,
-  uploadEventoImagen,
-  fetchEspaciosForSelect,
-  TIPOS_EVENTO,
-} from "./eventos";
-export type { Evento } from "./eventos";
