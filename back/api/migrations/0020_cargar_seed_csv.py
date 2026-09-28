@@ -77,12 +77,14 @@ def load_seed(apps, schema_editor):
 
     # 6. Horarios: todas sus claves foráneas ya fueron cargadas.
     dias = {
-        "Lunes": "lunes",
-        "Martes": "martes",
-        "Miércoles": "miercoles",
-        "Jueves": "jueves",
-        "Viernes": "viernes",
-        "Sábado": "sabado",
+        "lunes": "lunes",
+        "martes": "martes",
+        "miercoles": "miercoles",
+        "miércoles": "miercoles",
+        "jueves": "jueves",
+        "viernes": "viernes",
+        "sabado": "sabado",
+        "sábado": "sabado",
     }
     for row in rows("Datos ISI - Horarios.csv"):
         comision = comisiones[
@@ -90,10 +92,12 @@ def load_seed(apps, schema_editor):
         ]
         esp_nombre = (row.get("espacio") or "").strip()
         espacio = Espacio.objects.filter(nombre=esp_nombre).first() if esp_nombre else None
+        dia_raw = row["dia_semana"].strip().lower()
+        dia_semana = dias.get(dia_raw, "lunes")
         HorarioCursado.objects.update_or_create(
             comision=comision,
             espacio=espacio,
-            dia_semana=dias[row["dia_semana"]],
+            dia_semana=dia_semana,
             hora_inicio=row["hora_inicio"],
             hora_fin=row["hora_fin"],
             defaults={"activo": row["activo"].strip().lower() == "true"},

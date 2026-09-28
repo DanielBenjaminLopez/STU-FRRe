@@ -344,6 +344,7 @@ class HorarioCursadoResource(resources.ModelResource):
 
     def get_instance(self, instance_loader, row):
         comision_id = row.get('comision')
+        espacio_val = row.get('espacio') or row.get('aula') or row.get('Aula')
         dia_raw = (
             row.get('dia_semana')
             or row.get('dia')
@@ -355,14 +356,37 @@ class HorarioCursadoResource(resources.ModelResource):
         hora_inicio = row.get('hora_inicio') or row.get('hora_ini')
         hora_fin = row.get('hora_fin') or row.get('hora_final')
         if comision_id and dia_semana and hora_inicio and hora_fin:
-            existing = self._meta.model.objects.filter(
+            espacio_id = None
+            if espacio_val:
+                espacio_id = (
+                    espacio_val
+                    if isinstance(espacio_val, int)
+                    else Espacio.objects.filter(nombre=str(espacio_val).strip()).values_list('id', flat=True).first()
+                )
+
+            # 1. Buscar coincidencia exacta (incluyendo el espacio si fue provisto)
+            if espacio_id is not None:
+                exact = self._meta.model.objects.filter(
+                    comision_id=comision_id,
+                    espacio_id=espacio_id,
+                    dia_semana=dia_semana,
+                    hora_inicio=hora_inicio,
+                    hora_fin=hora_fin,
+                ).first()
+                if exact:
+                    return exact
+
+            # 2. Si no hay coincidencia exacta, buscar si existe un registro huérfano sin aula (espacio=None)
+            orphan = self._meta.model.objects.filter(
                 comision_id=comision_id,
+                espacio__isnull=True,
                 dia_semana=dia_semana,
                 hora_inicio=hora_inicio,
                 hora_fin=hora_fin,
             ).first()
-            if existing:
-                return existing
+            if orphan:
+                return orphan
+
         return super().get_instance(instance_loader, row)
 
     class Meta:
