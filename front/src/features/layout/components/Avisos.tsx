@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-<<<<<<< HEAD:front/src/shared/components/widgets/Avisos.tsx
-import type { Aviso } from "../../api/avisos";
-=======
-import { fetchAvisosActivos, type Aviso } from "../api/avisos";
-import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
-
-const REFRESH_MS = 5 * 60_000;
->>>>>>> 6532e56 (Realizar migracion inicial a arquitectura por features):front/src/features/layout/components/Avisos.tsx
+import type { Aviso } from "../api/avisos";
 
 function formatFecha(fecha: string): string {
   return new Date(`${fecha}T00:00:00`).toLocaleDateString("es-AR", {

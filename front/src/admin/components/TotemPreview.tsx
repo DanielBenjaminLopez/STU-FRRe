@@ -1,14 +1,4 @@
-<<<<<<< HEAD
-import Encabezado from "../../shared/components/widgets/Encabezado";
-import Horarios from "../../shared/components/widgets/Horarios";
-import Examenes from "../../shared/components/widgets/Examenes";
-import Calendar from "../../shared/components/widgets/Calendar";
-import Mapa from "../../shared/components/widgets/Mapa";
-import Avisos from "../../shared/components/widgets/Avisos";
-import { useAvisos } from "../../shared/hooks/useAvisos";
-=======
 import { Avisos, Encabezado } from "../../features/layout";
->>>>>>> 6532e56 (Realizar migracion inicial a arquitectura por features)
 import {
   useTotemScale,
   TOTEM_WIDTH,
@@ -17,6 +7,7 @@ import {
 import { useTotem } from "../../shared/context/TotemContext";
 import { plantillaDTOToLocal } from "../../features/widgets/placement";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
+import { useAvisos } from "../../shared/hooks/useAvisos";
 
 export default function TotemPreview() {
   const { containerRef, scale, isReady } = useTotemScale();
