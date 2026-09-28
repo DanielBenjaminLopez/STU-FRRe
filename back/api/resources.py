@@ -23,7 +23,14 @@ class EspacioResource(resources.ModelResource):
     class Meta:
         model = Espacio
         import_id_fields = ('nombre',)
-        fields = ('id', 'nombre', 'tipo', 'tipo_otro', 'piso')
+        fields = ('id', 'nombre', 'edificio', 'tipo', 'tipo_otro', 'piso')
+
+    def before_import_row(self, row, **kwargs):
+        edificio_val = str(row.get('edificio') or '').strip().lower()
+        if edificio_val in ('anexo', 'edificio anexo'):
+            row['edificio'] = 'anexo'
+        else:
+            row['edificio'] = 'central'
 
 
 class CarreraResource(resources.ModelResource):
@@ -337,7 +344,6 @@ class HorarioCursadoResource(resources.ModelResource):
 
     def get_instance(self, instance_loader, row):
         comision_id = row.get('comision')
-        espacio_val = row.get('espacio') or row.get('aula') or row.get('Aula')
         dia_raw = (
             row.get('dia_semana')
             or row.get('dia')
@@ -348,19 +354,15 @@ class HorarioCursadoResource(resources.ModelResource):
         dia_semana = normalizar_dia_semana(dia_raw)
         hora_inicio = row.get('hora_inicio') or row.get('hora_ini')
         hora_fin = row.get('hora_fin') or row.get('hora_final')
-        if comision_id and espacio_val and dia_semana and hora_inicio and hora_fin:
-            try:
-                espacio_id = espacio_val if isinstance(espacio_val, int) else Espacio.objects.filter(nombre=espacio_val).values_list('id', flat=True).first()
-                if espacio_id:
-                    return self._meta.model.objects.get(
-                        comision_id=comision_id,
-                        espacio_id=espacio_id,
-                        dia_semana=dia_semana,
-                        hora_inicio=hora_inicio,
-                        hora_fin=hora_fin,
-                    )
-            except self._meta.model.DoesNotExist:
-                return None
+        if comision_id and dia_semana and hora_inicio and hora_fin:
+            existing = self._meta.model.objects.filter(
+                comision_id=comision_id,
+                dia_semana=dia_semana,
+                hora_inicio=hora_inicio,
+                hora_fin=hora_fin,
+            ).first()
+            if existing:
+                return existing
         return super().get_instance(instance_loader, row)
 
     class Meta:

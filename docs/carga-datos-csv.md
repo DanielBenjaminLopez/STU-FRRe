@@ -47,20 +47,24 @@ A continuación se detalla la estructura requerida para cada archivo CSV junto c
 - **Columnas:**
   | Columna | Obligatorio | Valores permitidos / Ejemplo | Descripción |
   | :--- | :--- | :--- | :--- |
-  | `nombre` | **Sí** | `Aula 101`, `Aula Magna` | Nombre único identificatorio del espacio. |
+  | `nombre` | **Sí** | `Aula 101`, `Aula Magna`, `Aula A1` | Nombre único identificatorio del espacio. |
+  | `edificio` | No | `central`, `anexo` | Edificio al que pertenece (por defecto `central` si se omite o queda vacío). |
   | `tipo` | **Sí** | `aula`, `laboratorio_informatico`, `secretaria`, `departamento`, `otro` | Categoría del espacio físico. |
   | `tipo_otro`| Condicional | `Biblioteca` | Requerido **solo** si `tipo` es `otro`. |
   | `piso` | **Sí** | `planta_baja`, `primer_piso`, `segundo_piso` | Nivel en el que se ubica. |
 
 - **Ejemplo CSV:**
   ```csv
-  nombre,tipo,tipo_otro,piso
-  Aula Magna,aula,,planta_baja
-  Aula 101,aula,,primer_piso
-  Aula 201,aula,,segundo_piso
-  Laboratorio de Redes,laboratorio_informatico,,primer_piso
-  Secretaría Académica,secretaria,,planta_baja
+  nombre,edificio,tipo,tipo_otro,piso
+  Aula Magna,central,aula,,planta_baja
+  Aula 1.1,central,aula,,primer_piso
+  Aula X0.1,anexo,aula,,planta_baja
+  Aula X0.2,anexo,aula,,planta_baja
   ```
+
+> **Nota sobre el Edificio:**
+> - Si se dejan las celdas de `edificio` vacías o no se incluye la columna, el sistema asume automáticamente `central`.
+> - Para incorporar aulas del anexo, basta con subir un archivo CSV que contenga únicamente las aulas nuevas indicando `anexo` en esta columna.
 
 ---
 
@@ -78,7 +82,6 @@ A continuación se detalla la estructura requerida para cada archivo CSV junto c
   Ingeniería en Sistemas de Información,ISI,grado
   Ingeniería Electromecánica,IEM,grado
   Ingeniería Química,IQ,grado
-  Tecnicatura Universitaria en Programación,TUP,tecnica
   ```
 
 ---

@@ -284,7 +284,8 @@ function Schedule({ items }: { items: Clase[] }) {
             )),
           )}
 
-        {items
+        {[...items]
+          .sort((a, b) => (b.aula ? 1 : 0) - (a.aula ? 1 : 0))
           .filter(
             (item, index, arr) =>
               arr.findIndex(
