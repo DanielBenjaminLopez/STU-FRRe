@@ -7,7 +7,7 @@ import {
   fireEvent,
 } from "@testing-library/react";
 import AvisosPage from "../AvisosPage";
-import * as avisosApi from "../../../shared/api/avisos";
+import * as avisosApi from "../../../features/layout/api/avisos";
 
 vi.mock("sileo", () => ({
   sileo: {
@@ -20,7 +20,7 @@ vi.mock("sileo", () => ({
 
 import { sileo } from "sileo";
 
-vi.mock("../../../shared/api/avisos", () => ({
+vi.mock("../../../features/layout/api/avisos", () => ({
   fetchAvisos: vi.fn(),
   createAviso: vi.fn(),
   updateAviso: vi.fn(),

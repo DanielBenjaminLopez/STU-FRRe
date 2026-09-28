@@ -9,7 +9,7 @@ import Button from "../../shared/components/ui/Button";
 import {
   fetchEventosCalendario,
   bulkSaveCalendario,
-} from "../../shared/api/calendarioAdmin";
+} from "../../features/calendario/api/calendarioAdmin";
 
 interface PendingEvent {
   titulo: string;

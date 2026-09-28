@@ -4,29 +4,15 @@ import type {
   WidgetPlacement,
   WidgetType,
   WidgetDefinition,
-} from "../pages/plantillas/types";
-import { GRID_COLS, GRID_ROWS } from "../pages/plantillas/types";
+} from "../../features/widgets/placement";
+import { GRID_COLS, GRID_ROWS } from "../../features/widgets/placement";
 import {
   useTotemScale,
   TOTEM_WIDTH,
   TOTEM_HEIGHT,
 } from "../../shared/hooks/useTotemScale";
-import Encabezado from "../../shared/components/widgets/Encabezado";
-import Horarios from "../../shared/components/widgets/Horarios";
-import Examenes from "../../shared/components/widgets/Examenes";
-import Calendar from "../../shared/components/widgets/Calendar";
-import Mapa from "../../shared/components/widgets/Mapa";
-import Noticias from "../../shared/components/widgets/Noticias";
-import Novedades from "../../shared/components/widgets/Novedades";
-
-const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
-  horarios: Horarios,
-  examenes: Examenes,
-  calendario: Calendar,
-  mapa: Mapa,
-  noticias: Noticias,
-  novedades: Novedades,
-};
+import { WIDGET_COMPONENTS } from "../../features/widgets";
+import { Encabezado } from "../../features/layout";
 
 interface PlacedWidgetProps {
   widget: WidgetPlacement;

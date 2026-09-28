@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTotem } from "../../shared/context/TotemContext";
-import { vincularTotem } from "../../shared/api/totems";
+import { vincularTotem } from "../../features/totems/api/totems";
 import Button from "../../shared/components/ui/Button";
 import { sileo } from "sileo";
 

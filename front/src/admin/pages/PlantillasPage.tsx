@@ -19,16 +19,10 @@ import {
 import WidgetPalette from "../components/WidgetPalette";
 import TemplateCanvas from "../components/TemplateCanvas";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-import Horarios from "../../shared/components/widgets/Horarios";
-import Examenes from "../../shared/components/widgets/Examenes";
-import Calendar from "../../shared/components/widgets/Calendar";
-import Mapa from "../../shared/components/widgets/Mapa";
-import Noticias from "../../shared/components/widgets/Noticias";
-import Novedades from "../../shared/components/widgets/Novedades";
 import { AdminTemplatesSkeleton } from "../../shared/components/ui/Skeleton";
 import Button from "../../shared/components/ui/Button";
-import { fetchWidgets } from "../../shared/api/widgets";
-import { updateTotem } from "../../shared/api/totems";
+import { fetchWidgets } from "../../features/widgets/api/widgets";
+import { updateTotem } from "../../features/totems/api/totems";
 import { useTotem } from "../../shared/context/TotemContext";
 import {
   createPlantilla,
@@ -36,7 +30,7 @@ import {
   fetchPlantillas,
   replacePlantillaWidgets,
   updatePlantilla,
-} from "../../shared/api/plantillas";
+} from "../../features/widgets/api/plantillas";
 import {
   WIDGET_REGISTRY,
   buildEffectiveRegistry,
@@ -49,16 +43,8 @@ import {
   type WidgetDefinition,
   type WidgetPlacement,
   type Plantilla,
-} from "./plantillas/types";
-
-const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
-  horarios: Horarios,
-  examenes: Examenes,
-  calendario: Calendar,
-  mapa: Mapa,
-  noticias: Noticias,
-  novedades: Novedades,
-};
+} from "../../features/widgets/placement";
+import { WIDGET_COMPONENTS } from "../../features/widgets";
 
 function makeId(): string {
   return (

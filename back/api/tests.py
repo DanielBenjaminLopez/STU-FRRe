@@ -303,7 +303,7 @@ class TotemAPITestCase(TestCase):
         self.assertIn(self.totem.id, ids_all)
         self.assertIn(totem_no_vinculado.id, ids_all)
 
-    @patch("api.views.notify_totem_deleted")
+    @patch("api.features.totems.api.notify_totem_deleted")
     def test_eliminar_totem_notifica_y_borra(self, mock_notify):
         totem_id = self.totem.id
         url = f"/api/totems/{totem_id}/"

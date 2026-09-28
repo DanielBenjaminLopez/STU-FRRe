@@ -25,9 +25,9 @@ import {
   type PlanMateria,
   type Comision,
   type HorarioCursado,
-} from "../../shared/api/horariosAdmin";
+} from "../../features/horarios/api/horariosAdmin";
 import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
-import type { Espacio } from "../../shared/api/totems";
+import type { Espacio } from "../../features/totems/api/totems";
 
 function formatDia(dia: string): string {
   if (!dia) return "";

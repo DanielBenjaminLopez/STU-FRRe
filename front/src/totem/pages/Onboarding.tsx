@@ -6,7 +6,7 @@ import {
   clearTotemToken,
   setTotemToken,
 } from "../../shared/api/client";
-import { createTotem, fetchTotemMe } from "../../shared/api/totems";
+import { createTotem, fetchTotemMe } from "../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 import { TotemStageCSS } from "../../shared/components/TotemStage";
 
@@ -66,7 +66,9 @@ export default function Onboarding() {
   useEffect(() => {
     if (!codigo) return;
 
-    setSegundosRestantes(getRemainingSeconds());
+    const initialTimer = setTimeout(() => {
+      setSegundosRestantes(getRemainingSeconds());
+    }, 0);
 
     const interval = setInterval(() => {
       const remaining = getRemainingSeconds();
@@ -80,6 +82,7 @@ export default function Onboarding() {
     }, 1000);
 
     return () => {
+      clearTimeout(initialTimer);
       clearInterval(interval);
     };
   }, [codigo]);
@@ -238,7 +241,9 @@ export default function Onboarding() {
                     r="8"
                     fill="transparent"
                     className={`transition-all duration-1000 ease-linear ${
-                      segundosRestantes < 60 ? "text-amber-500" : "text-gray-900"
+                      segundosRestantes < 60
+                        ? "text-amber-500"
+                        : "text-gray-900"
                     }`}
                     stroke="currentColor"
                     strokeWidth="16"
