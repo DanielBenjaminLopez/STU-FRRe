@@ -8,8 +8,6 @@ Este documento describe la estructura del modelo relacional implementado en Post
 
 ![Diagrama Entidad-Relación (DER)](img/der.png)
 
-> Código fuente del esquema disponible en [database.dbml](database.dbml) para editar o visualizar en [dbdiagram.io](https://dbdiagram.io).
-
 ---
 
 ## 2. Módulo Académico
@@ -76,7 +74,8 @@ Instancias de exámenes finales por asignatura, turno y fecha.
 ### 3.1. Espacio (`api_espacio`)
 Instalaciones físicas del predio universitario (aulas, laboratorios, oficinas).
 - `id` (AutoField, PK)
-- `nombre` (CharField 150, Unique): Nombre del espacio (ej: *Aula Magna*, *Aula 101*).
+- `nombre` (CharField 150, Unique): Nombre del espacio (ej: *Aula Magna*, *Aula 101*, *Aula A1*).
+- `edificio` (CharField 20, default='central'): Edificio al que pertenece (`central`: *Edificio Central*, `anexo`: *Anexo*).
 - `tipo` (CharField 50): `aula`, `laboratorio_informatico`, `secretaria`, `departamento`, `otro`.
 - `tipo_otro` (CharField 100, Blank): Aclaración obligatoria cuando `tipo='otro'`.
 - `piso` (CharField 20): `planta_baja`, `primer_piso`, `segundo_piso`.

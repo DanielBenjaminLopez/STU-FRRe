@@ -8,8 +8,10 @@ import type { PlantillaDTO } from "../../widgets/api/plantillas";
 export interface Espacio {
   id: number;
   nombre: string;
+  edificio?: "central" | "anexo" | string;
+  edificio_display?: string;
   tipo: string;
-  piso: number;
+  piso: number | string;
 }
 
 export interface Totem {

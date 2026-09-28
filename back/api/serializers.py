@@ -306,9 +306,11 @@ class NoticiasSerializer(serializers.ModelSerializer):
 
 
 class EspacioSerializer(serializers.ModelSerializer):
+    edificio_display = serializers.CharField(source='get_edificio_display', read_only=True)
+
     class Meta:
         model = Espacio
-        fields = ['id', 'nombre', 'tipo', 'piso']
+        fields = ['id', 'nombre', 'edificio', 'edificio_display', 'tipo', 'piso']
 
 
 class UbicacionMapaSerializer(serializers.ModelSerializer):
