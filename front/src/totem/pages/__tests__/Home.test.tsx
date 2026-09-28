@@ -44,7 +44,7 @@ vi.mock("../../../features/layout/components/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Avisos", () => ({
+vi.mock("../../../features/layout/components/Avisos", () => ({
   default: () => <div data-testid="mock-avisos">Avisos widget</div>,
 }));
 
