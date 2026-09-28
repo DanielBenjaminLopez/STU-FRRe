@@ -9,6 +9,7 @@ import Mapa from "../../shared/components/widgets/Mapa";
 import Noticias from "../../shared/components/widgets/Noticias";
 import Novedades from "../../shared/components/widgets/Novedades";
 import Avisos from "../../shared/components/widgets/Avisos";
+import { useAvisos } from "../../shared/hooks/useAvisos";
 import VideoPanel from "../../shared/components/VideoPanel";
 import Logo from "../../assets/logo_negro.webp";
 import {
@@ -56,6 +57,7 @@ export default function Home() {
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
   const { lastMessage, rejected } = useTotemWebSocket(null, true);
+  const { avisos, visible: hayAvisos } = useAvisos();
 
   const load = useCallback(async () => {
     try {
@@ -212,9 +214,13 @@ export default function Home() {
               willChange: "transform",
             }}
           >
-            <div className="flex flex-col w-full h-full p-16 gap-16">
-              <Avisos />
+            <div
+              className={`flex flex-col w-full h-full p-16 ${
+                hayAvisos ? "gap-4" : "gap-16"
+              }`}
+            >
               <Encabezado size="lg" />
+              {hayAvisos && <Avisos avisos={avisos} />}
               <div className="relative flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
                 <AnimatePresence>
                   {showVideo && (
