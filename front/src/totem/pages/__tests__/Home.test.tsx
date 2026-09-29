@@ -5,6 +5,8 @@ import { fetchTotemMe } from "../../../features/totems/api/totems";
 import { ApiError } from "../../../shared/api/client";
 import type { Totem } from "../../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
+import { useAvisos } from "../../../features/layout/hooks/useAvisos";
+import type { Aviso } from "../../../features/layout/api/avisos";
 
 vi.mock("../../../features/totems/api/totems", () => ({
   fetchTotemMe: vi.fn(),
@@ -41,6 +43,37 @@ vi.mock("../../../features/mapa/components/Mapa", () => ({
 vi.mock("../../../features/layout/components/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
+
+vi.mock("../../../features/layout/components/Avisos", () => ({
+  default: () => <div data-testid="mock-avisos">Avisos widget</div>,
+}));
+
+vi.mock("../../../features/layout/hooks/useAvisos", () => ({
+  useAvisos: vi.fn(),
+}));
+
+const mockUseAvisos = vi.mocked(useAvisos);
+
+function makeAviso(overrides: Partial<Aviso> = {}): Aviso {
+  return {
+    id: 1,
+    horario_cursado: null,
+    actividad_extra: null,
+    fecha: "2026-03-15",
+    motivo: "Manifestacion",
+    tipo: "paro",
+    ...overrides,
+  };
+}
+
+function mockAvisos(avisos: Aviso[]) {
+  mockUseAvisos.mockReturnValue({
+    avisos,
+    loading: false,
+    error: false,
+    visible: avisos.length > 0,
+  });
+}
 
 vi.mock("../../../shared/hooks/useTotemScale", () => ({
   useTotemScale: () => ({
@@ -92,6 +125,7 @@ describe("totem Home", () => {
     localStorage.clear();
     localStorage.setItem("auth_token", "totem-token");
     setupWs();
+    mockAvisos([]);
   });
 
   afterEach(() => {
@@ -208,5 +242,29 @@ describe("totem Home", () => {
       });
       expect(localStorage.getItem("auth_token")).toBeNull();
     });
+  });
+
+  it("mantiene el espaciado amplio y oculta la banner cuando no hay avisos", async () => {
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+
+    await screen.findByTestId("mock-encabezado");
+    const columna = screen.getByTestId("mock-encabezado").parentElement;
+
+    expect(columna).toHaveClass("gap-16");
+    expect(columna).not.toHaveClass("gap-4");
+    expect(screen.queryByTestId("mock-avisos")).not.toBeInTheDocument();
+  });
+
+  it("aprieta el espaciado y muestra la banner cuando hay avisos", async () => {
+    mockAvisos([makeAviso()]);
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+
+    await screen.findByTestId("mock-avisos");
+    const columna = screen.getByTestId("mock-encabezado").parentElement;
+
+    expect(columna).toHaveClass("gap-4");
+    expect(columna).not.toHaveClass("gap-16");
   });
 });

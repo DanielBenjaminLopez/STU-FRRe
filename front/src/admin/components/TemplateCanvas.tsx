@@ -173,7 +173,7 @@ export default function TemplateCanvas({
         }}
       >
         <div className="flex flex-col w-full h-full p-16 gap-16">
-          <Encabezado />
+          <Encabezado size="lg" />
           <div
             ref={setNodeRef}
             data-canvas

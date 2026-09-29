@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { fetchAvisosActivos, type Aviso } from "../api/avisos";
-import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
-
-const REFRESH_MS = 5 * 60_000;
+import type { Aviso } from "../api/avisos";
 
 function formatFecha(fecha: string): string {
   return new Date(`${fecha}T00:00:00`).toLocaleDateString("es-AR", {
@@ -19,49 +16,17 @@ function getTipoLabel(tipo: string): string {
     feriado: "Feriado",
     otro: "Aviso",
   };
-
   return labels[tipo] ?? tipo;
 }
 
-export default function Avisos() {
-  const [avisos, setAvisos] = useState<Aviso[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+interface AvisosProps {
+  avisos: Aviso[];
+}
+
+export default function Avisos({ avisos }: AvisosProps) {
   const [scrollDistance, setScrollDistance] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const realtimeEvent = useTotemRealtime();
-  const relevantEvent =
-    realtimeEvent?.resource === "avisos" ? realtimeEvent : null;
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
-        return;
-
-      try {
-        const data = await fetchAvisosActivos();
-        if (mounted) {
-          setAvisos(data);
-          setError(false);
-        }
-      } catch {
-        if (mounted) setError(true);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    load();
-    const refreshTimer = setInterval(load, REFRESH_MS);
-
-    return () => {
-      mounted = false;
-      clearInterval(refreshTimer);
-    };
-  }, [relevantEvent, realtimeEvent?.type]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -80,14 +45,12 @@ export default function Avisos() {
     return () => resizeObserver.disconnect();
   }, [avisos]);
 
-  if (loading || error || avisos.length === 0) return null;
-
   const marqueeStyle = {
     "--avisos-scroll-distance": `-${scrollDistance}px`,
   } as CSSProperties;
 
   return (
-    <div className="absolute top-2 left-0 z-30 flex w-full items-center overflow-hidden rounded-4xl bg-red-300/50 px-5 pr-0 text-black">
+    <div className="flex w-full items-center overflow-hidden rounded-4xl bg-red-300/50 px-5 pr-0 text-black">
       <h1 className="z-10 shrink-0 border-r border-red-950/20 pr-4 text-xl font-semibold select-none">
         Avisos
       </h1>

@@ -7,10 +7,12 @@ import {
 import { useTotem } from "../../shared/context/TotemContext";
 import { plantillaDTOToLocal } from "../../features/widgets/placement";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
+import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
 export default function TotemPreview() {
   const { containerRef, scale, isReady } = useTotemScale();
   const { selectedTotem } = useTotem();
+  const { avisos, visible: hayAvisos } = useAvisos();
 
   const plantilla = selectedTotem?.plantilla
     ? plantillaDTOToLocal(selectedTotem.plantilla)
@@ -37,10 +39,12 @@ export default function TotemPreview() {
       >
         <div
           key={selectedTotem?.id ?? "none"}
-          className="flex flex-col w-full h-full p-16 gap-16 relative animate-totem-switch"
+          className={`flex flex-col w-full h-full p-16 relative animate-totem-switch ${
+            hayAvisos ? "gap-4" : "gap-16"
+          }`}
         >
-          <Avisos />
-          <Encabezado />
+          <Encabezado size="lg" />
+          {hayAvisos && <Avisos avisos={avisos} />}
           <div className="relative flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
             {plantilla && plantilla.widgets.length > 0 ? (
               plantilla.widgets.map((w) => {

@@ -6,7 +6,16 @@ import {
   getGreeting,
 } from "../../../shared/utils/dateTime";
 
-export default function Encabezado() {
+const sizeStyles = {
+  sm: "text-lg font-normal bg-gray-100 border border-gray-200 px-4 py-1 rounded-4xl",
+  lg: "text-7xl font-semibold",
+} as const;
+
+export interface EncabezadoProps {
+  size?: "sm" | "lg";
+}
+
+export default function Encabezado({ size = "sm" }: EncabezadoProps) {
   const [time, setTime] = useState(getCurrentTime());
   const [date, setDate] = useState(getCurrentDate());
   const [greeting, setGreeting] = useState(getGreeting());
@@ -27,13 +36,15 @@ export default function Encabezado() {
 
   return (
     <div className="flex items-center w-full justify-between">
-      <img src={Logo} alt="Logo" className="w-80" draggable={false} />
-      <div className="flex flex-col justify-start items-end">
-        <div className="text-lg font-normal bg-gray-100 border border-gray-200 px-4 py-1 rounded-4xl select-none">
-          {time}
+      <img src={Logo} alt="Logo" className="w-80 shrink-0" draggable={false} />
+      <div className="flex items-center gap-6">
+        <div className="flex flex-col items-end">
+          <div className="text-5xl font-semibold select-none">{greeting}</div>
+          <div className="text-2xl font-normal whitespace-nowrap select-none">
+            {date}
+          </div>
         </div>
-        <div className="text-5xl font-semibold select-none">{greeting}</div>
-        <div className="text-lg font-normal select-none">{date}</div>
+        <div className={`select-none ${sizeStyles[size]}`}>{time}</div>
       </div>
     </div>
   );

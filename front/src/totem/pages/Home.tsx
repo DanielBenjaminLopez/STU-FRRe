@@ -25,6 +25,7 @@ import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext
 import { TotemPinProvider } from "../../shared/context/TotemPinContext";
 import type { PinPosition, FloorKey } from "../../features/mapa";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
+import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
 const POLLING_MS = 5 * 60_000;
 
@@ -39,6 +40,7 @@ export default function Home() {
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
   const { lastMessage, rejected } = useTotemWebSocket(null, true);
+  const { avisos, visible: hayAvisos } = useAvisos();
 
   const load = useCallback(async () => {
     try {
@@ -195,9 +197,13 @@ export default function Home() {
               willChange: "transform",
             }}
           >
-            <div className="flex flex-col w-full h-full p-16 gap-16">
-              <Avisos />
-              <Encabezado />
+            <div
+              className={`flex flex-col w-full h-full p-16 ${
+                hayAvisos ? "gap-4" : "gap-16"
+              }`}
+            >
+              <Encabezado size="lg" />
+              {hayAvisos && <Avisos avisos={avisos} />}
               <div className="relative flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
                 <AnimatePresence>
                   {showVideo && (
