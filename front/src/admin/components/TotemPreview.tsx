@@ -7,7 +7,7 @@ import {
 import { useTotem } from "../../shared/context/TotemContext";
 import { plantillaDTOToLocal } from "../../features/widgets/placement";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
-import { useAvisos } from "../../shared/hooks/useAvisos";
+import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
 export default function TotemPreview() {
   const { containerRef, scale, isReady } = useTotemScale();

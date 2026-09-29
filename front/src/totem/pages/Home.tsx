@@ -25,7 +25,7 @@ import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext
 import { TotemPinProvider } from "../../shared/context/TotemPinContext";
 import type { PinPosition, FloorKey } from "../../features/mapa";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
-import { useAvisos } from "../../shared/hooks/useAvisos";
+import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
 const POLLING_MS = 5 * 60_000;
 

@@ -5,8 +5,8 @@ import { fetchTotemMe } from "../../../features/totems/api/totems";
 import { ApiError } from "../../../shared/api/client";
 import type { Totem } from "../../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
-import { useAvisos } from "../../../shared/hooks/useAvisos";
-import type { Aviso } from "../../../shared/api/avisos";
+import { useAvisos } from "../../../features/layout/hooks/useAvisos";
+import type { Aviso } from "../../../features/layout/api/avisos";
 
 vi.mock("../../../features/totems/api/totems", () => ({
   fetchTotemMe: vi.fn(),
@@ -48,7 +48,7 @@ vi.mock("../../../features/layout/components/Avisos", () => ({
   default: () => <div data-testid="mock-avisos">Avisos widget</div>,
 }));
 
-vi.mock("../../../shared/hooks/useAvisos", () => ({
+vi.mock("../../../features/layout/hooks/useAvisos", () => ({
   useAvisos: vi.fn(),
 }));
 
