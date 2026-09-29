@@ -455,6 +455,10 @@ class NoticiasViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
+        # Riesgo conocido: si la descarga del cuerpo falla para una sola nota
+        # (500 puntual, corte de red), 'contenido' sigue siendo el resumen y esta
+        # llamada lo escribe igual, vaciando la nota. El camino feliz esta
+        # cubierto, el fallo parcial no. Vease el reporte de la rama.
         nuevas, actualizadas = sincronizar_noticias(
             noticias_scrapeadas, preservar_contenido=False,
         )

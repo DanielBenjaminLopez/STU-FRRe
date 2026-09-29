@@ -24,7 +24,8 @@ python manage.py collectstatic --noinput
     objetivo=$(date -u -d 'today 03:00' +%s)
     [ "$objetivo" -le "$(date +%s)" ] && objetivo=$(date -u -d 'tomorrow 03:00' +%s)
     sleep $((objetivo - $(date +%s)))
-    python manage.py scrape_noticias --sin-contenido || echo "scraping diario fallo; se reintenta manana"
+    python manage.py scrape_noticias --sin-contenido ||
+      echo "scraping diario falló; se reintenta mañana"
   done
 ) &
 

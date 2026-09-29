@@ -632,8 +632,8 @@ class ScrapeNoticiasCommandTest(TestCase):
         call_command("scrape_noticias", "--sin-contenido")
 
         noticia = Noticias.objects.get(enlace=nuevo["enlace"])
-        # sin --contenido no se pisa contenido, pero una noticia recien creada no
-        # puede quedar vacia, asi que toma el resumen del listado
+        # con --sin-contenido no se pisa el contenido, pero una noticia recién
+        # creada no puede quedar vacía, así que toma el resumen del listado
         self.assertEqual(noticia.contenido, "Resumen cortito del listado.")
 
     @patch("api.management.commands.scrape_noticias.scrape_noticias")
@@ -694,7 +694,7 @@ class NoticiasSyncAPITest(TestCase):
 
     @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
     @patch("api.management.commands.scrape_noticias.scrape_noticias")
-    def test_actualiza_una_noticia_existente_sin_vaciarla(self, mock_scrape, mock_completo):
+    def test_actualiza_una_noticia_existente_con_el_cuerpo_nuevo(self, mock_scrape, mock_completo):
         Noticias.objects.create(
             titulo="Vieja",
             contenido="Cuerpo viejo que debe ser reemplazado por el nuevo.",
@@ -751,7 +751,7 @@ class NoticiasSyncAPITest(TestCase):
 
     @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
     @patch("api.management.commands.scrape_noticias.scrape_noticias")
-    def test_el_endpoint_es_publico_mientras_permita_allowany(self, mock_scrape, mock_completo):
+    def test_el_endpoint_es_publico_mientras_siga_allowany(self, mock_scrape, mock_completo):
         """Documenta que sync sigue con AllowAny, pendiente de cerrar."""
         mock_scrape.return_value = self.scrapeado
         mock_completo.return_value = "Cuerpo."
