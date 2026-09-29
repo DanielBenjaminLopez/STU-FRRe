@@ -1,11 +1,14 @@
+from datetime import timedelta
 from unittest.mock import patch
 from django.contrib.auth.models import Group, User
+from django.core.management import call_command
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from api.authentication import TotemToken
-from api.models import Plantilla, PlantillaWidget, Totem, Widget
+from api.models import Noticias, Plantilla, PlantillaWidget, Totem, Widget
 
 
 class WidgetModelTest(TestCase):
@@ -554,3 +557,92 @@ class CsvImportAPITestCase(TestCase):
         self.assertEqual(HorarioCursado.objects.count(), horarios_antes + 1)
         h = HorarioCursado.objects.latest("id")
         self.assertIsNone(h.espacio)
+
+
+class ScrapeNoticiasCommandTest(TestCase):
+    """El scraping automatico corre con --sin-contenido y avisa a los totems."""
+
+    ENLACE = "https://www.frre.utn.edu.ar/noticia-de-prueba/"
+
+    def setUp(self):
+        Noticias.objects.create(
+            titulo="Noticia de prueba",
+            contenido="Este es el cuerpo completo que ya estaba guardado.",
+            fecha_publicacion=timezone.now(),
+            enlace=self.ENLACE,
+            origen="scraping",
+        )
+        self.scrapeado = [
+            {
+                "titulo": "Noticia de prueba actualizada",
+                "contenido": "Resumen cortito del listado.",
+                "fecha_publicacion": timezone.now(),
+                "fecha_expiracion": timezone.now() + timedelta(days=365),
+                "imagen_url": "https://www.frre.utn.edu.ar/img.jpg",
+                "enlace": self.ENLACE,
+            }
+        ]
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_sin_contenido_conserva_el_cuerpo_guardado(self, mock_scrape):
+        mock_scrape.return_value = self.scrapeado
+
+        call_command("scrape_noticias", "--sin-contenido")
+
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(
+            noticia.contenido,
+            "Este es el cuerpo completo que ya estaba guardado.",
+        )
+        # el resto de los campos si se refresca
+        self.assertEqual(noticia.titulo, "Noticia de prueba actualizada")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_sin_el_flag_el_cuerpo_si_se_actualiza(self, mock_scrape):
+        mock_scrape.return_value = self.scrapeado
+
+        with patch(
+            "api.management.commands.scrape_noticias.scrape_contenido_completo",
+            return_value="Cuerpo descargado del sitio.",
+        ):
+            call_command("scrape_noticias")
+
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(noticia.contenido, "Cuerpo descargado del sitio.")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_notifica_a_los_totems(self, mock_scrape):
+        mock_scrape.return_value = self.scrapeado
+
+        # on_commit difiere el callback hasta el commit, y TestCase corre dentro
+        # de una transaccion que se hace rollback: hay que ejecutarlo a mano.
+        with patch("api.management.commands.scrape_noticias.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                call_command("scrape_noticias", "--sin-contenido")
+
+        mock_notify.assert_called_once_with("noticias")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_noticia_nueva_igual_recibe_el_resumen(self, mock_scrape):
+        nuevo = dict(self.scrapeado[0])
+        nuevo["enlace"] = "https://www.frre.utn.edu.ar/noticia-nueva/"
+        mock_scrape.return_value = [nuevo]
+
+        call_command("scrape_noticias", "--sin-contenido")
+
+        noticia = Noticias.objects.get(enlace=nuevo["enlace"])
+        # sin --contenido no se pisa contenido, pero una noticia recien creada no
+        # puede quedar vacia, asi que toma el resumen del listado
+        self.assertEqual(noticia.contenido, "Resumen cortito del listado.")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_rellena_noticia_que_habia_quedado_vacia(self, mock_scrape):
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        noticia.contenido = ""
+        noticia.save(update_fields=["contenido"])
+        mock_scrape.return_value = self.scrapeado
+
+        call_command("scrape_noticias", "--sin-contenido")
+
+        noticia.refresh_from_db()
+        self.assertEqual(noticia.contenido, "Resumen cortito del listado.")

@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from api.models import Noticias
+from api.realtime import notify_content
 from django.utils import timezone
 
 
@@ -131,9 +133,15 @@ class Command(BaseCommand):
             action='store_true',
             help='Muestra las noticias sin guardar en la BD',
         )
+        parser.add_argument(
+            '--sin-contenido',
+            action='store_true',
+            help='Solo sincroniza el listado, sin descargar el cuerpo de cada noticia',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
+        sin_contenido = options['sin_contenido']
 
         self.stdout.write('Obteniendo noticias de frre.utn.edu.ar...')
 
@@ -150,29 +158,44 @@ class Command(BaseCommand):
                 self.stdout.write(f'  - {n["titulo"]}')
             return
 
-        self.stdout.write('Obteniendo contenido completo de cada noticia...')
-        for n in noticias:
-            if n['enlace']:
-                contenido = scrape_contenido_completo(n['enlace'])
-                if contenido:
-                    n['contenido'] = contenido
-                time.sleep(0.3)
+        if not sin_contenido:
+            self.stdout.write('Obteniendo contenido completo de cada noticia...')
+            for n in noticias:
+                if n['enlace']:
+                    contenido = scrape_contenido_completo(n['enlace'])
+                    if contenido:
+                        n['contenido'] = contenido
+                    time.sleep(0.3)
 
         sincronizadas = 0
         for n in noticias:
+            defaults = {
+                'titulo': n['titulo'],
+                'fecha_publicacion': n['fecha_publicacion'],
+                'fecha_expiracion': n['fecha_expiracion'],
+                'imagen_url': n['imagen_url'],
+                'origen': 'scraping',
+            }
+            # Con --sin-contenido se conserva el cuerpo ya guardado: el listado
+            # solo trae el resumen, y pisarlo dejaria la nota vacia en el totem.
+            if not sin_contenido:
+                defaults['contenido'] = n['contenido']
+
             obj, created = Noticias.objects.update_or_create(
                 enlace=n['enlace'],
-                defaults={
-                    'titulo': n['titulo'],
-                    'contenido': n['contenido'],
-                    'fecha_publicacion': n['fecha_publicacion'],
-                    'fecha_expiracion': n['fecha_expiracion'],
-                    'imagen_url': n['imagen_url'],
-                    'origen': 'scraping',
-                },
+                defaults=defaults,
             )
+            # Una noticia que quedo sin cuerpo (creada por una corrida previa con
+            # --sin-contenido) se completa con el resumen del listado, para que el
+            # totem no muestre una nota vacia.
+            if sin_contenido and not obj.contenido and n['contenido']:
+                obj.contenido = n['contenido']
+                obj.save(update_fields=['contenido'])
+
             if created:
                 sincronizadas += 1
+
+        transaction.on_commit(lambda: notify_content('noticias'))
 
         self.stdout.write(self.style.SUCCESS(
             f'Sincronización completa: {sincronizadas} nuevas, '
