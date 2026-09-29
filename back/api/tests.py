@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 from django.contrib.auth.models import Group, User
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
@@ -646,3 +647,116 @@ class ScrapeNoticiasCommandTest(TestCase):
 
         noticia.refresh_from_db()
         self.assertEqual(noticia.contenido, "Resumen cortito del listado.")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_falla_con_codigo_de_salida_distinto_de_cero(self, mock_scrape):
+        """El job diario depende del exit code: si no falla, no queda registro."""
+        mock_scrape.side_effect = Exception("timeout del sitio")
+
+        with self.assertRaises(CommandError):
+            call_command("scrape_noticias", "--sin-contenido")
+
+
+class NoticiasSyncAPITest(TestCase):
+    """El boton de sincronizar descarga el cuerpo completo y no lo pisa."""
+
+    ENLACE = "https://www.frre.utn.edu.ar/noticia-del-boton/"
+
+    def setUp(self):
+        self.scrapeado = [
+            {
+                "titulo": "Noticia del boton",
+                "contenido": "Resumen cortito del listado.",
+                "fecha_publicacion": timezone.now(),
+                "fecha_expiracion": timezone.now() + timedelta(days=365),
+                "imagen_url": "https://www.frre.utn.edu.ar/img.jpg",
+                "enlace": self.ENLACE,
+            }
+        ]
+        self.client = APIClient()
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_guarda_el_cuerpo_completo_y_no_el_resumen(self, mock_scrape, mock_completo):
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "El articulo completo de la noticia, con mucho mas detalle."
+
+        response = self.client.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(
+            noticia.contenido,
+            "El articulo completo de la noticia, con mucho mas detalle.",
+        )
+        # el cuerpo completo tiene que haberse descargado de verdad
+        mock_completo.assert_called_once_with(self.ENLACE)
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_actualiza_una_noticia_existente_sin_vaciarla(self, mock_scrape, mock_completo):
+        Noticias.objects.create(
+            titulo="Vieja",
+            contenido="Cuerpo viejo que debe ser reemplazado por el nuevo.",
+            fecha_publicacion=timezone.now(),
+            enlace=self.ENLACE,
+            origen="scraping",
+        )
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo nuevo descargado del sitio."
+
+        response = self.client.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(noticia.contenido, "Cuerpo nuevo descargado del sitio.")
+        self.assertEqual(response.json()["nuevas"], 0)
+        self.assertEqual(response.json()["actualizadas"], 1)
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_devuelve_502_si_el_scrape_falla(self, mock_scrape):
+        mock_scrape.side_effect = Exception("timeout del sitio")
+
+        response = self.client.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertIn("timeout del sitio", response.json()["detail"])
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_responde_el_mismo_shape_que_espera_el_panel(self, mock_scrape, mock_completo):
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo."
+
+        data = self.client.post("/api/noticias/sync/").json()
+
+        # estas claves son las que lee syncNoticias en el frontend
+        self.assertEqual(
+            set(data), {"detail", "nuevas", "actualizadas", "total"}
+        )
+        self.assertEqual(data["total"], 1)
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_avisa_a_los_totems(self, mock_scrape, mock_completo):
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo."
+
+        # la vista importa notify_content a nivel de modulo, hay que parchearlo ahi
+        with patch("api.views.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.post("/api/noticias/sync/")
+
+        mock_notify.assert_called_once_with("noticias")
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_el_endpoint_es_publico_mientras_permita_allowany(self, mock_scrape, mock_completo):
+        """Documenta que sync sigue con AllowAny, pendiente de cerrar."""
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo."
+
+        anonimo = APIClient()
+        response = anonimo.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
