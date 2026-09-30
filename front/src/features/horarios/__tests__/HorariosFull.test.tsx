@@ -4,10 +4,19 @@ import HorariosFull from "../components/HorariosFull";
 import type { Clase } from "../api/horarios";
 
 const mockUseHorarios = vi.hoisted(() => vi.fn());
+const mockPublicFetch = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useHorarios", () => ({
   useHorarios: mockUseHorarios,
 }));
+
+// El tótem puede seguir publicando un cuatrimestre vigente. La grilla no debe
+// filtrar por él: si algún día volviera a hacerlo, este mock lo detectaría.
+vi.mock("../../../shared/api/client", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../shared/api/client")>();
+  return { ...actual, publicFetch: mockPublicFetch };
+});
 
 const LONGA =
   "Generación, Transmisión y Distribución de la Energía Eléctrica II";
@@ -108,6 +117,26 @@ describe("HorariosFull", () => {
     // duplique los horarios de las materias.
     expect(screen.getAllByText("Algoritmos")).toHaveLength(1);
     expect(screen.getAllByText("Matemática")).toHaveLength(1);
+  });
+
+  it("no filtra la grilla aunque exista un cuatrimestre vigente", async () => {
+    mockPublicFetch.mockResolvedValue({
+      cuatrimestre_vigente: "segundo",
+      configurado: true,
+    });
+
+    render(<HorariosFull onClose={vi.fn()} />);
+
+    select("Seleccionar carrera", "ISI");
+    select("Seleccionar nivel", "1ro");
+    select("Seleccionar comisión", "K1");
+
+    expect(await screen.findByText("Horarios de cursado")).toBeInTheDocument();
+    expect(screen.getByText("Algoritmos")).toBeInTheDocument();
+    expect(screen.getByText("Matemática")).toBeInTheDocument();
+    expect(screen.getByText(LONGA)).toBeInTheDocument();
+    expect(screen.getByText("09:15")).toBeInTheDocument();
+    expect(screen.getByText("15:15")).toBeInTheDocument();
   });
 
   it("muestra el nombre completo de las materias largas y lo deja wrappear", () => {
