@@ -438,34 +438,30 @@ class NoticiasViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='sync')
     def sync(self, request):
-        from api.management.commands.scrape_noticias import scrape_noticias as do_scrape
+        from api.management.commands.scrape_noticias import (
+            completar_contenidos,
+            scrape_noticias as do_scrape,
+            sincronizar_noticias,
+        )
 
         try:
             noticias_scrapeadas = do_scrape()
+            # Sin esto se pisaria el cuerpo ya descargado con el resumen de una
+            # linea que trae el listado.
+            completar_contenidos(noticias_scrapeadas)
         except Exception as e:
             return Response(
                 {'detail': f'Error al scrapeear: {e}'},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        nuevas = 0
-        actualizadas = 0
-        for n in noticias_scrapeadas:
-            obj, created = Noticias.objects.update_or_create(
-                enlace=n['enlace'],
-                defaults={
-                    'titulo': n['titulo'],
-                    'contenido': n['contenido'],
-                    'fecha_publicacion': n['fecha_publicacion'],
-                    'fecha_expiracion': n['fecha_expiracion'],
-                    'imagen_url': n['imagen_url'],
-                    'origen': 'scraping',
-                },
-            )
-            if created:
-                nuevas += 1
-            else:
-                actualizadas += 1
+        # Riesgo conocido: si la descarga del cuerpo falla para una sola nota
+        # (500 puntual, corte de red), 'contenido' sigue siendo el resumen y esta
+        # llamada lo escribe igual, vaciando la nota. El camino feliz esta
+        # cubierto, el fallo parcial no. Vease el reporte de la rama.
+        nuevas, actualizadas = sincronizar_noticias(
+            noticias_scrapeadas, preservar_contenido=False,
+        )
 
         transaction.on_commit(lambda: notify_content('noticias'))
 

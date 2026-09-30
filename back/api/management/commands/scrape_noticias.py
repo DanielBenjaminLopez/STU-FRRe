@@ -2,8 +2,10 @@ import time
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 from api.models import Noticias
+from api.realtime import notify_content
 from django.utils import timezone
 
 
@@ -122,6 +124,55 @@ def scrape_noticias():
     return noticias
 
 
+def completar_contenidos(noticias):
+    """Descarga el cuerpo completo de cada noticia y lo deja en n['contenido']."""
+    for n in noticias:
+        if n['enlace']:
+            contenido = scrape_contenido_completo(n['enlace'])
+            if contenido:
+                n['contenido'] = contenido
+            time.sleep(0.3)
+
+
+def sincronizar_noticias(noticias, preservar_contenido=True):
+    """Sincroniza las noticias scrapeadas. Devuelve (nuevas, actualizadas).
+
+    El listado solo trae el resumen (~100 chars) mientras que el cuerpo
+    completo ronda los 4.000. Con preservar_contenido se conserva el cuerpo ya
+    descargado, porque pisarlo dejaria la nota del totem truncada. Las noticias
+    que aun no tienen cuerpo toman el resumen del listado.
+    """
+    nuevas = 0
+    actualizadas = 0
+    for n in noticias:
+        defaults = {
+            'titulo': n['titulo'],
+            'fecha_publicacion': n['fecha_publicacion'],
+            'fecha_expiracion': n['fecha_expiracion'],
+            'imagen_url': n['imagen_url'],
+            'origen': 'scraping',
+        }
+        if not preservar_contenido:
+            defaults['contenido'] = n['contenido']
+
+        obj, created = Noticias.objects.update_or_create(
+            enlace=n['enlace'],
+            defaults=defaults,
+        )
+        # Una noticia sin cuerpo (creada por una corrida --sin-contenido, o sin
+        # resumen en el listado) se completa con lo que haya disponible.
+        if not obj.contenido and n['contenido']:
+            obj.contenido = n['contenido']
+            obj.save(update_fields=['contenido'])
+
+        if created:
+            nuevas += 1
+        else:
+            actualizadas += 1
+
+    return nuevas, actualizadas
+
+
 class Command(BaseCommand):
     help = 'Scrapea noticias de frre.utn.edu.ar y las sincroniza en la BD'
 
@@ -131,17 +182,22 @@ class Command(BaseCommand):
             action='store_true',
             help='Muestra las noticias sin guardar en la BD',
         )
+        parser.add_argument(
+            '--sin-contenido',
+            action='store_true',
+            help='Solo sincroniza el listado, sin descargar el cuerpo de cada noticia',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
+        sin_contenido = options['sin_contenido']
 
         self.stdout.write('Obteniendo noticias de frre.utn.edu.ar...')
 
         try:
             noticias = scrape_noticias()
         except Exception as e:
-            self.stderr.write(self.style.ERROR(f'Error al scrapeear: {e}'))
-            return
+            raise CommandError(f'Error al scrapeear: {e}') from e
 
         self.stdout.write(f'Se encontraron {len(noticias)} noticias')
 
@@ -150,31 +206,16 @@ class Command(BaseCommand):
                 self.stdout.write(f'  - {n["titulo"]}')
             return
 
-        self.stdout.write('Obteniendo contenido completo de cada noticia...')
-        for n in noticias:
-            if n['enlace']:
-                contenido = scrape_contenido_completo(n['enlace'])
-                if contenido:
-                    n['contenido'] = contenido
-                time.sleep(0.3)
+        if not sin_contenido:
+            self.stdout.write('Obteniendo contenido completo de cada noticia...')
+            completar_contenidos(noticias)
 
-        sincronizadas = 0
-        for n in noticias:
-            obj, created = Noticias.objects.update_or_create(
-                enlace=n['enlace'],
-                defaults={
-                    'titulo': n['titulo'],
-                    'contenido': n['contenido'],
-                    'fecha_publicacion': n['fecha_publicacion'],
-                    'fecha_expiracion': n['fecha_expiracion'],
-                    'imagen_url': n['imagen_url'],
-                    'origen': 'scraping',
-                },
-            )
-            if created:
-                sincronizadas += 1
+        nuevas, actualizadas = sincronizar_noticias(
+            noticias, preservar_contenido=sin_contenido,
+        )
+
+        transaction.on_commit(lambda: notify_content('noticias'))
 
         self.stdout.write(self.style.SUCCESS(
-            f'Sincronización completa: {sincronizadas} nuevas, '
-            f'{len(noticias) - sincronizadas} actualizadas'
+            f'Sincronización completa: {nuevas} nuevas, {actualizadas} actualizadas'
         ))
