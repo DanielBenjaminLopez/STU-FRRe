@@ -470,7 +470,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Duplicados", tipo="grado")
         mat = Materia.objects.create(nombre="Física I Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="K1")
         esp = Espacio.objects.create(nombre="Aula 10", tipo="aula", piso=1)
 
@@ -489,7 +489,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="ISI Test", tipo="grado")
         mat = Materia.objects.create(nombre="SGBD Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Lab 5", tipo="laboratorio", piso=1)
         Espacio.objects.create(nombre="Lab 6", tipo="laboratorio", piso=1)
@@ -509,7 +509,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Errores", tipo="grado")
         mat = Materia.objects.create(nombre="Análisis Numérico Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Aula Test Errores", tipo="aula", piso=1)
 
@@ -538,7 +538,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Sin Espacio", tipo="grado")
         mat = Materia.objects.create(nombre="Diseño de Sistemas Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
 
         csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Sin Espacio,Diseño de Sistemas Test,Curso 1,,Miércoles,15:30,17:00,2023\n"

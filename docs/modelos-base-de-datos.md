@@ -30,8 +30,6 @@ Tabla intermedia de asociación curricular. Define cómo se dicta una materia de
 - `carrera_id` (ForeignKey -> Carrera, `on_delete=PROTECT`)
 - `materia_id` (ForeignKey -> Materia, `on_delete=PROTECT`)
 - `nivel` (CharField 10): Año de cursado: `primero`, `segundo`, `tercero`, `cuarto`, `quinto`.
-- `modalidad` (CharField 15): `anual` o `cuatrimestral`.
-- `cuatrimestre` (CharField 10, Nullable): `primero` o `segundo` (obligatorio si modalidad es cuatrimestral).
 - `plan_estudio` (CharField 4): `2023`, `2008`.
 - **Restricción de unicidad:** `unique_together = ['carrera', 'materia', 'nivel', 'plan_estudio']`.
 

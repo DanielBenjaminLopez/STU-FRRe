@@ -17,8 +17,6 @@ const clases: Clase[] = [
     plan_materia: 1,
     comision_id: 1,
     nivel: "primero",
-    modalidad: "anual",
-    cuatrimestre: "",
     comision: "K1",
     materia_nombre: "Algoritmos",
     hora_inicio: "09:15",
@@ -33,8 +31,6 @@ const clases: Clase[] = [
     plan_materia: 2,
     comision_id: 2,
     nivel: "primero",
-    modalidad: "cuatrimestral",
-    cuatrimestre: "segundo",
     comision: "K1",
     materia_nombre: "Matemática",
     hora_inicio: "13:30",
@@ -74,9 +70,26 @@ describe("HorariosFull", () => {
 
     select("Seleccionar comisión", "K1");
 
-    expect(screen.getAllByText("09:15")).toHaveLength(2);
+    expect(screen.getByText("09:15")).toBeInTheDocument();
     expect(screen.getByText("15:15")).toBeInTheDocument();
-    expect(screen.getAllByText("Algoritmos")).toHaveLength(2);
+    expect(screen.getByText("Algoritmos")).toBeInTheDocument();
     expect(screen.getByText("Matemática")).toBeInTheDocument();
+  });
+
+  it("muestra un solo panel, sin cuatrimestres", () => {
+    render(<HorariosFull onClose={vi.fn()} />);
+
+    select("Seleccionar carrera", "ISI");
+    select("Seleccionar nivel", "1ro");
+    select("Seleccionar comisión", "K1");
+
+    expect(screen.getByText("Horarios de cursado")).toBeInTheDocument();
+    expect(screen.queryByText("Primer cuatrimestre")).not.toBeInTheDocument();
+    expect(screen.queryByText("Segundo cuatrimestre")).not.toBeInTheDocument();
+
+    // Cada clase se dibuja una sola vez: no hay un panel por cuatrimestre que
+    // duplique los horarios de las materias.
+    expect(screen.getAllByText("Algoritmos")).toHaveLength(1);
+    expect(screen.getAllByText("Matemática")).toHaveLength(1);
   });
 });

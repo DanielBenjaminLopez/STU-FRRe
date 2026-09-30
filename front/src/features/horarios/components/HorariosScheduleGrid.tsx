@@ -28,11 +28,6 @@ const DAYS = [
   { value: "sabado", label: "Sáb" },
 ];
 
-const SEMESTERS = [
-  { value: "primero", label: "Primer cuatrimestre" },
-  { value: "segundo", label: "Segundo cuatrimestre" },
-] as const;
-
 const MIN_SCHEDULE_MINUTES = 8 * 60;
 
 const CARD_COLORS = [
@@ -578,30 +573,15 @@ export default function HorariosScheduleGrid({
             </div>
           )}
           {!loading && !error && completeSelection && (
-            <div className="grid h-full grid-cols-1 grid-rows-2 gap-4 overflow-auto p-4 sm:p-8">
-              {SEMESTERS.map((semester) => {
-                const semesterItems = selectedItems.filter(
-                  (item) =>
-                    item.modalidad === "anual" ||
-                    item.modalidad === "" ||
-                    (item.modalidad === "cuatrimestral" &&
-                      item.cuatrimestre === semester.value),
-                );
-
-                return (
-                  <section
-                    key={semester.value}
-                    className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
-                  >
-                    <h2 className="shrink-0 border-b border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-600 sm:text-base">
-                      {semester.label}
-                    </h2>
-                    <div className="min-h-0 flex-1">
-                      <Schedule items={semesterItems} />
-                    </div>
-                  </section>
-                );
-              })}
+            <div className="grid h-full grid-cols-1 overflow-auto p-4 sm:p-8">
+              <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30">
+                <h2 className="shrink-0 border-b border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-600 sm:text-base">
+                  Horarios de cursado
+                </h2>
+                <div className="min-h-0 flex-1">
+                  <Schedule items={selectedItems} />
+                </div>
+              </section>
             </div>
           )}
         </div>

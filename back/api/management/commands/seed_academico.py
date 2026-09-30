@@ -360,15 +360,13 @@ class Command(BaseCommand):
             materia, _ = Materia.objects.get_or_create(nombre=nombre)
             return materia
 
-        def crear_plan(carrera, materia_nombre, nivel, modalidad, plan, comisiones_data):
+        def crear_plan(carrera, materia_nombre, nivel, plan, comisiones_data):
             """Crea PlanMateria + Comisiones + Horarios"""
             m = mat(materia_nombre)
             pm = PlanMateria.objects.create(
                 carrera=carrera,
                 materia=m,
                 nivel=nivel,
-                modalidad=modalidad,
-                cuatrimestre=None if modalidad == "anual" else "primero",
                 plan_estudio=plan,
             )
             for com_nombre, horarios in comisiones_data:
@@ -425,7 +423,7 @@ class Command(BaseCommand):
                     comisiones = generar_horarios_k1_k2()
                 else:
                     comisiones = generar_horarios_unica()
-                crear_plan(c_isi, materia_nombre, nivel, "anual", "2023", comisiones)
+                crear_plan(c_isi, materia_nombre, nivel, "2023", comisiones)
 
         # ── 5. IQ (Plan 2023, 5 años, anual) ──
         self.stdout.write("Cargando IQ...")
@@ -436,7 +434,7 @@ class Command(BaseCommand):
                     comisiones = generar_horarios_k1_k2()
                 else:
                     comisiones = generar_horarios_unica()
-                crear_plan(c_iq, materia_nombre, nivel, "anual", "2023", comisiones)
+                crear_plan(c_iq, materia_nombre, nivel, "2023", comisiones)
 
         # ── 6. IEM (Plan 2023, 5 años, anual) ──
         self.stdout.write("Cargando IEM...")
@@ -447,7 +445,7 @@ class Command(BaseCommand):
                     comisiones = generar_horarios_k1_k2()
                 else:
                     comisiones = generar_horarios_unica()
-                crear_plan(c_iem, materia_nombre, nivel, "anual", "2023", comisiones)
+                crear_plan(c_iem, materia_nombre, nivel, "2023", comisiones)
 
         # ── 7. TUP (Plan 2024, 2 años, cuatrimestral) ──
         self.stdout.write("Cargando TUP...")
@@ -455,17 +453,7 @@ class Command(BaseCommand):
         for cuatrimestre, materias_lista in MATERIAS_TUP.items():
             for materia_nombre in materias_lista:
                 comisiones = generar_horarios_k1_k2()
-                pm = crear_plan(c_tup, materia_nombre, cuatrimestre, "cuatrimestral", "2023", comisiones)
-                # Asignar cuatrimestre correcto
-                if cuatrimestre == "primero":
-                    pm.cuatrimestre = "primero"
-                elif cuatrimestre == "segundo":
-                    pm.cuatrimestre = "segundo"
-                elif cuatrimestre == "tercero":
-                    pm.cuatrimestre = "primero"
-                elif cuatrimestre == "cuarto":
-                    pm.cuatrimestre = "segundo"
-                pm.save(update_fields=["cuatrimestre"])
+                crear_plan(c_tup, materia_nombre, cuatrimestre, "2023", comisiones)
 
         # ── 8. LAR (Plan 2026, 4 años, anual) ──
         self.stdout.write("Cargando LAR...")
@@ -476,7 +464,7 @@ class Command(BaseCommand):
                     comisiones = generar_horarios_k1_k2()
                 else:
                     comisiones = generar_horarios_unica()
-                crear_plan(c_lar, materia_nombre, nivel, "anual", "2023", comisiones)
+                crear_plan(c_lar, materia_nombre, nivel, "2023", comisiones)
 
         # ── Resumen ──
         carreras_ids = [c_isi.id, c_iq.id, c_iem.id, c_tup.id, c_lar.id]
