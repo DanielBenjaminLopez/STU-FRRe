@@ -19,7 +19,6 @@ import {
   fetchEspaciosForSelect,
   DIAS_SEMANA,
   NIVELES,
-  MODALIDADES,
   importarHorariosCSV,
   type CsvImportResult,
   type PlanMateria,
@@ -79,9 +78,6 @@ function MateriasHorariosPage() {
 
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
-  const [filterModalidad, setFilterModalidad] = useState<
-    "" | "anual" | "cuatrimestral"
-  >("");
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
@@ -107,11 +103,9 @@ function MateriasHorariosPage() {
           tipo?: string;
           carrera?: number;
           nivel?: string;
-          modalidad?: string;
         } = {};
         if (filterCarrera !== "") filters.carrera = filterCarrera;
         if (filterNivel) filters.nivel = filterNivel;
-        if (filterModalidad) filters.modalidad = filterModalidad;
 
         const [planMaterias, allComisiones, allHorarios, esp, car] =
           await Promise.all([
@@ -195,7 +189,7 @@ function MateriasHorariosPage() {
     return () => {
       active = false;
     };
-  }, [filterCarrera, filterNivel, filterModalidad, reloadKey]);
+  }, [filterCarrera, filterNivel, reloadKey]);
 
   function handleCarreraChange(value: number | "") {
     setFilterCarrera(value);
@@ -371,37 +365,6 @@ function MateriasHorariosPage() {
             ))}
           </div>
         </div>
-
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-gray-500">Modalidad</span>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setFilterModalidad("")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                filterModalidad === ""
-                  ? "bg-black text-white border-black cursor-pointer"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
-              }`}
-            >
-              Todas
-            </button>
-            {MODALIDADES.map((m) => (
-              <button
-                key={m.value}
-                type="button"
-                onClick={() => setFilterModalidad(m.value)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
-                  filterModalidad === m.value
-                    ? "bg-black text-white border-black cursor-pointer"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div className="space-y-3">
@@ -449,10 +412,19 @@ function MateriasHorariosPage() {
           onClose={() => setShowImportModal(false)}
           onImport={importarHorariosCSV}
           onSuccess={(res: CsvImportResult) => {
-            sileo.success({
-              title: "Importación exitosa",
-              description: res.detail || "Importación realizada exitosamente.",
-            });
+            const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
+            if (exito) {
+              sileo.success({
+                title: "Importación exitosa",
+                description:
+                  res.detail || "Importación realizada exitosamente.",
+              });
+            } else {
+              sileo.error({
+                title: "La importación falló",
+                description: res.detail || "No se guardó ningún registro.",
+              });
+            }
             reload();
           }}
         />
@@ -494,14 +466,6 @@ function MateriaCard({
 
   const nivelLabel =
     NIVELES.find((n) => n.value === pm.nivel)?.label || pm.nivel;
-  const modalidadLabel = pm.modalidad === "anual" ? "Anual" : "Cuatrimestral";
-
-  const cuatrimestreLabel =
-    pm.cuatrimestre === "primero"
-      ? "1er"
-      : pm.cuatrimestre === "segundo"
-        ? "2do"
-        : pm.cuatrimestre;
 
   async function handleAddComisionLocal() {
     if (!newComisionNombre.trim()) return;
@@ -535,9 +499,7 @@ function MateriaCard({
             <TipoCarreraBadge tipo={pm.carrera_tipo} />
           </div>
           <p className="text-xs text-gray-500">
-            {pm.carrera_nombre} | Nivel {nivelLabel} | {modalidadLabel}
-            {cuatrimestreLabel && ` - ${cuatrimestreLabel}°`}
-            {` | Plan ${pm.plan_estudio}`}
+            {pm.carrera_nombre} | Nivel {nivelLabel} | Plan {pm.plan_estudio}
           </p>
         </div>
         <span className="text-xs text-gray-400">

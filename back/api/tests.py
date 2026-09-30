@@ -474,7 +474,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Duplicados", tipo="grado")
         mat = Materia.objects.create(nombre="Física I Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="K1")
         esp = Espacio.objects.create(nombre="Aula 10", tipo="aula", piso=1)
 
@@ -493,7 +493,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="ISI Test", tipo="grado")
         mat = Materia.objects.create(nombre="SGBD Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Lab 5", tipo="laboratorio", piso=1)
         Espacio.objects.create(nombre="Lab 6", tipo="laboratorio", piso=1)
@@ -513,7 +513,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Errores", tipo="grado")
         mat = Materia.objects.create(nombre="Análisis Numérico Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Aula Test Errores", tipo="aula", piso=1)
 
@@ -542,7 +542,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Sin Espacio", tipo="grado")
         mat = Materia.objects.create(nombre="Diseño de Sistemas Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
 
         csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Sin Espacio,Diseño de Sistemas Test,Curso 1,,Miércoles,15:30,17:00,2023\n"
@@ -760,3 +760,129 @@ class NoticiasSyncAPITest(TestCase):
         response = anonimo.post("/api/noticias/sync/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class PlanMateriaSinCuatrimestreTestCase(TestCase):
+    """Cubre la eliminación de cuatrimestre y modalidad en PlanMateria."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_sin_cuatrimestre",
+            email="admin_sin_cuatrimestre@test.com",
+            password="password123",
+        )
+        admin_group, _ = Group.objects.get_or_create(name="admin")
+        self.admin_user.groups.add(admin_group)
+        self.client.force_authenticate(user=self.admin_user)
+
+    def test_model_no_tiene_cuatrimestre_ni_modalidad(self):
+        from api.models import PlanMateria
+
+        campos = {f.name for f in PlanMateria._meta.get_fields()}
+        self.assertNotIn("cuatrimestre", campos)
+        self.assertNotIn("modalidad", campos)
+        self.assertIn("nivel", campos)
+        self.assertIn("plan_estudio", campos)
+
+    def test_api_plan_materia_no_expone_cuatrimestre_ni_modalidad(self):
+        from api.models import Carrera, Materia, PlanMateria
+
+        Carrera.objects.create(nombre="Test API Sin Cuatrimestre", tipo="grado", codigo="TAC")
+        mat = Materia.objects.create(nombre="Materia Test API Sin Cuatrimestre")
+        PlanMateria.objects.create(
+            carrera=Carrera.objects.get(codigo="TAC"),
+            materia=mat,
+            nivel="primero",
+            plan_estudio="2023",
+        )
+
+        response = self.client.get("/api/plan-materias/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        fila = next(f for f in response.json() if f["materia_nombre"] == mat.nombre)
+        self.assertNotIn("cuatrimestre", fila)
+        self.assertNotIn("modalidad", fila)
+        self.assertEqual(fila["nivel"], "primero")
+        self.assertEqual(fila["plan_estudio"], "2023")
+
+    def test_api_horarios_no_expone_cuatrimestre_ni_modalidad(self):
+        from api.models import Carrera, Comision, HorarioCursado, Materia, PlanMateria
+
+        car = Carrera.objects.create(nombre="Test API Horarios", tipo="grado", codigo="TAH")
+        mat = Materia.objects.create(nombre="Materia Test API Horarios")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="cuarto", plan_estudio="2023")
+        com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        HorarioCursado.objects.create(
+            comision=com,
+            dia_semana="lunes",
+            hora_inicio="08:00",
+            hora_fin="10:00",
+            activo=True,
+        )
+
+        response = self.client.get("/api/horarios/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        fila = next(
+            f for f in response.json() if f["materia_nombre"] == mat.nombre
+        )
+        self.assertNotIn("cuatrimestre", fila)
+        self.assertNotIn("modalidad", fila)
+        self.assertEqual(fila["nivel"], "cuarto")
+
+    def test_importar_plan_csv_ignora_columnas_eliminadas(self):
+        """Los CSV de seed siguen trayendo modalidad y cuatrimestre: se ignoran."""
+        import tablib
+        from api.models import Carrera, Materia, PlanMateria
+        from api.resources import PlanMateriaResource
+
+        Carrera.objects.create(nombre="Carrera Test CSV", tipo="grado", codigo="TCSV")
+        Materia.objects.create(nombre="Materia Test CSV")
+        Materia.objects.create(nombre="Materia Test CSV 2")
+
+        dataset = tablib.Dataset()
+        dataset.headers = (
+            "carrera",
+            "materia",
+            "nivel",
+            "modalidad",
+            "cuatrimestre",
+            "plan_estudio",
+        )
+        dataset.append(("Carrera Test CSV", "Materia Test CSV", "primero", "anual", "segundo", "2023"))
+        dataset.append(("Carrera Test CSV", "Materia Test CSV 2", "segundo", "cuatrimestral", "primero", "2023"))
+
+        antes = PlanMateria.objects.count()
+        result = PlanMateriaResource().import_data(dataset, dry_run=False)
+        self.assertFalse(result.has_errors(), result.row_errors())
+        self.assertEqual(PlanMateria.objects.count(), antes + 2)
+
+        car = Carrera.objects.get(codigo="TCSV")
+        pm1 = PlanMateria.objects.get(carrera=car, materia__nombre="Materia Test CSV")
+        self.assertEqual(pm1.nivel, "primero")
+        self.assertEqual(pm1.plan_estudio, "2023")
+
+    def test_importar_plan_csv_no_colapsa_planes_por_plan_estudio(self):
+        """Misma carrera, materia y nivel en dos planes: son dos PlanMateria."""
+        import tablib
+        from api.models import Carrera, Materia, PlanMateria
+        from api.resources import PlanMateriaResource
+
+        Carrera.objects.create(nombre="Química Test Planes", tipo="grado", codigo="TQP")
+        Materia.objects.create(nombre="Práctica Supervisada Test Planes")
+
+        dataset = tablib.Dataset()
+        dataset.headers = ("carrera", "materia", "nivel", "plan_estudio")
+        dataset.append(("Química Test Planes", "Práctica Supervisada Test Planes", "quinto", "2023"))
+        dataset.append(("Química Test Planes", "Práctica Supervisada Test Planes", "quinto", "1995"))
+
+        antes = PlanMateria.objects.count()
+        result = PlanMateriaResource().import_data(dataset, dry_run=False)
+        self.assertFalse(result.has_errors(), result.row_errors())
+        self.assertEqual(PlanMateria.objects.count(), antes + 2)
+
+        planes = PlanMateria.objects.filter(
+            carrera__codigo="TQP", materia__nombre="Práctica Supervisada Test Planes"
+        ).values_list("plan_estudio", flat=True)
+        self.assertEqual(sorted(planes), ["1995", "2023"])

@@ -9,8 +9,6 @@ export interface PlanMateria {
   materia_nombre: string;
   carrera_tipo: "grado" | "tecnica" | "posgrado" | "diplomatura";
   nivel: string;
-  modalidad: string;
-  cuatrimestre: string | null;
   plan_estudio: string;
 }
 
@@ -22,7 +20,6 @@ export interface Comision {
   materia_nombre?: string;
   carrera_nombre?: string;
   nivel?: string;
-  modalidad?: string;
 }
 
 export interface HorarioCursado {
@@ -57,11 +54,6 @@ export const NIVELES = [
   { value: "quinto", label: "5to" },
 ] as const;
 
-export const MODALIDADES = [
-  { value: "anual", label: "Anual" },
-  { value: "cuatrimestral", label: "Cuatrimestral" },
-] as const;
-
 export const PLANES = [
   { value: "2023", label: "2023" },
   { value: "2008", label: "2008" },
@@ -71,13 +63,11 @@ export async function fetchPlanMaterias(filters?: {
   tipo?: string;
   carrera?: number;
   nivel?: string;
-  modalidad?: string;
 }): Promise<PlanMateria[]> {
   const params = new URLSearchParams();
   if (filters?.tipo) params.append("tipo", filters.tipo);
   if (filters?.carrera) params.append("carrera", String(filters.carrera));
   if (filters?.nivel) params.append("nivel", filters.nivel);
-  if (filters?.modalidad) params.append("modalidad", filters.modalidad);
   const qs = params.toString();
   return apiFetch<PlanMateria[]>(`/api/plan-materias/${qs ? `?${qs}` : ""}`);
 }
@@ -118,12 +108,7 @@ export async function fetchComisiones(filters?: {
 export async function createComision(
   data: Omit<
     Comision,
-    | "id"
-    | "display_name"
-    | "materia_nombre"
-    | "carrera_nombre"
-    | "nivel"
-    | "modalidad"
+    "id" | "display_name" | "materia_nombre" | "carrera_nombre" | "nivel"
   >,
 ): Promise<Comision> {
   return apiFetch<Comision>("/api/comisiones/", {
@@ -186,6 +171,8 @@ export interface CsvImportDetailRow {
 
 export interface CsvImportResult {
   detail: string;
+  /** El backend responde 200 aunque la importacion falle por errores de fila. */
+  exito?: boolean;
   creados?: number;
   actualizados?: number;
   total?: number;
