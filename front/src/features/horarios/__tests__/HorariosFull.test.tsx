@@ -130,10 +130,23 @@ describe("HorariosFull", () => {
     // cortaba los nombres largos. No debe volver.
     expect(nombre).not.toHaveClass("truncate");
 
-    // Las horas y el aula tampoco se recortan. La comisión y el aula comparten
-    // un solo nodo de texto: "[K1] · Laboratorio informático 4".
+    // Las horas y el aula tampoco se recortan. La comisión y el aula van en
+    // nodos separados para que el aula baje a su propia línea.
     expect(screen.getByText("16:35 - 18:55")).toBeInTheDocument();
-    expect(screen.getByText(/Laboratorio informático 4/)).toBeInTheDocument();
+
+    const tarjeta = screen
+      .getByText("Laboratorio informático 4")
+      .closest(".schedule-class-card")!;
+    expect(tarjeta.querySelector(".schedule-class-comision")).toHaveTextContent(
+      "[K1]",
+    );
+    expect(tarjeta.querySelector(".schedule-class-aula")).toHaveTextContent(
+      "Laboratorio informático 4",
+    );
+    // Y no vuelven a compartir un mismo nodo de texto.
+    expect(
+      tarjeta.querySelector(".schedule-class-comision")!.textContent,
+    ).not.toContain("Laboratorio");
   });
 
   it("escala la grilla con la tipografía del tótem, sin px fijos", () => {

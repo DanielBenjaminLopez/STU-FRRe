@@ -301,18 +301,24 @@ function TimeGrid({
                     title={`${evt.item.carrera_codigo} - ${evt.item.materia_nombre}\n${evt.item.comision ? `[${evt.item.comision}] - ` : ""}${formatAula(evt.item.aula)}`}
                   >
                     <div
-                      className={`hyphens-auto line-clamp-4 break-words text-lg font-semibold leading-tight ${colors.text}`}
+                      className={`hyphens-auto line-clamp-4 break-words text-lg font-semibold leading-snug ${colors.text}`}
                     >
                       {evt.item.materia_nombre}
                     </div>
-                    <div className="text-sm leading-tight text-gray-500">
+                    <div className="text-sm leading-snug text-gray-500">
                       {evt.item.hora_inicio.slice(0, 5)} -{" "}
                       {evt.item.hora_fin.slice(0, 5)}
                     </div>
-                    <div className="break-words text-xs leading-tight text-gray-500">
-                      {evt.item.comision ? `[${evt.item.comision}] · ` : ""}
-                      {formatAula(evt.item.aula)}
-                    </div>
+                    {evt.item.comision && (
+                      <div className="break-words text-xs leading-snug text-gray-500">
+                        [{evt.item.comision}]
+                      </div>
+                    )}
+                    {formatAula(evt.item.aula) && (
+                      <div className="break-words text-xs leading-snug text-gray-400">
+                        {formatAula(evt.item.aula)}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -374,7 +380,9 @@ function ListView({ items }: { items: ScheduleItem[] }) {
                       {item.materia_nombre}
                     </span>
                     <span className="break-words text-sm text-gray-500">
-                      {item.comision ? `[${item.comision}] · ` : ""}
+                      {item.comision && `[${item.comision}]`}
+                    </span>
+                    <span className="break-words text-sm text-gray-500">
                       {formatAula(item.aula)} · {item.carrera_codigo}
                     </span>
                   </div>

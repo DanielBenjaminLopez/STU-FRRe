@@ -59,7 +59,10 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 0.125rem;
+  /* En `em` y no en `rem`: .totem-scale-stage duplica --text-* pero no el
+     root font-size, así que un gap en rem quedaba con la mitad del
+     espaciado dentro del tótem. */
+  gap: 0.25em;
   overflow: hidden;
   border-width: 1px;
   border-radius: 0.75rem;

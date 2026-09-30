@@ -241,8 +241,10 @@ function Schedule({ items }: { items: Clase[] }) {
 
   const rows = times.length - 1;
   // La geometría va en `em` contra el `font-size` de #schedule, que es
-  // var(--text-base): 48px en el admin y 96px dentro del tótem 4K. Con px fijo
-  // las filas no crecían y el texto escalado se recortaba.
+  // var(--text-base): 1rem (16px) en el admin y 2rem (32px) dentro de
+  // .totem-scale-stage en el tótem 4K. Así 3em de fila miden 48px en el admin
+  // y 96px en el tótem. Con px fijo las filas no crecían y el texto escalado
+  // se recortaba.
   const gridRows = `3em repeat(${rows}, minmax(3em, 1fr)) 1em`;
   const gridColumns = `4.5em repeat(${DAYS.length}, minmax(0, 1fr))`;
 
@@ -316,16 +318,22 @@ function Schedule({ items }: { items: Clase[] }) {
                   className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)}`}
                   title={`${item.materia_nombre}\n[${item.comision}] · ${item.carrera_codigo}\nAula: ${item.aula}`}
                 >
-                  <span className="line-clamp-4 hyphens-auto break-words text-lg font-semibold leading-tight">
+                  <span className="line-clamp-4 hyphens-auto break-words text-lg font-semibold leading-snug">
                     {item.materia_nombre}
                   </span>
-                  <span className="text-sm leading-tight opacity-75">
+                  <span className="text-sm leading-snug opacity-75">
                     {formatTime(item.hora_inicio)} - {formatTime(item.hora_fin)}
                   </span>
-                  <span className="break-words text-sm leading-tight opacity-70">
-                    {item.comision ? `[${item.comision}] · ` : ""}
-                    {item.aula}
-                  </span>
+                  {item.comision && (
+                    <span className="schedule-class-comision break-words text-sm leading-snug opacity-70">
+                      [{item.comision}]
+                    </span>
+                  )}
+                  {item.aula && (
+                    <span className="schedule-class-aula break-words text-sm leading-snug opacity-60">
+                      {item.aula}
+                    </span>
+                  )}
                 </div>
               </motion.div>
             );
