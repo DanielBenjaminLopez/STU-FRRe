@@ -1,4 +1,10 @@
 #schedule {
+  /* Raíz de escalado de la grilla. Al heredar de las variables --text-* de
+     Tailwind, las tipografías de abajo se duplican solas dentro de
+     .totem-scale-stage (tótem 4K) y quedan normales en el admin. La geometría
+     del grid se expresa en `em` contra este tamaño, así que escala junto con
+     el texto. Usar px o rem crudo acá deja la grilla a media escala. */
+  font-size: var(--text-base);
   background: rgba(255, 255, 255, 0.18);
 }
 
@@ -24,7 +30,7 @@
   overflow: hidden;
   padding: 0.5rem;
   color: #374151;
-  font-size: 0.875rem;
+  font-size: var(--text-lg);
   font-weight: 600;
 }
 
@@ -33,9 +39,10 @@
   align-items: flex-start;
   justify-content: flex-end;
   padding: 0.5rem;
-  color: #9ca3af;
-  font-size: 0.75rem;
+  color: #6b7280;
+  font-size: var(--text-base);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .schedule-class-wrapper {

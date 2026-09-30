@@ -31,7 +31,10 @@ export interface ScheduleGridProps {
 
 const HOURS_START = 8;
 const HOURS_END = 20;
-const HOUR_HEIGHT = 64;
+// Altura de una hora en `em` contra el `font-size` del contenedor
+// (var(--text-base)): 64px en el admin y 128px dentro del tótem 4K. En px fijo
+// las filas no acompañarían la tipografía escalada.
+const HOUR_HEIGHT_EM = 4;
 
 const CARRERA_COLORS: Record<
   string,
@@ -152,8 +155,9 @@ function layoutOverlapping(items: ScheduleItem[]): PositionedEvent[] {
     .map((item) => {
       const startMin = getMinutes(item.hora_inicio);
       const endMin = getMinutes(item.hora_fin);
-      const top = ((startMin - HOURS_START * 60) / 60) * HOUR_HEIGHT;
-      const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT, 24);
+      // top y height se calculan en `em` para acompañar la escala del texto.
+      const top = ((startMin - HOURS_START * 60) / 60) * HOUR_HEIGHT_EM;
+      const height = Math.max(((endMin - startMin) / 60) * HOUR_HEIGHT_EM, 1.5);
       return { item, top, height, left: 0, width: 100 };
     })
     .sort((a, b) => a.top - b.top || a.height - b.height);
@@ -226,19 +230,22 @@ function TimeGrid({
     });
   }
 
-  const totalHeight = hours.length * HOUR_HEIGHT;
+  const totalHeight = hours.length * HOUR_HEIGHT_EM;
 
   return (
-    <div className="flex flex-col h-full overflow-hidden mx-8">
-      <div className="flex border-b border-gray-200 shrink-0 overflow-hidden">
-        <div className="w-16 shrink-0" />
+    <div
+      className="mx-8 flex h-full w-full flex-col overflow-auto"
+      style={{ fontSize: "var(--text-base)" }}
+    >
+      <div className="flex shrink-0 overflow-hidden border-b border-gray-200">
+        <div className="w-20 shrink-0" />
         {dayColumns.map((col) => (
           <div
             key={col.label + col.date.toISOString()}
-            className="flex-1 min-w-0 py-3 text-center text-sm font-semibold text-gray-600 border-l border-gray-200"
+            className="min-w-0 flex-1 border-l border-gray-200 py-3 text-center text-base font-semibold text-gray-600"
           >
             <div>{col.label}</div>
-            <div className="text-xs font-normal text-gray-400">
+            <div className="text-sm font-normal text-gray-500">
               {col.date.getDate()}
             </div>
           </div>
@@ -246,14 +253,17 @@ function TimeGrid({
       </div>
 
       <div className="flex flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="w-16 shrink-0 relative" style={{ height: totalHeight }}>
+        <div
+          className="relative w-20 shrink-0"
+          style={{ height: `${totalHeight}em` }}
+        >
           {hours.map((h) => (
             <div
               key={h}
               className="absolute left-0 right-0 flex items-start justify-end pr-2"
-              style={{ top: (h - HOURS_START) * HOUR_HEIGHT }}
+              style={{ top: `${(h - HOURS_START) * HOUR_HEIGHT_EM}em` }}
             >
-              <span className="text-xs text-gray-400 mt-1">
+              <span className="mt-1 whitespace-nowrap text-sm text-gray-600">
                 {String(h).padStart(2, "0")}:00
               </span>
             </div>
@@ -266,13 +276,13 @@ function TimeGrid({
             <div
               key={col.label + col.date.toISOString()}
               className="flex-1 min-w-0 relative border-l border-gray-200"
-              style={{ height: totalHeight }}
+              style={{ height: `${totalHeight}em` }}
             >
               {hours.map((h) => (
                 <div
                   key={h}
                   className="absolute left-0 right-0 border-t border-gray-100"
-                  style={{ top: (h - HOURS_START) * HOUR_HEIGHT }}
+                  style={{ top: `${(h - HOURS_START) * HOUR_HEIGHT_EM}em` }}
                 />
               ))}
 
@@ -283,23 +293,23 @@ function TimeGrid({
                     key={evt.item.id}
                     className={`absolute rounded-2xl border px-2 py-1 overflow-hidden cursor-default ${colors.bg} ${colors.border}`}
                     style={{
-                      top: evt.top + 1,
-                      height: evt.height - 2,
+                      top: `${evt.top + 0.05}em`,
+                      height: `${evt.height - 0.1}em`,
                       left: `${evt.left}%`,
                       width: `${evt.width - 1}%`,
                     }}
                     title={`${evt.item.carrera_codigo} - ${evt.item.materia_nombre}\n${evt.item.comision ? `[${evt.item.comision}] - ` : ""}${formatAula(evt.item.aula)}`}
                   >
                     <div
-                      className={`text-xs font-semibold leading-tight ${colors.text} truncate`}
+                      className={`hyphens-auto line-clamp-4 break-words text-lg font-semibold leading-tight ${colors.text}`}
                     >
                       {evt.item.materia_nombre}
                     </div>
-                    <div className="text-[10px] text-gray-500 leading-tight">
+                    <div className="text-sm leading-tight text-gray-500">
                       {evt.item.hora_inicio.slice(0, 5)} -{" "}
                       {evt.item.hora_fin.slice(0, 5)}
                     </div>
-                    <div className="text-[10px] text-gray-500 leading-tight truncate">
+                    <div className="break-words text-xs leading-tight text-gray-500">
                       {evt.item.comision ? `[${evt.item.comision}] · ` : ""}
                       {formatAula(evt.item.aula)}
                     </div>
@@ -332,7 +342,10 @@ function ListView({ items }: { items: ScheduleItem[] }) {
   }, [items]);
 
   return (
-    <div className="flex flex-col gap-6 overflow-auto p-4 h-full mx-4">
+    <div
+      className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 overflow-auto p-4"
+      style={{ fontSize: "var(--text-base)" }}
+    >
       {grouped.length === 0 && (
         <div className="flex items-center justify-center h-full">
           <span className="text-gray-400">No hay elementos para mostrar</span>
@@ -340,7 +353,7 @@ function ListView({ items }: { items: ScheduleItem[] }) {
       )}
       {grouped.map((group) => (
         <div key={group.day} className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
+          <h3 className="text-lg font-semibold text-gray-600 uppercase tracking-wide">
             {group.label}
           </h3>
           <div className="flex flex-col gap-2">
@@ -351,16 +364,16 @@ function ListView({ items }: { items: ScheduleItem[] }) {
                   key={item.id}
                   className={`flex items-start gap-3 p-3 rounded-2xl border ${colors.border} ${colors.bg}`}
                 >
-                  <div className="shrink-0 text-xs font-semibold text-gray-500 mt-0.5 min-w-20">
+                  <div className="mt-0.5 min-w-32 shrink-0 text-base font-semibold text-gray-600">
                     {item.hora_inicio.slice(0, 5)} - {item.hora_fin.slice(0, 5)}
                   </div>
-                  <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex min-w-0 flex-col gap-1">
                     <span
-                      className={`text-sm font-semibold ${colors.text} truncate`}
+                      className={`hyphens-auto line-clamp-4 break-words text-xl font-semibold ${colors.text}`}
                     >
                       {item.materia_nombre}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="break-words text-sm text-gray-500">
                       {item.comision ? `[${item.comision}] · ` : ""}
                       {formatAula(item.aula)} · {item.carrera_codigo}
                     </span>

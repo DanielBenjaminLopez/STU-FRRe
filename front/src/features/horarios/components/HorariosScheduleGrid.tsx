@@ -240,14 +240,17 @@ function Schedule({ items }: { items: Clase[] }) {
   }
 
   const rows = times.length - 1;
-  const gridRows = `48px repeat(${rows}, minmax(48px, 1fr)) 24px`;
-  const gridColumns = `72px repeat(${DAYS.length}, minmax(0, 1fr))`;
+  // La geometría va en `em` contra el `font-size` de #schedule, que es
+  // var(--text-base): 48px en el admin y 96px dentro del tótem 4K. Con px fijo
+  // las filas no crecían y el texto escalado se recortaba.
+  const gridRows = `3em repeat(${rows}, minmax(3em, 1fr)) 1em`;
+  const gridColumns = `4.5em repeat(${DAYS.length}, minmax(0, 1fr))`;
 
   return (
     <div className="h-full w-full overflow-auto p-4 sm:p-8">
       <div
         id="schedule"
-        className="mx-auto grid h-full min-w-[760px] w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
+        className="mx-auto grid h-full w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
         style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}
       >
         <div className="schedule-corner" />
@@ -313,20 +316,16 @@ function Schedule({ items }: { items: Clase[] }) {
                   className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)}`}
                   title={`${item.materia_nombre}\n[${item.comision}] · ${item.carrera_codigo}\nAula: ${item.aula}`}
                 >
-                  <span className="truncate text-sm font-semibold leading-tight">
+                  <span className="line-clamp-4 hyphens-auto break-words text-lg font-semibold leading-tight">
                     {item.materia_nombre}
                   </span>
-                  <span className="text-[10px] leading-tight opacity-75">
+                  <span className="text-sm leading-tight opacity-75">
                     {formatTime(item.hora_inicio)} - {formatTime(item.hora_fin)}
                   </span>
-                  <span className="truncate text-[10px] leading-tight opacity-75">
-                    [{item.comision}]
+                  <span className="break-words text-sm leading-tight opacity-70">
+                    {item.comision ? `[${item.comision}] · ` : ""}
+                    {item.aula}
                   </span>
-                  {item.aula && (
-                    <span className="truncate text-[10px] leading-tight opacity-60">
-                      {item.aula}
-                    </span>
-                  )}
                 </div>
               </motion.div>
             );
