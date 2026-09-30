@@ -28,6 +28,7 @@ export interface Totem {
   pin_mapa_piso: "baja" | "primero" | "segundo" | null;
   pin_mapa_svg_x: number | null;
   pin_mapa_svg_y: number | null;
+  pin_mapa_orientacion?: 0 | 90 | 180 | 270 | number;
   video_url: string | null;
   video_intervalo: number;
   video_activo: boolean;
@@ -92,6 +93,16 @@ export async function updateTotemPinMapa(
           }
         : { pin_mapa_piso: null, pin_mapa_svg_x: null, pin_mapa_svg_y: null },
     ),
+  });
+}
+
+export async function updateTotemOrientacionMapa(
+  id: number,
+  pin_mapa_orientacion: 0 | 90 | 180 | 270 | number,
+): Promise<Totem> {
+  return apiFetch<Totem>(`/api/totems/${id}/`, {
+    method: "PATCH",
+    body: JSON.stringify({ pin_mapa_orientacion }),
   });
 }
 

@@ -2,18 +2,26 @@ import { useState } from "react";
 import { AnimatePresence } from "motion/react";
 import MapaFull from "./MapaFull";
 import MapaRaw, { type PinPosition } from "./MapaRaw";
-import { useTotemPin } from "../../../shared/context/TotemPinContext";
+import {
+  useTotemPin,
+  useTotemOrientation,
+} from "../../../shared/context/TotemPinContext";
 
 export default function Mapa({
   pinPosition: pinPositionProp,
+  orientation: orientationProp,
 }: {
   pinPosition?: PinPosition | null;
+  orientation?: number;
 }) {
   const [showFull, setShowFull] = useState(false);
   // Si se provee la prop directamente (ej: admin), úsala; si no, leé del contexto del tótem
   const contextPin = useTotemPin();
+  const contextOrientation = useTotemOrientation();
   const pinPosition =
     pinPositionProp !== undefined ? pinPositionProp : contextPin;
+  const orientation =
+    orientationProp !== undefined ? orientationProp : contextOrientation;
 
   return (
     <>
@@ -22,6 +30,7 @@ export default function Mapa({
           <MapaFull
             onClose={() => setShowFull(false)}
             pinPosition={pinPosition}
+            orientation={orientation}
           />
         )}
       </AnimatePresence>
@@ -38,7 +47,11 @@ export default function Mapa({
           </button>
         </div>
         <div className="flex items-center justify-center w-full h-full bg-white/50 rounded-4xl pointer-events-none border border-gray-200 overflow-hidden">
-          <MapaRaw compact pinPosition={pinPosition} />
+          <MapaRaw
+            compact
+            pinPosition={pinPosition}
+            orientation={orientation}
+          />
         </div>
       </div>
     </>

@@ -9,9 +9,11 @@ import {
 export default function MapaFull({
   onClose,
   pinPosition,
+  orientation,
 }: {
   onClose: () => void;
   pinPosition?: PinPosition | null;
+  orientation?: number;
 }) {
   return (
     <motion.div
@@ -41,7 +43,7 @@ export default function MapaFull({
           </div>
         </div>
         {/* <MapaRaw /> */}
-        <MapaRaw pinPosition={pinPosition} />
+        <MapaRaw pinPosition={pinPosition} orientation={orientation} />
       </motion.div>
     </motion.div>
   );

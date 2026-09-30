@@ -22,8 +22,10 @@ import {
 import { fetchTotemMe, type Totem } from "../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
 import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext";
-import { TotemPinProvider } from "../../shared/context/TotemPinContext";
-import type { PinPosition, FloorKey } from "../../features/mapa";
+import {
+  TotemPinProvider,
+  getTotemPinPosition,
+} from "../../shared/context/TotemPinContext";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
 import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
@@ -165,22 +167,14 @@ export default function Home() {
     : null;
   const hasWidgets = plantilla && plantilla.widgets.length > 0;
 
-  const pinPosition: PinPosition | null =
-    totem?.pin_mapa_piso &&
-    totem.pin_mapa_svg_x !== null &&
-    totem.pin_mapa_svg_y !== null
-      ? {
-          floor: totem.pin_mapa_piso as FloorKey,
-          svgX: totem.pin_mapa_svg_x!,
-          svgY: totem.pin_mapa_svg_y!,
-        }
-      : null;
+  const totemOrientation = totem?.pin_mapa_orientacion ?? 0;
+  const pinPosition = getTotemPinPosition(totem);
 
   const showVideo = modoVideo && totem?.video_activo && !!totem.video_url;
 
   return (
     <TotemRealtimeProvider value={lastMessage}>
-      <TotemPinProvider value={pinPosition}>
+      <TotemPinProvider value={pinPosition} orientation={totemOrientation}>
         <div
           ref={containerRef}
           className="totem-scale-container"
