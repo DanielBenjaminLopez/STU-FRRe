@@ -66,8 +66,6 @@ class PlanMateriaResource(resources.ModelResource):
             'carrera',
             'materia',
             'nivel',
-            'modalidad',
-            'cuatrimestre',
             'plan_estudio',
         )
 

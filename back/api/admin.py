@@ -106,11 +106,9 @@ class PlanMateriaAdmin(ImportExportModelAdmin):
         'carrera',
         'materia',
         'nivel',
-        'modalidad',
-        'cuatrimestre',
         'plan_estudio',
     ]
-    list_filter = ['carrera', 'nivel', 'modalidad', 'plan_estudio']
+    list_filter = ['carrera', 'nivel', 'plan_estudio']
 
 
 @admin.register(Comision)

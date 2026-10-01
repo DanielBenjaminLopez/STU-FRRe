@@ -32,7 +32,7 @@ Dado que la base de datos es relacional, existen dependencias de claves foránea
 1. **Espacios Físicos**: Aulas, laboratorios, oficinas y dependencias.
 2. **Carreras**: Carreras dictadas en la facultad.
 3. **Materias**: Asignaturas académicas.
-4. **Plan de Materias**: Relación entre carrera, materia, año/nivel, modalidad y plan de estudio.
+4. **Plan de Materias**: Relación entre carrera, materia, año/nivel y plan de estudio.
 5. **Comisiones**: Comisiones o cursos por cada materia de un plan.
 6. **Horarios de Cursado**: Asignación de días, horas y aulas a cada comisión.
 7. **Mesas de Examen**: Turnos, fechas, horas y aulas para exámenes finales.
@@ -111,16 +111,14 @@ A continuación se detalla la estructura requerida para cada archivo CSV junto c
   | `carrera` | **Sí** | Nombre exacto de la carrera existente | Debe coincidir con una carrera ya cargada. |
   | `materia` | **Sí** | Nombre exacto de la materia existente | Debe coincidir con una materia ya cargada. |
   | `nivel` | **Sí** | `primero`, `segundo`, `tercero`, `cuarto`, `quinto` | Año de cursada en el plan. |
-  | `modalidad` | **Sí** | `anual`, `cuatrimestral` | Régimen de cursado. |
-  | `cuatrimestre`| Condicional | `primero`, `segundo` | Obligatorio si modalidad es `cuatrimestral`; vacío si es `anual`. |
   | `plan_estudio`| No | `2023`, `2008` | Plan de estudio (por defecto `2023`). |
 
 - **Ejemplo CSV:**
   ```csv
-  carrera,materia,nivel,modalidad,cuatrimestre,plan_estudio
-  Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,primero,anual,,2023
-  Ingeniería en Sistemas de Información,Sistemas Operativos,segundo,cuatrimestral,primero,2023
-  Ingeniería en Sistemas de Información,Bases de Datos,tercero,cuatrimestral,segundo,2023
+  carrera,materia,nivel,plan_estudio
+  Ingeniería en Sistemas de Información,Algoritmos y Estructuras de Datos,primero,2023
+  Ingeniería en Sistemas de Información,Sistemas Operativos,segundo,2023
+  Ingeniería en Sistemas de Información,Bases de Datos,tercero,2023
   ```
 
 ---
@@ -226,5 +224,4 @@ El panel web administrativo del frontend ofrece una sección específica para im
 | `No existe la comisión 'X' para la materia 'Y'` | La comisión no fue creada previamente o el nombre de la materia tiene diferencias tipográficas. | Cargar primero la comisión en `Comisiones` verificando que coincida exactamente con la materia y carrera. |
 | `No existe el espacio 'X' en la base de datos` | El aula o laboratorio no existe en la tabla de `Espacios`. | Crear el espacio en `Espacios` antes de asociar el horario o mesa. |
 | `Formato de hora inválido ('08:00:00')` | La hora incluye segundos o texto adicional. | Usar únicamente `HH:MM` (ejemplo `08:00`). |
-| `Debe indicar el cuatrimestre cuando la modalidad es Cuatrimestral` | En `PlanMateria`, se indicó modalidad `cuatrimestral` pero el campo `cuatrimestre` quedó vacío. | Completar con `primero` o `segundo`. |
 | `El día de la semana 'X' no es válido` | El día contiene caracteres irreconocibles. | Usar `lunes`, `martes`, `miercoles`, `jueves`, `viernes` o `sabado`. |

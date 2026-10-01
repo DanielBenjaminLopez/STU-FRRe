@@ -25,10 +25,6 @@ function getMinutes(time: string): number {
   return h * 60 + m;
 }
 
-function normalizeValue(value: string | null | undefined): string {
-  return value?.trim().toLowerCase() ?? "";
-}
-
 export function useHorarios() {
   const [todas, setTodas] = useState<Clase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,8 +54,6 @@ export function useHorarios() {
             {
               nivel: planMateria.nivel,
               carreraNombre: planMateria.carrera_nombre || "",
-              modalidad: normalizeValue(planMateria.modalidad),
-              cuatrimestre: normalizeValue(planMateria.cuatrimestre),
             },
           ]),
         );
@@ -81,12 +75,6 @@ export function useHorarios() {
             nivelPorComision.get(clase.comision_id) ||
             nivelesPorPlan.get(clase.plan_materia)?.nivel ||
             "",
-          modalidad:
-            nivelesPorPlan.get(clase.plan_materia)?.modalidad ||
-            clase.modalidad,
-          cuatrimestre:
-            nivelesPorPlan.get(clase.plan_materia)?.cuatrimestre ||
-            normalizeValue(clase.cuatrimestre),
         }));
         if (!mounted) return;
         setTodas(clases);
