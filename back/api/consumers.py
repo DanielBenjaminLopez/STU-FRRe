@@ -70,7 +70,7 @@ class TotemConfigConsumer(AsyncWebsocketConsumer):
             self.totem_id = payload.get('totem_id')
             self.totem = await sync_to_async(
                 Totem.objects.get
-            )(id=self.totem_id, vinculado=True, activo=True)
+            )(id=self.totem_id, vinculado=True)
         except (TokenError, Totem.DoesNotExist, ValueError, TypeError):
             await self.close(code=4403)
             return
@@ -96,3 +96,10 @@ class TotemConfigConsumer(AsyncWebsocketConsumer):
             'type': 'contenido_actualizado',
             'resource': event['resource'],
         }))
+
+    async def totem_eliminado(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'totem_eliminado',
+            'totem_id': event['totem_id'],
+        }))
+        await self.close(code=4403)

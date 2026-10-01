@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { sileo } from "sileo";
 
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import ImportCsvModal from "../components/ImportCsvModal";
+import Button from "../../shared/components/ui/Button";
 import { fetchCarreras } from "../../shared/api/carreras";
 import {
   fetchMesasExamen,
@@ -14,10 +16,10 @@ import {
   fetchPlanMaterias,
   fetchEspaciosForSelect,
   importarMesasExamenCSV,
-  TURNOS,
+  getTurnoFromFecha,
   type MesaExamen,
   type PlanMateriaDTO,
-} from "../../shared/api/mesasExamen";
+} from "../../features/examenes/api/mesasExamen";
 
 const columns: Column<MesaExamen>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },
@@ -85,11 +87,6 @@ const columns: Column<MesaExamen>[] = [
 export default function MesasExamenPage() {
   const [data, setData] = useState<MesaExamen[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  void error;
-  void success;
 
   const [carreras, setCarreras] = useState<{ value: number; label: string }[]>(
     [],
@@ -108,7 +105,6 @@ export default function MesasExamenPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      setError("");
       const result = await fetchMesasExamen();
       const now = Date.now();
       setData(
@@ -124,9 +120,11 @@ export default function MesasExamenPage() {
         }),
       );
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al cargar los datos",
-      );
+      sileo.error({
+        title: "Error al cargar los datos",
+        description:
+          err instanceof Error ? err.message : "Error al cargar los datos",
+      });
     } finally {
       setLoading(false);
     }
@@ -238,13 +236,6 @@ export default function MesasExamenPage() {
       type: "time",
       required: true,
     },
-    {
-      name: "turno",
-      label: "Turno",
-      type: "select",
-      required: true,
-      options: TURNOS.map((t) => ({ value: t.value, label: t.label })),
-    },
   ];
 
   function handleCreate() {
@@ -275,28 +266,36 @@ export default function MesasExamenPage() {
 
   async function handleSubmit(formData: Record<string, unknown>) {
     try {
+      const fecha = String(formData.fecha || "");
+      const autoTurno =
+        getTurnoFromFecha(fecha) || editingRow?.turno || "febrero";
+
       const payload = {
         plan_materia: Number(formData.plan_materia || formData.materia),
         espacio: Number(formData.espacio),
-        fecha: String(formData.fecha || ""),
+        fecha,
         hora: String(formData.hora || "08:00"),
-        turno: String(formData.turno || "febrero"),
+        turno: autoTurno,
       };
 
       if (editingRow) {
         await updateMesaExamen(editingRow.id, payload);
-        setSuccess("Mesa de examen actualizada");
       } else {
         await createMesaExamen(payload as unknown as Omit<MesaExamen, "id">);
-        setSuccess("Mesa de examen creada");
+        sileo.success({ title: "Mesa de examen creada" });
       }
-      setTimeout(() => setSuccess(""), 3000);
       setShowForm(false);
       setEditingRow(null);
       setSelectedCarrera(null);
       await loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Error al guardar la mesa de examen",
+      });
     }
   }
 
@@ -304,12 +303,17 @@ export default function MesasExamenPage() {
     try {
       if (deletingRow) {
         await deleteMesaExamen(deletingRow.id);
-        setSuccess("Mesa de examen eliminada");
-        setTimeout(() => setSuccess(""), 3000);
+        sileo.success({ title: "Mesa de examen eliminada" });
         await loadData();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Error al eliminar la mesa de examen",
+      });
     } finally {
       setDeletingRow(null);
     }
@@ -323,13 +327,9 @@ export default function MesasExamenPage() {
         onCreate={handleCreate}
         createLabel="Nuevo"
       >
-        <button
-          type="button"
-          onClick={() => setShowImportModal(true)}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
-        >
+        <Button variant="primary" onClick={() => setShowImportModal(true)}>
           Importar
-        </button>
+        </Button>
       </PageHeader>
 
       <DataTable
@@ -338,8 +338,8 @@ export default function MesasExamenPage() {
         onEdit={handleEdit}
         onDelete={(row) => setDeletingRow(row)}
         isLoading={loading}
-        searchPlaceholder="Buscar"
-        hideCount
+        searchPlaceholder="Buscar mesa de examen..."
+        label="mesas de examen"
       />
 
       {showForm && (
@@ -367,7 +367,6 @@ export default function MesasExamenPage() {
                     (editingRow.fecha_hora
                       ? editingRow.fecha_hora.split("T")[1]?.slice(0, 5)
                       : "08:00"),
-                  turno: editingRow.turno,
                 }
               : undefined
           }
@@ -396,9 +395,11 @@ export default function MesasExamenPage() {
           onClose={() => setShowImportModal(false)}
           onImport={importarMesasExamenCSV}
           onSuccess={(res) => {
-            setSuccess(res.detail || "Importación realizada exitosamente.");
+            sileo.success({
+              title: "Importación exitosa",
+              description: res.detail || "Importación realizada exitosamente.",
+            });
             loadData();
-            setTimeout(() => setSuccess(""), 4000);
           }}
         />
       )}

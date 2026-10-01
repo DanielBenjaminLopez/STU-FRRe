@@ -1,3 +1,4 @@
+from unittest.mock import patch
 from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from rest_framework import status
@@ -202,6 +203,38 @@ class TotemModelTest(TestCase):
         totem = Totem.objects.create(activo=False)
         self.assertFalse(totem.activo)
 
+    def test_codigo_valido_expira_a_los_5_minutos(self):
+        from datetime import timedelta
+        from django.utils import timezone
+
+        totem_expirado = Totem.objects.create(
+            codigo_vinculacion="12345",
+            codigo_creado_en=timezone.now() - timedelta(minutes=6),
+            vinculado=False,
+        )
+        self.assertFalse(totem_expirado.codigo_valido)
+
+        totem_valido = Totem.objects.create(
+            codigo_vinculacion="54321",
+            codigo_creado_en=timezone.now() - timedelta(minutes=4),
+            vinculado=False,
+        )
+        self.assertTrue(totem_valido.codigo_valido)
+
+
+class TotemSecurityTestCase(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_rate_limiting_crear_totem(self):
+        url = "/api/totems/new/"
+        for _ in range(10):
+            response = self.client.post(url)
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response_11 = self.client.post(url)
+        self.assertEqual(response_11.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
 
 class TotemAPITestCase(TestCase):
     def setUp(self):
@@ -237,6 +270,48 @@ class TotemAPITestCase(TestCase):
             response.data["plantilla"]["widgets_posiciones"][0]["widget_tipo"],
             "horarios_totem_test",
         )
+
+    def test_listar_totems_solo_retorna_vinculados_por_defecto(self):
+        self.totem.vinculado = True
+        self.totem.save()
+        totem_no_vinculado = Totem.objects.create(
+            codigo_vinculacion="99999", vinculado=False
+        )
+
+        response = self.client.get("/api/totems/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [t["id"] for t in response.data]
+        self.assertIn(self.totem.id, ids)
+        self.assertNotIn(totem_no_vinculado.id, ids)
+
+    def test_listar_totems_con_filtro_vinculado(self):
+        self.totem.vinculado = True
+        self.totem.save()
+        totem_no_vinculado = Totem.objects.create(
+            codigo_vinculacion="99998", vinculado=False
+        )
+
+        # Filtro vinculados=false
+        res_no_vinc = self.client.get("/api/totems/?vinculado=false")
+        ids_no_vinc = [t["id"] for t in res_no_vinc.data]
+        self.assertIn(totem_no_vinculado.id, ids_no_vinc)
+        self.assertNotIn(self.totem.id, ids_no_vinc)
+
+        # Filtro vinculados=all
+        res_all = self.client.get("/api/totems/?vinculado=all")
+        ids_all = [t["id"] for t in res_all.data]
+        self.assertIn(self.totem.id, ids_all)
+        self.assertIn(totem_no_vinculado.id, ids_all)
+
+    @patch("api.features.totems.api.notify_totem_deleted")
+    def test_eliminar_totem_notifica_y_borra(self, mock_notify):
+        totem_id = self.totem.id
+        url = f"/api/totems/{totem_id}/"
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Totem.objects.filter(id=totem_id).exists())
+        mock_notify.assert_called_once_with(totem_id)
 
     def test_no_se_puede_borrar_plantilla_asignada(self):
         url = f"/api/plantillas/{self.plantilla.id}/"

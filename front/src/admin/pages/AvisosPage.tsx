@@ -6,7 +6,7 @@ import {
   deleteAviso,
   TIPOS_AVISO,
   type Aviso,
-} from "../../shared/api/avisos";
+} from "../../features/layout/api/avisos";
 import type { Column } from "../components/DataTable";
 
 const columns: Column<Aviso>[] = [
@@ -43,6 +43,7 @@ const config = {
   update: updateAviso,
   remove: deleteAviso,
   getRowLabel: (row: Aviso) => `${row.tipo} - ${row.motivo}`,
+  notifyOnUpdate: false,
 };
 
 export default function AvisosPage() {

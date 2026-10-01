@@ -314,6 +314,8 @@ class Command(BaseCommand):
             ("Examenes", "examenes", 4, 2),
             ("Calendario", "calendario", 2, 2),
             ("Mapa", "mapa", 2, 2),
+            ("Noticias", "noticias", 4, 2),
+            ("Eventos", "novedades", 4, 2),
         ]
         for nombre, tipo, col_tam, fila_tam in widgets_data:
             Widget.objects.get_or_create(

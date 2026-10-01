@@ -1,0 +1,1 @@
+"""Template composition feature."""

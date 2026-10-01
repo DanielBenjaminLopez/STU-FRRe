@@ -1,3 +1,5 @@
+import Button from "../../shared/components/ui/Button";
+
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
@@ -23,13 +25,9 @@ export default function PageHeader({
       <div className="flex items-center gap-3">
         {children}
         {onCreate && (
-          <button
-            type="button"
-            onClick={onCreate}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-          >
+          <Button variant="primary" onClick={onCreate}>
             {createLabel}
-          </button>
+          </Button>
         )}
       </div>
     </div>

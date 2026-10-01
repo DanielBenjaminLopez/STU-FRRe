@@ -7,22 +7,25 @@ import {
   waitFor,
 } from "@testing-library/react";
 import NoticiasPage from "../NoticiasPage";
-import * as noticiasApi from "../../../shared/api/noticias";
+import * as noticiasApi from "../../../features/noticias/api/noticias";
 
-vi.mock("../../../shared/api/noticias", () => ({
-  fetchFeed: vi.fn(),
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+import { sileo } from "sileo";
+
+vi.mock("../../../features/noticias/api/noticias", () => ({
+  fetchNoticias: vi.fn(),
   createNoticia: vi.fn(),
   updateNoticia: vi.fn(),
   deleteNoticia: vi.fn(),
   syncNoticias: vi.fn(),
-  createEvento: vi.fn(),
-  updateEvento: vi.fn(),
-  deleteEvento: vi.fn(),
-  fetchEspaciosForSelect: vi.fn(),
-  TIPOS_EVENTO: [
-    { value: "conferencia", label: "Conferencia" },
-    { value: "taller", label: "Taller" },
-  ],
 }));
 
 vi.mock("../../components/NoticiasCarousel", () => ({
@@ -65,45 +68,38 @@ vi.mock("../../components/DataTable", () => ({
   ),
 }));
 
-const mockFetchFeed = vi.mocked(noticiasApi.fetchFeed);
+const mockFetchNoticias = vi.mocked(noticiasApi.fetchNoticias);
 const mockSyncNoticias = vi.mocked(noticiasApi.syncNoticias);
 const mockCreateNoticia = vi.mocked(noticiasApi.createNoticia);
 const mockDeleteNoticia = vi.mocked(noticiasApi.deleteNoticia);
-const mockDeleteEvento = vi.mocked(noticiasApi.deleteEvento);
-const mockFetchEspacios = vi.mocked(noticiasApi.fetchEspaciosForSelect);
 
-const FEED = [
+const NOTICIAS = [
   {
     id: 1,
     titulo: "Noticia de prueba",
-    tipo: "noticia",
     contenido: "Contenido",
-    fecha: "2026-08-01T10:00:00Z",
-    origen: "manual",
-    imagen_url: null,
-    enlace: null,
+    fecha_publicacion: "2026-08-01T10:00:00Z",
+    origen: "manual" as const,
+    imagen_url: "",
+    enlace: "",
     fecha_expiracion: null,
   },
   {
     id: 2,
-    titulo: "Evento de prueba",
-    tipo: "evento",
-    tipo_evento: "conferencia",
-    contenido: "Desc evento",
-    fecha: "2026-08-10T14:00:00Z",
-    origen: "manual",
+    titulo: "Noticia institucional UTN",
+    contenido: "Scrapeada de la web",
+    fecha_publicacion: "2026-08-10T14:00:00Z",
+    origen: "scraping" as const,
     imagen_url: "https://example.com/img.jpg",
-    enlace: null,
+    enlace: "https://frre.utn.edu.ar",
     fecha_expiracion: null,
-    espacio_nombre: "Aula 1",
   },
 ];
 
 describe("NoticiasPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchFeed.mockResolvedValue(FEED as never);
-    mockFetchEspacios.mockResolvedValue([]);
+    mockFetchNoticias.mockResolvedValue(NOTICIAS);
   });
 
   afterEach(() => {
@@ -112,18 +108,20 @@ describe("NoticiasPage", () => {
 
   it("renderiza el título y subtítulo", async () => {
     render(<NoticiasPage />);
-    expect(screen.getByText("Noticias y Eventos")).toBeInTheDocument();
+    expect(screen.getByText("Noticias")).toBeInTheDocument();
     expect(
-      screen.getByText("Feed unificado de noticias y eventos"),
+      screen.getByText(
+        "Gestión de noticias institucionales y sincronización con UTN",
+      ),
     ).toBeInTheDocument();
   });
 
-  it("carga y muestra el feed en la tabla", async () => {
+  it("carga y muestra las noticias en la tabla", async () => {
     render(<NoticiasPage />);
     await waitFor(() => {
       expect(screen.getByTestId("count")).toHaveTextContent("2");
     });
-    expect(mockFetchFeed).toHaveBeenCalled();
+    expect(mockFetchNoticias).toHaveBeenCalled();
   });
 
   it("muestra los botones de acción", async () => {
@@ -131,9 +129,6 @@ describe("NoticiasPage", () => {
     await screen.findByTestId("count");
     expect(
       screen.getByRole("button", { name: /Sincronizar desde UTN/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Cargar evento/ }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Cargar noticia/ }),
@@ -161,9 +156,10 @@ describe("NoticiasPage", () => {
     await waitFor(() => {
       expect(mockSyncNoticias).toHaveBeenCalled();
     });
-    expect(
-      await screen.findByText("Sincronizados 5 items"),
-    ).toBeInTheDocument();
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Sincronización finalizada",
+      description: "Sincronizados 5 items",
+    });
   });
 
   it("muestra error al fallar sincronización", async () => {
@@ -171,7 +167,12 @@ describe("NoticiasPage", () => {
     render(<NoticiasPage />);
     await screen.findByTestId("count");
     fireEvent.click(screen.getByText("Sincronizar desde UTN"));
-    expect(await screen.findByText("Error de red")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith({
+        title: "Error al sincronizar",
+        description: "Error de red",
+      });
+    });
   });
 
   it("abre modal de crear noticia", async () => {
@@ -180,15 +181,6 @@ describe("NoticiasPage", () => {
     fireEvent.click(screen.getByText("Cargar noticia"));
     expect(
       screen.getByRole("heading", { name: "Crear noticia" }),
-    ).toBeInTheDocument();
-  });
-
-  it("abre modal de crear evento", async () => {
-    render(<NoticiasPage />);
-    await screen.findByTestId("count");
-    fireEvent.click(screen.getByText("Cargar evento"));
-    expect(
-      screen.getByRole("heading", { name: "Crear evento" }),
     ).toBeInTheDocument();
   });
 
@@ -215,6 +207,9 @@ describe("NoticiasPage", () => {
     await waitFor(() => {
       expect(mockCreateNoticia).toHaveBeenCalled();
     });
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Noticia creada",
+    });
   });
 
   it("elimina una noticia tras confirmar", async () => {
@@ -232,22 +227,8 @@ describe("NoticiasPage", () => {
     await waitFor(() => {
       expect(mockDeleteNoticia).toHaveBeenCalledWith(1);
     });
-  });
-
-  it("elimina un evento tras confirmar", async () => {
-    render(<NoticiasPage />);
-    await waitFor(() => {
-      expect(screen.getByText("Evento de prueba")).toBeInTheDocument();
-    });
-
-    const deleteButtons = screen.getAllByText("delete");
-    fireEvent.click(deleteButtons[1]);
-
-    expect(screen.getByText(/¿Estás seguro/)).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Eliminar"));
-
-    await waitFor(() => {
-      expect(mockDeleteEvento).toHaveBeenCalledWith(2);
+    expect(sileo.success).toHaveBeenCalledWith({
+      title: "Noticia eliminada",
     });
   });
 
@@ -269,8 +250,13 @@ describe("NoticiasPage", () => {
   });
 
   it("muestra error al cargar datos", async () => {
-    mockFetchFeed.mockRejectedValue(new Error("Error de carga"));
+    mockFetchNoticias.mockRejectedValue(new Error("Error de carga"));
     render(<NoticiasPage />);
-    expect(await screen.findByText("Error de carga")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith({
+        title: "Error al cargar noticias",
+        description: "Error de carga",
+      });
+    });
   });
 });

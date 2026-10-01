@@ -48,7 +48,9 @@ describe("ConfirmDeleteModal", () => {
       />,
     );
     expect(screen.getByText(/¿Estás seguro/)).toBeInTheDocument();
-    expect(screen.getByText(/Esta acción no se puede deshacer/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Esta acción no se puede deshacer/),
+    ).toBeInTheDocument();
   });
 
   it("muestra los botones Cancelar y Eliminar", () => {
@@ -60,8 +62,12 @@ describe("ConfirmDeleteModal", () => {
         onClose={mockOnClose}
       />,
     );
-    expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Eliminar" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Cancelar" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Eliminar" }),
+    ).toBeInTheDocument();
   });
 
   it("llama a onClose al hacer click en Cancelar", () => {
@@ -106,7 +112,7 @@ describe("ConfirmDeleteModal", () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it("cierra el modal al hacer click en el backdrop", () => {
+  it("no cierra el modal al hacer click en el backdrop", () => {
     const { container } = render(
       <ConfirmDeleteModal
         title="Eliminar carrera"
@@ -117,7 +123,7 @@ describe("ConfirmDeleteModal", () => {
     );
     const backdrop = container.querySelector(".fixed.inset-0");
     fireEvent.click(backdrop!);
-    expect(mockOnClose).toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
   });
 
   it("el botón Eliminar tiene estilo rojo", () => {

@@ -5,11 +5,13 @@ const navItems = [
   { to: "/admin", label: "Inicio", end: true },
   { to: "/admin/horarios", label: "Horarios" },
   { to: "/admin/mesas-examen", label: "Mesas de examen" },
-  { to: "/admin/noticias", label: "Noticias y Eventos" },
+  { to: "/admin/noticias", label: "Noticias" },
+  { to: "/admin/eventos", label: "Eventos" },
   { to: "/admin/calendario-avisos", label: "Calendario" },
   { to: "/admin/avisos", label: "Avisos" },
   { to: "/admin/ubicaciones-mapa", label: "Mapas" },
   { to: "/admin/plantillas", label: "Plantillas" },
+  { to: "/admin/video", label: "Video" },
 ];
 
 export default function Sidebar() {
@@ -39,11 +41,11 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      <div className="px-4 py-4 border-t border-gray-100">
+      <div className="flex items-center justify-center px-4 h-16 border-t border-gray-200 shrink-0">
         <button
           type="button"
           onClick={logout}
-          className="w-full text-xs font-medium text-gray-400 hover:text-red-500 transition-colors text-center"
+          className="w-full text-sm font-medium text-gray-400 hover:text-red-500 transition-colors text-center cursor-pointer"
         >
           Cerrar sesión
         </button>

@@ -25,10 +25,10 @@ export default function EventTypeSelector({
               type="button"
               onClick={() => onSelect(isActive ? null : t.value)}
               className={`
-                flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-medium transition-all
+                flex items-center gap-2 px-3 py-3 rounded-xl border text-sm font-medium transition-all cursor-pointer select-none
                 ${
                   isActive
-                    ? `${t.bg} ${t.border} shadow-sm`
+                    ? `${t.bg} ${t.border}`
                     : "bg-white border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }
               `}

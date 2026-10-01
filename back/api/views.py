@@ -1,10 +1,16 @@
+import os
+import uuid
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -30,7 +36,8 @@ from .models import (
     Widget,
 )
 from .permissions import IsAdminOrSecretaria, IsTotem
-from .realtime import notify_content, notify_totems
+from .realtime import notify_content, notify_totem, notify_totems, notify_totem_deleted
+from .throttling import TotemNewRateThrottle
 
 
 class RealtimeContentMixin:
@@ -80,96 +87,6 @@ from .serializers import (
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-
-
-class WidgetViewSet(viewsets.ModelViewSet):
-    queryset = Widget.objects.all()
-    serializer_class = WidgetSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.plantillas_posiciones.exists():
-            return Response(
-                {
-                    "detail": (
-                        f"No se puede eliminar el widget '{instance.nombre}' "
-                        "porque está siendo utilizado en una o más plantillas. "
-                        "Desactívelo en su lugar."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        return super().destroy(request, *args, **kwargs)
-
-
-
-class PlantillaViewSet(viewsets.ModelViewSet):
-    queryset = Plantilla.objects.prefetch_related('widgets_posiciones__widget').all()
-    serializer_class = PlantillaSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
-
-    def _notify_assigned_totems(self, plantilla):
-        notify_totems(
-            plantilla.totems.filter(vinculado=True).values_list('id', flat=True)
-        )
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        if instance.totems.exists():
-            return Response(
-                {
-                    "detail": (
-                        f"No se puede eliminar la plantilla '{instance.nombre}' "
-                        "porque está asignada a uno o más tótems. "
-                        "Desasígnala de los tótems antes de eliminarla."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        return super().destroy(request, *args, **kwargs)
-
-    @action(detail=True, methods=['post'], url_path='reemplazar-widgets')
-    def reemplazar_widgets(self, request, pk=None):
-        plantilla = self.get_object()
-
-        items = request.data
-        if not isinstance(items, list):
-            return Response(
-                {"detail": "Se esperaba una lista de widgets."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        posiciones = []
-        for item in items:
-            serializer = PlantillaWidgetPosicionSerializer(data=item)
-            serializer.is_valid(raise_exception=True)
-            posiciones.append(serializer.validated_data)
-
-        validar_solapamiento_payload(posiciones)
-
-        with transaction.atomic():
-            plantilla.widgets_posiciones.all().delete()
-            PlantillaWidget.objects.bulk_create(
-                [
-                    PlantillaWidget(plantilla=plantilla, **datos)
-                    for datos in posiciones
-                ]
-            )
-            transaction.on_commit(lambda: self._notify_assigned_totems(plantilla))
-
-        plantilla_actualizada = Plantilla.objects.prefetch_related(
-            'widgets_posiciones__widget'
-        ).get(pk=plantilla.pk)
-        return Response(PlantillaSerializer(plantilla_actualizada).data)
-
-
-class PlantillaWidgetViewSet(viewsets.ModelViewSet):
-    queryset = PlantillaWidget.objects.select_related('plantilla', 'widget').all()
-    serializer_class = PlantillaWidgetSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
-
-
 
 
 class MeView(APIView):
@@ -375,6 +292,7 @@ class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
         'espacio',
     ).all()
     serializer_class = MesaExamenSerializer
+    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['post'], url_path='importar-csv')
     def importar_csv(self, request):
@@ -426,9 +344,66 @@ class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 
 class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'eventos'
-    queryset = Evento.objects.select_related('espacio').all()
+    queryset = Evento.objects.all()
     serializer_class = EventoSerializer
     permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            instance = serializer.save()
+            if instance.destacado:
+                Evento.objects.exclude(id=instance.id).filter(destacado=True).update(destacado=False)
+        self._notify_content()
+
+    def perform_update(self, serializer):
+        with transaction.atomic():
+            instance = serializer.save()
+            if instance.destacado:
+                Evento.objects.exclude(id=instance.id).filter(destacado=True).update(destacado=False)
+        self._notify_content()
+
+    @action(detail=True, methods=['post'], url_path='toggle-destacado')
+    def toggle_destacado(self, request, pk=None):
+        with transaction.atomic():
+            evento = self.get_object()
+            nuevo_estado = not evento.destacado
+            if nuevo_estado:
+                Evento.objects.filter(destacado=True).update(destacado=False)
+            evento.destacado = nuevo_estado
+            evento.save(update_fields=['destacado'])
+        self._notify_content()
+        return Response(self.get_serializer(evento).data)
+
+    @action(detail=False, methods=['post'], url_path='upload-imagen', parser_classes=[MultiPartParser, FormParser])
+    def upload_imagen(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response(
+                {"detail": "No se proporcionó ningún archivo de imagen."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
+        if file_obj.content_type not in allowed_types:
+            return Response(
+                {"detail": "El archivo debe ser una imagen válida (JPEG, PNG, WebP, GIF, SVG)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if file_obj.size > 5 * 1024 * 1024:
+            return Response(
+                {"detail": "La imagen no puede superar los 5MB."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ext = os.path.splitext(file_obj.name)[1]
+        unique_name = f"{uuid.uuid4().hex}{ext}"
+        saved_path = default_storage.save(f"eventos/{unique_name}", file_obj)
+        url = default_storage.url(saved_path)
+        if not url.startswith('/') and not url.startswith('http'):
+            url = f"/{url}"
+
+        return Response({"url": url}, status=status.HTTP_200_OK)
 
 
 class AvisoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
@@ -507,72 +482,9 @@ class AvisosActivosView(APIView):
 
     def get(self, request):
         hoy = timezone.now().date()
-        avisos = Suspension.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
-        serializer = SuspensionSerializer(avisos, many=True)
+        avisos = Aviso.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
+        serializer = AvisoSerializer(avisos, many=True)
         return Response(serializer.data)
-
-
-class TotemViewSet(viewsets.ModelViewSet):
-    queryset = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
-        'plantilla__widgets_posiciones__widget'
-    ).all()
-    serializer_class = TotemSerializer
-    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
-
-    def perform_update(self, serializer):
-        totem = serializer.save()
-        transaction.on_commit(lambda: notify_totems([totem.id]))
-
-
-class TotemMeView(APIView):
-    permission_classes = [IsTotem]
-
-    def get(self, request):
-        totem = Totem.objects.select_related(
-            'espacio', 'plantilla'
-        ).prefetch_related(
-            'plantilla__widgets_posiciones__widget'
-        ).get(pk=request.user.totem.id)
-        return Response(TotemSerializer(totem).data)
-
-
-class TotemNewView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = TotemNuevoSerializer(data={})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-        )
-
-
-class VincularTotemView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
-
-    def post(self, request):
-        serializer = VincularTotemSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        totem = serializer.save()
-
-        totem_token = TotemToken.for_totem(totem)
-
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"totem_{serializer.validated_data['codigo_vinculacion']}",
-            {
-                "type": "vinculado",
-                "totem_id": totem.id,
-                "access": str(totem_token),
-            },
-        )
-
-        return Response(
-            TotemSerializer(totem).data,
-            status=status.HTTP_200_OK,
-        )
 
 
 class EspacioListView(APIView):
@@ -657,3 +569,4 @@ class BulkCalendarView(APIView):
                 {'detail': f'Error al guardar eventos: {e}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+

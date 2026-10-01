@@ -10,6 +10,17 @@ import CrudAdminPage from "../CrudAdminPage";
 import type { Column } from "../DataTable";
 import type { FormField } from "../DataFormModal";
 
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+import { sileo } from "sileo";
+
 interface TestItem {
   id: number;
   nombre: string;
@@ -74,7 +85,14 @@ describe("CrudAdminPage", () => {
       fetchList: vi.fn().mockRejectedValue(new Error("Error de carga")),
     });
     render(<CrudAdminPage config={config} />);
-    expect(await screen.findByText("Error de carga")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al cargar los datos",
+          description: "Error de carga",
+        }),
+      );
+    });
   });
 
   it("muestra error genérico cuando el error no es Error", async () => {
@@ -82,9 +100,14 @@ describe("CrudAdminPage", () => {
       fetchList: vi.fn().mockRejectedValue("unknown"),
     });
     render(<CrudAdminPage config={config} />);
-    expect(
-      await screen.findByText("Error al cargar los datos"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al cargar los datos",
+          description: "Error al cargar los datos",
+        }),
+      );
+    });
   });
 
   it("abre el modal de crear al hacer click en Crear", async () => {

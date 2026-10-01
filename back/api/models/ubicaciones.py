@@ -3,6 +3,11 @@ from django.db import models
 
 
 class Espacio(models.Model):
+    EDIFICIO = [
+        ('central', 'Edificio Central'),
+        ('anexo', 'Anexo'),
+    ]
+
     TIPO_ESPACIO = [
         ('aula', 'Aula'),
         ('laboratorio_informatico', 'Laboratorio Informático'),
@@ -18,6 +23,7 @@ class Espacio(models.Model):
     ]
 
     nombre = models.CharField(max_length=150, unique=True)
+    edificio = models.CharField(max_length=20, choices=EDIFICIO, default='central')
     tipo = models.CharField(max_length=50, choices=TIPO_ESPACIO)
     tipo_otro = models.CharField(
         max_length=100,
@@ -28,7 +34,7 @@ class Espacio(models.Model):
     piso = models.CharField(max_length=20, choices=PISO, default='planta_baja')
 
     class Meta:
-        ordering = ['piso', 'nombre']
+        ordering = ['edificio', 'piso', 'nombre']
         verbose_name = 'Espacio'
         verbose_name_plural = 'Espacios'
 

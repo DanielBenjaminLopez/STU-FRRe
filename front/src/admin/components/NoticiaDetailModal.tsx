@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import type { ContenidoFeed } from "../../shared/api/noticias";
+import Button from "../../shared/components/ui/Button";
+import type { ContenidoFeed } from "../../features/noticias/api/noticias";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -41,24 +42,17 @@ export default function NoticiaDetailModal({
   const isEvento = noticia.tipo === "evento";
 
   const badgeLabel = isEvento
-    ? ["Evento", noticia.tipo_evento, noticia.espacio_nombre]
-        .filter(Boolean)
-        .join(" · ")
+    ? (noticia.tipo_evento ?? "Evento")
     : noticia.origen === "scraping"
       ? "UTN FRRe"
       : "Manual";
 
   const badgeColor = isEvento
-    ? "text-green-700 bg-green-50"
+    ? "text-amber-800 bg-amber-100"
     : "text-blue-700 bg-blue-50";
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8">
       <div className="bg-white rounded-4xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         {noticia.imagen_url && (
           <div className="relative h-64 shrink-0 overflow-hidden">
@@ -75,12 +69,36 @@ export default function NoticiaDetailModal({
         )}
 
         <div className="flex flex-col gap-4 p-8 overflow-y-auto flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`px-3 py-1 text-xs font-medium rounded-full ${badgeColor}`}
+              className={`inline-flex items-center justify-center h-6 px-3 text-xs font-semibold rounded-full border border-transparent ${badgeColor}`}
             >
               {badgeLabel}
             </span>
+            {noticia.espacio_nombre && (
+              <span className="inline-flex items-center justify-center gap-1.5 h-6 px-3 text-xs font-semibold rounded-full bg-amber-50 text-amber-900 border border-amber-200">
+                <svg
+                  className="w-3 h-3 text-amber-700 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {noticia.espacio_nombre}
+              </span>
+            )}
             <span className="text-sm text-gray-400">
               {formatDate(noticia.fecha)}
             </span>
@@ -140,13 +158,9 @@ export default function NoticiaDetailModal({
         </div>
 
         <div className="flex justify-end px-8 pb-8 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-8 py-2.5 text-sm font-medium text-white bg-black rounded-2xl hover:bg-gray-800 transition-colors"
-          >
+          <Button variant="primary" onClick={onClose}>
             Cerrar
-          </button>
+          </Button>
         </div>
       </div>
     </div>

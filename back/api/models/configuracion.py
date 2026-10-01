@@ -1,11 +1,14 @@
 import random
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from ..validators import validar_video
+
 
 class Totem(models.Model):
-    VINCULO_VIGENCIA_HORAS = 1
+    VINCULO_VIGENCIA_MINUTOS = 5
 
     nombre = models.CharField(max_length=150, blank=True, default='')
     espacio = models.ForeignKey(
@@ -53,6 +56,19 @@ class Totem(models.Model):
         blank=True,
         help_text='Coordenada Y en el sistema de coordenadas del SVG del mapa.',
     )
+    video_archivo = models.FileField(
+        upload_to='totems/videos/',
+        null=True,
+        blank=True,
+        validators=[validar_video],
+        help_text='Video MP4 vertical para pantalla del tótem.',
+    )
+    video_intervalo = models.IntegerField(
+        default=60,
+        validators=[MinValueValidator(60), MaxValueValidator(600)],
+        help_text='Segundos de inactividad antes de mostrar el video.',
+    )
+    video_activo = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['nombre']
@@ -61,6 +77,21 @@ class Totem(models.Model):
 
     def __str__(self):
         return self.nombre or self.codigo_vinculacion or f'Tótem #{self.id}'
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old = Totem.objects.get(pk=self.pk)
+                if old.video_archivo and old.video_archivo != self.video_archivo:
+                    old.video_archivo.delete(save=False)
+            except Totem.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        if self.video_archivo:
+            self.video_archivo.delete(save=False)
+        super().delete(*args, **kwargs)
 
     @classmethod
     def generar_codigo(cls) -> str:
@@ -76,7 +107,7 @@ class Totem(models.Model):
         if self.vinculado:
             return False
         vigencia = timezone.now() - self.codigo_creado_en
-        return vigencia.total_seconds() < self.VINCULO_VIGENCIA_HORAS * 3600
+        return vigencia.total_seconds() < self.VINCULO_VIGENCIA_MINUTOS * 60
 
 
 class Widget(models.Model):
@@ -153,6 +184,7 @@ class PlantillaWidget(models.Model):
 
     def __str__(self):
         return f"{self.widget.nombre} en {self.plantilla.nombre} ({self.col_pos}, {self.fila_pos})"
+
 
 
 

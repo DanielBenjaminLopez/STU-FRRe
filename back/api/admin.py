@@ -72,8 +72,8 @@ class TotemAdmin(ImportExportModelAdmin):
 @admin.register(Espacio)
 class EspacioAdmin(ImportExportModelAdmin):
     resource_class = EspacioResource
-    list_display = ['nombre', 'tipo', 'piso']
-    list_filter = ['tipo', 'piso']
+    list_display = ['nombre', 'edificio', 'tipo', 'piso']
+    list_filter = ['edificio', 'tipo', 'piso']
     search_fields = ['nombre']
 
 

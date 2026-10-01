@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -187,13 +188,14 @@ class MateriaSerializer(serializers.ModelSerializer):
 
         
 class PlanMateriaSerializer(serializers.ModelSerializer):
-    carrera_nombre = serializers.CharField(source='carrera.__str__', read_only=True)
+    carrera_nombre = serializers.CharField(source='carrera.nombre', read_only=True)
+    carrera_codigo = serializers.CharField(source='carrera.codigo', read_only=True)
     materia_nombre = serializers.CharField(source='materia.__str__', read_only=True)
     carrera_tipo = serializers.CharField(source='carrera.tipo', read_only=True)
     
     class Meta:
         model = PlanMateria
-        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'materia_nombre', 'carrera_tipo', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
+        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'carrera_codigo', 'materia_nombre', 'carrera_tipo', 'nivel', 'modalidad', 'cuatrimestre', 'plan_estudio']
 
 
 class ComisionSerializer(serializers.ModelSerializer):
@@ -213,9 +215,11 @@ class ComisionSerializer(serializers.ModelSerializer):
 
         
 class HorarioCursadoSerializer(serializers.ModelSerializer):
+    plan_materia = serializers.IntegerField(source='comision.plan_materia.id', read_only=True)
     materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
     espacio_nombre = serializers.SerializerMethodField()
     carrera_codigo = serializers.CharField(source='comision.plan_materia.carrera.codigo', read_only=True)
+    nivel = serializers.CharField(source='comision.plan_materia.nivel', read_only=True)
     comision_nombre = serializers.CharField(source='comision.nombre', read_only=True)
     espacio = serializers.PrimaryKeyRelatedField(
         queryset=Espacio.objects.all(),
@@ -229,8 +233,8 @@ class HorarioCursadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = HorarioCursado
         fields = [
-            'id', 'comision', 'espacio', 'materia_nombre', 'espacio_nombre',
-            'carrera_codigo', 'comision_nombre', 'dia_semana',
+            'id', 'comision', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre',
+            'carrera_codigo', 'nivel', 'comision_nombre', 'dia_semana',
             'hora_inicio', 'hora_fin', 'activo',
         ]
 
@@ -240,21 +244,32 @@ class MesaExamenSerializer(serializers.ModelSerializer):
     dia_semana = serializers.CharField(read_only=True)
     materia_nombre = serializers.CharField(source='plan_materia.materia.__str__', read_only=True)
     espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+    carrera_codigo = serializers.SerializerMethodField()
 
     class Meta:
         model = MesaExamen
-        fields = ['id', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo']
+        fields = [
+            'id', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre',
+            'carrera_codigo', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo',
+        ]
+
+    def get_carrera_codigo(self, obj):
+        if obj.plan_materia and obj.plan_materia.carrera and obj.plan_materia.carrera.codigo:
+            return obj.plan_materia.carrera.codigo
+        return ""
 
 
 class EventoSerializer(serializers.ModelSerializer):
     espacio_nombre = serializers.SerializerMethodField()
+    imagen_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
+    espacio = serializers.CharField(max_length=200, required=False, allow_blank=True, default='')
     
     class Meta:
         model = Evento
-        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre']
+        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre', 'destacado']
         
     def get_espacio_nombre(self, obj):
-        return str(obj.espacio) if obj.espacio else None
+        return obj.espacio or None
 
 
 class AvisoSerializer(serializers.ModelSerializer):
@@ -291,9 +306,11 @@ class NoticiasSerializer(serializers.ModelSerializer):
 
 
 class EspacioSerializer(serializers.ModelSerializer):
+    edificio_display = serializers.CharField(source='get_edificio_display', read_only=True)
+
     class Meta:
         model = Espacio
-        fields = ['id', 'nombre', 'tipo', 'piso']
+        fields = ['id', 'nombre', 'edificio', 'edificio_display', 'tipo', 'piso']
 
 
 class UbicacionMapaSerializer(serializers.ModelSerializer):
@@ -310,6 +327,10 @@ class TotemNuevoSerializer(serializers.Serializer):
     codigo_vinculacion = serializers.CharField(read_only=True)
 
     def create(self, validated_data):
+        # Limpiar tótems no vinculados cuyo código haya expirado
+        limite_expiracion = timezone.now() - timedelta(minutes=Totem.VINCULO_VIGENCIA_MINUTOS)
+        Totem.objects.filter(vinculado=False, codigo_creado_en__lt=limite_expiracion).delete()
+
         codigo = Totem.generar_codigo()
         totem = Totem.objects.create(
             codigo_vinculacion=codigo,
@@ -370,6 +391,7 @@ class TotemSerializer(serializers.ModelSerializer):
         allow_null=True,
         required=False,
     )
+    video_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Totem
@@ -378,11 +400,17 @@ class TotemSerializer(serializers.ModelSerializer):
             'config_pantalla', 'vinculado', 'activo',
             'plantilla_id', 'plantilla', 'creado_en',
             'pin_mapa_piso', 'pin_mapa_svg_x', 'pin_mapa_svg_y',
+            'video_archivo', 'video_url', 'video_intervalo', 'video_activo',
         ]
         read_only_fields = ['vinculado', 'creado_en']
 
     def get_espacio_nombre(self, obj):
         return str(obj.espacio) if obj.espacio else None
+
+    def get_video_url(self, obj):
+        if obj.video_archivo:
+            return obj.video_archivo.url
+        return None
 
 
 class EventoCalendarioSerializer(serializers.ModelSerializer):

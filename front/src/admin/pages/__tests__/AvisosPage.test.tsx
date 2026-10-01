@@ -7,9 +7,20 @@ import {
   fireEvent,
 } from "@testing-library/react";
 import AvisosPage from "../AvisosPage";
-import * as avisosApi from "../../../shared/api/avisos";
+import * as avisosApi from "../../../features/layout/api/avisos";
 
-vi.mock("../../../shared/api/avisos", () => ({
+vi.mock("sileo", () => ({
+  sileo: {
+    success: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
+
+import { sileo } from "sileo";
+
+vi.mock("../../../features/layout/api/avisos", () => ({
   fetchAvisos: vi.fn(),
   createAviso: vi.fn(),
   updateAviso: vi.fn(),
@@ -124,7 +135,14 @@ describe("AvisosPage", () => {
   it("muestra error al cargar datos", async () => {
     mockFetchAvisos.mockRejectedValue(new Error("Error de carga"));
     render(<AvisosPage />);
-    expect(await screen.findByText("Error de carga")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(sileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al cargar los datos",
+          description: "Error de carga",
+        }),
+      );
+    });
   });
 
   it("permite buscar aviso por texto", async () => {

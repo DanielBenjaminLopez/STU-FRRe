@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import WidgetPalette from "../WidgetPalette";
-import { WIDGET_REGISTRY } from "../../pages/plantillas/types";
+import { WIDGET_REGISTRY } from "../../../features/widgets/placement";
 
 vi.mock("@dnd-kit/core", () => ({
   useDraggable: vi.fn(() => ({
@@ -27,6 +27,9 @@ function MockMapa() {
 function MockNoticias() {
   return <div data-testid="mock-noticias">Noticias</div>;
 }
+function MockNovedades() {
+  return <div data-testid="mock-novedades">Eventos</div>;
+}
 
 const mockComponents = {
   horarios: MockHorarios,
@@ -34,6 +37,7 @@ const mockComponents = {
   calendario: MockCalendario,
   mapa: MockMapa,
   noticias: MockNoticias,
+  novedades: MockNovedades,
 };
 
 describe("WidgetPalette", () => {
@@ -52,7 +56,12 @@ describe("WidgetPalette", () => {
         components={mockComponents}
       />,
     );
-    expect(screen.getByText("Agregar elementos")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Widgets" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Arrastrá los widgets a la plantilla"),
+    ).toBeInTheDocument();
   });
 
   it("renderiza los widgets del registry", () => {
@@ -67,6 +76,7 @@ describe("WidgetPalette", () => {
     expect(screen.getByText("Calendario")).toBeInTheDocument();
     expect(screen.getByText("Mapa")).toBeInTheDocument();
     expect(screen.getByText("Noticias")).toBeInTheDocument();
+    expect(screen.getByText("Eventos")).toBeInTheDocument();
   });
 
   it("muestra el tamaño de cada widget", () => {
@@ -76,7 +86,7 @@ describe("WidgetPalette", () => {
         components={mockComponents}
       />,
     );
-    expect(screen.getAllByText(/4×2/)).toHaveLength(3);
+    expect(screen.getAllByText(/4×2/)).toHaveLength(4);
     expect(screen.getAllByText(/2×2/)).toHaveLength(2);
   });
 

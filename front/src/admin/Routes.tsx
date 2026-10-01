@@ -2,14 +2,15 @@ import { Routes, Route } from "react-router";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import VincularTotem from "./pages/VincularTotem";
 import MateriasHorariosPage from "./pages/MateriasHorariosPage";
 import MesasExamenPage from "./pages/MesasExamenPage";
 import NoticiasPage from "./pages/NoticiasPage";
+import EventosPage from "./pages/EventosPage";
 import CalendarioAdminPage from "./pages/CalendarioAdminPage";
 import AvisosPage from "./pages/AvisosPage";
 import PlantillasPage from "./pages/PlantillasPage";
 import UbicacionesMapaPage from "./pages/UbicacionesMapaPage";
+import VideoConfigPage from "./pages/VideoConfigPage";
 
 export default function AdminRoutes() {
   return (
@@ -20,14 +21,6 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/vincular"
-        element={
-          <ProtectedRoute>
-            <VincularTotem />
           </ProtectedRoute>
         }
       />
@@ -52,6 +45,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <NoticiasPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/eventos"
+        element={
+          <ProtectedRoute>
+            <EventosPage />
           </ProtectedRoute>
         }
       />
@@ -84,6 +85,14 @@ export default function AdminRoutes() {
         element={
           <ProtectedRoute>
             <UbicacionesMapaPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/video"
+        element={
+          <ProtectedRoute>
+            <VideoConfigPage />
           </ProtectedRoute>
         }
       />

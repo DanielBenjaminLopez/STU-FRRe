@@ -21,14 +21,9 @@ class Evento(models.Model):
     descripcion = models.TextField(blank=True)
     fecha_hora_inicio = models.DateTimeField()
     fecha_hora_fin = models.DateTimeField()
-    imagen_url = models.URLField(max_length=500, blank=True, default='')
-    espacio = models.ForeignKey(
-        'Espacio',
-        on_delete=models.CASCADE,
-        related_name='eventos',
-        null=True,
-        blank=True,
-    )
+    imagen_url = models.CharField(max_length=500, blank=True, default='')
+    espacio = models.CharField(max_length=200, blank=True, default='')
+    destacado = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['fecha_hora_inicio']

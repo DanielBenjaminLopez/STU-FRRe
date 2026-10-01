@@ -21,6 +21,11 @@ body {
   font-family: "Manrope", sans-serif;
 }
 
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 @theme {
   --color-gray-100: #f5f5f7;
   --color-gray-200: #f3f3f3;
@@ -53,9 +58,109 @@ body {
   will-change: transform;
 }
 
+@keyframes totem-code-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-code-fade {
+  animation: totem-code-fade 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+}
+
+/* === Totem scale: Opción A (JS) y Opción B (CSS-only) === */
+.totem-scale-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Variante CSS-only que habilita container queries */
+.totem-scale-container--css {
+  container-type: size;
+}
+
+.totem-scale-stage {
+  flex-shrink: 0;
+  overflow: hidden;
+  /* Opción A: optimización de capa compuesta para transform: scale() */
+  will-change: transform;
+  transform-origin: center center;
+  /* 4K 2x: sobreescribe variables Tailwind solo dentro del tótem/preview.
+     --spacing 0.25rem→0.5rem duplica p-*, m-*, gap-*, w-*, h-*, etc.
+     --text-* y --radius-* duplican tipografía y radios. No afecta admin. */
+  --spacing: 0.5rem;
+  --text-xs: 1.5rem;
+  --text-sm: 1.75rem;
+  --text-base: 2rem;
+  --text-lg: 2.25rem;
+  --text-xl: 2.5rem;
+  --text-2xl: 3rem;
+  --text-3xl: 3.75rem;
+  --text-4xl: 4.5rem;
+  --text-5xl: 6rem;
+  --text-6xl: 7.5rem;
+  --text-7xl: 9rem;
+  --text-8xl: 12rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+  --radius-4xl: 4rem;
+}
+
+/* Escala 2x para tamaños arbitrarios en px usados en widgets (gap-4=16px→32px ya cubierto por --spacing, pero text-[10px]/[17px] son px fijos) */
+.totem-scale-stage .text-\[10px\] {
+  font-size: 20px;
+}
+.totem-scale-stage .text-\[17px\] {
+  font-size: 34px;
+}
+
+/* Opción B: CSS-only sin JS. Usa container queries (cqw/cqh) para
+   calcular scale = min(100cqw/2160px, 100cqh/3840px) de forma unitless.
+   No requiere ResizeObserver ni state de React. 4K nativo. */
+.totem-scale-stage--css {
+  transform: scale(min(calc(100cqw / 2160px), calc(100cqh / 3840px)));
+}
+
+@supports not (width: 100cqw) {
+  .totem-scale-stage--css {
+    /* Fallback viewport si no hay soporte para container queries */
+    transform: scale(min(calc(100vw / 2160px), calc(100vh / 3840px)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .avisos-marquee-overflowing {
     animation-play-state: paused;
+  }
+  .animate-totem-switch,
+  .animate-widget-pop-in,
+  .animate-fade-in {
+    animation: none !important;
   }
 }
 
@@ -78,4 +183,103 @@ body {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #666;
+}
+
+/* Custom subtle scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+@keyframes widget-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-widget-pop-in {
+  animation: widget-pop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out forwards;
+}
+
+@keyframes totem-switch {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-totem-switch {
+  animation: totem-switch 0.3s ease-in-out forwards;
+  will-change: opacity;
+}
+
+/* Sileo Toast dark theme (#101828) */
+[data-sileo-viewport],
+[data-sileo-viewport] * {
+  font-family: "Manrope", sans-serif !important;
+}
+
+[data-sileo-viewport] {
+  z-index: 9999 !important;
+  --sileo-state-error: #f87171;
+  --sileo-state-success: #34d399;
+  --sileo-state-warning: #f0b968;
+  --sileo-state-info: #60a5fa;
+}
+
+[data-sileo-viewport] [data-sileo-pill],
+[data-sileo-viewport] [data-sileo-body] {
+  fill: #101828 !important;
+}
+
+[data-sileo-viewport] [data-sileo-title] {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+}
+
+[data-sileo-viewport] [data-sileo-description] {
+  font-size: 0.8125rem !important;
+  line-height: 1.25rem !important;
+  color: #94a3b8 !important;
+  text-align: center !important;
+  padding: 0.75rem 1rem !important;
 }

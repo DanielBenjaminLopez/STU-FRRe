@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { sileo } from "sileo";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import TipoCarreraBadge from "../components/TipoCarreraBadge";
 import SearchableCarrera from "../components/SearchableCarrera";
 import ImportCsvModal from "../components/ImportCsvModal";
+import Button from "../../shared/components/ui/Button";
 import { AdminSchedulesSkeleton } from "../../shared/components/ui/Skeleton";
 
 import {
@@ -23,9 +25,9 @@ import {
   type PlanMateria,
   type Comision,
   type HorarioCursado,
-} from "../../shared/api/horariosAdmin";
+} from "../../features/horarios/api/horariosAdmin";
 import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
-import type { Espacio } from "../../shared/api/totems";
+import type { Espacio } from "../../features/totems/api/totems";
 
 function formatDia(dia: string): string {
   if (!dia) return "";
@@ -73,12 +75,7 @@ function MateriasHorariosPage() {
   const [carreras, setCarreras] = useState<Carrera[]>([]);
   const [espacios, setEspacios] = useState<Espacio[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-
-  void error;
-  void success;
 
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");
@@ -105,7 +102,6 @@ function MateriasHorariosPage() {
     async function init() {
       if (!active) return;
       setLoading(true);
-      setError("");
       try {
         const filters: {
           tipo?: string;
@@ -183,8 +179,14 @@ function MateriasHorariosPage() {
         });
 
         setData(result);
-      } catch {
-        if (active) setError("Error al cargar datos");
+      } catch (err) {
+        if (active) {
+          sileo.error({
+            title: "Error al cargar datos",
+            description:
+              err instanceof Error ? err.message : "Error al cargar los datos",
+          });
+        }
       } finally {
         if (active) setLoading(false);
       }
@@ -223,11 +225,13 @@ function MateriasHorariosPage() {
         hora_fin: "08:30",
         activo: true,
       });
-      setSuccess("Comisión creada");
-      setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al crear comisión");
+      sileo.error({
+        title: "Error al crear comisión",
+        description:
+          err instanceof Error ? err.message : "Error al crear la comisión",
+      });
     }
   }
 
@@ -251,11 +255,13 @@ function MateriasHorariosPage() {
           });
         }
       }
-      setSuccess("Horario agregado");
-      setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al agregar horario");
+      sileo.error({
+        title: "Error al agregar horario",
+        description:
+          err instanceof Error ? err.message : "Error al agregar el horario",
+      });
     }
   }
 
@@ -264,20 +270,22 @@ function MateriasHorariosPage() {
     try {
       if (deleteTarget.type === "materia") {
         await deletePlanMateria(deleteTarget.id as number);
-        setSuccess("Materia eliminada");
+        sileo.success({ title: "Materia eliminada" });
       } else if (deleteTarget.type === "comision") {
         await deleteComision(deleteTarget.id as number);
-        setSuccess("Comisión eliminada");
+        sileo.success({ title: "Comisión eliminada" });
       } else if (deleteTarget.type === "horario") {
         for (const id of deleteTarget.id as number[]) {
           await deleteHorario(id);
         }
-        setSuccess("Horario eliminado");
       }
-      setTimeout(() => setSuccess(""), 3000);
       reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error ? err.message : "Error al eliminar el elemento",
+      });
     } finally {
       setDeleteTarget(null);
     }
@@ -296,12 +304,9 @@ function MateriasHorariosPage() {
             Gestión de comisiones y horarios por materia
           </p>
         </div>
-        <button
-          onClick={() => setShowImportModal(true)}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-2xl transition-colors"
-        >
+        <Button variant="primary" onClick={() => setShowImportModal(true)}>
           Importar
-        </button>
+        </Button>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 space-y-4">
@@ -341,8 +346,8 @@ function MateriasHorariosPage() {
                 filterCarrera === ""
                   ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                   : filterNivel === ""
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-black text-white border-black cursor-pointer"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
               }`}
             >
               Todos
@@ -357,8 +362,8 @@ function MateriasHorariosPage() {
                   filterCarrera === ""
                     ? "bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed"
                     : filterNivel === n.value
-                      ? "bg-black text-white border-black"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                      ? "bg-black text-white border-black cursor-pointer"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
                 }`}
               >
                 {n.label}
@@ -375,8 +380,8 @@ function MateriasHorariosPage() {
               onClick={() => setFilterModalidad("")}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                 filterModalidad === ""
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                  ? "bg-black text-white border-black cursor-pointer"
+                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
               }`}
             >
               Todas
@@ -388,8 +393,8 @@ function MateriasHorariosPage() {
                 onClick={() => setFilterModalidad(m.value)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
                   filterModalidad === m.value
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                    ? "bg-black text-white border-black cursor-pointer"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-gray-300 cursor-pointer"
                 }`}
               >
                 {m.label}
@@ -444,9 +449,11 @@ function MateriasHorariosPage() {
           onClose={() => setShowImportModal(false)}
           onImport={importarHorariosCSV}
           onSuccess={(res: CsvImportResult) => {
-            setSuccess(res.detail || "Importación realizada exitosamente.");
+            sileo.success({
+              title: "Importación exitosa",
+              description: res.detail || "Importación realizada exitosamente.",
+            });
             reload();
-            setTimeout(() => setSuccess(""), 4000);
           }}
         />
       )}
@@ -542,7 +549,7 @@ function MateriaCard({
             e.stopPropagation();
             onDelete(pm.materia_nombre || `Materia #${pm.id}`);
           }}
-          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
           title="Eliminar materia"
         >
           <svg
@@ -598,7 +605,7 @@ function MateriaCard({
                 <button
                   type="button"
                   onClick={handleAddComisionLocal}
-                  className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800"
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800 cursor-pointer"
                 >
                   Agregar
                 </button>
@@ -608,7 +615,7 @@ function MateriaCard({
                     setShowAddComision(false);
                     setNewComisionNombre("");
                   }}
-                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+                  className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -617,7 +624,7 @@ function MateriaCard({
               <button
                 type="button"
                 onClick={() => setShowAddComision(true)}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors cursor-pointer"
               >
                 <svg
                   className="w-4 h-4"
@@ -640,7 +647,7 @@ function MateriaCard({
               <button
                 type="button"
                 onClick={() => setShowAddHorario(!showAddHorario)}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors cursor-pointer"
               >
                 <svg
                   className="w-4 h-4"
@@ -795,14 +802,14 @@ function InlineAddHorario({
         <button
           type="button"
           onClick={handleSubmit}
-          className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+          className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800 cursor-pointer"
         >
           OK
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-gray-500 hover:text-gray-700 cursor-pointer"
         >
           Cancelar
         </button>
@@ -865,7 +872,7 @@ function ComisionBlock({
         <button
           type="button"
           onClick={() => onDelete(c.display_name || `Comisión ${c.nombre}`)}
-          className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+          className="text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
         >
           Eliminar
         </button>
@@ -894,7 +901,7 @@ function ComisionBlock({
                     `${formatDia(g.dia_semana)} ${g.hora_inicio.slice(0, 5)}-${g.hora_fin.slice(0, 5)}`,
                   )
                 }
-                className="ml-auto text-gray-400 hover:text-red-500"
+                className="ml-auto text-gray-400 hover:text-red-500 cursor-pointer"
                 title="Eliminar horario"
               >
                 <svg
@@ -981,14 +988,14 @@ function ComisionBlock({
             <button
               type="button"
               onClick={handleAddHorarioLocal}
-              className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800"
+              className="px-3 py-1 text-white bg-black rounded-lg hover:bg-gray-800 cursor-pointer"
             >
               OK
             </button>
             <button
               type="button"
               onClick={() => setShowAddHorario(false)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 cursor-pointer"
             >
               Cancelar
             </button>
@@ -998,7 +1005,7 @@ function ComisionBlock({
         <button
           type="button"
           onClick={() => setShowAddHorario(true)}
-          className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-black transition-colors"
+          className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-black transition-colors cursor-pointer"
         >
           <svg
             className="w-3.5 h-3.5"

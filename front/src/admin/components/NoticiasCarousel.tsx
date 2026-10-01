@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { ContenidoFeed } from "../../shared/api/noticias";
+import type { ContenidoFeed } from "../../features/noticias/api/noticias";
 import NoticiaDetailModal from "./NoticiaDetailModal";
 
 const ROTATION_INTERVAL = 5000;
@@ -57,16 +57,14 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
 
   const badgeLabel =
     item.tipo === "evento"
-      ? ["Evento", item.tipo_evento, item.espacio_nombre]
-          .filter(Boolean)
-          .join(" · ")
+      ? (item.tipo_evento ?? "Evento")
       : item.origen === "scraping"
         ? "UTN FRRe"
         : "Manual";
 
   const badgeColor =
     item.tipo === "evento"
-      ? "bg-green-500/80"
+      ? "bg-amber-500/90"
       : item.origen === "scraping"
         ? "bg-blue-500/80"
         : "bg-gray-500/80";
@@ -105,7 +103,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
         <button
           type="button"
           onClick={prev}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
         >
           <svg
             className="w-5 h-5 text-white"
@@ -125,7 +123,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
         <button
           type="button"
           onClick={next}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
         >
           <svg
             className="w-5 h-5 text-white"
@@ -143,12 +141,36 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`px-2 py-0.5 text-xs font-medium text-white rounded-full backdrop-blur-sm ${badgeColor}`}
+              className={`inline-flex items-center justify-center h-6 px-3 text-xs font-semibold text-white rounded-full backdrop-blur-sm shadow-xs border border-transparent ${badgeColor}`}
             >
               {badgeLabel}
             </span>
+            {item.espacio_nombre && (
+              <span className="inline-flex items-center justify-center gap-1.5 h-6 px-3 text-xs font-semibold text-amber-950 rounded-full backdrop-blur-md bg-amber-200/90 border border-amber-300/50 shadow-xs">
+                <svg
+                  className="w-3 h-3 text-amber-900/80 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {item.espacio_nombre}
+              </span>
+            )}
             <span className="text-xs text-white/70">
               {formatDate(item.fecha)}
             </span>
@@ -160,7 +182,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
           <button
             type="button"
             onClick={() => setSelected(item)}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-white mt-1 w-fit px-4 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-white mt-1 w-fit px-4 py-1.5 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm transition-colors cursor-pointer"
           >
             Leer más
             <svg
@@ -185,7 +207,7 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
               key={`${n.tipo}-${n.id}`}
               type="button"
               onClick={() => setCurrent(i)}
-              className={`w-2 h-2 rounded-full transition-colors ${
+              className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
                 i === current ? "bg-white" : "bg-white/40"
               }`}
             />

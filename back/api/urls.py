@@ -2,6 +2,16 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from .features.plantillas.api import PlantillaViewSet, PlantillaWidgetViewSet
+from .features.totems.api import (
+    TotemConfigVideoView,
+    TotemMeView,
+    TotemNewView,
+    TotemViewSet,
+    VincularTotemView,
+)
+from .features.widgets.api import WidgetViewSet
+
 from .views import (
     AvisoViewSet,
     BulkCalendarView,
@@ -18,14 +28,7 @@ from .views import (
     MeView,
     MesaExamenViewSet,
     NoticiasViewSet,
-    PlantillaViewSet,
-    PlantillaWidgetViewSet,
-    TotemNewView,
-    TotemMeView,
-    TotemViewSet,
     UbicacionMapaViewSet,
-    VincularTotemView,
-    WidgetViewSet,
 )
 
 router = DefaultRouter()
@@ -50,6 +53,7 @@ urlpatterns = [
     path('totems/me/', TotemMeView.as_view(), name='totem_me'),
     path('totems/new/', TotemNewView.as_view(), name='totem_new'),
     path('totems/vincular/', VincularTotemView.as_view(), name='totem_vincular'),
+    path('totems/<int:pk>/config-video/', TotemConfigVideoView.as_view(), name='totem_config_video'),
     path('', include(router.urls)),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -1,48 +1,87 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import Home from "../Home";
-import { fetchTotemMe } from "../../../shared/api/totems";
+import { fetchTotemMe } from "../../../features/totems/api/totems";
 import { ApiError } from "../../../shared/api/client";
-import type { Totem } from "../../../shared/api/totems";
+import type { Totem } from "../../../features/totems/api/totems";
+import { useTotemWebSocket } from "../../../shared/hooks/useTotemWebSocket";
+import { useAvisos } from "../../../features/layout/hooks/useAvisos";
+import type { Aviso } from "../../../features/layout/api/avisos";
 
-vi.mock("../../../shared/api/totems", () => ({
+vi.mock("../../../features/totems/api/totems", () => ({
   fetchTotemMe: vi.fn(),
 }));
 
+vi.mock("../../../shared/hooks/useTotemWebSocket", () => ({
+  useTotemWebSocket: vi.fn(),
+}));
+
 const mockFetchTotemMe = vi.mocked(fetchTotemMe);
+const mockUseTotemWebSocket = vi.mocked(useTotemWebSocket);
 
 const mockNavigate = vi.fn();
 vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../../shared/components/widgets/Horarios", () => ({
+vi.mock("../../../features/horarios/components/Horarios", () => ({
   default: () => <div data-testid="mock-horarios">Horarios widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Examenes", () => ({
+vi.mock("../../../features/examenes/components/Examenes", () => ({
   default: () => <div data-testid="mock-examenes">Examenes widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Calendar", () => ({
+vi.mock("../../../features/calendario/components/Calendar", () => ({
   default: () => <div data-testid="mock-calendario">Calendario widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Mapa", () => ({
+vi.mock("../../../features/mapa/components/Mapa", () => ({
   default: () => <div data-testid="mock-mapa">Mapa widget</div>,
 }));
 
-vi.mock("../../../shared/components/widgets/Encabezado", () => ({
+vi.mock("../../../features/layout/components/Encabezado", () => ({
   default: () => <div data-testid="mock-encabezado">Encabezado</div>,
 }));
+
+vi.mock("../../../features/layout/components/Avisos", () => ({
+  default: () => <div data-testid="mock-avisos">Avisos widget</div>,
+}));
+
+vi.mock("../../../features/layout/hooks/useAvisos", () => ({
+  useAvisos: vi.fn(),
+}));
+
+const mockUseAvisos = vi.mocked(useAvisos);
+
+function makeAviso(overrides: Partial<Aviso> = {}): Aviso {
+  return {
+    id: 1,
+    horario_cursado: null,
+    actividad_extra: null,
+    fecha: "2026-03-15",
+    motivo: "Manifestacion",
+    tipo: "paro",
+    ...overrides,
+  };
+}
+
+function mockAvisos(avisos: Aviso[]) {
+  mockUseAvisos.mockReturnValue({
+    avisos,
+    loading: false,
+    error: false,
+    visible: avisos.length > 0,
+  });
+}
 
 vi.mock("../../../shared/hooks/useTotemScale", () => ({
   useTotemScale: () => ({
     containerRef: { current: null },
     scale: 1,
   }),
-  TOTEM_WIDTH: 1080,
-  TOTEM_HEIGHT: 1920,
+  TOTEM_WIDTH: 2160,
+  TOTEM_HEIGHT: 3840,
 }));
 
 function makeTotem(overrides: Partial<Totem> = {}): Totem {
@@ -56,9 +95,28 @@ function makeTotem(overrides: Partial<Totem> = {}): Totem {
     vinculado: true,
     plantilla_id: null,
     plantilla: null,
+    pin_mapa_piso: null,
+    pin_mapa_svg_x: null,
+    pin_mapa_svg_y: null,
+    video_url: null,
+    video_intervalo: 0,
+    video_activo: false,
     creado_en: "2026-01-01T00:00:00Z",
     ...overrides,
   };
+}
+
+function setupWs(
+  overrides: { lastMessage?: unknown; rejected?: boolean } = {},
+) {
+  mockUseTotemWebSocket.mockReturnValue({
+    lastMessage: (overrides.lastMessage ?? null) as {
+      type: string;
+      [key: string]: unknown;
+    } | null,
+    isConnected: true,
+    rejected: overrides.rejected ?? false,
+  });
 }
 
 describe("totem Home", () => {
@@ -66,6 +124,8 @@ describe("totem Home", () => {
     vi.clearAllMocks();
     localStorage.clear();
     localStorage.setItem("auth_token", "totem-token");
+    setupWs();
+    mockAvisos([]);
   });
 
   afterEach(() => {
@@ -137,13 +197,74 @@ describe("totem Home", () => {
     ).toBeInTheDocument();
   });
 
-  it("redirige a /onboarding cuando recibe 403", async () => {
+  it("muestra la pantalla de fuera de servicio y no redirige cuando recibe ApiError 401 Tótem desactivado", async () => {
+    mockFetchTotemMe.mockRejectedValue(new ApiError("Tótem desactivado", 401));
+    render(<Home />);
+    expect(
+      await screen.findByText("Tótem fuera de servicio"),
+    ).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      "/onboarding",
+      expect.anything(),
+    );
+  });
+
+  it("redirige a /onboarding y limpia el token cuando recibe 403", async () => {
     mockFetchTotemMe.mockRejectedValue(new ApiError("Forbidden", 403));
     render(<Home />);
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
         replace: true,
       });
+      expect(localStorage.getItem("auth_token")).toBeNull();
     });
+  });
+
+  it("redirige a /onboarding y limpia el token cuando recibe mensaje websocket totem_eliminado", async () => {
+    setupWs({ lastMessage: { type: "totem_eliminado", totem_id: 1 } });
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
+        replace: true,
+      });
+      expect(localStorage.getItem("auth_token")).toBeNull();
+    });
+  });
+
+  it("redirige a /onboarding y limpia el token cuando el websocket es rechazado", async () => {
+    setupWs({ rejected: true });
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding", {
+        replace: true,
+      });
+      expect(localStorage.getItem("auth_token")).toBeNull();
+    });
+  });
+
+  it("mantiene el espaciado amplio y oculta la banner cuando no hay avisos", async () => {
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+
+    await screen.findByTestId("mock-encabezado");
+    const columna = screen.getByTestId("mock-encabezado").parentElement;
+
+    expect(columna).toHaveClass("gap-16");
+    expect(columna).not.toHaveClass("gap-4");
+    expect(screen.queryByTestId("mock-avisos")).not.toBeInTheDocument();
+  });
+
+  it("aprieta el espaciado y muestra la banner cuando hay avisos", async () => {
+    mockAvisos([makeAviso()]);
+    mockFetchTotemMe.mockResolvedValue(makeTotem());
+    render(<Home />);
+
+    await screen.findByTestId("mock-avisos");
+    const columna = screen.getByTestId("mock-encabezado").parentElement;
+
+    expect(columna).toHaveClass("gap-4");
+    expect(columna).not.toHaveClass("gap-16");
   });
 });

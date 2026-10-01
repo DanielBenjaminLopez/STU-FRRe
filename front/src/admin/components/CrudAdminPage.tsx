@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { sileo } from "sileo";
 import DataTable, { type Column } from "./DataTable";
 import DataFormModal, { type FormField } from "./DataFormModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
@@ -19,6 +20,7 @@ interface CrudConfig<T extends { id: number }> {
   remove?: (...args: any[]) => Promise<any>;
   getRowLabel?: (row: T) => string;
   validate?: (data: Record<string, unknown>) => string | null;
+  notifyOnUpdate?: boolean;
 }
 
 interface CrudAdminPageProps<T extends { id: number }> {
@@ -40,11 +42,11 @@ export default function CrudAdminPage<T extends { id: number }>({
     remove,
     getRowLabel,
     validate,
+    notifyOnUpdate = true,
   } = config;
 
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<T | null>(null);
@@ -54,13 +56,14 @@ export default function CrudAdminPage<T extends { id: number }>({
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      setError("");
       const result = await fetchList();
       setData(result);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error al cargar los datos",
-      );
+      sileo.error({
+        title: "Error al cargar los datos",
+        description:
+          err instanceof Error ? err.message : "Error al cargar los datos",
+      });
     } finally {
       setLoading(false);
     }
@@ -93,23 +96,38 @@ export default function CrudAdminPage<T extends { id: number }>({
 
   async function handleSubmit(formData: Record<string, unknown>) {
     if (validate) {
-      const error = validate(formData);
-      if (error) {
-        setError(error);
+      const errorMsg = validate(formData);
+      if (errorMsg) {
+        sileo.error({
+          title: "Error de validación",
+          description: errorMsg,
+        });
         return;
       }
     }
     try {
       if (editingRow && update) {
         await update(editingRow.id as number, formData);
+        if (notifyOnUpdate) {
+          sileo.success({
+            title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} actualizado`,
+          });
+        }
       } else if (create) {
         await create(formData);
+        sileo.success({
+          title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} creado`,
+        });
       }
       setShowForm(false);
       setEditingRow(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al guardar");
+      sileo.error({
+        title: "Error al guardar",
+        description:
+          err instanceof Error ? err.message : "Error al guardar los datos",
+      });
     }
   }
 
@@ -117,10 +135,17 @@ export default function CrudAdminPage<T extends { id: number }>({
     try {
       if (deletingRow && remove) {
         await remove(deletingRow.id as number);
+        sileo.success({
+          title: `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} eliminado`,
+        });
         await load();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar");
+      sileo.error({
+        title: "Error al eliminar",
+        description:
+          err instanceof Error ? err.message : "Error al eliminar el elemento",
+      });
     }
   }
 
@@ -141,12 +166,6 @@ export default function CrudAdminPage<T extends { id: number }>({
         onCreate={create ? handleCreate : undefined}
         createLabel={`Crear ${entityName}`}
       />
-
-      {error && (
-        <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-600">
-          {error}
-        </div>
-      )}
 
       <DataTable
         data={data}
