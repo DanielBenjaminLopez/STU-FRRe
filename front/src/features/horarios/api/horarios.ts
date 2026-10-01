@@ -7,8 +7,6 @@ export interface Clase {
   plan_materia: number;
   comision_id: number;
   nivel: string;
-  modalidad: string;
-  cuatrimestre: string;
   comision: string;
   materia_nombre: string;
   hora_inicio: string;
@@ -38,8 +36,6 @@ interface PlanMateriaBackend {
   carrera_codigo?: string;
   carrera_nombre?: string;
   nivel: string;
-  modalidad?: string | null;
-  cuatrimestre?: string | null;
 }
 
 interface ComisionHorarioBackend {
@@ -86,8 +82,6 @@ export async function fetchHorarios(
       plan_materia: Number(h.plan_materia ?? 0),
       comision_id: Number(h.comision),
       nivel: h.nivel ?? nivelesPorPlan.get(Number(h.plan_materia ?? 0)) ?? "",
-      modalidad: "",
-      cuatrimestre: "",
       comision: h.comision_nombre,
       materia_nombre: h.materia_nombre,
       hora_inicio: h.hora_inicio,

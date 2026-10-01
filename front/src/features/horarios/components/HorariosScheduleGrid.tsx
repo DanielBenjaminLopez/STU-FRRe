@@ -28,11 +28,6 @@ const DAYS = [
   { value: "sabado", label: "Sáb" },
 ];
 
-const SEMESTERS = [
-  { value: "primero", label: "Primer cuatrimestre" },
-  { value: "segundo", label: "Segundo cuatrimestre" },
-] as const;
-
 const MIN_SCHEDULE_MINUTES = 8 * 60;
 
 const CARD_COLORS = [
@@ -245,14 +240,19 @@ function Schedule({ items }: { items: Clase[] }) {
   }
 
   const rows = times.length - 1;
-  const gridRows = `48px repeat(${rows}, minmax(48px, 1fr)) 24px`;
-  const gridColumns = `72px repeat(${DAYS.length}, minmax(0, 1fr))`;
+  // La geometría va en `em` contra el `font-size` de #schedule, que es
+  // var(--text-base): 1rem (16px) en el admin y 2rem (32px) dentro de
+  // .totem-scale-stage en el tótem 4K. Así 3em de fila miden 48px en el admin
+  // y 96px en el tótem. Con px fijo las filas no crecían y el texto escalado
+  // se recortaba.
+  const gridRows = `3em repeat(${rows}, minmax(3em, 1fr)) 1em`;
+  const gridColumns = `4.5em repeat(${DAYS.length}, minmax(0, 1fr))`;
 
   return (
     <div className="h-full w-full overflow-auto p-4 sm:p-8">
       <div
         id="schedule"
-        className="mx-auto grid h-full min-w-[760px] w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
+        className="mx-auto grid h-full w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
         style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}
       >
         <div className="schedule-corner" />
@@ -318,17 +318,19 @@ function Schedule({ items }: { items: Clase[] }) {
                   className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)}`}
                   title={`${item.materia_nombre}\n[${item.comision}] · ${item.carrera_codigo}\nAula: ${item.aula}`}
                 >
-                  <span className="truncate text-sm font-semibold leading-tight">
+                  <span className="line-clamp-4 hyphens-auto break-words text-lg font-semibold leading-snug">
                     {item.materia_nombre}
                   </span>
-                  <span className="text-[10px] leading-tight opacity-75">
+                  <span className="text-sm leading-snug opacity-75">
                     {formatTime(item.hora_inicio)} - {formatTime(item.hora_fin)}
                   </span>
-                  <span className="truncate text-[10px] leading-tight opacity-75">
-                    [{item.comision}]
-                  </span>
+                  {item.comision && (
+                    <span className="schedule-class-comision break-words text-sm leading-snug opacity-70">
+                      [{item.comision}]
+                    </span>
+                  )}
                   {item.aula && (
-                    <span className="truncate text-[10px] leading-tight opacity-60">
+                    <span className="schedule-class-aula break-words text-sm leading-snug opacity-60">
                       {item.aula}
                     </span>
                   )}
@@ -578,30 +580,15 @@ export default function HorariosScheduleGrid({
             </div>
           )}
           {!loading && !error && completeSelection && (
-            <div className="grid h-full grid-cols-1 grid-rows-2 gap-4 overflow-auto p-4 sm:p-8">
-              {SEMESTERS.map((semester) => {
-                const semesterItems = selectedItems.filter(
-                  (item) =>
-                    item.modalidad === "anual" ||
-                    item.modalidad === "" ||
-                    (item.modalidad === "cuatrimestral" &&
-                      item.cuatrimestre === semester.value),
-                );
-
-                return (
-                  <section
-                    key={semester.value}
-                    className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
-                  >
-                    <h2 className="shrink-0 border-b border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-600 sm:text-base">
-                      {semester.label}
-                    </h2>
-                    <div className="min-h-0 flex-1">
-                      <Schedule items={semesterItems} />
-                    </div>
-                  </section>
-                );
-              })}
+            <div className="grid h-full grid-cols-1 overflow-auto p-4 sm:p-8">
+              <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30">
+                <h2 className="shrink-0 border-b border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-600 sm:text-base">
+                  Horarios de cursado
+                </h2>
+                <div className="min-h-0 flex-1">
+                  <Schedule items={selectedItems} />
+                </div>
+              </section>
             </div>
           )}
         </div>

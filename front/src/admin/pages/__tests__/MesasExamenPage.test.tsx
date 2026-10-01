@@ -177,4 +177,83 @@ describe("MesasExamenPage", () => {
 
     expect(await screen.findByText("2 mesas de examen")).toBeInTheDocument();
   });
+
+  describe("importación CSV", () => {
+    async function importar(resultado: {
+      exito?: boolean;
+      detail: string;
+      totales: {
+        creados: number;
+        actualizados: number;
+        omitidos: number;
+        errores: number;
+      };
+    }) {
+      const mockImportar = vi.mocked(mesasApi.importarMesasExamenCSV);
+      mockImportar.mockResolvedValue(resultado as never);
+
+      render(<MesasExamenPage />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "Importar" }));
+
+      const input = await waitFor(() => {
+        const el =
+          document.querySelector<HTMLInputElement>('input[type="file"]');
+        if (!el) throw new Error("no se encontró el input de archivo");
+        return el;
+      });
+      fireEvent.change(input, {
+        target: {
+          files: [new File(["a,b\n1,2"], "mesas.csv", { type: "text/csv" })],
+        },
+      });
+
+      fireEvent.click(
+        document.querySelector<HTMLButtonElement>(
+          'form button[type="submit"]',
+        )!,
+      );
+
+      await screen.findByText("Resumen de Importación");
+      fireEvent.click(screen.getByRole("button", { name: "Aceptar" }));
+    }
+
+    it("muestra toast de error cuando el backend responde exito false", async () => {
+      const { sileo } = await import("sileo");
+      const mockError = vi.mocked(sileo.error);
+      const mockSuccess = vi.mocked(sileo.success);
+
+      await importar({
+        exito: false,
+        detail: "Importación fallida. Se detectaron 2 errores.",
+        totales: { creados: 0, actualizados: 0, omitidos: 0, errores: 2 },
+      });
+
+      await waitFor(() => {
+        expect(mockError).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "La importación falló" }),
+        );
+      });
+      expect(mockSuccess).not.toHaveBeenCalled();
+    });
+
+    it("muestra toast de éxito cuando la importación termina sin errores", async () => {
+      const { sileo } = await import("sileo");
+      const mockError = vi.mocked(sileo.error);
+      const mockSuccess = vi.mocked(sileo.success);
+
+      await importar({
+        exito: true,
+        detail: "Importación exitosa. 3 creados, 0 actualizados.",
+        totales: { creados: 3, actualizados: 0, omitidos: 0, errores: 0 },
+      });
+
+      await waitFor(() => {
+        expect(mockSuccess).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "Importación exitosa" }),
+        );
+      });
+      expect(mockError).not.toHaveBeenCalled();
+    });
+  });
 });

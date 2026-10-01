@@ -395,10 +395,19 @@ export default function MesasExamenPage() {
           onClose={() => setShowImportModal(false)}
           onImport={importarMesasExamenCSV}
           onSuccess={(res) => {
-            sileo.success({
-              title: "Importación exitosa",
-              description: res.detail || "Importación realizada exitosamente.",
-            });
+            const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
+            if (exito) {
+              sileo.success({
+                title: "Importación exitosa",
+                description:
+                  res.detail || "Importación realizada exitosamente.",
+              });
+            } else {
+              sileo.error({
+                title: "La importación falló",
+                description: res.detail || "No se guardó ningún registro.",
+              });
+            }
             loadData();
           }}
         />

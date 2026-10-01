@@ -1,11 +1,15 @@
+from datetime import timedelta
 from unittest.mock import patch
 from django.contrib.auth.models import Group, User
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from api.authentication import TotemToken
-from api.models import Plantilla, PlantillaWidget, Totem, Widget
+from api.models import Noticias, Plantilla, PlantillaWidget, Totem, Widget
 
 
 class WidgetModelTest(TestCase):
@@ -470,7 +474,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Duplicados", tipo="grado")
         mat = Materia.objects.create(nombre="Física I Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="K1")
         esp = Espacio.objects.create(nombre="Aula 10", tipo="aula", piso=1)
 
@@ -489,7 +493,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="ISI Test", tipo="grado")
         mat = Materia.objects.create(nombre="SGBD Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
         com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Lab 5", tipo="laboratorio", piso=1)
         Espacio.objects.create(nombre="Lab 6", tipo="laboratorio", piso=1)
@@ -509,7 +513,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Errores", tipo="grado")
         mat = Materia.objects.create(nombre="Análisis Numérico Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
         Espacio.objects.create(nombre="Aula Test Errores", tipo="aula", piso=1)
 
@@ -538,7 +542,7 @@ class CsvImportAPITestCase(TestCase):
 
         car = Carrera.objects.create(nombre="Sistemas Test Sin Espacio", tipo="grado")
         mat = Materia.objects.create(nombre="Diseño de Sistemas Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", modalidad="anual", plan_estudio="2023")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
         Comision.objects.create(plan_materia=pm, nombre="Curso 1")
 
         csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Sin Espacio,Diseño de Sistemas Test,Curso 1,,Miércoles,15:30,17:00,2023\n"
@@ -554,3 +558,331 @@ class CsvImportAPITestCase(TestCase):
         self.assertEqual(HorarioCursado.objects.count(), horarios_antes + 1)
         h = HorarioCursado.objects.latest("id")
         self.assertIsNone(h.espacio)
+
+
+class ScrapeNoticiasCommandTest(TestCase):
+    """El scraping automatico corre con --sin-contenido y avisa a los totems."""
+
+    ENLACE = "https://www.frre.utn.edu.ar/noticia-de-prueba/"
+
+    def setUp(self):
+        Noticias.objects.create(
+            titulo="Noticia de prueba",
+            contenido="Este es el cuerpo completo que ya estaba guardado.",
+            fecha_publicacion=timezone.now(),
+            enlace=self.ENLACE,
+            origen="scraping",
+        )
+        self.scrapeado = [
+            {
+                "titulo": "Noticia de prueba actualizada",
+                "contenido": "Resumen cortito del listado.",
+                "fecha_publicacion": timezone.now(),
+                "fecha_expiracion": timezone.now() + timedelta(days=365),
+                "imagen_url": "https://www.frre.utn.edu.ar/img.jpg",
+                "enlace": self.ENLACE,
+            }
+        ]
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_sin_contenido_conserva_el_cuerpo_guardado(self, mock_scrape):
+        mock_scrape.return_value = self.scrapeado
+
+        call_command("scrape_noticias", "--sin-contenido")
+
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(
+            noticia.contenido,
+            "Este es el cuerpo completo que ya estaba guardado.",
+        )
+        # el resto de los campos si se refresca
+        self.assertEqual(noticia.titulo, "Noticia de prueba actualizada")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_sin_el_flag_el_cuerpo_si_se_actualiza(self, mock_scrape):
+        mock_scrape.return_value = self.scrapeado
+
+        with patch(
+            "api.management.commands.scrape_noticias.scrape_contenido_completo",
+            return_value="Cuerpo descargado del sitio.",
+        ):
+            call_command("scrape_noticias")
+
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(noticia.contenido, "Cuerpo descargado del sitio.")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_notifica_a_los_totems(self, mock_scrape):
+        mock_scrape.return_value = self.scrapeado
+
+        # on_commit difiere el callback hasta el commit, y TestCase corre dentro
+        # de una transaccion que se hace rollback: hay que ejecutarlo a mano.
+        with patch("api.management.commands.scrape_noticias.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                call_command("scrape_noticias", "--sin-contenido")
+
+        mock_notify.assert_called_once_with("noticias")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_noticia_nueva_igual_recibe_el_resumen(self, mock_scrape):
+        nuevo = dict(self.scrapeado[0])
+        nuevo["enlace"] = "https://www.frre.utn.edu.ar/noticia-nueva/"
+        mock_scrape.return_value = [nuevo]
+
+        call_command("scrape_noticias", "--sin-contenido")
+
+        noticia = Noticias.objects.get(enlace=nuevo["enlace"])
+        # con --sin-contenido no se pisa el contenido, pero una noticia recién
+        # creada no puede quedar vacía, así que toma el resumen del listado
+        self.assertEqual(noticia.contenido, "Resumen cortito del listado.")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_rellena_noticia_que_habia_quedado_vacia(self, mock_scrape):
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        noticia.contenido = ""
+        noticia.save(update_fields=["contenido"])
+        mock_scrape.return_value = self.scrapeado
+
+        call_command("scrape_noticias", "--sin-contenido")
+
+        noticia.refresh_from_db()
+        self.assertEqual(noticia.contenido, "Resumen cortito del listado.")
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_falla_con_codigo_de_salida_distinto_de_cero(self, mock_scrape):
+        """El job diario depende del exit code: si no falla, no queda registro."""
+        mock_scrape.side_effect = Exception("timeout del sitio")
+
+        with self.assertRaises(CommandError):
+            call_command("scrape_noticias", "--sin-contenido")
+
+
+class NoticiasSyncAPITest(TestCase):
+    """El boton de sincronizar descarga el cuerpo completo y no lo pisa."""
+
+    ENLACE = "https://www.frre.utn.edu.ar/noticia-del-boton/"
+
+    def setUp(self):
+        self.scrapeado = [
+            {
+                "titulo": "Noticia del boton",
+                "contenido": "Resumen cortito del listado.",
+                "fecha_publicacion": timezone.now(),
+                "fecha_expiracion": timezone.now() + timedelta(days=365),
+                "imagen_url": "https://www.frre.utn.edu.ar/img.jpg",
+                "enlace": self.ENLACE,
+            }
+        ]
+        self.client = APIClient()
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_guarda_el_cuerpo_completo_y_no_el_resumen(self, mock_scrape, mock_completo):
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "El articulo completo de la noticia, con mucho mas detalle."
+
+        response = self.client.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(
+            noticia.contenido,
+            "El articulo completo de la noticia, con mucho mas detalle.",
+        )
+        # el cuerpo completo tiene que haberse descargado de verdad
+        mock_completo.assert_called_once_with(self.ENLACE)
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_actualiza_una_noticia_existente_con_el_cuerpo_nuevo(self, mock_scrape, mock_completo):
+        Noticias.objects.create(
+            titulo="Vieja",
+            contenido="Cuerpo viejo que debe ser reemplazado por el nuevo.",
+            fecha_publicacion=timezone.now(),
+            enlace=self.ENLACE,
+            origen="scraping",
+        )
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo nuevo descargado del sitio."
+
+        response = self.client.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        noticia = Noticias.objects.get(enlace=self.ENLACE)
+        self.assertEqual(noticia.contenido, "Cuerpo nuevo descargado del sitio.")
+        self.assertEqual(response.json()["nuevas"], 0)
+        self.assertEqual(response.json()["actualizadas"], 1)
+
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_devuelve_502_si_el_scrape_falla(self, mock_scrape):
+        mock_scrape.side_effect = Exception("timeout del sitio")
+
+        response = self.client.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertIn("timeout del sitio", response.json()["detail"])
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_responde_el_mismo_shape_que_espera_el_panel(self, mock_scrape, mock_completo):
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo."
+
+        data = self.client.post("/api/noticias/sync/").json()
+
+        # estas claves son las que lee syncNoticias en el frontend
+        self.assertEqual(
+            set(data), {"detail", "nuevas", "actualizadas", "total"}
+        )
+        self.assertEqual(data["total"], 1)
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_avisa_a_los_totems(self, mock_scrape, mock_completo):
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo."
+
+        # la vista importa notify_content a nivel de modulo, hay que parchearlo ahi
+        with patch("api.views.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.client.post("/api/noticias/sync/")
+
+        mock_notify.assert_called_once_with("noticias")
+
+    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
+    @patch("api.management.commands.scrape_noticias.scrape_noticias")
+    def test_el_endpoint_es_publico_mientras_siga_allowany(self, mock_scrape, mock_completo):
+        """Documenta que sync sigue con AllowAny, pendiente de cerrar."""
+        mock_scrape.return_value = self.scrapeado
+        mock_completo.return_value = "Cuerpo."
+
+        anonimo = APIClient()
+        response = anonimo.post("/api/noticias/sync/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class PlanMateriaSinCuatrimestreTestCase(TestCase):
+    """Cubre la eliminación de cuatrimestre y modalidad en PlanMateria."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_sin_cuatrimestre",
+            email="admin_sin_cuatrimestre@test.com",
+            password="password123",
+        )
+        admin_group, _ = Group.objects.get_or_create(name="admin")
+        self.admin_user.groups.add(admin_group)
+        self.client.force_authenticate(user=self.admin_user)
+
+    def test_model_no_tiene_cuatrimestre_ni_modalidad(self):
+        from api.models import PlanMateria
+
+        campos = {f.name for f in PlanMateria._meta.get_fields()}
+        self.assertNotIn("cuatrimestre", campos)
+        self.assertNotIn("modalidad", campos)
+        self.assertIn("nivel", campos)
+        self.assertIn("plan_estudio", campos)
+
+    def test_api_plan_materia_no_expone_cuatrimestre_ni_modalidad(self):
+        from api.models import Carrera, Materia, PlanMateria
+
+        Carrera.objects.create(nombre="Test API Sin Cuatrimestre", tipo="grado", codigo="TAC")
+        mat = Materia.objects.create(nombre="Materia Test API Sin Cuatrimestre")
+        PlanMateria.objects.create(
+            carrera=Carrera.objects.get(codigo="TAC"),
+            materia=mat,
+            nivel="primero",
+            plan_estudio="2023",
+        )
+
+        response = self.client.get("/api/plan-materias/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        fila = next(f for f in response.json() if f["materia_nombre"] == mat.nombre)
+        self.assertNotIn("cuatrimestre", fila)
+        self.assertNotIn("modalidad", fila)
+        self.assertEqual(fila["nivel"], "primero")
+        self.assertEqual(fila["plan_estudio"], "2023")
+
+    def test_api_horarios_no_expone_cuatrimestre_ni_modalidad(self):
+        from api.models import Carrera, Comision, HorarioCursado, Materia, PlanMateria
+
+        car = Carrera.objects.create(nombre="Test API Horarios", tipo="grado", codigo="TAH")
+        mat = Materia.objects.create(nombre="Materia Test API Horarios")
+        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="cuarto", plan_estudio="2023")
+        com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        HorarioCursado.objects.create(
+            comision=com,
+            dia_semana="lunes",
+            hora_inicio="08:00",
+            hora_fin="10:00",
+            activo=True,
+        )
+
+        response = self.client.get("/api/horarios/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        fila = next(
+            f for f in response.json() if f["materia_nombre"] == mat.nombre
+        )
+        self.assertNotIn("cuatrimestre", fila)
+        self.assertNotIn("modalidad", fila)
+        self.assertEqual(fila["nivel"], "cuarto")
+
+    def test_importar_plan_csv_ignora_columnas_eliminadas(self):
+        """Los CSV de seed siguen trayendo modalidad y cuatrimestre: se ignoran."""
+        import tablib
+        from api.models import Carrera, Materia, PlanMateria
+        from api.resources import PlanMateriaResource
+
+        Carrera.objects.create(nombre="Carrera Test CSV", tipo="grado", codigo="TCSV")
+        Materia.objects.create(nombre="Materia Test CSV")
+        Materia.objects.create(nombre="Materia Test CSV 2")
+
+        dataset = tablib.Dataset()
+        dataset.headers = (
+            "carrera",
+            "materia",
+            "nivel",
+            "modalidad",
+            "cuatrimestre",
+            "plan_estudio",
+        )
+        dataset.append(("Carrera Test CSV", "Materia Test CSV", "primero", "anual", "segundo", "2023"))
+        dataset.append(("Carrera Test CSV", "Materia Test CSV 2", "segundo", "cuatrimestral", "primero", "2023"))
+
+        antes = PlanMateria.objects.count()
+        result = PlanMateriaResource().import_data(dataset, dry_run=False)
+        self.assertFalse(result.has_errors(), result.row_errors())
+        self.assertEqual(PlanMateria.objects.count(), antes + 2)
+
+        car = Carrera.objects.get(codigo="TCSV")
+        pm1 = PlanMateria.objects.get(carrera=car, materia__nombre="Materia Test CSV")
+        self.assertEqual(pm1.nivel, "primero")
+        self.assertEqual(pm1.plan_estudio, "2023")
+
+    def test_importar_plan_csv_no_colapsa_planes_por_plan_estudio(self):
+        """Misma carrera, materia y nivel en dos planes: son dos PlanMateria."""
+        import tablib
+        from api.models import Carrera, Materia, PlanMateria
+        from api.resources import PlanMateriaResource
+
+        Carrera.objects.create(nombre="Química Test Planes", tipo="grado", codigo="TQP")
+        Materia.objects.create(nombre="Práctica Supervisada Test Planes")
+
+        dataset = tablib.Dataset()
+        dataset.headers = ("carrera", "materia", "nivel", "plan_estudio")
+        dataset.append(("Química Test Planes", "Práctica Supervisada Test Planes", "quinto", "2023"))
+        dataset.append(("Química Test Planes", "Práctica Supervisada Test Planes", "quinto", "1995"))
+
+        antes = PlanMateria.objects.count()
+        result = PlanMateriaResource().import_data(dataset, dry_run=False)
+        self.assertFalse(result.has_errors(), result.row_errors())
+        self.assertEqual(PlanMateria.objects.count(), antes + 2)
+
+        planes = PlanMateria.objects.filter(
+            carrera__codigo="TQP", materia__nombre="Práctica Supervisada Test Planes"
+        ).values_list("plan_estudio", flat=True)
+        self.assertEqual(sorted(planes), ["1995", "2023"])

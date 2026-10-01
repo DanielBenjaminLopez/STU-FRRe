@@ -43,16 +43,6 @@ class PlanMateria(models.Model):
         ('quinto', 'Quinto año'),
     ]
 
-    MODALIDAD = [
-        ('anual', 'Anual'),
-        ('cuatrimestral', 'Cuatrimestral'),
-    ]
-
-    CUATRIMESTRE = [
-        ('primero', 'Primero'),
-        ('segundo', 'Segundo'),
-    ]
-
     PLAN_ESTUDIO = [
         ('2026', 'Plan 2026'),
         ('2023', 'Plan 2023'),
@@ -73,18 +63,10 @@ class PlanMateria(models.Model):
         related_name='carreras',
     )
     nivel = models.CharField(max_length=10, choices=NIVEL, default='primero')
-    modalidad = models.CharField(max_length=15, choices=MODALIDAD, default='cuatrimestral')
-    cuatrimestre = models.CharField(
-        max_length=10,
-        choices=CUATRIMESTRE,
-        null=True,
-        blank=True,
-        help_text='Completar solo si la modalidad es Cuatrimestral.',
-    )
     plan_estudio = models.CharField(max_length=4, choices=PLAN_ESTUDIO, default='2023')
 
     class Meta:
-        ordering = ['carrera', 'nivel', 'cuatrimestre']
+        ordering = ['carrera', 'nivel']
         unique_together = [
             ['carrera', 'materia', 'nivel', 'plan_estudio'],
         ]
@@ -92,22 +74,10 @@ class PlanMateria(models.Model):
         verbose_name_plural = 'Plan - Materias'
 
     def __str__(self):
-        cuatrimestre_str = f', {self.get_cuatrimestre_display()} cuatrimestre' if self.cuatrimestre else ''
         return (
             f'{self.carrera.nombre} — {self.materia.nombre} '
-            f'({self.get_nivel_display()}{cuatrimestre_str}, Plan {self.plan_estudio})'
+            f'({self.get_nivel_display()}, Plan {self.plan_estudio})'
         )
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-        if self.modalidad == 'cuatrimestral' and not self.cuatrimestre:
-            raise ValidationError(
-                {'cuatrimestre': 'Debe indicar el cuatrimestre cuando la modalidad es Cuatrimestral.'}
-            )
-        if self.modalidad == 'anual' and self.cuatrimestre:
-            raise ValidationError(
-                {'cuatrimestre': 'Las materias anuales no tienen cuatrimestre.'}
-            )
 
 
 class Comision(models.Model):
