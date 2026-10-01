@@ -664,16 +664,21 @@ function buildYouAreHerePin(
   return group;
 }
 
+export type MapOrientation = 0 | 90 | 180 | 270;
+
 export type PinPosition = {
   svgX: number;
   svgY: number;
   floor: FloorKey;
 };
 
+const FLOOR_ORDER = Object.keys(FLOORS_META) as FloorKey[];
+
 export default function MapaRaw({
   initialFloor = "baja",
   compact = false,
   pinPosition = null,
+  orientation = 0,
   onPinPlaced,
   externalFloor,
 }: {
@@ -681,15 +686,21 @@ export default function MapaRaw({
   compact?: boolean;
   /** Posición del pin leída externamente (desde la BD). Si es null, no se muestra. */
   pinPosition?: PinPosition | null;
+  /** Orientación fija del mapa en grados (0, 90, 180, 270) configurada desde Admin. */
+  orientation?: number;
   /** Si se provee, activa el modo edición: click en el canvas llama a esta función con la posición elegida. */
   onPinPlaced?: (pos: PinPosition) => void;
   /** Permite que un componente padre controle el piso activo sin remountar MapaRaw. */
   externalFloor?: FloorKey;
 } = {}) {
-  const [internalFloor, setFloor] = useState<FloorKey>(initialFloor);
+  const [internalFloor, setFloor] = useState<FloorKey>(
+    () => pinPosition?.floor ?? initialFloor,
+  );
   // Cuando se controla externamente, el piso externo tiene precedencia.
   // Así evitamos el anti-patrón de setState dentro de un effect.
   const floor = externalFloor ?? internalFloor;
+
+  const orientationRad = (orientation * Math.PI) / 180;
 
   const [selectedRoom, setSelectedRoom] = useState<{
     id: string;
@@ -752,6 +763,7 @@ export default function MapaRaw({
   const youAreHereRef = useRef<THREE.Group | null>(null);
   const ghostPinRef = useRef<THREE.Group | null>(null);
   const idleAnimationStartRef = useRef(0);
+  const idleTargetRef = useRef(new THREE.Vector3(8.5, 0, 8));
   const isInteractingRef = useRef(false);
   const needsRenderRef = useRef(true);
   const floorPlaneRef = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0));
@@ -803,8 +815,14 @@ export default function MapaRaw({
     if (!searchType) return [];
     return allRooms
       .filter((r) => r.data.tipo === searchType)
-      .sort((a, b) => a.data.nombre.localeCompare(b.data.nombre));
+      .sort(
+        (a, b) =>
+          a.data.nombre.localeCompare(b.data.nombre) ||
+          FLOOR_ORDER.indexOf(a.floor) - FLOOR_ORDER.indexOf(b.floor),
+      );
   }, [allRooms, searchType]);
+
+  const isPinEditor = Boolean(onPinPlaced);
 
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
@@ -816,6 +834,9 @@ export default function MapaRaw({
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    if (buildingGroupRef.current) {
+      scene.add(buildingGroupRef.current);
+    }
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     cameraRef.current = camera;
@@ -843,7 +864,7 @@ export default function MapaRaw({
       controls.minPolarAngle = 0.8;
       controls.maxPolarAngle = 0.8;
     }
-    if (onPinPlaced) {
+    if (isPinEditor) {
       controls.minPolarAngle = 0;
       controls.maxPolarAngle = 0;
     }
@@ -858,18 +879,6 @@ export default function MapaRaw({
     dir2.position.set(-20, 10, -20);
     scene.add(dir2);
 
-    const floorPlaneGeo = new THREE.PlaneGeometry(
-      buildingSize * 1.3,
-      buildingSize * 1.3,
-    );
-    const floorPlaneMat = new THREE.MeshPhongMaterial({
-      color: 0xf0f0f0,
-    });
-    const floorPlane = new THREE.Mesh(floorPlaneGeo, floorPlaneMat);
-    floorPlane.rotation.x = -Math.PI / 2;
-    floorPlane.position.y = -0.02;
-    // scene.add(floorPlane);
-
     if (compact) {
       const camDistance = buildingSize * 0.5;
       camera.position.set(0, camDistance * 0.9, camDistance);
@@ -880,18 +889,19 @@ export default function MapaRaw({
       controls.target.set(1, 0, 0);
     }
 
-    if (onPinPlaced) {
-      const camDistance = buildingSize * 1;
+    if (isPinEditor) {
+      const camDistance = buildingSize * 1.05;
       camera.position.set(0, camDistance * 0.9, camDistance);
-      controls.target.set(8.5, 0, 0);
+      controls.target.set(0, 0, 0);
     }
 
     controls.update();
+    needsRenderRef.current = true;
 
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const idleTarget = controls.target.clone();
+    idleTargetRef.current.copy(controls.target);
     idleAnimationStartRef.current = performance.now();
 
     const handleControlStart = () => {
@@ -922,7 +932,8 @@ export default function MapaRaw({
       if (idle) {
         const time = performance.now();
         controls.target.x =
-          idleTarget.x + Math.sin(time * IDLE_PAN_SPEED) * IDLE_PAN_AMPLITUDE;
+          idleTargetRef.current.x +
+          Math.sin(time * IDLE_PAN_SPEED) * IDLE_PAN_AMPLITUDE;
         needsRenderRef.current = true;
       }
       if (isInteractingRef.current) {
@@ -955,9 +966,8 @@ export default function MapaRaw({
       controls.dispose();
       renderer.dispose();
       scene.clear();
-      raycastTargetsRef.current = [];
     };
-  }, [buildingSize, compact]);
+  }, [buildingSize, compact, isPinEditor]);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -983,6 +993,7 @@ export default function MapaRaw({
     }
 
     const group = new THREE.Group();
+    group.rotation.y = orientationRad;
     scene.add(group);
     buildingGroupRef.current = group;
 
@@ -1020,12 +1031,16 @@ export default function MapaRaw({
     hoveredRef.current = null;
     ghostPinRef.current = null;
     needsRenderRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [polygons, bounds, floor, compact]);
 
-  // --- Efecto dedicado al pin (separado del build de meshes) ---
+  // --- Efecto dedicado al pin y la orientación (sin reconstruir meshes) ---
   useEffect(() => {
     const group = buildingGroupRef.current;
     if (!group) return;
+
+    group.rotation.y = orientationRad;
+    group.updateMatrixWorld();
 
     // Limpiar pin real anterior
     if (youAreHereRef.current) {
@@ -1046,15 +1061,44 @@ export default function MapaRaw({
 
     // Dibujar pin si la posición corresponde al piso actual
     if (pinPosition && pinPosition.floor === floor) {
-      youAreHereRef.current = buildYouAreHerePin(
+      const pinGroup = buildYouAreHerePin(
         bounds,
         group,
         pinPosition.svgX,
         pinPosition.svgY,
       );
+      pinGroup.rotation.y = -orientationRad;
+      youAreHereRef.current = pinGroup;
     }
+
+    // En modo compacto, alinear el foco de la cámara con la orientación (y el pin si existe)
+    if (compact && controlsRef.current && cameraRef.current) {
+      const localX =
+        pinPosition && pinPosition.floor === floor
+          ? (pinPosition.svgX - bounds.cx) * SCALE
+          : 8.5;
+      const localZ =
+        pinPosition && pinPosition.floor === floor
+          ? -(pinPosition.svgY - bounds.cy) * SCALE
+          : 8;
+      const cos = Math.cos(orientationRad);
+      const sin = Math.sin(orientationRad);
+      const targetX = localX * cos + localZ * sin;
+      const targetZ = -localX * sin + localZ * cos;
+
+      const camDistance = buildingSize * 0.5;
+      cameraRef.current.position.set(
+        targetX - 8.5,
+        camDistance * 0.9,
+        targetZ - 8 + camDistance,
+      );
+      controlsRef.current.target.set(targetX, 0, targetZ);
+      idleTargetRef.current.set(targetX, 0, targetZ);
+      controlsRef.current.update();
+    }
+
     needsRenderRef.current = true;
-  }, [pinPosition, floor, bounds]);
+  }, [pinPosition, floor, bounds, orientationRad, compact, buildingSize]);
 
   const highlightMesh = useCallback((id: string | null) => {
     meshesRef.current.forEach((meshes) => {
@@ -1105,10 +1149,17 @@ export default function MapaRaw({
       // Modo edición de pin: mostrar pin fantasma en la posición del cursor
       if (onPinPlaced && buildingGroupRef.current) {
         const target = new THREE.Vector3();
-        raycasterRef.current.ray.intersectPlane(floorPlaneRef.current, target);
-        if (target.lengthSq() > 0) {
-          const svgX = target.x / SCALE + bounds.cx;
-          const svgY = -target.z / SCALE + bounds.cy;
+        const hit = raycasterRef.current.ray.intersectPlane(
+          floorPlaneRef.current,
+          target,
+        );
+        if (hit && target.lengthSq() > 0) {
+          buildingGroupRef.current.updateMatrixWorld();
+          const localTarget = buildingGroupRef.current.worldToLocal(
+            target.clone(),
+          );
+          const svgX = localTarget.x / SCALE + bounds.cx;
+          const svgY = -localTarget.z / SCALE + bounds.cy;
           // Actualizar o crear pin fantasma
           if (ghostPinRef.current) {
             buildingGroupRef.current.remove(ghostPinRef.current);
@@ -1173,10 +1224,17 @@ export default function MapaRaw({
       // Modo edición de pin: colocar en cualquier punto del plano del piso
       if (onPinPlaced) {
         const target = new THREE.Vector3();
-        raycasterRef.current.ray.intersectPlane(floorPlaneRef.current, target);
-        if (target.lengthSq() > 0) {
-          const svgX = target.x / SCALE + bounds.cx;
-          const svgY = -target.z / SCALE + bounds.cy;
+        const hit = raycasterRef.current.ray.intersectPlane(
+          floorPlaneRef.current,
+          target,
+        );
+        if (hit && target.lengthSq() > 0 && buildingGroupRef.current) {
+          buildingGroupRef.current.updateMatrixWorld();
+          const localTarget = buildingGroupRef.current.worldToLocal(
+            target.clone(),
+          );
+          const svgX = localTarget.x / SCALE + bounds.cx;
+          const svgY = -localTarget.z / SCALE + bounds.cy;
           onPinPlaced({ svgX, svgY, floor });
         }
         needsRenderRef.current = true;
@@ -1366,26 +1424,36 @@ export default function MapaRaw({
                   </span>
                   {searchType ? (
                     <div className="flex flex-col gap-2 overflow-auto">
-                      {filteredPlaces.map((r, i) => {
+                      {filteredPlaces.map((r) => {
                         const colors =
                           TYPE_COLORS[r.data.tipo] ?? DEFAULT_COLOR;
+                        const isSelected =
+                          searchPlaceId === r.id && floor === r.floor;
                         return (
                           <button
-                            key={`${i}`}
+                            key={`${r.floor}-${r.id}`}
                             onClick={() => handleSearchSelect(r)}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-2 ${
-                              searchPlaceId === r.id
-                                ? "text-white"
-                                : "text-black"
+                            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center justify-between gap-2 ${
+                              isSelected ? "text-white" : "text-black"
                             }`}
                             style={{
-                              backgroundColor:
-                                searchPlaceId === r.id
-                                  ? colors.highlight
-                                  : colors.base,
+                              backgroundColor: isSelected
+                                ? colors.highlight
+                                : colors.base,
                             }}
                           >
-                            {r.data.nombre}
+                            <span className="truncate">{r.data.nombre}</span>
+                            {r.data.tipo === "baños" && (
+                              <span
+                                className={`text-xs font-medium px-2.5 py-0.5 rounded-full shrink-0 transition-colors ${
+                                  isSelected
+                                    ? "bg-white/25 text-white"
+                                    : "bg-white/65 text-cyan-950"
+                                }`}
+                              >
+                                {floors[r.floor]?.label ?? r.floor}
+                              </span>
+                            )}
                           </button>
                         );
                       })}

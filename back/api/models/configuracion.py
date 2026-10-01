@@ -56,6 +56,17 @@ class Totem(models.Model):
         blank=True,
         help_text='Coordenada Y en el sistema de coordenadas del SVG del mapa.',
     )
+    ORIENTACION_MAPA_CHOICES = [
+        (0, '0° (Norte / Estándar)'),
+        (90, '90° (Este / Derecha)'),
+        (180, '180° (Sur / Invertido)'),
+        (270, '270° (Oeste / Izquierda)'),
+    ]
+    pin_mapa_orientacion = models.IntegerField(
+        choices=ORIENTACION_MAPA_CHOICES,
+        default=0,
+        help_text='Orientación fija del mapa en grados (0, 90, 180, 270).',
+    )
     video_archivo = models.FileField(
         upload_to='totems/videos/',
         null=True,

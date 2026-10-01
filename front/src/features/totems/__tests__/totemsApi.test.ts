@@ -18,6 +18,7 @@ import {
   fetchEspacios,
   vincularTotem,
   fetchTotemMe,
+  updateTotemOrientacionMapa,
 } from "../api/totems";
 
 describe("totems API", () => {
@@ -57,6 +58,21 @@ describe("totems API", () => {
     expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/1/", {
       method: "PATCH",
       body: JSON.stringify({ nombre: "Tótem Actualizado" }),
+    });
+    expect(result).toEqual(updated);
+  });
+
+  it("updateTotemOrientacionMapa llama a /api/totems/:id/ con PATCH y pin_mapa_orientacion", async () => {
+    const updated = {
+      id: 1,
+      nombre: "Tótem A",
+      pin_mapa_orientacion: 180,
+    };
+    mockApiFetch.mockResolvedValue(updated);
+    const result = await updateTotemOrientacionMapa(1, 180);
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/1/", {
+      method: "PATCH",
+      body: JSON.stringify({ pin_mapa_orientacion: 180 }),
     });
     expect(result).toEqual(updated);
   });

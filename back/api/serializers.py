@@ -398,7 +398,7 @@ class TotemSerializer(serializers.ModelSerializer):
             'id', 'nombre', 'espacio_id', 'espacio_nombre',
             'config_pantalla', 'vinculado', 'activo',
             'plantilla_id', 'plantilla', 'creado_en',
-            'pin_mapa_piso', 'pin_mapa_svg_x', 'pin_mapa_svg_y',
+            'pin_mapa_piso', 'pin_mapa_svg_x', 'pin_mapa_svg_y', 'pin_mapa_orientacion',
             'video_archivo', 'video_url', 'video_intervalo', 'video_activo',
         ]
         read_only_fields = ['vinculado', 'creado_en']

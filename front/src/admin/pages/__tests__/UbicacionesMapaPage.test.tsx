@@ -15,6 +15,7 @@ const {
   mockFetchUbicaciones,
   mockUpdateUbicacion,
   mockUpdateTotemPinMapa,
+  mockUpdateTotemOrientacionMapa,
   mockSileo,
 } = vi.hoisted(() => ({
   mockTotems: vi.fn(),
@@ -23,6 +24,7 @@ const {
   mockFetchUbicaciones: vi.fn(),
   mockUpdateUbicacion: vi.fn(),
   mockUpdateTotemPinMapa: vi.fn(),
+  mockUpdateTotemOrientacionMapa: vi.fn(),
   mockSileo: {
     success: vi.fn(),
     error: vi.fn(),
@@ -48,15 +50,18 @@ vi.mock("../../../features/mapa/api/ubicacionesMapa", () => ({
 
 vi.mock("../../../features/totems/api/totems", () => ({
   updateTotemPinMapa: mockUpdateTotemPinMapa,
+  updateTotemOrientacionMapa: mockUpdateTotemOrientacionMapa,
 }));
 
 vi.mock("../../../features/mapa/components/MapaRaw", () => ({
   default: ({
     onPinPlaced,
+    orientation,
   }: {
     onPinPlaced?: (pos: { floor: string; svgX: number; svgY: number }) => void;
+    orientation?: number;
   }) => (
-    <div data-testid="mock-mapa-raw">
+    <div data-testid="mock-mapa-raw" data-orientation={orientation ?? 0}>
       <button
         data-testid="btn-place-pin"
         onClick={() => onPinPlaced?.({ floor: "baja", svgX: 150, svgY: 250 })}
@@ -103,6 +108,7 @@ describe("UbicacionesMapaPage", () => {
     mockSelectedTotem.mockReturnValue(mockTotemWithPin);
     mockRefreshTotems.mockResolvedValue(undefined);
     mockUpdateTotemPinMapa.mockResolvedValue({});
+    mockUpdateTotemOrientacionMapa.mockResolvedValue({});
     mockUpdateUbicacion.mockResolvedValue({});
   });
 
@@ -183,6 +189,55 @@ describe("UbicacionesMapaPage", () => {
 
     // Placement should be silent
     expect(mockSileo.success).not.toHaveBeenCalled();
+  });
+
+  it("updates totem orientation and rotates editor preview", async () => {
+    render(<UbicacionesMapaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-mapa-raw")).toHaveAttribute(
+        "data-orientation",
+        "0",
+      );
+    });
+
+    const btn180 = screen.getByText("180° — Invertido");
+    fireEvent.click(btn180);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-mapa-raw")).toHaveAttribute(
+        "data-orientation",
+        "180",
+      );
+      expect(mockUpdateTotemOrientacionMapa).toHaveBeenCalledWith(
+        "totem-1",
+        180,
+      );
+      expect(mockRefreshTotems).toHaveBeenCalled();
+    });
+  });
+
+  it("shows sileo.error when updating totem orientation fails", async () => {
+    mockUpdateTotemOrientacionMapa.mockRejectedValue(
+      new Error("Orientation save failed"),
+    );
+
+    render(<UbicacionesMapaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("90° — Derecha")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("90° — Derecha"));
+
+    await waitFor(() => {
+      expect(mockSileo.error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Error al guardar la orientación",
+          description: "Orientation save failed",
+        }),
+      );
+    });
   });
 
   it("shows sileo.error when updating totem pin fails", async () => {
