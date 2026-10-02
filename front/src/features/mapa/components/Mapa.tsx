@@ -6,6 +6,7 @@ import {
   useTotemPin,
   useTotemOrientation,
 } from "../../../shared/context/TotemPinContext";
+import { useOnTotemReset } from "../../../shared/context/TotemResetContext";
 
 export default function Mapa({
   pinPosition: pinPositionProp,
@@ -15,6 +16,7 @@ export default function Mapa({
   orientation?: number;
 }) {
   const [showFull, setShowFull] = useState(false);
+  useOnTotemReset(() => setShowFull(false));
   // Si se provee la prop directamente (ej: admin), úsala; si no, leé del contexto del tótem
   const contextPin = useTotemPin();
   const contextOrientation = useTotemOrientation();

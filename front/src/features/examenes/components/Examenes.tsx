@@ -7,6 +7,7 @@ import { ClaseListSkeleton } from "../../../shared/components/ui/Skeleton";
 import Select from "../../../shared/components/ui/Select";
 import VerButton from "../../../shared/components/ui/VerButton";
 import { formatAula } from "../../../shared/utils/formatAula";
+import { useOnTotemReset } from "../../../shared/context/TotemResetContext";
 
 const badgeColors: Record<string, string> = {
   ISI: "bg-cyan-100",
@@ -93,6 +94,7 @@ export default function Examenes() {
     error,
   } = useExamenes();
   const [showFull, setShowFull] = useState(false);
+  useOnTotemReset(() => setShowFull(false));
   const [selectedCarrera, setSelectedCarrera] = useState<string>("");
 
   const ahoraFiltrado = selectedCarrera

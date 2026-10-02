@@ -26,6 +26,10 @@ import {
   TotemPinProvider,
   getTotemPinPosition,
 } from "../../shared/context/TotemPinContext";
+import {
+  TotemResetProvider,
+  useTotemResetController,
+} from "../../shared/context/TotemResetContext";
 import { WIDGET_COMPONENTS } from "../../features/widgets";
 import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
@@ -43,6 +47,7 @@ export default function Home() {
   const { containerRef, scale } = useTotemScale();
   const { lastMessage, rejected } = useTotemWebSocket(null, true);
   const { avisos, visible: hayAvisos } = useAvisos();
+  const { subscribe: subscribeReset, triggerReset } = useTotemResetController();
 
   const load = useCallback(async () => {
     try {
@@ -114,13 +119,14 @@ export default function Home() {
       const elapsed = Date.now() - lastInteractionRef.current;
       const intervalMs = (totem.video_intervalo || 60) * 1000;
       if (!modoVideo && elapsed >= intervalMs) {
+        triggerReset();
         setModoVideo(true);
       }
     };
 
     const timer = setInterval(checkInactivity, 5000);
     return () => clearInterval(timer);
-  }, [totem, modoVideo]);
+  }, [totem, modoVideo, triggerReset]);
 
   const handleVideoEnded = useCallback(() => {
     lastInteractionRef.current = Date.now();
@@ -128,11 +134,9 @@ export default function Home() {
   }, []);
 
   const handleInteraction = useCallback(() => {
+    lastInteractionRef.current = Date.now();
     if (modoVideo) {
-      lastInteractionRef.current = Date.now();
       setModoVideo(false);
-    } else {
-      lastInteractionRef.current = Date.now();
     }
   }, [modoVideo]);
 
@@ -175,165 +179,167 @@ export default function Home() {
   return (
     <TotemRealtimeProvider value={lastMessage}>
       <TotemPinProvider value={pinPosition} orientation={totemOrientation}>
-        <div
-          ref={containerRef}
-          className="totem-scale-container"
-          onTouchStart={handleInteraction}
-          onClick={handleInteraction}
-        >
+        <TotemResetProvider value={subscribeReset}>
           <div
-            className="totem-scale-stage bg-white overflow-hidden"
-            style={{
-              width: TOTEM_WIDTH,
-              height: TOTEM_HEIGHT,
-              transform: `scale(${scale})`,
-              transformOrigin: "center center",
-              willChange: "transform",
-            }}
+            ref={containerRef}
+            className="totem-scale-container"
+            onTouchStart={handleInteraction}
+            onClick={handleInteraction}
           >
             <div
-              className={`flex flex-col w-full h-full p-16 ${
-                hayAvisos ? "gap-4" : "gap-16"
-              }`}
+              className="totem-scale-stage bg-white overflow-hidden"
+              style={{
+                width: TOTEM_WIDTH,
+                height: TOTEM_HEIGHT,
+                transform: `scale(${scale})`,
+                transformOrigin: "center center",
+                willChange: "transform",
+              }}
             >
-              <Encabezado size="lg" />
-              {hayAvisos && <Avisos avisos={avisos} />}
-              <div className="relative flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
-                <AnimatePresence>
-                  {showVideo && (
+              <div
+                className={`flex flex-col w-full h-full p-16 ${
+                  hayAvisos ? "gap-4" : "gap-16"
+                }`}
+              >
+                <Encabezado size="lg" />
+                {hayAvisos && <Avisos avisos={avisos} />}
+                <div className="relative flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
+                  <AnimatePresence>
+                    {showVideo && (
+                      <motion.div
+                        key="video"
+                        className="absolute inset-0 z-0 overflow-hidden rounded-4xl bg-black"
+                        initial={{ opacity: 1, height: 0 }}
+                        animate={{ opacity: 1, height: "100%", scale: 1.05 }}
+                        exit={{ opacity: 1, height: 0 }}
+                        transition={{
+                          duration: 0.6,
+                          ease: [0.4, 0, 0.2, 1],
+                        }}
+                      >
+                        <div className="absolute inset-0">
+                          <VideoPanel
+                            url={totem.video_url!}
+                            onEnded={handleVideoEnded}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {hasWidgets ? (
                     <motion.div
-                      key="video"
-                      className="absolute inset-0 z-0 overflow-hidden rounded-4xl bg-black"
-                      initial={{ opacity: 1, height: 0 }}
-                      animate={{ opacity: 1, height: "100%", scale: 1.05 }}
-                      exit={{ opacity: 1, height: 0 }}
+                      className={`relative z-10 col-span-4 row-span-6 grid grid-cols-4 grid-rows-6 gap-4 min-h-0 bg-white rounded-4xl ${
+                        showVideo ? "pointer-events-none" : ""
+                      }`}
+                      initial={{ y: "110%", opacity: 0 }}
+                      animate={
+                        showVideo
+                          ? {
+                              y: "95%",
+                              scale: 1,
+                              backgroundColor: "white",
+                              opacity: 1,
+                            }
+                          : { y: 0, opacity: 1 }
+                      }
                       transition={{
                         duration: 0.6,
                         ease: [0.4, 0, 0.2, 1],
                       }}
                     >
-                      <div className="absolute inset-0">
-                        <VideoPanel
-                          url={totem.video_url!}
-                          onEnded={handleVideoEnded}
-                        />
-                      </div>
+                      {plantilla.widgets.map((w) => {
+                        const Component = WIDGET_COMPONENTS[w.type];
+                        if (!Component) return null;
+                        return (
+                          <div
+                            key={w.id}
+                            className="overflow-hidden grid"
+                            style={{
+                              gridColumn: `${w.col + 1} / span ${w.colSpan}`,
+                              gridRow: `${w.row + 1} / span ${w.rowSpan}`,
+                              gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
+                              gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
+                            }}
+                          >
+                            <Component />
+                          </div>
+                        );
+                      })}
                     </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {hasWidgets ? (
-                  <motion.div
-                    className={`relative z-10 col-span-4 row-span-6 grid grid-cols-4 grid-rows-6 gap-4 min-h-0 bg-white rounded-4xl ${
-                      showVideo ? "pointer-events-none" : ""
-                    }`}
-                    initial={{ y: "110%", opacity: 0 }}
-                    animate={
-                      showVideo
-                        ? {
-                            y: "95%",
-                            scale: 1,
-                            backgroundColor: "white",
-                            opacity: 1,
-                          }
-                        : { y: 0, opacity: 1 }
-                    }
-                    transition={{
-                      duration: 0.6,
-                      ease: [0.4, 0, 0.2, 1],
-                    }}
-                  >
-                    {plantilla.widgets.map((w) => {
-                      const Component = WIDGET_COMPONENTS[w.type];
-                      if (!Component) return null;
-                      return (
-                        <div
-                          key={w.id}
-                          className="overflow-hidden grid"
-                          style={{
-                            gridColumn: `${w.col + 1} / span ${w.colSpan}`,
-                            gridRow: `${w.row + 1} / span ${w.rowSpan}`,
-                            gridTemplateColumns: `repeat(${w.colSpan}, minmax(0, 1fr))`,
-                            gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
-                          }}
-                        >
-                          <Component />
-                        </div>
-                      );
-                    })}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="empty"
-                    className="relative z-10 col-span-4 row-span-6 flex items-center justify-center p-8"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{
-                      duration: 0.6,
-                      ease: [0.4, 0, 0.2, 1],
-                    }}
-                  >
-                    <p className="text-gray-400 text-center text-lg leading-relaxed">
-                      Próximamente encontrarás aquí los horarios de cursada y
-                      novedades del campus.
-                    </p>
-                  </motion.div>
-                )}
-
-                <AnimatePresence>
-                  {showVideo && (
+                  ) : (
                     <motion.div
-                      key="screensaver-fade"
-                      className="pointer-events-none absolute inset-0 z-20"
+                      key="empty"
+                      className="relative z-10 col-span-4 row-span-6 flex items-center justify-center p-8"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
                       transition={{
                         duration: 0.6,
                         ease: [0.4, 0, 0.2, 1],
                       }}
                     >
-                      <div className="absolute inset-x-0 -bottom-16 h-32 bg-linear-to-t from-black/50 via-black/20 to-transparent" />
-                      <div className="absolute inset-x-0 -bottom-12 flex flex-col items-center gap-1 animate-pulse">
-                        <svg
-                          className="w-12 h-12 -mb-5 text-white/85"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m4.5 15.75 7.5-7.5 7.5 7.5"
-                          />
-                        </svg>
-                        <svg
-                          className="w-12 h-12 text-white/60"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2.5}
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m4.5 15.75 7.5-7.5 7.5 7.5"
-                          />
-                        </svg>
-                        <p className="text-center">
-                          <span className="text-3xl font-medium text-white/85">
-                            Tocá para interactuar
-                          </span>
-                        </p>
-                      </div>
+                      <p className="text-gray-400 text-center text-lg leading-relaxed">
+                        Próximamente encontrarás aquí los horarios de cursada y
+                        novedades del campus.
+                      </p>
                     </motion.div>
                   )}
-                </AnimatePresence>
+
+                  <AnimatePresence>
+                    {showVideo && (
+                      <motion.div
+                        key="screensaver-fade"
+                        className="pointer-events-none absolute inset-0 z-20"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{
+                          duration: 0.6,
+                          ease: [0.4, 0, 0.2, 1],
+                        }}
+                      >
+                        <div className="absolute inset-x-0 -bottom-16 h-32 bg-linear-to-t from-black/50 via-black/20 to-transparent" />
+                        <div className="absolute inset-x-0 -bottom-12 flex flex-col items-center gap-1 animate-pulse">
+                          <svg
+                            className="w-12 h-12 -mb-5 text-white/85"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2.5}
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+                            />
+                          </svg>
+                          <svg
+                            className="w-12 h-12 text-white/60"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2.5}
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+                            />
+                          </svg>
+                          <p className="text-center">
+                            <span className="text-3xl font-medium text-white/85">
+                              Tocá para interactuar
+                            </span>
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </TotemResetProvider>
       </TotemPinProvider>
     </TotemRealtimeProvider>
   );

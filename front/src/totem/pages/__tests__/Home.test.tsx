@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  waitFor,
+  fireEvent,
+  act,
+} from "@testing-library/react";
 import Home from "../Home";
 import { fetchTotemMe } from "../../../features/totems/api/totems";
 import { ApiError } from "../../../shared/api/client";
@@ -24,9 +31,26 @@ vi.mock("react-router", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-vi.mock("../../../features/horarios/components/Horarios", () => ({
-  default: () => <div data-testid="mock-horarios">Horarios widget</div>,
-}));
+vi.mock("../../../features/horarios/components/Horarios", async () => {
+  const { useState } = await import("react");
+  const { useOnTotemReset } =
+    await import("../../../shared/context/TotemResetContext");
+  function MockHorarios() {
+    const [open, setOpen] = useState(false);
+    useOnTotemReset(() => setOpen(false));
+    return (
+      <div data-testid="mock-horarios">
+        <button type="button" onClick={() => setOpen(true)}>
+          Abrir horarios
+        </button>
+        {open && <div data-testid="mock-horarios-full">Horarios Full</div>}
+      </div>
+    );
+  }
+  return {
+    default: MockHorarios,
+  };
+});
 
 vi.mock("../../../features/examenes/components/Examenes", () => ({
   default: () => <div data-testid="mock-examenes">Examenes widget</div>,
@@ -266,5 +290,55 @@ describe("totem Home", () => {
 
     expect(columna).toHaveClass("gap-4");
     expect(columna).not.toHaveClass("gap-16");
+  });
+
+  it("cierra los widgets abiertos al iniciar la bajada hacia el salvapantallas", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mockFetchTotemMe.mockResolvedValue(
+        makeTotem({
+          video_activo: true,
+          video_url: "https://example.com/video.mp4",
+          video_intervalo: 5,
+          plantilla_id: 1,
+          plantilla: {
+            id: 1,
+            nombre: "Plantilla",
+            activa: true,
+            creado_en: "2026-01-01T00:00:00Z",
+            widgets_posiciones: [
+              {
+                id: 11,
+                plantilla: 1,
+                widget: 1,
+                widget_nombre: "Horarios",
+                widget_tipo: "horarios",
+                col_pos: 0,
+                fila_pos: 0,
+                col_tam: 4,
+                fila_tam: 2,
+              },
+            ],
+          },
+        }),
+      );
+
+      render(<Home />);
+      await screen.findByTestId("mock-horarios");
+
+      fireEvent.click(screen.getByText("Abrir horarios"));
+      expect(screen.getByTestId("mock-horarios-full")).toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(10000);
+      });
+
+      expect(screen.getByText("Tocá para interactuar")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("mock-horarios-full"),
+      ).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

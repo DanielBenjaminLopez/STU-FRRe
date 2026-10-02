@@ -7,6 +7,7 @@ import { ClaseListSkeleton } from "../../../shared/components/ui/Skeleton";
 import Select from "../../../shared/components/ui/Select";
 import VerButton from "../../../shared/components/ui/VerButton";
 import { formatAula } from "../../../shared/utils/formatAula";
+import { useOnTotemReset } from "../../../shared/context/TotemResetContext";
 
 const badgeColors: Record<string, string> = {
   ISI: "bg-cyan-100",
@@ -106,6 +107,7 @@ const INACTIVITY_MS = 30_000;
 export default function Horarios() {
   const { ahora, siguiente, uniqueCarreras, loading, error } = useHorarios();
   const [showFull, setShowFull] = useState(false);
+  useOnTotemReset(() => setShowFull(false));
   const [selectedCarrera, setSelectedCarrera] = useState<string | null>(null);
   const isAutoRotating = useRef(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
