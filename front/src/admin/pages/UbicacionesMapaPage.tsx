@@ -10,17 +10,32 @@ import {
   type UbicacionMapa,
   type PisoKey,
 } from "../../features/mapa/api/ubicacionesMapa";
-import { updateTotemPinMapa } from "../../features/totems/api/totems";
+import {
+  updateTotemPinMapa,
+  updateTotemOrientacionMapa,
+} from "../../features/totems/api/totems";
 import MapaRaw, {
   type PinPosition,
+  type MapOrientation,
 } from "../../features/mapa/components/MapaRaw";
 import type { FloorKey } from "../../features/mapa/components/MapaRaw";
 import { useTotem } from "../../shared/context/TotemContext";
+import { getTotemPinPosition } from "../../shared/context/TotemPinContext";
 
 const PISOS: { key: PisoKey; label: string }[] = [
   { key: "baja", label: "Planta Baja" },
   { key: "primero", label: "Primer Piso" },
   { key: "segundo", label: "Segundo Piso" },
+];
+
+const ORIENTACIONES: {
+  value: MapOrientation;
+  label: string;
+}[] = [
+  { value: 0, label: "0° — Estándar" },
+  { value: 90, label: "90° — Derecha" },
+  { value: 180, label: "180° — Invertido" },
+  { value: 270, label: "270° — Izquierda" },
 ];
 
 const TIPOS_MAPA = [
@@ -88,6 +103,18 @@ export default function UbicacionesMapaPage() {
   const [editorFloorOverride, setEditorFloor] = useState<FloorKey | null>(null);
   const editorFloor: FloorKey = editorFloorOverride ?? defaultEditorFloor;
 
+  const [optimisticOrientacion, setOptimisticOrientacion] = useState<{
+    totemId: number;
+    value: MapOrientation;
+  } | null>(null);
+
+  const currentOrientacion: MapOrientation =
+    (optimisticOrientacion?.totemId === selectedTotem?.id
+      ? optimisticOrientacion?.value
+      : undefined) ??
+    (selectedTotem?.pin_mapa_orientacion as MapOrientation | undefined) ??
+    0;
+
   const cargarUbicaciones = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -135,16 +162,7 @@ export default function UbicacionesMapaPage() {
     };
   }, []);
 
-  const currentPinPosition: PinPosition | null =
-    selectedTotem?.pin_mapa_piso &&
-    selectedTotem.pin_mapa_svg_x !== null &&
-    selectedTotem.pin_mapa_svg_y !== null
-      ? {
-          floor: selectedTotem.pin_mapa_piso as FloorKey,
-          svgX: selectedTotem.pin_mapa_svg_x!,
-          svgY: selectedTotem.pin_mapa_svg_y!,
-        }
-      : null;
+  const currentPinPosition = getTotemPinPosition(selectedTotem);
 
   const handlePinPlaced = useCallback(
     async (pos: PinPosition) => {
@@ -160,6 +178,30 @@ export default function UbicacionesMapaPage() {
       } catch (err) {
         sileo.error({
           title: "Error al guardar la posición",
+          description: err instanceof Error ? err.message : "Intentá de nuevo.",
+        });
+      } finally {
+        setPinSaving(false);
+      }
+    },
+    [selectedTotem, refreshTotems],
+  );
+
+  const handleOrientacionChange = useCallback(
+    async (orientacion: MapOrientation) => {
+      if (!selectedTotem) return;
+      setOptimisticOrientacion({
+        totemId: selectedTotem.id,
+        value: orientacion,
+      });
+      setPinSaving(true);
+      try {
+        await updateTotemOrientacionMapa(selectedTotem.id, orientacion);
+        await refreshTotems();
+      } catch (err) {
+        setOptimisticOrientacion(null);
+        sileo.error({
+          title: "Error al guardar la orientación",
           description: err instanceof Error ? err.message : "Intentá de nuevo.",
         });
       } finally {
@@ -405,15 +447,16 @@ export default function UbicacionesMapaPage() {
           </div>
         </div>
 
-        {/* ── Sección 2: Pin del tótem activo ── */}
+        {/* ── Sección 2: Pin y orientación del tótem activo ── */}
         <div className="flex flex-col gap-4 border-t border-gray-100 pt-8">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                Posición del tótem en el mapa
+                Posición y orientación del tótem en el mapa
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Hacé click en el mapa para indicar dónde está el tótem.
+                Hacé click en el mapa para ubicar el tótem y elegí su
+                orientación según hacia dónde mire la pantalla.
               </p>
             </div>
 
@@ -442,22 +485,49 @@ export default function UbicacionesMapaPage() {
             </div>
           ) : (
             <div className="flex gap-4 h-130">
-              {/* Selector de pisos — vertical, a la izquierda del mapa */}
-              <div className="flex flex-col gap-2 shrink-0">
-                {PISOS.map((p) => (
-                  <button
-                    key={p.key}
-                    id={`pin-piso-${p.key}`}
-                    onClick={() => setEditorFloor(p.key as FloorKey)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
-                      editorFloor === p.key
-                        ? "bg-cyan-100 text-cyan-900"
-                        : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                ))}
+              {/* Controles laterales: piso y orientación */}
+              <div className="flex flex-col gap-6 shrink-0 w-48">
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+                    Piso
+                  </span>
+                  {PISOS.map((p) => (
+                    <button
+                      key={p.key}
+                      id={`pin-piso-${p.key}`}
+                      onClick={() => setEditorFloor(p.key as FloorKey)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
+                        editorFloor === p.key
+                          ? "bg-cyan-100 text-cyan-900"
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1">
+                    Orientación del mapa
+                  </span>
+                  {ORIENTACIONES.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      id={`pin-orientacion-${o.value}`}
+                      disabled={pinSaving}
+                      onClick={() => handleOrientacionChange(o.value)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left cursor-pointer ${
+                        currentOrientacion === o.value
+                          ? "bg-cyan-100 text-cyan-900"
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
+                      }`}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Mapa 3D */}
@@ -466,6 +536,7 @@ export default function UbicacionesMapaPage() {
                   key={`pin-editor-${selectedTotem.id}`}
                   externalFloor={editorFloor}
                   pinPosition={currentPinPosition}
+                  orientation={currentOrientacion}
                   onPinPlaced={handlePinPlaced}
                 />
               </div>

@@ -92,6 +92,8 @@ def scrape_noticias():
 
         titulo = h3.get_text(strip=True)
         enlace = h3.get('href', '')
+        if enlace.startswith('/'):
+            enlace = 'https://www.frre.utn.edu.ar' + enlace
 
         p_desc = item.select_one('p.description')
         contenido_breve = p_desc.get_text(strip=True) if p_desc else ''

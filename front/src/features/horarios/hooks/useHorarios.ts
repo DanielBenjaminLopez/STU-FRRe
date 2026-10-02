@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Clase } from "../api/horarios";
 import {
   fetchComisionesHorarios,
@@ -25,23 +25,27 @@ function getMinutes(time: string): number {
   return h * 60 + m;
 }
 
-export function useHorarios() {
+export function useHorarios(enabled = true) {
   const [todas, setTodas] = useState<Clase[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
+  const hasLoadedRef = useRef(false);
   const realtimeEvent = useTotemRealtime();
   const relevantEvent =
     realtimeEvent?.resource === "horarios" ? realtimeEvent : null;
 
   useEffect(() => {
+    if (!enabled) return;
     let mounted = true;
 
     async function load() {
       if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
         return;
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) {
+          setLoading(true);
+        }
         setError(null);
         const [planMaterias, comisiones, data] = await Promise.all([
           fetchPlanMateriasHorarios().catch(() => []),
@@ -77,6 +81,7 @@ export function useHorarios() {
             "",
         }));
         if (!mounted) return;
+        hasLoadedRef.current = true;
         setTodas(clases);
       } catch (e) {
         if (mounted) {
@@ -94,12 +99,13 @@ export function useHorarios() {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, [relevantEvent]);
+  }, [enabled, relevantEvent]);
 
   useEffect(() => {
+    if (!enabled) return;
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [enabled]);
 
   const today = getTodayDayName();
   const clasesHoy = todas.filter((c) => c.dia_semana === today);

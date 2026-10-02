@@ -3,6 +3,7 @@ import { AnimatePresence } from "motion/react";
 import { useNovedades } from "../hooks/useNoticias";
 import NovedadesFull from "./NovedadesFull";
 import { NovedadesCarouselSkeleton } from "../../../shared/components/ui/Skeleton";
+import { useOnTotemReset } from "../../../shared/context/TotemResetContext";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -18,6 +19,7 @@ const AUTO_ROTATE_MS = 10000;
 export default function Novedades() {
   const { feed, loading, error } = useNovedades();
   const [showFull, setShowFull] = useState(false);
+  useOnTotemReset(() => setShowFull(false));
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

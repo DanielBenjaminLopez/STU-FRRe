@@ -11,7 +11,6 @@ export default function CalendarFull({ onClose }: { onClose: () => void }) {
       loading={loading}
       error={error}
       onClose={onClose}
-      loadingText="Cargando eventos..."
     />
   );
 }
