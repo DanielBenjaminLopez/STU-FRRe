@@ -13,12 +13,6 @@
 .schedule-time-label,
 .schedule-cell {
   min-width: 0;
-}
-
-.schedule-corner,
-.schedule-day-header,
-.schedule-time-label,
-.schedule-cell {
   border-right: 1px solid rgba(156, 163, 175, 0.28);
   border-bottom: 1px solid rgba(156, 163, 175, 0.28);
 }
@@ -47,8 +41,6 @@
 
 .schedule-class-wrapper {
   min-width: 0;
-  min-height: 0;
-  overflow: hidden;
   padding: 0.25rem;
 }
 
@@ -63,7 +55,6 @@
      root font-size, así que un gap en rem quedaba con la mitad del
      espaciado dentro del tótem. */
   gap: 0.25em;
-  overflow: hidden;
   border-width: 1px;
   border-radius: 0.75rem;
   padding: 0.5rem;

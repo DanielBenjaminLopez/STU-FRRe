@@ -105,7 +105,8 @@ const AUTO_ROTATE_MS = 15_000;
 const INACTIVITY_MS = 30_000;
 
 export default function Horarios() {
-  const { ahora, siguiente, uniqueCarreras, loading, error } = useHorarios();
+  const { ahora, siguiente, todas, uniqueCarreras, loading, error } =
+    useHorarios();
   const [showFull, setShowFull] = useState(false);
   useOnTotemReset(() => setShowFull(false));
   const [selectedCarrera, setSelectedCarrera] = useState<string | null>(null);
@@ -165,7 +166,14 @@ export default function Horarios() {
   return (
     <>
       <AnimatePresence>
-        {showFull && <HorariosFull onClose={() => setShowFull(false)} />}
+        {showFull && (
+          <HorariosFull
+            onClose={() => setShowFull(false)}
+            items={todas}
+            loading={loading}
+            error={error}
+          />
+        )}
       </AnimatePresence>
       <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
         <div className="relative flex flex-row items-center justify-between w-full">

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "motion/react";
 import type { Clase } from "../api/horarios";
 import { NIVELES } from "../api/horariosAdmin";
 import { ScheduleGridSkeleton } from "../../../shared/components/ui/Skeleton";
-import Select from "../../../shared/components/ui/Select";
 import {
   overlayContainerVariants,
   overlayPanelVariants,
@@ -27,8 +26,6 @@ const DAYS = [
   { value: "viernes", label: "Vie" },
   { value: "sabado", label: "Sáb" },
 ];
-
-const MIN_SCHEDULE_MINUTES = 8 * 60;
 
 const CARD_COLORS = [
   "bg-cyan-100 border-cyan-200 text-cyan-800",
@@ -55,13 +52,6 @@ function minutes(time: string): number {
 
 function formatTime(time: string): string {
   return time.slice(0, 5);
-}
-
-function formatMinutes(totalMinutes: number): string {
-  const normalized = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
-  const hours = Math.floor(normalized / 60);
-  const mins = normalized % 60;
-  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
 }
 
 function levelLabel(value: string): string {
@@ -197,23 +187,9 @@ function Schedule({ items }: { items: Clase[] }) {
     ]);
     if (eventTimes.length === 0) return [];
 
-    const earliest = Math.min(...eventTimes.map(minutes));
-    const latest = Math.max(...eventTimes.map(minutes));
-    const scheduleEnd = Math.max(latest, earliest + MIN_SCHEDULE_MINUTES);
-    const boundaries = new Set<string>(eventTimes);
-
-    // Keep the real event boundaries and add hourly marks through the
-    // minimum eight-hour window so the empty time is still visible.
-    for (
-      let time = Math.ceil(earliest / 60) * 60;
-      time < scheduleEnd;
-      time += 60
-    ) {
-      boundaries.add(formatMinutes(time));
-    }
-    boundaries.add(formatMinutes(scheduleEnd));
-
-    return [...boundaries].sort((a, b) => minutes(a) - minutes(b));
+    return [...new Set<string>(eventTimes)].sort(
+      (a, b) => minutes(a) - minutes(b),
+    );
   }, [items]);
 
   const colorBySubject = useMemo(() => {
@@ -231,6 +207,125 @@ function Schedule({ items }: { items: Clase[] }) {
     return colors;
   }, [items]);
 
+  const deduplicatedItems = useMemo(
+    () =>
+      [...items]
+        .sort((a, b) => (b.aula ? 1 : 0) - (a.aula ? 1 : 0))
+        .filter(
+          (item, index, arr) =>
+            arr.findIndex(
+              (other) =>
+                other.dia_semana === item.dia_semana &&
+                other.hora_inicio === item.hora_inicio &&
+                other.materia_nombre === item.materia_nombre,
+            ) === index,
+        ),
+    [items],
+  );
+
+  const visibleDays = useMemo(
+    () =>
+      DAYS.filter(
+        (day) =>
+          day.value !== "sabado" ||
+          deduplicatedItems.some((item) => item.dia_semana === "sabado"),
+      ),
+    [deduplicatedItems],
+  );
+
+  const layoutByDay = useMemo(() => {
+    type PositionedItem = {
+      item: Clase;
+      lane: number;
+      clusterCols: number;
+    };
+
+    const dayLayouts: {
+      tracks: number;
+      startCol: number;
+      positioned: PositionedItem[];
+    }[] = [];
+
+    let currentStartCol = 2;
+
+    for (const day of visibleDays) {
+      const dayItems = deduplicatedItems
+        .filter((item) => item.dia_semana === day.value)
+        .filter((item) => minutes(item.hora_fin) > minutes(item.hora_inicio))
+        .sort(
+          (a, b) =>
+            minutes(a.hora_inicio) - minutes(b.hora_inicio) ||
+            minutes(b.hora_fin) - minutes(a.hora_fin),
+        );
+
+      // Agrupar clases que se solapan temporalmente en clusters
+      const clusters: Clase[][] = [];
+      let currentCluster: Clase[] = [];
+      let clusterMaxEnd = -1;
+
+      for (const item of dayItems) {
+        const start = minutes(item.hora_inicio);
+        const end = minutes(item.hora_fin);
+        if (currentCluster.length === 0 || start < clusterMaxEnd) {
+          currentCluster.push(item);
+          clusterMaxEnd = Math.max(clusterMaxEnd, end);
+        } else {
+          clusters.push(currentCluster);
+          currentCluster = [item];
+          clusterMaxEnd = end;
+        }
+      }
+      if (currentCluster.length > 0) {
+        clusters.push(currentCluster);
+      }
+
+      const positioned: PositionedItem[] = [];
+      let maxTracksForDay = 1;
+
+      for (const cluster of clusters) {
+        const laneEnds: number[] = [];
+        const clusterAssignments: { item: Clase; lane: number }[] = [];
+
+        for (const item of cluster) {
+          const start = minutes(item.hora_inicio);
+          const end = minutes(item.hora_fin);
+          let assignedLane = laneEnds.findIndex((laneEnd) => laneEnd <= start);
+          if (assignedLane === -1) {
+            assignedLane = laneEnds.length;
+            laneEnds.push(end);
+          } else {
+            laneEnds[assignedLane] = end;
+          }
+          clusterAssignments.push({ item, lane: assignedLane });
+        }
+
+        const clusterCols = Math.max(1, laneEnds.length);
+        maxTracksForDay = Math.max(maxTracksForDay, clusterCols);
+
+        for (const assignment of clusterAssignments) {
+          positioned.push({
+            item: assignment.item,
+            lane: assignment.lane,
+            clusterCols,
+          });
+        }
+      }
+
+      dayLayouts.push({
+        tracks: maxTracksForDay,
+        startCol: currentStartCol,
+        positioned,
+      });
+
+      currentStartCol += maxTracksForDay;
+    }
+
+    return {
+      dayLayouts,
+      totalTracks: currentStartCol - 2,
+    };
+  }, [deduplicatedItems, visibleDays]);
+
   if (times.length < 2) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-400">
@@ -239,28 +334,54 @@ function Schedule({ items }: { items: Clase[] }) {
     );
   }
 
-  const rows = times.length - 1;
   // La geometría va en `em` contra el `font-size` de #schedule, que es
   // var(--text-base): 1rem (16px) en el admin y 2rem (32px) dentro de
-  // .totem-scale-stage en el tótem 4K. Así 3em de fila miden 48px en el admin
-  // y 96px en el tótem. Con px fijo las filas no crecían y el texto escalado
-  // se recortaba.
-  const gridRows = `3em repeat(${rows}, minmax(3em, 1fr)) 1em`;
-  const gridColumns = `4.5em repeat(${DAYS.length}, minmax(0, 1fr))`;
+  // .totem-scale-stage en el tótem 4K. Cada fila mide en `em` de forma
+  // proporcional a su duración (aprox. 1em cada 16 min), y usa `auto` como
+  // máximo para expandirse solo cuando el nombre de una materia lo requiera.
+  const rowTracks = times
+    .slice(0, -1)
+    .map((time, idx) => {
+      const startMin = minutes(time);
+      const endMin = minutes(times[idx + 1]);
+      const delta = Math.max(5, endMin - startMin);
+      const hasActiveClass = deduplicatedItems.some(
+        (item) =>
+          minutes(item.hora_inicio) < endMin &&
+          minutes(item.hora_fin) > startMin,
+      );
+      const effectiveMinutes = hasActiveClass ? delta : Math.min(delta, 20);
+      const heightEm = Math.max(
+        delta <= 15 ? 1.5 : 2.75,
+        Number((effectiveMinutes / 16).toFixed(2)),
+      );
+      return `minmax(${heightEm}em, auto)`;
+    })
+    .join(" ");
+
+  const gridRows = `3em ${rowTracks} 2.25em`;
+  const gridColumns = `4.5em repeat(${layoutByDay.totalTracks}, minmax(0, 1fr))`;
 
   return (
-    <div className="h-full w-full overflow-auto p-4 sm:p-8">
+    <div className="w-full p-4 sm:p-8">
       <div
         id="schedule"
-        className="mx-auto grid h-full w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
+        className="mx-auto grid w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
         style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}
       >
         <div className="schedule-corner" />
-        {DAYS.map((day) => (
-          <div key={day.value} className="schedule-day-header">
-            {day.label}
-          </div>
-        ))}
+        {visibleDays.map((day, dayIndex) => {
+          const { startCol, tracks } = layoutByDay.dayLayouts[dayIndex];
+          return (
+            <div
+              key={day.value}
+              className="schedule-day-header"
+              style={{ gridColumn: `${startCol} / span ${tracks}`, gridRow: 1 }}
+            >
+              {day.label}
+            </div>
+          );
+        })}
 
         {times.map((time, index) => (
           <div
@@ -272,36 +393,34 @@ function Schedule({ items }: { items: Clase[] }) {
           </div>
         ))}
 
-        {times
-          .slice(0, -1)
-          .flatMap((time, rowIndex) =>
-            DAYS.map((day, dayIndex) => (
+        {times.slice(0, -1).flatMap((time, rowIndex) =>
+          visibleDays.map((day, dayIndex) => {
+            const { startCol, tracks } = layoutByDay.dayLayouts[dayIndex];
+            return (
               <div
                 key={`${time}-${day.value}`}
                 className="schedule-cell"
-                style={{ gridColumn: dayIndex + 2, gridRow: rowIndex + 2 }}
+                style={{
+                  gridColumn: `${startCol} / span ${tracks}`,
+                  gridRow: rowIndex + 2,
+                }}
               />
-            )),
-          )}
+            );
+          }),
+        )}
 
-        {[...items]
-          .sort((a, b) => (b.aula ? 1 : 0) - (a.aula ? 1 : 0))
-          .filter(
-            (item, index, arr) =>
-              arr.findIndex(
-                (other) =>
-                  other.dia_semana === item.dia_semana &&
-                  other.hora_inicio === item.hora_inicio &&
-                  other.materia_nombre === item.materia_nombre,
-              ) === index,
-          )
-          .map((item) => {
+        {layoutByDay.dayLayouts.flatMap(({ startCol, tracks, positioned }) =>
+          positioned.map(({ item, lane, clusterCols }) => {
             const start = times.indexOf(formatTime(item.hora_inicio));
             const end = times.indexOf(formatTime(item.hora_fin));
-            const day = DAYS.findIndex(
-              (candidate) => candidate.value === item.dia_semana,
-            );
-            if (start < 0 || end <= start || day < 0) return null;
+            if (start < 0 || end <= start) return null;
+
+            const span =
+              clusterCols === 1
+                ? tracks
+                : Math.max(1, Math.floor(tracks / clusterCols));
+            const colStart =
+              clusterCols === 1 ? startCol : startCol + lane * span;
 
             return (
               <motion.div
@@ -310,7 +429,7 @@ function Schedule({ items }: { items: Clase[] }) {
                 animate={{ opacity: 1 }}
                 className="schedule-class-wrapper"
                 style={{
-                  gridColumn: day + 2,
+                  gridColumn: `${colStart} / span ${span}`,
                   gridRow: `${start + 2} / ${end + 2}`,
                 }}
               >
@@ -318,26 +437,107 @@ function Schedule({ items }: { items: Clase[] }) {
                   className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)}`}
                   title={`${item.materia_nombre}\n[${item.comision}] · ${item.carrera_codigo}\nAula: ${item.aula}`}
                 >
-                  <span className="line-clamp-4 hyphens-auto break-words text-lg font-semibold leading-snug">
+                  <span className="shrink-0 hyphens-auto break-words text-lg font-semibold leading-snug">
                     {item.materia_nombre}
                   </span>
-                  <span className="text-sm leading-snug opacity-75">
+                  <span className="shrink-0 text-sm font-medium leading-snug opacity-75">
                     {formatTime(item.hora_inicio)} - {formatTime(item.hora_fin)}
                   </span>
-                  {item.comision && (
-                    <span className="schedule-class-comision break-words text-sm leading-snug opacity-70">
-                      [{item.comision}]
-                    </span>
-                  )}
                   {item.aula && (
-                    <span className="schedule-class-aula break-words text-sm leading-snug opacity-60">
+                    <span className="schedule-class-aula mt-0.5 inline-block max-w-full shrink-0 break-words rounded-lg bg-white/60 px-2 py-0.5 text-sm font-semibold leading-snug">
                       {item.aula}
                     </span>
                   )}
                 </div>
               </motion.div>
             );
-          })}
+          }),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function getNivelesForCarrera(items: Clase[], carrera: string): string[] {
+  return [
+    ...new Set(
+      items
+        .filter((item) => item.carrera_codigo === carrera)
+        .map((item) => item.nivel),
+    ),
+  ].sort(
+    (a, b) =>
+      NIVELES.findIndex((level) => level.value === a) -
+      NIVELES.findIndex((level) => level.value === b),
+  );
+}
+
+function getComisionesForNivel(
+  items: Clase[],
+  carrera: string,
+  nivel: string,
+): string[] {
+  return [
+    ...new Set(
+      items
+        .filter(
+          (item) => item.carrera_codigo === carrera && item.nivel === nivel,
+        )
+        .map((item) => item.comision),
+    ),
+  ].sort();
+}
+
+function SegmentedControlRow({
+  label,
+  layoutId,
+  headerGradient,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  layoutId: string;
+  headerGradient: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-24 shrink-0 text-right text-sm font-medium text-gray-500">
+        {label}
+      </span>
+      <div className="flex flex-1 items-center gap-1 rounded-xl border border-gray-200 bg-white/60 p-1">
+        {options.map((option) => {
+          const active = value === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={`relative flex-1 cursor-pointer rounded-lg px-2 py-1.5 text-center text-sm transition-colors focus:outline-none ${
+                active
+                  ? "font-semibold text-blue-950"
+                  : "font-medium text-gray-600 hover:bg-white/60 hover:text-gray-900"
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId={layoutId}
+                  transition={{
+                    type: "spring",
+                    stiffness: 450,
+                    damping: 32,
+                  }}
+                  className={`absolute inset-0 rounded-lg border border-blue-300/60 bg-linear-to-br shadow-xs ${headerGradient}`}
+                  aria-hidden
+                />
+              )}
+              <span className="relative z-10">{option.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -367,36 +567,17 @@ export default function HorariosScheduleGrid({
   );
 
   const niveles = useMemo(
-    () =>
-      [
-        ...new Set(
-          items
-            .filter((item) => item.carrera_codigo === selectedCarrera)
-            .map((item) => item.nivel),
-        ),
-      ].sort(
-        (a, b) =>
-          NIVELES.findIndex((level) => level.value === a) -
-          NIVELES.findIndex((level) => level.value === b),
-      ),
+    () => getNivelesForCarrera(items, selectedCarrera),
     [items, selectedCarrera],
   );
 
   const comisiones = useMemo(
-    () =>
-      [
-        ...new Set(
-          items
-            .filter(
-              (item) =>
-                item.carrera_codigo === selectedCarrera &&
-                item.nivel === selectedNivel,
-            )
-            .map((item) => item.comision),
-        ),
-      ].sort(),
+    () => getComisionesForNivel(items, selectedCarrera, selectedNivel),
     [items, selectedCarrera, selectedNivel],
   );
+
+  const effectiveComision =
+    selectedComision || (comisiones.length === 1 ? comisiones[0] : "");
 
   const selectedItems = useMemo(
     () =>
@@ -404,18 +585,38 @@ export default function HorariosScheduleGrid({
         (item) =>
           item.carrera_codigo === selectedCarrera &&
           item.nivel === selectedNivel &&
-          item.comision ===
-            (selectedComision ||
-              (comisiones.length === 1 ? comisiones[0] : "")),
+          item.comision === effectiveComision,
       ),
-    [items, selectedCarrera, selectedNivel, selectedComision, comisiones],
+    [items, selectedCarrera, selectedNivel, effectiveComision],
   );
-
-  const effectiveComision =
-    selectedComision || (comisiones.length === 1 ? comisiones[0] : "");
 
   const completeSelection =
     selectedCarrera !== "" && selectedNivel !== "" && effectiveComision !== "";
+
+  const handleQuickCarreraChange = (carrera: string) => {
+    const nextNiveles = getNivelesForCarrera(items, carrera);
+    const nextNivel = nextNiveles.includes(selectedNivel)
+      ? selectedNivel
+      : (nextNiveles[0] ?? "");
+    const nextComisiones = getComisionesForNivel(items, carrera, nextNivel);
+    const nextComision = nextComisiones.includes(effectiveComision)
+      ? effectiveComision
+      : (nextComisiones[0] ?? "");
+
+    setSelectedCarrera(carrera);
+    setSelectedNivel(nextNivel);
+    setSelectedComision(nextComision);
+  };
+
+  const handleQuickNivelChange = (nivel: string) => {
+    const nextComisiones = getComisionesForNivel(items, selectedCarrera, nivel);
+    const nextComision = nextComisiones.includes(effectiveComision)
+      ? effectiveComision
+      : (nextComisiones[0] ?? "");
+
+    setSelectedNivel(nivel);
+    setSelectedComision(nextComision);
+  };
 
   return (
     <motion.div
@@ -434,42 +635,6 @@ export default function HorariosScheduleGrid({
         >
           <h1 className="text-xl font-semibold">{title}</h1>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <Select
-              value={selectedCarrera}
-              onChange={(value) => {
-                setSelectedCarrera(value);
-                setSelectedNivel("");
-                setSelectedComision("");
-              }}
-              options={carreras.map((value) => ({
-                value,
-                label: value,
-              }))}
-              placeholder="Carrera"
-              aria-label="Seleccionar carrera"
-            />
-            <Select
-              value={selectedNivel}
-              onChange={(value) => {
-                setSelectedNivel(value);
-                setSelectedComision("");
-              }}
-              options={niveles.map((value) => ({
-                value,
-                label: levelLabel(value),
-              }))}
-              placeholder="Nivel"
-              disabled={!selectedCarrera}
-              aria-label="Seleccionar nivel"
-            />
-            <Select
-              value={effectiveComision}
-              onChange={setSelectedComision}
-              options={comisiones.map((value) => ({ value, label: value }))}
-              placeholder="Comisión"
-              disabled={!selectedNivel}
-              aria-label="Seleccionar comisión"
-            />
             <button
               type="button"
               onClick={onClose}
@@ -580,13 +745,55 @@ export default function HorariosScheduleGrid({
             </div>
           )}
           {!loading && !error && completeSelection && (
-            <div className="grid h-full grid-cols-1 overflow-auto p-4 sm:p-8">
-              <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30">
+            <div className="flex h-full w-full flex-col gap-4 overflow-auto p-4 sm:p-8">
+              <section className="my-auto flex w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30">
                 <h2 className="shrink-0 border-b border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-600 sm:text-base">
                   Horarios de cursado
                 </h2>
-                <div className="min-h-0 flex-1">
+                <div>
                   <Schedule items={selectedItems} />
+                </div>
+              </section>
+
+              {/* Menú inferior estilo Apple Segmented Control */}
+              <section className="flex w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white/30">
+                <span className="shrink-0 border-b border-gray-200 px-4 py-2.5 text-center text-sm font-semibold text-gray-600">
+                  Cambiar comisión
+                </span>
+                <div className="flex flex-col gap-2.5 p-4">
+                  <SegmentedControlRow
+                    label="Carrera"
+                    layoutId="schedule-seg-carrera"
+                    headerGradient={headerGradient}
+                    value={selectedCarrera}
+                    options={carreras.map((value) => ({
+                      value,
+                      label: value,
+                    }))}
+                    onChange={handleQuickCarreraChange}
+                  />
+                  <SegmentedControlRow
+                    label="Nivel"
+                    layoutId="schedule-seg-nivel"
+                    headerGradient={headerGradient}
+                    value={selectedNivel}
+                    options={niveles.map((value) => ({
+                      value,
+                      label: levelLabel(value),
+                    }))}
+                    onChange={handleQuickNivelChange}
+                  />
+                  <SegmentedControlRow
+                    label="Comisión"
+                    layoutId="schedule-seg-comision"
+                    headerGradient={headerGradient}
+                    value={effectiveComision}
+                    options={comisiones.map((value) => ({
+                      value,
+                      label: value,
+                    }))}
+                    onChange={setSelectedComision}
+                  />
                 </div>
               </section>
             </div>

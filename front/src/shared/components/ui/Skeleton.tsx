@@ -25,38 +25,34 @@ export function ClaseListSkeleton({ count = 2 }: { count?: number }) {
   );
 }
 
-function ScheduleRowSkeleton() {
+export function ScheduleGridSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-2xl border border-gray-200 bg-white/50">
-      <Skeleton className="shrink-0 h-3 w-24 mt-0.5" />
-      <div className="flex flex-col gap-1.5 min-w-0 flex-1">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-3 w-32" />
+    <div className="flex h-full flex-col items-start justify-start gap-8 overflow-auto p-6 sm:p-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-0">
+        <div className="flex gap-4">
+          <div className="flex w-8 shrink-0 flex-col items-center">
+            <div className="mt-8 h-full w-0.5 rounded-full bg-linear-to-b from-blue-200 to-blue-300" />
+          </div>
+          <div className="flex-1 pb-8">
+            <div className="flex w-full flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-8 w-8 shrink-0 rounded-full border border-gray-200" />
+                <Skeleton className="h-5 w-48 rounded-lg" />
+              </div>
+              <div className="grid w-full max-w-3xl grid-cols-1 gap-3">
+                {Array.from({ length: count }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex min-h-16 items-center justify-center rounded-2xl border border-gray-200 bg-white/50 p-4 shadow-xs"
+                  >
+                    <Skeleton className="h-4 w-64 rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function ScheduleDaySkeleton({ itemCount = 2 }: { itemCount?: number }) {
-  return (
-    <div className="flex flex-col gap-2">
-      <Skeleton className="h-4 w-24" />
-      <div className="flex flex-col gap-2">
-        {Array.from({ length: itemCount }).map((_, i) => (
-          <ScheduleRowSkeleton key={i} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function ScheduleGridSkeleton() {
-  return (
-    <div className="flex flex-col gap-6 overflow-auto p-4 h-full mx-4">
-      <ScheduleDaySkeleton itemCount={2} />
-      <ScheduleDaySkeleton itemCount={3} />
-      <ScheduleDaySkeleton itemCount={4} />
-      <ScheduleDaySkeleton itemCount={2} />
     </div>
   );
 }
