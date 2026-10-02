@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { QRCodeSVG } from "qrcode.react";
 import { useNoticias } from "../hooks/useNoticias";
 import type { ContenidoFeed } from "../api/noticias";
 import { NoticiaListSkeleton } from "../../../shared/components/ui/Skeleton";
@@ -101,17 +102,32 @@ function NoticiaCard({ item }: { item: ContenidoFeed }) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-col gap-1.5 p-4 flex-1">
-        <p className="text-xs font-medium text-gray-400">
-          {formatDate(item.fecha)}
-        </p>
-        <h2 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
-          {item.titulo}
-        </h2>
-        {item.contenido && (
-          <p className="text-xs text-gray-500 line-clamp-3 leading-relaxed mt-0.5">
-            {item.contenido}
+      <div className="flex flex-1 items-center justify-between gap-4 p-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 self-start">
+          <p className="text-xs font-medium text-gray-400">
+            {formatDate(item.fecha)}
           </p>
+          <h2 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
+            {item.titulo}
+          </h2>
+          {item.contenido && (
+            <p className="text-xs text-gray-500 line-clamp-3 leading-relaxed mt-0.5">
+              {item.contenido}
+            </p>
+          )}
+        </div>
+
+        {item.enlace && (
+          <div
+            data-testid="noticia-qr"
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white p-1.5 shadow-xs"
+          >
+            <QRCodeSVG
+              value={item.enlace}
+              level="M"
+              className="h-full w-full text-gray-900"
+            />
+          </div>
         )}
       </div>
     </div>
@@ -143,14 +159,7 @@ export default function NoticiasFull({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 bg-linear-to-br from-purple-300/50 to-purple-300/60">
-          <div>
-            <h1 className="text-xl font-bold">{title}</h1>
-            {!loading && !error && feed.length > 0 && (
-              <p className="text-xs text-gray-500 mt-0.5">
-                {feed.length} publicaciones
-              </p>
-            )}
-          </div>
+          <h1 className="text-xl font-bold">{title}</h1>
           <button
             type="button"
             onClick={onClose}
