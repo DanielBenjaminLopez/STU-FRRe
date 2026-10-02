@@ -28,7 +28,6 @@ export interface CalendarGridProps {
   loading: boolean;
   error: string | null;
   onClose: () => void;
-  loadingText?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -154,17 +153,12 @@ function indexarEventos(
   return porFecha;
 }
 
-function clasesRedondeo(
-  evento: EventoIndexado | undefined,
-  compacto: boolean,
-): string {
+function clasesRedondeo(evento: EventoIndexado | undefined): string {
   if (!evento) return "rounded-full";
   if (evento.formato === "puntual" || evento.posicion === "unica")
     return "rounded-full";
-  if (evento.posicion === "inicio")
-    return compacto ? "rounded-l-full" : "rounded-l-full pl-1";
-  if (evento.posicion === "fin")
-    return compacto ? "rounded-r-full" : "rounded-r-full pr-1";
+  if (evento.posicion === "inicio") return "rounded-l-full pl-1";
+  if (evento.posicion === "fin") return "rounded-r-full pr-1";
   return "rounded-none";
 }
 
@@ -221,15 +215,13 @@ export function MesGrilla({
   anio,
   mes,
   eventos,
-  compacto = false,
-  onSeleccionarDia,
+  grillaAnual = false,
   onSeleccionarEvento,
 }: {
   anio: number;
   mes: number;
   eventos: EventoCalendario[];
-  compacto?: boolean;
-  onSeleccionarDia?: (fecha: Date) => void;
+  grillaAnual?: boolean;
   onSeleccionarEvento?: (evento: EventoCalendario) => void;
 }) {
   const semanas = construirGrilla(anio, mes);
@@ -237,7 +229,9 @@ export function MesGrilla({
   const hoy = new Date();
   const esMesActual = hoy.getFullYear() === anio && hoy.getMonth() === mes;
 
-  const altoCelda = compacto ? "h-5 text-[10px]" : "h-10 text-[17px]";
+  const tamCelda = grillaAnual ? "h-9" : "h-10";
+  const anchoCelda = grillaAnual ? "w-9" : "w-10";
+  const altoCelda = `${tamCelda} text-[17px]`;
 
   return (
     <div>
@@ -245,9 +239,9 @@ export function MesGrilla({
         {DIAS_SEMANA.map((d) => (
           <div
             key={d}
-            className={`text-center font-semibold text-slate-500 ${compacto ? "text-[10px] py-0.5" : "text-sm py-1.5"}`}
+            className={`text-center font-semibold text-slate-500 text-sm ${grillaAnual ? "py-1" : "py-1.5"}`}
           >
-            {compacto ? d[0] : d}
+            {d}
           </div>
         ))}
       </div>
@@ -262,7 +256,7 @@ export function MesGrilla({
               esMesActual && !celda.fueraDeMes && celda.dia === hoy.getDate();
 
             return (
-              <div key={j} className={compacto ? "py-px" : "py-0.5"}>
+              <div key={j} className="py-0.5">
                 <div
                   title={evento?.titulo}
                   onClick={
@@ -271,9 +265,7 @@ export function MesGrilla({
                           e.stopPropagation();
                           onSeleccionarEvento(evento);
                         }
-                      : !celda.fueraDeMes && onSeleccionarDia
-                        ? () => onSeleccionarDia(new Date(anio, mes, celda.dia))
-                        : undefined
+                      : undefined
                   }
                   className={[
                     "flex items-center justify-center font-medium mx-auto",
@@ -283,16 +275,13 @@ export function MesGrilla({
                     evento
                       ? evento.formato === "rango"
                         ? "w-full"
-                        : compacto
-                          ? "w-5"
-                          : "w-10"
+                        : anchoCelda
                       : "",
                     !evento && esHoy
-                      ? `${compacto ? "w-5" : "w-10"} rounded-full ring-1 ring-slate-800`
+                      ? `${anchoCelda} rounded-full ring-1 ring-slate-800`
                       : "",
-                    evento ? clasesRedondeo(evento, compacto) : "",
-                    (onSeleccionarDia || onSeleccionarEvento) &&
-                    !celda.fueraDeMes
+                    evento ? clasesRedondeo(evento) : "",
+                    onSeleccionarEvento && evento && !celda.fueraDeMes
                       ? "cursor-pointer"
                       : "",
                   ]
@@ -347,8 +336,6 @@ export default function CalendarGrid({
     return hasta.getFullYear() >= anio && desde.getFullYear() <= anio;
   });
 
-  const subtitulo = `Ciclo lectivo ${anio}`;
-
   return (
     <motion.div
       variants={overlayContainerVariants}
@@ -367,10 +354,6 @@ export default function CalendarGrid({
           </div>
 
           <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-gray-700 min-w-48 text-center">
-              {subtitulo}
-            </span>
-
             <button
               type="button"
               onClick={onClose}
@@ -381,7 +364,7 @@ export default function CalendarGrid({
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-8">
+        <div className="flex-1 min-h-0 overflow-hidden p-8">
           {loading && <CalendarGridSkeleton />}
 
           {error && (
@@ -391,8 +374,8 @@ export default function CalendarGrid({
           )}
 
           {!loading && !error && (
-            <div className="flex flex-col items-center gap-6">
-              <div className="grid w-full gap-4 grid-cols-3 grid-rows-4">
+            <div className="flex flex-col items-center gap-6 h-full">
+              <div className="grid w-full flex-1 min-h-0 gap-4 grid-cols-3 grid-rows-4">
                 {MESES.map((nombreMes, m) => {
                   const seleccionDelMes =
                     eventoSeleccionado &&
@@ -417,7 +400,10 @@ export default function CalendarGrid({
                         : null;
 
                   return (
-                    <div key={nombreMes} className="relative w-full h-full">
+                    <div
+                      key={nombreMes}
+                      className="relative w-full h-full min-h-0"
+                    >
                       <div className="rounded-2xl bg-white/50 backdrop-blur-md border border-gray-200 px-2.5 py-3 text-center flex flex-col w-full h-full">
                         <div className="mb-1.5 text-base font-bold text-slate-900">
                           {nombreMes}
@@ -426,6 +412,7 @@ export default function CalendarGrid({
                           anio={anio}
                           mes={m}
                           eventos={eventos}
+                          grillaAnual
                           onSeleccionarEvento={setEventoSeleccionado}
                         />
                       </div>
@@ -433,7 +420,7 @@ export default function CalendarGrid({
                       {seleccionDelMes && (
                         <div
                           data-popover-evento
-                          className="absolute top-full left-0 z-10 mt-1 w-full rounded-2xl border border-gray-200 bg-white p-4 shadow-lg"
+                          className={`absolute ${m >= 9 ? "bottom-full mb-1" : "top-full mt-1"} left-0 z-10 w-full rounded-2xl border border-gray-200 bg-white p-4 shadow-lg`}
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="mb-2 flex items-center justify-between">

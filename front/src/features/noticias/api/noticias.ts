@@ -27,6 +27,19 @@ export interface ContenidoFeed {
   destacado?: boolean;
 }
 
+const UTN_FRRE_BASE_URL = "https://www.frre.utn.edu.ar";
+
+function resolveNoticiaEnlace(n: Noticia): string {
+  const raw = n.enlace?.trim() ?? "";
+  if (raw.startsWith("/")) {
+    return `${UTN_FRRE_BASE_URL}${raw}`;
+  }
+  if (raw) {
+    return raw;
+  }
+  return n.origen === "scraping" ? `${UTN_FRRE_BASE_URL}/noticias/` : "";
+}
+
 function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
   return {
     id: n.id,
@@ -37,7 +50,7 @@ function mapNoticiaToFeed(n: Noticia): ContenidoFeed {
     imagen_url: n.imagen_url,
     tipo: "noticia",
     origen: n.origen,
-    enlace: n.enlace,
+    enlace: resolveNoticiaEnlace(n),
   };
 }
 

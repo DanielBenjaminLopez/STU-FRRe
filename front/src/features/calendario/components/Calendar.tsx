@@ -4,6 +4,7 @@ import { useCalendario } from "../hooks/useCalendario";
 import CalendarFull from "./CalendarFull";
 import { MesGrilla, LeyendaCalendario } from "./CalendarGrid";
 import { CalendarSkeleton } from "../../../shared/components/ui/Skeleton";
+import { useOnTotemReset } from "../../../shared/context/TotemResetContext";
 
 const MESES = [
   "Enero",
@@ -27,6 +28,7 @@ const MESES = [
 export default function Calendar() {
   const { eventos, loading, error } = useCalendario();
   const [showFull, setShowFull] = useState(false);
+  useOnTotemReset(() => setShowFull(false));
 
   const ahora = new Date();
   const anio = ahora.getFullYear();

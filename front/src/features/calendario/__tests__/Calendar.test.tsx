@@ -13,7 +13,6 @@ vi.mock("../components/CalendarFull", () => ({
   default: ({ onClose }: { onClose: () => void }) => (
     <div data-testid="calendar-full">
       <span>Calendario académico</span>
-      <span>Ciclo lectivo 2026</span>
       <button type="button" onClick={onClose}>
         Cerrar
       </button>

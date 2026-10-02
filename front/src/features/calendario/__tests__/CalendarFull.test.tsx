@@ -72,14 +72,14 @@ describe("CalendarFull", () => {
     }
   });
 
-  it("muestra subtítulo 'Ciclo lectivo {año}'", () => {
+  it("no muestra subtítulo 'Ciclo lectivo {año}'", () => {
     mockUseCalendario.mockReturnValue({
       eventos: [],
       loading: false,
       error: null,
     });
     render(<CalendarFull onClose={vi.fn()} />);
-    expect(screen.getByText("Ciclo lectivo 2026")).toBeInTheDocument();
+    expect(screen.queryByText(/Ciclo lectivo/)).not.toBeInTheDocument();
   });
 
   it("llama a onClose al hacer click en Cerrar", () => {
