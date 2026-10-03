@@ -13,17 +13,16 @@ import {
   createMesaExamen,
   updateMesaExamen,
   deleteMesaExamen,
-  fetchPlanMaterias,
-  fetchEspaciosForSelect,
+  fetchMateriasForSelect,
   importarMesasExamenCSV,
   getTurnoFromFecha,
   type MesaExamen,
-  type PlanMateriaDTO,
+  type MateriaDTO,
 } from "../../features/examenes/api/mesasExamen";
 
 const columns: Column<MesaExamen>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },
-  { key: "espacio_nombre", label: "Espacio" },
+  { key: "espacio", label: "Espacio" },
   {
     key: "fecha_hora",
     label: "Fecha y hora",
@@ -91,11 +90,8 @@ export default function MesasExamenPage() {
   const [carreras, setCarreras] = useState<{ value: number; label: string }[]>(
     [],
   );
-  const [planMaterias, setPlanMaterias] = useState<PlanMateriaDTO[]>([]);
+  const [materias, setMaterias] = useState<MateriaDTO[]>([]);
   const [selectedCarrera, setSelectedCarrera] = useState<number | null>(null);
-  const [espacios, setEspacios] = useState<{ value: number; label: string }[]>(
-    [],
-  );
 
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<MesaExamen | null>(null);
@@ -143,38 +139,9 @@ export default function MesasExamenPage() {
               );
           })
           .catch(() => {});
-        fetchPlanMaterias()
-          .then((pmList) => {
-            if (active) setPlanMaterias(pmList);
-          })
-          .catch(() => {});
-        fetchEspaciosForSelect()
-          .then((e) => {
-            if (active) {
-              const filtrados = e.filter((esp) => {
-                const t = String(esp.tipo).toLowerCase();
-                return (
-                  t === "aula" ||
-                  t === "laboratorio_informatico" ||
-                  t === "laboratorio informático" ||
-                  t.includes("aula") ||
-                  t.includes("laboratorio")
-                );
-              });
-              filtrados.sort((a, b) => {
-                const tipoA = String(a.tipo).toLowerCase().startsWith("aula")
-                  ? 0
-                  : 1;
-                const tipoB = String(b.tipo).toLowerCase().startsWith("aula")
-                  ? 0
-                  : 1;
-                if (tipoA !== tipoB) return tipoA - tipoB;
-                return String(a.nombre).localeCompare(String(b.nombre), "es");
-              });
-              setEspacios(
-                filtrados.map((esp) => ({ value: esp.id, label: esp.nombre })),
-              );
-            }
+        fetchMateriasForSelect()
+          .then((matList) => {
+            if (active) setMaterias(matList);
           })
           .catch(() => {});
       }
@@ -187,18 +154,19 @@ export default function MesasExamenPage() {
 
   const materiasFilteredOptions = (
     selectedCarrera
-      ? planMaterias.filter(
-          (pm) => Number(pm.carrera) === Number(selectedCarrera),
-        )
-      : planMaterias
-  ).map((pm) => ({
-    value: pm.id,
-    label: selectedCarrera
-      ? pm.materia_nombre || `Materia #${pm.id}`
-      : pm.carrera_nombre
-        ? `${pm.materia_nombre} (${pm.carrera_nombre})`
-        : pm.materia_nombre || `Materia #${pm.id}`,
-  }));
+      ? materias.filter((m) => Number(m.carrera) === Number(selectedCarrera))
+      : materias
+  ).map((m) => {
+    const matNombre = m.nombre || `Materia #${m.id}`;
+    return {
+      value: m.id,
+      label: selectedCarrera
+        ? matNombre
+        : m.carrera_nombre
+          ? `${matNombre} (${m.carrera_nombre})`
+          : matNombre,
+    };
+  });
 
   const formFields: FormField[] = [
     {
@@ -210,7 +178,7 @@ export default function MesasExamenPage() {
       placeholder: "Todas las carreras",
     },
     {
-      name: "plan_materia",
+      name: "materia",
       label: "Materia",
       type: "select",
       required: true,
@@ -220,9 +188,9 @@ export default function MesasExamenPage() {
     {
       name: "espacio",
       label: "Espacio",
-      type: "select",
+      type: "text",
       required: true,
-      options: espacios,
+      placeholder: "Ej: Aula 10, Aula Magna",
     },
     {
       name: "fecha",
@@ -245,9 +213,8 @@ export default function MesasExamenPage() {
   }
 
   function handleEdit(row: MesaExamen) {
-    const pmId = row.plan_materia || row.materia;
-    const pm = planMaterias.find((p) => p.id === pmId);
-    setSelectedCarrera(pm?.carrera ? Number(pm.carrera) : null);
+    const mat = materias.find((m) => m.id === row.materia);
+    setSelectedCarrera(mat?.carrera ? Number(mat.carrera) : null);
     setEditingRow(row);
     setShowForm(true);
   }
@@ -260,7 +227,7 @@ export default function MesasExamenPage() {
     if (name === "carrera") {
       const cId = value ? Number(value) : null;
       setSelectedCarrera(cId);
-      setFormData((prev) => ({ ...prev, plan_materia: "" }));
+      setFormData((prev) => ({ ...prev, materia: "" }));
     }
   }
 
@@ -271,8 +238,8 @@ export default function MesasExamenPage() {
         getTurnoFromFecha(fecha) || editingRow?.turno || "febrero";
 
       const payload = {
-        plan_materia: Number(formData.plan_materia || formData.materia),
-        espacio: Number(formData.espacio),
+        materia: Number(formData.materia),
+        espacio: String(formData.espacio || "").trim(),
         fecha,
         hora: String(formData.hora || "08:00"),
         turno: autoTurno,
@@ -350,12 +317,9 @@ export default function MesasExamenPage() {
             editingRow
               ? {
                   carrera:
-                    planMaterias.find(
-                      (p) =>
-                        p.id ===
-                        (editingRow.plan_materia || editingRow.materia),
-                    )?.carrera || "",
-                  plan_materia: editingRow.plan_materia || editingRow.materia,
+                    materias.find((m) => m.id === editingRow.materia)
+                      ?.carrera || "",
+                  materia: editingRow.materia,
                   espacio: editingRow.espacio,
                   fecha:
                     editingRow.fecha ||

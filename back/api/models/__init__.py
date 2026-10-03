@@ -1,10 +1,8 @@
 from .configuracion import Totem, Widget, Plantilla, PlantillaWidget
-from .ubicaciones import Espacio, UbicacionMapa
+from .ubicaciones import UbicacionMapa
 from .academico import (
     Carrera,
     Materia,
-    PlanMateria,
-    Comision,
     HorarioCursado,
     MesaExamen,
 )

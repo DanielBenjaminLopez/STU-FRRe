@@ -81,7 +81,7 @@ function mapEventoToFeed(e: Evento): ContenidoFeed {
     imagen_url: e.imagen_url || "",
     tipo: "evento",
     tipo_evento: tipoLabel,
-    espacio_nombre: e.espacio_nombre || undefined,
+    espacio_nombre: e.espacio || undefined,
     destacado: Boolean(e.destacado),
   };
 }

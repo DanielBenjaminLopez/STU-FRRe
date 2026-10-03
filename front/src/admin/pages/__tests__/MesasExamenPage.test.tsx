@@ -32,8 +32,7 @@ vi.mock(
       createMesaExamen: vi.fn(),
       updateMesaExamen: vi.fn(),
       deleteMesaExamen: vi.fn(),
-      fetchPlanMaterias: vi.fn(),
-      fetchEspaciosForSelect: vi.fn(),
+      fetchMateriasForSelect: vi.fn(),
       importarMesasExamenCSV: vi.fn(),
     };
   },
@@ -44,24 +43,20 @@ vi.mock("../../../shared/api/carreras", () => ({
 }));
 
 const mockFetchMesas = vi.mocked(mesasApi.fetchMesasExamen);
-const mockFetchPlanMaterias = vi.mocked(mesasApi.fetchPlanMaterias);
-const mockFetchEspacios = vi.mocked(mesasApi.fetchEspaciosForSelect);
+const mockFetchMateriasForSelect = vi.mocked(mesasApi.fetchMateriasForSelect);
 const mockFetchCarreras = vi.mocked(carrerasApi.fetchCarreras);
 
 describe("MesasExamenPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetchMesas.mockResolvedValue([]);
-    mockFetchPlanMaterias.mockResolvedValue([
+    mockFetchMateriasForSelect.mockResolvedValue([
       {
         id: 1,
         carrera: 1,
-        materia_nombre: "Matemática Discreta",
+        nombre: "Matemática Discreta",
         carrera_nombre: "Sistemas",
       },
-    ]);
-    mockFetchEspacios.mockResolvedValue([
-      { id: 10, nombre: "Aula Magna", tipo: "aula" } as never,
     ]);
     mockFetchCarreras.mockResolvedValue([
       { id: 1, nombre: "Ingeniería en Sistemas" } as never,
@@ -94,7 +89,7 @@ describe("MesasExamenPage", () => {
       target: { value: "1" },
     });
     fireEvent.change(screen.getByLabelText(/Espacio/i), {
-      target: { value: "10" },
+      target: { value: "Aula Magna" },
     });
     fireEvent.change(screen.getByLabelText(/Fecha/i), {
       target: { value: "2026-03-15" },
@@ -109,8 +104,8 @@ describe("MesasExamenPage", () => {
     await waitFor(() => {
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          plan_materia: 1,
-          espacio: 10,
+          materia: 1,
+          espacio: "Aula Magna",
           fecha: "2026-03-15",
           hora: "09:00",
           turno: "marzo",
@@ -132,7 +127,7 @@ describe("MesasExamenPage", () => {
       target: { value: "1" },
     });
     fireEvent.change(screen.getByLabelText(/Espacio/i), {
-      target: { value: "10" },
+      target: { value: "Aula Magna" },
     });
     fireEvent.change(screen.getByLabelText(/Fecha/i), {
       target: { value: "2026-12-10" },
@@ -158,7 +153,7 @@ describe("MesasExamenPage", () => {
       {
         id: 1,
         materia_nombre: "Física I",
-        espacio_nombre: "Aula 2",
+        espacio: "Aula 2",
         fecha: "2026-04-10",
         turno: "abril",
         llamado: 3,
@@ -166,7 +161,7 @@ describe("MesasExamenPage", () => {
       {
         id: 2,
         materia_nombre: "Química",
-        espacio_nombre: "Aula 3",
+        espacio: "Aula 3",
         fecha: "2026-04-12",
         turno: "abril",
         llamado: 3,

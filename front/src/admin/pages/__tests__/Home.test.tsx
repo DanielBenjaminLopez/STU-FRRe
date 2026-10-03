@@ -99,8 +99,6 @@ const plantilla = {
 const vinculado = {
   id: 1,
   nombre: "Tótem A",
-  espacio_id: 1,
-  espacio_nombre: "Aula 1A",
   activo: true,
   config_pantalla: {},
   vinculado: true,
@@ -112,8 +110,6 @@ const vinculado = {
 const sinVincular = {
   id: 2,
   nombre: "",
-  espacio_id: null,
-  espacio_nombre: null,
   activo: false,
   config_pantalla: {},
   vinculado: false,
@@ -125,8 +121,6 @@ const sinVincular = {
 const inactivo = {
   id: 3,
   nombre: "Tótem Inactivo",
-  espacio_id: null,
-  espacio_nombre: null,
   activo: false,
   config_pantalla: {},
   vinculado: true,

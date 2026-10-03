@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Clase } from "../api/horarios";
-import {
-  fetchComisionesHorarios,
-  fetchHorarios,
-  fetchPlanMateriasHorarios,
-} from "../api/horarios";
+import { fetchHorarios } from "../api/horarios";
 import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
 
 function getTodayDayName(): string {
@@ -47,39 +43,7 @@ export function useHorarios(enabled = true) {
           setLoading(true);
         }
         setError(null);
-        const [planMaterias, comisiones, data] = await Promise.all([
-          fetchPlanMateriasHorarios().catch(() => []),
-          fetchComisionesHorarios().catch(() => []),
-          fetchHorarios(),
-        ]);
-        const nivelesPorPlan = new Map(
-          planMaterias.map((planMateria) => [
-            planMateria.id,
-            {
-              nivel: planMateria.nivel,
-              carreraNombre: planMateria.carrera_nombre || "",
-            },
-          ]),
-        );
-        const nivelPorComision = new Map(
-          comisiones.map((comision) => [
-            comision.id,
-            comision.nivel ||
-              nivelesPorPlan.get(comision.plan_materia)?.nivel ||
-              "",
-          ]),
-        );
-        const clases = data.map((clase) => ({
-          ...clase,
-          carrera_nombre:
-            nivelesPorPlan.get(clase.plan_materia)?.carreraNombre ||
-            clase.carrera_nombre,
-          nivel:
-            clase.nivel ||
-            nivelPorComision.get(clase.comision_id) ||
-            nivelesPorPlan.get(clase.plan_materia)?.nivel ||
-            "",
-        }));
+        const clases = await fetchHorarios();
         if (!mounted) return;
         hasLoadedRef.current = true;
         setTodas(clases);

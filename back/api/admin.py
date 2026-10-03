@@ -4,15 +4,12 @@ from import_export.admin import ImportExportModelAdmin
 from .models import (
     Aviso,
     Carrera,
-    Comision,
-    Espacio,
     Evento,
     EventoCalendario,
     HorarioCursado,
     Materia,
     MesaExamen,
     Noticias,
-    PlanMateria,
     Plantilla,
     PlantillaWidget,
     Totem,
@@ -22,15 +19,12 @@ from .models import (
 from .resources import (
     AvisoResource,
     CarreraResource,
-    ComisionResource,
-    EspacioResource,
     EventoResource,
     EventoCalendarioResource,
     HorarioCursadoResource,
     MateriaResource,
     MesaExamenResource,
     NoticiasResource,
-    PlanMateriaResource,
     TotemResource,
 )
 
@@ -64,16 +58,7 @@ class PlantillaWidgetAdmin(admin.ModelAdmin):
 @admin.register(Totem)
 class TotemAdmin(ImportExportModelAdmin):
     resource_class = TotemResource
-    list_display = ['nombre', 'espacio', 'plantilla', 'creado_en']
-    search_fields = ['nombre']
-
-
-
-@admin.register(Espacio)
-class EspacioAdmin(ImportExportModelAdmin):
-    resource_class = EspacioResource
-    list_display = ['nombre', 'edificio', 'tipo', 'piso']
-    list_filter = ['edificio', 'tipo', 'piso']
+    list_display = ['nombre', 'plantilla', 'creado_en']
     search_fields = ['nombre']
 
 
@@ -95,45 +80,26 @@ class CarreraAdmin(ImportExportModelAdmin):
 @admin.register(Materia)
 class MateriaAdmin(ImportExportModelAdmin):
     resource_class = MateriaResource
-    list_display = ['nombre']
+    list_display = ['nombre', 'carrera', 'nivel']
+    list_filter = ['carrera', 'nivel']
     search_fields = ['nombre']
-
-
-@admin.register(PlanMateria)
-class PlanMateriaAdmin(ImportExportModelAdmin):
-    resource_class = PlanMateriaResource
-    list_display = [
-        'carrera',
-        'materia',
-        'nivel',
-        'plan_estudio',
-    ]
-    list_filter = ['carrera', 'nivel', 'plan_estudio']
-
-
-@admin.register(Comision)
-class ComisionAdmin(ImportExportModelAdmin):
-    resource_class = ComisionResource
-    list_display = ['nombre', 'plan_materia']
-    list_filter = ['plan_materia__carrera']
-    search_fields = ['nombre', 'plan_materia__materia__nombre']
 
 
 @admin.register(HorarioCursado)
 class HorarioCursadoAdmin(ImportExportModelAdmin):
     resource_class = HorarioCursadoResource
     list_display = [
+        'materia',
         'comision',
         'espacio',
         'dia_semana',
         'hora_inicio',
         'hora_fin',
-        'activo',
     ]
-    list_filter = ['dia_semana', 'activo']
+    list_filter = ['dia_semana', 'materia__carrera']
     search_fields = [
-        'comision__nombre',
-        'comision__plan_materia__materia__nombre',
+        'comision',
+        'materia__nombre',
     ]
 
 
@@ -141,15 +107,15 @@ class HorarioCursadoAdmin(ImportExportModelAdmin):
 class MesaExamenAdmin(ImportExportModelAdmin):
     resource_class = MesaExamenResource
     list_display = [
-        'plan_materia',
+        'materia',
         'espacio',
         'fecha',
         'hora',
         'turno',
         'activo',
     ]
-    list_filter = ['turno', 'activo', 'plan_materia__carrera']
-    search_fields = ['plan_materia__materia__nombre']
+    list_filter = ['turno', 'activo', 'materia__carrera']
+    search_fields = ['materia__nombre']
 
 
 @admin.register(Evento)

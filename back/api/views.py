@@ -21,9 +21,6 @@ from .models import (
     Aviso,
     Carrera,
     EventoCalendario,
-    PlanMateria,
-    Comision,
-    Espacio,
     Evento,
     HorarioCursado,
     Materia,
@@ -64,10 +61,7 @@ from .serializers import (
     AvisoSerializer,
     CustomTokenObtainPairSerializer,
     EventoCalendarioSerializer,
-    PlanMateriaSerializer,
     CarreraSerializer,
-    ComisionSerializer,
-    EspacioSerializer,
     EventoSerializer,
     HorarioCursadoSerializer,
     MateriaSerializer,
@@ -109,13 +103,8 @@ class CarreraViewSet(viewsets.ModelViewSet):
 
 
 class MateriaViewSet(viewsets.ModelViewSet):
-    queryset = Materia.objects.all()
+    queryset = Materia.objects.select_related('carrera').all()
     serializer_class = MateriaSerializer
-
-
-class PlanMateriaViewSet(viewsets.ModelViewSet):
-    queryset = PlanMateria.objects.select_related('carrera', 'materia').all()
-    serializer_class = PlanMateriaSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -128,20 +117,6 @@ class PlanMateriaViewSet(viewsets.ModelViewSet):
             qs = qs.filter(carrera_id=carrera)
         if nivel:
             qs = qs.filter(nivel=nivel)
-        return qs
-
-
-class ComisionViewSet(viewsets.ModelViewSet):
-    queryset = Comision.objects.select_related(
-        'plan_materia__carrera', 'plan_materia__materia'
-    ).all()
-    serializer_class = ComisionSerializer
-
-    def get_queryset(self):
-        qs = super().get_queryset()
-        plan_materia = self.request.query_params.get('plan_materia')
-        if plan_materia:
-            qs = qs.filter(plan_materia_id=plan_materia)
         return qs
 
 
@@ -163,16 +138,12 @@ def traducir_error(err_str):
     err_lower = msg.lower()
 
     if "matching query does not exist" in err_lower or "doesnotexist" in err_lower:
-        if "comision" in err_lower:
-            return "No existe la comisión especificada en la base de datos."
-        if "espacio" in err_lower or "aula" in err_lower:
-            return "No existe el espacio o aula especificada en la base de datos."
-        if "planmateria" in err_lower or "materia" in err_lower:
-            return "No existe la materia o plan de estudio en el sistema."
+        if "materia" in err_lower:
+            return "No existe la materia en el sistema."
         return "Un registro relacionado no existe en el sistema."
 
     if "unique constraint failed" in err_lower or "already exists" in err_lower or "duplicad" in err_lower:
-        return "Ya existe un registro con la misma comisión, espacio, día y horario."
+        return "Ya existe un registro con la misma materia, comisión, espacio, día y horario."
 
     if "null value in column" in err_lower or "cannot be null" in err_lower or "is required" in err_lower:
         return "Esta fila contiene campos requeridos vacíos."
@@ -226,9 +197,7 @@ def extract_import_details(result, dataset):
 class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'horarios'
     queryset = HorarioCursado.objects.select_related(
-        'comision__plan_materia__materia',
-        'comision__plan_materia__carrera',
-        'espacio',
+        'materia__carrera',
     ).all()
     serializer_class = HorarioCursadoSerializer
     permission_classes = [AllowAny]
@@ -284,9 +253,7 @@ class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'examenes'
     queryset = MesaExamen.objects.select_related(
-        'plan_materia__materia',
-        'plan_materia__carrera',
-        'espacio',
+        'materia__carrera',
     ).all()
     serializer_class = MesaExamenSerializer
     permission_classes = [AllowAny]
@@ -477,15 +444,6 @@ class AvisosActivosView(APIView):
         hoy = timezone.now().date()
         avisos = Aviso.objects.filter(fecha__gte=hoy).order_by('-fecha')[:5]
         serializer = AvisoSerializer(avisos, many=True)
-        return Response(serializer.data)
-
-
-class EspacioListView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        espacios = Espacio.objects.all().order_by("piso", "nombre")
-        serializer = EspacioSerializer(espacios, many=True)
         return Response(serializer.data)
 
 

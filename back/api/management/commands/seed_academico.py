@@ -2,7 +2,7 @@ import random
 from datetime import time
 from django.core.management.base import BaseCommand
 from api.models import (
-    Carrera, Materia, PlanMateria, Comision, HorarioCursado, Espacio,
+    Carrera, Materia, HorarioCursado,
 )
 
 # ── Espacios del mapa ──────────────────────────────────────────────
@@ -308,81 +308,37 @@ class Command(BaseCommand):
         # ── 1. Limpiar TODOS los datos académicos ──
         self.stdout.write("Limpiando todos los datos académicos...")
         horarios_borrados = HorarioCursado.objects.all().delete()[0]
-        comisiones_borradas = Comision.objects.all().delete()[0]
-        planes_borrados = PlanMateria.objects.all().delete()[0]
+        materias_borradas = Materia.objects.all().delete()[0]
         self.stdout.write(
-            f"  Borrados: {horarios_borrados} horarios, "
-            f"{comisiones_borradas} comisiones, {planes_borrados} planes"
+            f"  Borrados: {horarios_borrados} horarios, {materias_borradas} materias"
         )
 
-        # ── 2. Actualizar espacios del mapa ──
-        self.stdout.write("Actualizando espacios del mapa...")
-
-        # Reasignar totems a nuevos espacios antes de borrar
-        from api.models import Totem
-        espacios_nuevos_nombres = {n for n, _, _ in ESPACIOS_MAPA}
-        # Mapeo de espacios viejos a nuevos para totems
-        REASIGNACION_TOTEMS = {
-            "Aula 3C": "Aula 2.1",
-            "Laboratorio de Informatica": "CinApTIC",
-            "Aula 2C": "Aula 2.2",
-        }
-        for totem in Totem.objects.select_related("espacio").all():
-            nuevo_nombre = REASIGNACION_TOTEMS.get(totem.espacio.nombre)
-            if nuevo_nombre:
-                nuevo_espacio, _ = Espacio.objects.get_or_create(
-                    nombre=nuevo_nombre,
-                    defaults={"tipo": "aula", "piso": "segundo_piso"},
-                )
-                totem.espacio = nuevo_espacio
-                totem.save(update_fields=["espacio"])
-
-        # Borrar espacios viejos que no están en el mapa
-        Espacio.objects.exclude(nombre__in=espacios_nuevos_nombres).delete()
-
-        # Crear espacios del mapa que no existen
-        aulas_mapa = {}
-        for nombre, tipo, piso in ESPACIOS_MAPA:
-            e, _ = Espacio.objects.get_or_create(
-                nombre=nombre,
-                defaults={"tipo": tipo, "piso": piso},
-            )
-            aulas_mapa[nombre] = e
-        self.stdout.write(f"  Espacios: {Espacio.objects.count()} total")
-
-        # Agrupar aulas por piso para asignación
-        aulas_1p = [e for _, e in aulas_mapa.items() if e.piso == "primer_piso"]
-        aulas_2p = [e for _, e in aulas_mapa.items() if e.piso == "segundo_piso"]
-        aulas_todas = aulas_1p + aulas_2p
+        # ── 2. Espacios del mapa (nombres) ──
+        aulas_todas = [
+            nombre for nombre, _, piso in ESPACIOS_MAPA
+            if piso in ("primer_piso", "segundo_piso")
+        ]
 
         # ── 3. Crear Helper ──
-        def mat(nombre):
-            materia, _ = Materia.objects.get_or_create(nombre=nombre)
-            return materia
-
-        def crear_plan(carrera, materia_nombre, nivel, plan, comisiones_data):
-            """Crea PlanMateria + Comisiones + Horarios"""
-            m = mat(materia_nombre)
-            pm = PlanMateria.objects.create(
+        def crear_materia(carrera, materia_nombre, nivel, comisiones_data):
+            """Crea Materia + Horarios"""
+            m = Materia.objects.create(
                 carrera=carrera,
-                materia=m,
+                nombre=materia_nombre,
                 nivel=nivel,
-                plan_estudio=plan,
             )
             for com_nombre, horarios in comisiones_data:
-                com = Comision.objects.create(plan_materia=pm, nombre=com_nombre)
                 for dia, inicio, fin in horarios:
-                    # Rotar aulas
                     espacio = random.choice(aulas_todas)
                     HorarioCursado.objects.create(
-                        comision=com,
+                        materia=m,
+                        comision=com_nombre,
                         espacio=espacio,
                         dia_semana=dia,
                         hora_inicio=inicio,
                         hora_fin=fin,
-                        activo=True,
                     )
-            return pm
+            return m
 
         def generar_horarios_k1_k2():
             """Genera horarios para K1 (mañana) y K2 (tarde)"""
@@ -414,79 +370,58 @@ class Command(BaseCommand):
                 horarios.append((dia, franjas[1][0], franjas[1][1]))
             return [("Única", horarios)]
 
-        # ── 4. ISI (Plan 2023, 5 años, anual) ──
+        # ── 4. ISI ──
         self.stdout.write("Cargando ISI...")
         c_isi = Carrera.objects.get(codigo="ISI")
         for nivel, materias_lista in MATERIAS_ISI.items():
             for materia_nombre in materias_lista:
-                if nivel in ("primero", "segundo"):
-                    comisiones = generar_horarios_k1_k2()
-                else:
-                    comisiones = generar_horarios_unica()
-                crear_plan(c_isi, materia_nombre, nivel, "2023", comisiones)
+                comisiones = generar_horarios_k1_k2() if nivel in ("primero", "segundo") else generar_horarios_unica()
+                crear_materia(c_isi, materia_nombre, nivel, comisiones)
 
-        # ── 5. IQ (Plan 2023, 5 años, anual) ──
+        # ── 5. IQ ──
         self.stdout.write("Cargando IQ...")
         c_iq = Carrera.objects.get(codigo="IQ")
         for nivel, materias_lista in MATERIAS_IQ.items():
             for materia_nombre in materias_lista:
-                if nivel in ("primero", "segundo"):
-                    comisiones = generar_horarios_k1_k2()
-                else:
-                    comisiones = generar_horarios_unica()
-                crear_plan(c_iq, materia_nombre, nivel, "2023", comisiones)
+                comisiones = generar_horarios_k1_k2() if nivel in ("primero", "segundo") else generar_horarios_unica()
+                crear_materia(c_iq, materia_nombre, nivel, comisiones)
 
-        # ── 6. IEM (Plan 2023, 5 años, anual) ──
+        # ── 6. IEM ──
         self.stdout.write("Cargando IEM...")
         c_iem = Carrera.objects.get(codigo="IEM")
         for nivel, materias_lista in MATERIAS_IEM.items():
             for materia_nombre in materias_lista:
-                if nivel in ("primero", "segundo"):
-                    comisiones = generar_horarios_k1_k2()
-                else:
-                    comisiones = generar_horarios_unica()
-                crear_plan(c_iem, materia_nombre, nivel, "2023", comisiones)
+                comisiones = generar_horarios_k1_k2() if nivel in ("primero", "segundo") else generar_horarios_unica()
+                crear_materia(c_iem, materia_nombre, nivel, comisiones)
 
-        # ── 7. TUP (Plan 2024, 2 años, cuatrimestral) ──
+        # ── 7. TUP ──
         self.stdout.write("Cargando TUP...")
         c_tup = Carrera.objects.get(codigo="TUP")
         for cuatrimestre, materias_lista in MATERIAS_TUP.items():
             for materia_nombre in materias_lista:
                 comisiones = generar_horarios_k1_k2()
-                crear_plan(c_tup, materia_nombre, cuatrimestre, "2023", comisiones)
+                crear_materia(c_tup, materia_nombre, cuatrimestre, comisiones)
 
-        # ── 8. LAR (Plan 2026, 4 años, anual) ──
+        # ── 8. LAR ──
         self.stdout.write("Cargando LAR...")
         c_lar = Carrera.objects.get(codigo="LAR")
         for nivel, materias_lista in MATERIAS_LAR.items():
             for materia_nombre in materias_lista:
-                if nivel in ("primero", "segundo"):
-                    comisiones = generar_horarios_k1_k2()
-                else:
-                    comisiones = generar_horarios_unica()
-                crear_plan(c_lar, materia_nombre, nivel, "2023", comisiones)
+                comisiones = generar_horarios_k1_k2() if nivel in ("primero", "segundo") else generar_horarios_unica()
+                crear_materia(c_lar, materia_nombre, nivel, comisiones)
 
         # ── Resumen ──
         carreras_ids = [c_isi.id, c_iq.id, c_iem.id, c_tup.id, c_lar.id]
         total_horarios = HorarioCursado.objects.filter(
-            comision__plan_materia__carrera_id__in=carreras_ids
-        ).count()
-        total_comisiones = Comision.objects.filter(
-            plan_materia__carrera_id__in=carreras_ids
-        ).count()
-        total_planes = PlanMateria.objects.filter(
-            carrera_id__in=carreras_ids
+            materia__carrera_id__in=carreras_ids
         ).count()
         total_materias = Materia.objects.filter(
-            carreras__carrera_id__in=carreras_ids
-        ).distinct().count()
+            carrera_id__in=carreras_ids
+        ).count()
 
         self.stdout.write(self.style.SUCCESS(
             f"\n═══ Completado ═══\n"
             f"  Carreras: 5\n"
             f"  Materias: {total_materias}\n"
-            f"  PlanMaterias: {total_planes}\n"
-            f"  Comisiones: {total_comisiones}\n"
-            f"  Horarios: {total_horarios}\n"
-            f"  Espacios: {Espacio.objects.count()}"
+            f"  Horarios: {total_horarios}"
         ))

@@ -10,7 +10,6 @@ export interface Evento {
   fecha_hora_fin: string;
   imagen_url: string;
   espacio: string | null;
-  espacio_nombre: string | null;
   destacado?: boolean;
 }
 

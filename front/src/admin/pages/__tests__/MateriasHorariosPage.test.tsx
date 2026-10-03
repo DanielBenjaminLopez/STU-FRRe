@@ -28,15 +28,11 @@ vi.mock(
       >();
     return {
       ...actual,
-      fetchPlanMaterias: vi.fn(),
-      deletePlanMateria: vi.fn(),
-      fetchComisiones: vi.fn(),
-      createComision: vi.fn(),
-      deleteComision: vi.fn(),
+      fetchMaterias: vi.fn(),
+      deleteMateria: vi.fn(),
       fetchHorarios: vi.fn(),
       createHorario: vi.fn(),
       deleteHorario: vi.fn(),
-      fetchEspaciosForSelect: vi.fn(),
       importarHorariosCSV: vi.fn(),
     };
   },
@@ -46,30 +42,24 @@ vi.mock("../../../shared/api/carreras", () => ({
   fetchCarreras: vi.fn(),
 }));
 
-const mockFetchPlanMaterias = vi.mocked(horariosApi.fetchPlanMaterias);
-const mockFetchComisiones = vi.mocked(horariosApi.fetchComisiones);
+const mockFetchMaterias = vi.mocked(horariosApi.fetchMaterias);
 const mockFetchHorarios = vi.mocked(horariosApi.fetchHorarios);
-const mockFetchEspacios = vi.mocked(horariosApi.fetchEspaciosForSelect);
 const mockFetchCarreras = vi.mocked(carrerasApi.fetchCarreras);
 
 describe("MateriasHorariosPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetchPlanMaterias.mockResolvedValue([
+    mockFetchMaterias.mockResolvedValue([
       {
         id: 1,
         carrera: 1,
-        materia: 1,
+        nombre: "Matemática Discreta",
         carrera_nombre: "Ingeniería en Sistemas",
-        materia_nombre: "Matemática Discreta",
         carrera_tipo: "grado",
         nivel: "primero",
-        plan_estudio: "2023",
       },
     ]);
-    mockFetchComisiones.mockResolvedValue([]);
     mockFetchHorarios.mockResolvedValue([]);
-    mockFetchEspacios.mockResolvedValue([]);
     mockFetchCarreras.mockResolvedValue([
       { id: 1, nombre: "Ingeniería en Sistemas" } as never,
     ]);
@@ -93,13 +83,11 @@ describe("MateriasHorariosPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("describe la materia sin modalidad ni cuatrimestre", async () => {
+  it("describe la materia sin modalidad, cuatrimestre ni plan de estudio", async () => {
     render(<MateriasHorariosPage />);
 
     const detalle = await screen.findByText(/Nivel 1ro/);
-    expect(detalle).toHaveTextContent(
-      "Ingeniería en Sistemas | Nivel 1ro | Plan 2023",
-    );
+    expect(detalle).toHaveTextContent("Ingeniería en Sistemas | Nivel 1ro");
   });
 
   describe("importación CSV", () => {

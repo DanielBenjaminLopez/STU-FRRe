@@ -14,10 +14,9 @@ export interface Examen {
 
 interface MesaExamenBackend {
   id: number;
-  plan_materia?: number | null;
-  espacio?: number | null;
+  materia?: number | null;
+  espacio?: string;
   materia_nombre?: string;
-  espacio_nombre?: string;
   carrera_codigo?: string;
   fecha?: string;
   hora?: string;
@@ -48,7 +47,7 @@ export async function fetchExamenes(): Promise<Examen[]> {
         hora_inicio: horaInicio,
         hora_fin: calculateHoraFin(horaInicio),
         dia_semana: m.dia_semana || "",
-        aula: m.espacio_nombre || "",
+        aula: m.espacio || "",
         fecha: m.fecha,
       };
     });

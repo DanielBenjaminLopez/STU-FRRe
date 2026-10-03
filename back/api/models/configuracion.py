@@ -11,13 +11,6 @@ class Totem(models.Model):
     VINCULO_VIGENCIA_MINUTOS = 5
 
     nombre = models.CharField(max_length=150, blank=True, default='')
-    espacio = models.ForeignKey(
-        'Espacio',
-        on_delete=models.PROTECT,
-        related_name='totems',
-        null=True,
-        blank=True,
-    )
     codigo_vinculacion = models.CharField(
         max_length=10, unique=True, null=True, blank=True
     )

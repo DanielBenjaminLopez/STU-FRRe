@@ -5,10 +5,9 @@ vi.mock("../../../shared/api/client", () => ({
   totemFetch: vi.fn().mockResolvedValue([
     {
       id: 1,
-      plan_materia: 1,
-      espacio: 1,
+      materia: 1,
+      espacio: "Aula 1.1",
       materia_nombre: "Algoritmos y Estructuras de Datos",
-      espacio_nombre: "Aula 1.1",
       carrera_codigo: "ISI",
       fecha: "2026-09-21",
       hora: "08:00:00",
@@ -19,10 +18,9 @@ vi.mock("../../../shared/api/client", () => ({
     },
     {
       id: 2,
-      plan_materia: 2,
-      espacio: 2,
+      materia: 2,
+      espacio: "Aula 1.2",
       materia_nombre: "Física II",
-      espacio_nombre: "Aula 1.2",
       carrera_codigo: "IEM",
       fecha: "2026-09-22",
       hora: "10:00:00",
@@ -33,10 +31,9 @@ vi.mock("../../../shared/api/client", () => ({
     },
     {
       id: 3,
-      plan_materia: 3,
-      espacio: 3,
+      materia: 3,
+      espacio: "Aula 1.3",
       materia_nombre: "Inactiva",
-      espacio_nombre: "Aula 1.3",
       carrera_codigo: "IQ",
       fecha: "2026-09-23",
       hora: "14:00:00",

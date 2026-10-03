@@ -1,40 +1,27 @@
 import { apiFetch, apiUpload } from "../../../shared/api/client";
-import type { Espacio } from "../../totems/api/totems";
 
-export interface PlanMateria {
+export interface Materia {
   id: number;
+  nombre: string;
   carrera: number;
-  materia: number;
   carrera_nombre: string;
-  materia_nombre: string;
+  carrera_codigo?: string;
   carrera_tipo: "grado" | "tecnica" | "posgrado" | "diplomatura";
   nivel: string;
-  plan_estudio: string;
-}
-
-export interface Comision {
-  id: number;
-  plan_materia: number;
-  nombre: string;
-  display_name: string;
-  materia_nombre?: string;
-  carrera_nombre?: string;
-  nivel?: string;
 }
 
 export interface HorarioCursado {
   id: number;
-  comision: number | null;
-  espacio: number;
+  materia: number;
+  comision: string;
+  espacio: string;
   dia_semana: string;
   hora_inicio: string;
   hora_fin: string;
-  activo: boolean;
 }
 
 export interface HorarioCursadoConNombres extends HorarioCursado {
   materia_nombre?: string;
-  espacio_nombre?: string;
 }
 
 export const DIAS_SEMANA = [
@@ -54,81 +41,40 @@ export const NIVELES = [
   { value: "quinto", label: "5to" },
 ] as const;
 
-export const PLANES = [
-  { value: "2023", label: "2023" },
-  { value: "2008", label: "2008" },
-] as const;
-
-export async function fetchPlanMaterias(filters?: {
+export async function fetchMaterias(filters?: {
   tipo?: string;
   carrera?: number;
   nivel?: string;
-}): Promise<PlanMateria[]> {
+}): Promise<Materia[]> {
   const params = new URLSearchParams();
   if (filters?.tipo) params.append("tipo", filters.tipo);
   if (filters?.carrera) params.append("carrera", String(filters.carrera));
   if (filters?.nivel) params.append("nivel", filters.nivel);
   const qs = params.toString();
-  return apiFetch<PlanMateria[]>(`/api/plan-materias/${qs ? `?${qs}` : ""}`);
+  return apiFetch<Materia[]>(`/api/materias/${qs ? `?${qs}` : ""}`);
 }
 
-export async function createPlanMateria(
-  data: Omit<PlanMateria, "id" | "carrera_nombre" | "materia_nombre">,
-): Promise<PlanMateria> {
-  return apiFetch<PlanMateria>("/api/plan-materias/", {
+export async function createMateria(
+  data: Omit<Materia, "id" | "carrera_nombre">,
+): Promise<Materia> {
+  return apiFetch<Materia>("/api/materias/", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function updatePlanMateria(
+export async function updateMateria(
   id: number,
-  data: Partial<PlanMateria>,
-): Promise<PlanMateria> {
-  return apiFetch<PlanMateria>(`/api/plan-materias/${id}/`, {
+  data: Partial<Materia>,
+): Promise<Materia> {
+  return apiFetch<Materia>(`/api/materias/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
-export async function deletePlanMateria(id: number): Promise<void> {
-  await apiFetch(`/api/plan-materias/${id}/`, { method: "DELETE" });
-}
-
-export async function fetchComisiones(filters?: {
-  plan_materia?: number;
-}): Promise<Comision[]> {
-  const params = new URLSearchParams();
-  if (filters?.plan_materia)
-    params.append("plan_materia", String(filters.plan_materia));
-  const qs = params.toString();
-  return apiFetch<Comision[]>(`/api/comisiones/${qs ? `?${qs}` : ""}`);
-}
-
-export async function createComision(
-  data: Omit<
-    Comision,
-    "id" | "display_name" | "materia_nombre" | "carrera_nombre" | "nivel"
-  >,
-): Promise<Comision> {
-  return apiFetch<Comision>("/api/comisiones/", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function updateComision(
-  id: number,
-  data: Partial<Comision>,
-): Promise<Comision> {
-  return apiFetch<Comision>(`/api/comisiones/${id}/`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function deleteComision(id: number): Promise<void> {
-  await apiFetch(`/api/comisiones/${id}/`, { method: "DELETE" });
+export async function deleteMateria(id: number): Promise<void> {
+  await apiFetch(`/api/materias/${id}/`, { method: "DELETE" });
 }
 
 export async function fetchHorarios(): Promise<HorarioCursadoConNombres[]> {
@@ -156,10 +102,6 @@ export async function updateHorario(
 
 export async function deleteHorario(id: number): Promise<void> {
   await apiFetch(`/api/horarios/${id}/`, { method: "DELETE" });
-}
-
-export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
-  return apiFetch<Espacio[]>("/api/espacios/");
 }
 
 export interface CsvImportDetailRow {

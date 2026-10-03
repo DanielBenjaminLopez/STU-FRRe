@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from api.models import (
-    Carrera, Materia, PlanMateria, Comision, HorarioCursado, Espacio,
+    Carrera, Materia, HorarioCursado,
     MesaExamen, Noticias, Widget, Plantilla, PlantillaWidget,
 )
 from datetime import time, date, datetime, timedelta
@@ -14,25 +14,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("Cargando datos de prueba...")
 
-        if PlanMateria.objects.exists():
+        if Materia.objects.exists():
             self.stdout.write("Ya hay datos cargados. Omitiendo.")
             return
 
-        # ── Espacios ──
-        aulas = []
-        for piso in range(1, 4):
-            for num in ["A", "B", "C"]:
-                e = Espacio.objects.create(
-                    nombre=f"Aula {piso}{num}",
-                    tipo="aula",
-                    piso=piso,
-                )
-                aulas.append(e)
-
-        lab = Espacio.objects.create(
-            nombre="Laboratorio de Informatica", tipo="laboratorio_informatico", piso=2
-        )
-        aulas.append(lab)
+        aulas = ["Aula 1A", "Aula 1B", "Aula 1C", "Laboratorio de Informatica"]
 
         # ── Carreras ──
         carreras_data = [
@@ -70,8 +56,7 @@ class Command(BaseCommand):
 
         # ── Materias ──
         def mat(nombre):
-            materia, _ = Materia.objects.get_or_create(nombre=nombre)
-            return materia
+            return nombre
 
         # ISI - 5 materias (1 por nivel)
         materias_isi = [
@@ -156,7 +141,7 @@ class Command(BaseCommand):
             mat("Educacion Inclusiva"),
         ]
 
-        # ── PlanMaterias + Comisiones + Horarios ──
+        # ── Materias + Horarios ──
         horarios_data = [
             ("lunes", time(8, 0), time(10, 0)),
             ("martes", time(10, 15), time(12, 15)),
@@ -165,25 +150,23 @@ class Command(BaseCommand):
             ("viernes", time(10, 15), time(12, 15)),
         ]
 
-        def crear_plan(carrera, materia, nivel, plan, comisiones_data):
-            pm = PlanMateria.objects.create(
+        def crear_plan(carrera, materia, nivel, _plan, comisiones_data):
+            m = Materia.objects.create(
                 carrera=carrera,
-                materia=materia,
+                nombre=materia,
                 nivel=nivel,
-                plan_estudio=plan,
             )
             for com_nombre, horarios in comisiones_data:
-                com = Comision.objects.create(plan_materia=pm, nombre=com_nombre)
                 for dia, inicio, fin in horarios:
                     HorarioCursado.objects.create(
-                        comision=com,
+                        materia=m,
+                        comision=com_nombre,
                         espacio=aulas[0],
                         dia_semana=dia,
                         hora_inicio=inicio,
                         hora_fin=fin,
-                        activo=True,
                     )
-            return pm
+            return m
 
         # ── ISI (5 niveles, anual) ──
         crear_plan(c_isi, materias_isi[0], "primero", "2023",
@@ -346,7 +329,6 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             f"Datos cargados: {Carrera.objects.count()} carreras, "
-            f"{Materia.objects.count()} materias, {PlanMateria.objects.count()} planes, "
-            f"{Comision.objects.count()} comisiones, {HorarioCursado.objects.count()} horarios, "
-            f"{Espacio.objects.count()} espacios"
+            f"{Materia.objects.count()} materias, "
+            f"{HorarioCursado.objects.count()} horarios"
         ))

@@ -23,18 +23,6 @@ class Carrera(models.Model):
 
 
 class Materia(models.Model):
-    nombre = models.CharField(max_length=200, unique=True)
-
-    class Meta:
-        ordering = ['nombre']
-        verbose_name = 'Materia'
-        verbose_name_plural = 'Materias'
-
-    def __str__(self):
-        return self.nombre
-
-
-class PlanMateria(models.Model):
     NIVEL = [
         ('primero', 'Primer año'),
         ('segundo', 'Segundo año'),
@@ -43,61 +31,26 @@ class PlanMateria(models.Model):
         ('quinto', 'Quinto año'),
     ]
 
-    PLAN_ESTUDIO = [
-        ('2026', 'Plan 2026'),
-        ('2023', 'Plan 2023'),
-        ('2010', 'Plan 2010'),
-        ('2008', 'Plan 2008'),
-        ('2001', 'Plan 2001'),
-        ('1995', 'Plan 1995'),
-    ]
-
+    nombre = models.CharField(max_length=200)
     carrera = models.ForeignKey(
         Carrera,
         on_delete=models.PROTECT,
         related_name='materias',
-    )
-    materia = models.ForeignKey(
-        Materia,
-        on_delete=models.PROTECT,
-        related_name='carreras',
+        null=True,
+        blank=True,
     )
     nivel = models.CharField(max_length=10, choices=NIVEL, default='primero')
-    plan_estudio = models.CharField(max_length=4, choices=PLAN_ESTUDIO, default='2023')
 
     class Meta:
-        ordering = ['carrera', 'nivel']
+        ordering = ['carrera', 'nivel', 'nombre']
         unique_together = [
-            ['carrera', 'materia', 'nivel', 'plan_estudio'],
+            ['carrera', 'nombre', 'nivel'],
         ]
-        verbose_name = 'Plan - Materia'
-        verbose_name_plural = 'Plan - Materias'
+        verbose_name = 'Materia'
+        verbose_name_plural = 'Materias'
 
     def __str__(self):
-        return (
-            f'{self.carrera.nombre} — {self.materia.nombre} '
-            f'({self.get_nivel_display()}, Plan {self.plan_estudio})'
-        )
-
-
-class Comision(models.Model):
-    plan_materia = models.ForeignKey(
-        PlanMateria,
-        on_delete=models.CASCADE,
-        related_name='comisiones',
-    )
-    nombre = models.CharField(max_length=50, help_text='Ej: K1, K2, Única')
-
-    class Meta:
-        ordering = ['plan_materia', 'nombre']
-        unique_together = [['plan_materia', 'nombre']]
-        verbose_name = 'Comisión'
-        verbose_name_plural = 'Comisiones'
-
-    def __str__(self):
-        if self.plan_materia and hasattr(self.plan_materia, 'materia') and hasattr(self.plan_materia, 'carrera'):
-            return f'{self.plan_materia.materia.nombre} — {self.nombre} ({self.plan_materia.carrera.nombre})'
-        return f'Comisión {self.nombre}'
+        return self.nombre
 
 
 class HorarioCursado(models.Model):
@@ -110,35 +63,39 @@ class HorarioCursado(models.Model):
         ('sabado', 'Sábado'),
     ]
 
-    comision = models.ForeignKey(
-        Comision,
+    materia = models.ForeignKey(
+        Materia,
         on_delete=models.CASCADE,
         related_name='horarios',
         null=True,
         blank=True,
     )
-    espacio = models.ForeignKey(
-        'Espacio',
-        on_delete=models.CASCADE,
-        related_name='horarios',
-        null=True,
+    comision = models.CharField(
+        max_length=50,
+        default='',
         blank=True,
+        help_text='Ej: K1, K2, Curso 1, Única',
+    )
+    espacio = models.CharField(
+        max_length=150,
+        default='',
+        blank=True,
+        help_text='Ej: Aula 10, Laboratorio 4',
     )
     dia_semana = models.CharField(max_length=15, choices=DIA_SEMANA)
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()
-    activo = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['comision', 'dia_semana', 'hora_inicio']
-        unique_together = [['comision', 'espacio', 'dia_semana', 'hora_inicio', 'hora_fin']]
+        ordering = ['materia', 'comision', 'dia_semana', 'hora_inicio']
+        unique_together = [['materia', 'comision', 'espacio', 'dia_semana', 'hora_inicio', 'hora_fin']]
         verbose_name = 'Horario de cursado'
         verbose_name_plural = 'Horarios de cursado'
 
     def __str__(self):
-        if self.comision and hasattr(self.comision, 'plan_materia') and hasattr(self.comision.plan_materia, 'materia'):
-            materia = self.comision.plan_materia.materia.nombre
-            return f'{materia} ({self.comision.nombre}) - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
+        if self.materia:
+            com = f' ({self.comision})' if self.comision else ''
+            return f'{self.materia.nombre}{com} - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
         return f'Horario #{self.id or "nuevo"} - {self.dia_semana} {self.hora_inicio}-{self.hora_fin}'
 
 
@@ -165,17 +122,18 @@ class MesaExamen(models.Model):
         'diciembre': 8,
     }
 
-    plan_materia = models.ForeignKey(
-        PlanMateria,
+    materia = models.ForeignKey(
+        Materia,
         on_delete=models.CASCADE,
         related_name='mesas_examen',
         null=True,
         blank=True,
     )
-    espacio = models.ForeignKey(
-        'Espacio',
-        on_delete=models.CASCADE,
-        related_name='mesas_examen',
+    espacio = models.CharField(
+        max_length=150,
+        default='',
+        blank=True,
+        help_text='Ej: Aula 10, Aula Magna',
     )
     fecha = models.DateField(default='2025-01-01')
     hora = models.TimeField(default='00:00')
@@ -184,14 +142,13 @@ class MesaExamen(models.Model):
 
     class Meta:
         ordering = ['fecha', 'hora']
-        unique_together = [['plan_materia', 'espacio', 'fecha', 'hora', 'turno']]
+        unique_together = [['materia', 'espacio', 'fecha', 'hora', 'turno']]
         verbose_name = 'Mesa de examen'
         verbose_name_plural = 'Mesas de exámen'
 
     def __str__(self):
-        if self.plan_materia and hasattr(self.plan_materia, 'materia'):
-            materia = self.plan_materia.materia.nombre
-            return f'{materia} - {self.get_turno_display()} ({self.llamado}° llamado)'
+        if self.materia:
+            return f'{self.materia.nombre} - {self.get_turno_display()} ({self.llamado}° llamado)'
         return f'Mesa #{self.id or "nueva"} - {self.get_turno_display()}'
 
     @property
@@ -202,4 +159,5 @@ class MesaExamen(models.Model):
     def dia_semana(self):
         dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
         return dias[self.fecha.weekday()]
+
 

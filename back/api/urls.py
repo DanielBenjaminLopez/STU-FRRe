@@ -17,11 +17,8 @@ from .views import (
     BulkCalendarView,
     CustomTokenObtainPairView,
     EventoCalendarioViewSet,
-    PlanMateriaViewSet,
     AvisosActivosView,
     CarreraViewSet,
-    ComisionViewSet,
-    EspacioListView,
     EventoViewSet,
     HorarioCursadoViewSet,
     MateriaViewSet,
@@ -34,8 +31,6 @@ from .views import (
 router = DefaultRouter()
 router.register('carreras', CarreraViewSet)
 router.register('materias', MateriaViewSet)
-router.register('plan-materias', PlanMateriaViewSet)
-router.register('comisiones', ComisionViewSet)
 router.register('horarios', HorarioCursadoViewSet)
 router.register('mesas-examen', MesaExamenViewSet)
 router.register('eventos', EventoViewSet)
@@ -58,7 +53,6 @@ urlpatterns = [
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/me/', MeView.as_view(), name='auth_me'),
-    path('espacios/', EspacioListView.as_view(), name='espacios_list'),
     path('avisos-activos/', AvisosActivosView.as_view(), name='avisos_activos'),
     path('calendario/bulk/', BulkCalendarView.as_view(), name='calendario_bulk'),
 ]

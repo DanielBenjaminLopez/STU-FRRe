@@ -1,12 +1,10 @@
 import { apiFetch, apiUpload } from "../../../shared/api/client";
-import type { Espacio } from "../../totems/api/totems";
 import type { CsvImportResult } from "../../horarios/api/horariosAdmin";
 
 export interface MesaExamen {
   id: number;
-  plan_materia?: number;
-  materia?: number;
-  espacio: number;
+  materia: number;
+  espacio: string;
   fecha?: string;
   hora?: string;
   fecha_hora?: string;
@@ -14,7 +12,6 @@ export interface MesaExamen {
   llamado?: number;
   activo: boolean;
   materia_nombre?: string;
-  espacio_nombre?: string;
 }
 
 export const TURNOS = [
@@ -111,19 +108,15 @@ export async function deleteMesaExamen(id: number): Promise<void> {
   await apiFetch(`/api/mesas-examen/${id}/`, { method: "DELETE" });
 }
 
-export interface PlanMateriaDTO {
+export interface MateriaDTO {
   id: number;
   carrera: number;
+  nombre: string;
   carrera_nombre?: string;
-  materia_nombre?: string;
 }
 
-export async function fetchPlanMaterias(): Promise<PlanMateriaDTO[]> {
-  return apiFetch<PlanMateriaDTO[]>("/api/plan-materias/");
-}
-
-export async function fetchEspaciosForSelect(): Promise<Espacio[]> {
-  return apiFetch<Espacio[]>("/api/espacios/");
+export async function fetchMateriasForSelect(): Promise<MateriaDTO[]> {
+  return apiFetch<MateriaDTO[]>("/api/materias/");
 }
 
 export async function importarMesasExamenCSV(

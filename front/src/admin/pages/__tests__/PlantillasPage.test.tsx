@@ -177,8 +177,6 @@ function mockTotem(overrides: Partial<Totem> = {}): Totem {
   return {
     id: 1,
     nombre: "Tótem Principal",
-    espacio_id: null,
-    espacio_nombre: null,
     activo: true,
     config_pantalla: {},
     vinculado: true,
