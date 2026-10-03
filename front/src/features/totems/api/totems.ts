@@ -95,7 +95,7 @@ export async function updateTotemOrientacionMapa(
 }
 
 export async function fetchTotemMe(): Promise<Totem> {
-  return totemFetch<Totem>("/api/totems/me/");
+  return totemFetch<Totem>("/api/totems/me/", { cache: "no-store" });
 }
 
 export interface ConfiguracionVideo {

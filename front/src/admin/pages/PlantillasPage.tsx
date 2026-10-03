@@ -627,7 +627,12 @@ export default function PlantillasPage() {
     try {
       const isNew = Boolean(plantilla.isNew);
       const saved = await savePlantillaHelper(plantilla);
-      if (selectedTotem) {
+      // Solo actualizar el tótem si la plantilla cambió o es nueva.
+      // Si ya estaba asignada, replacePlantillaWidgets ya notificó al tótem.
+      const needsTotemUpdate =
+        selectedTotem &&
+        (isNew || selectedTotem.plantilla_id !== Number(saved.id));
+      if (needsTotemUpdate) {
         await updateTotem(selectedTotem.id, {
           plantilla_id: Number(saved.id),
         });

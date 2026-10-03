@@ -59,6 +59,12 @@ class MateriaResource(resources.ModelResource):
         widget=ForeignKeyWidget(Carrera, field='nombre'),
     )
 
+    def before_import(self, dataset, **kwargs):
+        if dataset.headers and 'nombre' not in dataset.headers and 'materia' in dataset.headers:
+            dataset.headers = [
+                'nombre' if h == 'materia' else h for h in dataset.headers
+            ]
+
     def before_import_row(self, row, **kwargs):
         if not row.get('nombre') and row.get('materia'):
             row['nombre'] = str(row.get('materia')).strip()

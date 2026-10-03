@@ -25,6 +25,10 @@ class PlantillaViewSet(viewsets.ModelViewSet):
     def _notify_assigned_totems(self, plantilla):
         notify_totems(plantilla.totems.values_list('id', flat=True))
 
+    def perform_update(self, serializer):
+        plantilla = serializer.save()
+        transaction.on_commit(lambda: self._notify_assigned_totems(plantilla))
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.totems.exists():
