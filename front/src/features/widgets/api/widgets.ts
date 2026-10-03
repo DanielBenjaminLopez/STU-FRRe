@@ -1,4 +1,5 @@
 import { apiFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface WidgetDTO {
   id: number;
@@ -11,5 +12,5 @@ export interface WidgetDTO {
 }
 
 export async function fetchWidgets(): Promise<WidgetDTO[]> {
-  return apiFetch<WidgetDTO[]>("/api/widgets/");
+  return apiFetch<WidgetDTO[]>(API_ENDPOINTS.widgets);
 }

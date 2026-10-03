@@ -7,6 +7,8 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import NoticiasCarousel from "../components/NoticiasCarousel";
 import Button from "../../shared/components/ui/Button";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchNoticias,
   createNoticia,
@@ -124,8 +126,11 @@ const noticiaFields: FormField[] = [
 ];
 
 export default function NoticiasPage() {
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedNoticias = peekApiCache<Noticia[]>(API_ENDPOINTS.noticias);
+  const [noticias, setNoticias] = useState<Noticia[]>(
+    () => cachedNoticias ?? [],
+  );
+  const [loading, setLoading] = useState(() => !cachedNoticias);
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<Noticia | null>(null);
   const [deletingRow, setDeletingRow] = useState<Noticia | null>(null);
@@ -133,7 +138,6 @@ export default function NoticiasPage() {
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await fetchNoticias();
       setNoticias(data);
     } catch (err) {

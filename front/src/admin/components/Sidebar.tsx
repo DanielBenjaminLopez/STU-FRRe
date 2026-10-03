@@ -1,16 +1,86 @@
 import { NavLink } from "react-router";
 import { useAuth } from "../../shared/context/AuthContext";
+import {
+  fetchHorarios,
+  fetchMaterias,
+} from "../../features/horarios/api/horariosAdmin";
+import { fetchCarreras } from "../../shared/api/carreras";
+import {
+  fetchMesasExamen,
+  fetchMateriasForSelect,
+} from "../../features/examenes/api/mesasExamen";
+import { fetchNoticias } from "../../features/noticias/api/noticias";
+import { fetchEventos } from "../../features/noticias/api/eventos";
+import { fetchEventosCalendario } from "../../features/calendario/api/calendarioAdmin";
+import { fetchAvisos } from "../../features/layout/api/avisos";
+import { fetchUbicacionesMapa } from "../../features/mapa/api/ubicacionesMapa";
+import { fetchPlantillas } from "../../features/widgets/api/plantillas";
+import { fetchWidgets } from "../../features/widgets/api/widgets";
 
-const navItems = [
-  { to: "/admin", label: "Inicio", end: true },
-  { to: "/admin/horarios", label: "Horarios" },
-  { to: "/admin/mesas-examen", label: "Mesas de examen" },
-  { to: "/admin/noticias", label: "Noticias" },
-  { to: "/admin/eventos", label: "Eventos" },
-  { to: "/admin/calendario-avisos", label: "Calendario" },
-  { to: "/admin/avisos", label: "Avisos" },
-  { to: "/admin/ubicaciones-mapa", label: "Mapas" },
-  { to: "/admin/plantillas", label: "Plantillas" },
+function prefetchAll(...promises: Promise<unknown>[]) {
+  for (const p of promises) {
+    p.catch(() => {});
+  }
+}
+
+const navItems: {
+  to: string;
+  label: string;
+  end?: boolean;
+  prefetch?: () => void;
+}[] = [
+  {
+    to: "/admin",
+    label: "Inicio",
+    end: true,
+    prefetch: () => prefetchAll(fetchPlantillas()),
+  },
+  {
+    to: "/admin/horarios",
+    label: "Horarios",
+    prefetch: () =>
+      prefetchAll(fetchMaterias(), fetchHorarios(), fetchCarreras()),
+  },
+  {
+    to: "/admin/mesas-examen",
+    label: "Mesas de examen",
+    prefetch: () =>
+      prefetchAll(
+        fetchMesasExamen(),
+        fetchCarreras(),
+        fetchMateriasForSelect(),
+      ),
+  },
+  {
+    to: "/admin/noticias",
+    label: "Noticias",
+    prefetch: () => prefetchAll(fetchNoticias()),
+  },
+  {
+    to: "/admin/eventos",
+    label: "Eventos",
+    prefetch: () => prefetchAll(fetchEventos()),
+  },
+  {
+    to: "/admin/calendario-avisos",
+    label: "Calendario",
+    prefetch: () => prefetchAll(fetchEventosCalendario()),
+  },
+  {
+    to: "/admin/avisos",
+    label: "Avisos",
+    prefetch: () => prefetchAll(fetchAvisos()),
+  },
+  {
+    to: "/admin/ubicaciones-mapa",
+    label: "Mapas",
+    prefetch: () => prefetchAll(fetchUbicacionesMapa()),
+  },
+  {
+    to: "/admin/plantillas",
+    label: "Plantillas",
+    prefetch: () => prefetchAll(fetchPlantillas(), fetchWidgets()),
+  },
   { to: "/admin/video", label: "Video" },
 ];
 
@@ -26,6 +96,8 @@ export default function Sidebar() {
               <NavLink
                 to={item.to}
                 end={item.end}
+                onMouseEnter={item.prefetch}
+                onFocus={item.prefetch}
                 className={({ isActive }) =>
                   `block px-4 py-2.5 text-sm font-medium rounded-2xl transition-colors ${
                     isActive

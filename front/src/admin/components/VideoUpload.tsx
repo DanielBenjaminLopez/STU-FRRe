@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { sileo } from "sileo";
+import { getAdminToken, invalidateApiCache } from "../../shared/api/client";
 
 interface VideoUploadProps {
   totemId: number;
@@ -49,7 +50,7 @@ export default function VideoUpload({
       setProgress(0);
 
       try {
-        const token = localStorage.getItem("admin_token");
+        const token = getAdminToken();
         const formData = new FormData();
         formData.append("video_archivo", file);
 
@@ -86,6 +87,7 @@ export default function VideoUpload({
           },
         );
 
+        invalidateApiCache();
         onUploaded(result.video_url);
         sileo.success({ title: "Video subido" });
       } catch (err) {

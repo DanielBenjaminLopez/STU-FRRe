@@ -1,4 +1,5 @@
 import { apiFetch, apiUpload } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface Materia {
   id: number;
@@ -54,11 +55,11 @@ export async function fetchMaterias(filters?: {
   if (filters?.carrera) params.append("carrera", String(filters.carrera));
   if (filters?.nivel) params.append("nivel", filters.nivel);
   const qs = params.toString();
-  return apiFetch<Materia[]>(`/api/materias/${qs ? `?${qs}` : ""}`);
+  return apiFetch<Materia[]>(`${API_ENDPOINTS.materias}${qs ? `?${qs}` : ""}`);
 }
 
 export async function fetchHorarios(): Promise<HorarioCursadoConNombres[]> {
-  return apiFetch<HorarioCursadoConNombres[]>("/api/horarios/");
+  return apiFetch<HorarioCursadoConNombres[]>(API_ENDPOINTS.horarios);
 }
 
 export async function createHorario(

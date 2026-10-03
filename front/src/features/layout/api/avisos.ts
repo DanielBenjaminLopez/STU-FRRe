@@ -1,4 +1,5 @@
 import { apiFetch, totemFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface Aviso {
   id: number;
@@ -16,7 +17,7 @@ export const TIPOS_AVISO = [
 ] as const;
 
 export async function fetchAvisos(): Promise<Aviso[]> {
-  return apiFetch<Aviso[]>("/api/avisos/");
+  return apiFetch<Aviso[]>(API_ENDPOINTS.avisos);
 }
 
 export async function fetchAvisosActivos(): Promise<Aviso[]> {

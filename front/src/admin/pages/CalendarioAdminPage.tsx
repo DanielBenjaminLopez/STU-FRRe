@@ -6,9 +6,12 @@ import EventTypeSelector from "../components/calendario/EventTypeSelector";
 import EventSummary from "../components/calendario/EventSummary";
 import SaveConfirmationModal from "../components/calendario/SaveConfirmationModal";
 import Button from "../../shared/components/ui/Button";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchEventosCalendario,
   bulkSaveCalendario,
+  type EventoCalendarioAdmin,
 } from "../../features/calendario/api/calendarioAdmin";
 
 interface PendingEvent {
@@ -38,11 +41,34 @@ function fmtDate(s: string) {
   return `${d}/${m}/${y}`;
 }
 
+function mapEventsForYear(
+  data: EventoCalendarioAdmin[],
+  targetYear: number,
+): PendingEvent[] {
+  return data
+    .filter((e) => parseInt(e.fecha_inicio.split("-")[0], 10) === targetYear)
+    .map((e) => ({
+      titulo: e.titulo,
+      tipo: e.tipo,
+      fecha_inicio: e.fecha_inicio,
+      fecha_fin: e.fecha_fin,
+      todo_el_dia: e.todo_el_dia,
+      color: e.color,
+      descripcion: e.descripcion,
+    }));
+}
+
 export default function CalendarioAdminPage() {
-  const [year, setYear] = useState(todayYear());
+  const initialYear = todayYear();
+  const cachedCalendario = peekApiCache<EventoCalendarioAdmin[]>(
+    API_ENDPOINTS.calendarioEventos,
+  );
+  const [year, setYear] = useState(initialYear);
   const [selectedTipo, setSelectedTipo] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState<PendingEvent[]>(() =>
+    cachedCalendario ? mapEventsForYear(cachedCalendario, initialYear) : [],
+  );
+  const [loading, setLoading] = useState(() => !cachedCalendario);
   const [saving, setSaving] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -50,23 +76,12 @@ export default function CalendarioAdminPage() {
     let mounted = true;
     async function load() {
       try {
-        setLoading(true);
+        if (!peekApiCache(API_ENDPOINTS.calendarioEventos)) {
+          setLoading(true);
+        }
         const data = await fetchEventosCalendario();
         if (!mounted) return;
-        const yearEvents = data.filter((e) => {
-          const y = parseInt(e.fecha_inicio.split("-")[0], 10);
-          return y === year;
-        });
-        const loaded: PendingEvent[] = yearEvents.map((e) => ({
-          titulo: e.titulo,
-          tipo: e.tipo,
-          fecha_inicio: e.fecha_inicio,
-          fecha_fin: e.fecha_fin,
-          todo_el_dia: e.todo_el_dia,
-          color: e.color,
-          descripcion: e.descripcion,
-        }));
-        setPending(loaded);
+        setPending(mapEventsForYear(data, year));
       } catch (err) {
         if (mounted) {
           sileo.error({

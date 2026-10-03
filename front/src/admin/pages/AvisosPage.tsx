@@ -1,4 +1,5 @@
 import CrudAdminPage from "../components/CrudAdminPage";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchAvisos,
   createAviso,
@@ -36,6 +37,7 @@ const config = {
   title: "Avisos",
   subtitle: "Gestión de avisos y suspensiones",
   entityName: "aviso",
+  cacheKey: API_ENDPOINTS.avisos,
   columns,
   formFields,
   fetchList: fetchAvisos,

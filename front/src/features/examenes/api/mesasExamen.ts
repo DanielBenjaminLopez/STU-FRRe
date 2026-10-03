@@ -1,4 +1,5 @@
 import { apiFetch, apiUpload } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 import type { CsvImportResult } from "../../horarios/api/horariosAdmin";
 
 export interface MesaExamen {
@@ -82,13 +83,13 @@ export function getTurnoFromFecha(fechaStr: string): TurnoMesa | null {
 }
 
 export async function fetchMesasExamen(): Promise<MesaExamen[]> {
-  return apiFetch<MesaExamen[]>("/api/mesas-examen/");
+  return apiFetch<MesaExamen[]>(API_ENDPOINTS.mesasExamen);
 }
 
 export async function createMesaExamen(
   data: Omit<MesaExamen, "id">,
 ): Promise<MesaExamen> {
-  return apiFetch<MesaExamen>("/api/mesas-examen/", {
+  return apiFetch<MesaExamen>(API_ENDPOINTS.mesasExamen, {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -98,14 +99,14 @@ export async function updateMesaExamen(
   id: number,
   data: Partial<MesaExamen>,
 ): Promise<MesaExamen> {
-  return apiFetch<MesaExamen>(`/api/mesas-examen/${id}/`, {
+  return apiFetch<MesaExamen>(`${API_ENDPOINTS.mesasExamen}${id}/`, {
     method: "PATCH",
     body: JSON.stringify(data),
   });
 }
 
 export async function deleteMesaExamen(id: number): Promise<void> {
-  await apiFetch(`/api/mesas-examen/${id}/`, { method: "DELETE" });
+  await apiFetch(`${API_ENDPOINTS.mesasExamen}${id}/`, { method: "DELETE" });
 }
 
 export interface MateriaDTO {
@@ -116,7 +117,7 @@ export interface MateriaDTO {
 }
 
 export async function fetchMateriasForSelect(): Promise<MateriaDTO[]> {
-  return apiFetch<MateriaDTO[]>("/api/materias/");
+  return apiFetch<MateriaDTO[]>(API_ENDPOINTS.materias);
 }
 
 export async function importarMesasExamenCSV(

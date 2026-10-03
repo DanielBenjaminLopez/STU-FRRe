@@ -1,4 +1,5 @@
 import { apiFetch, apiUpload, publicFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface Evento {
   id: number;
@@ -21,7 +22,7 @@ export const TIPOS_EVENTO = [
 ] as const;
 
 export async function fetchEventos(): Promise<Evento[]> {
-  return publicFetch<Evento[]>("/api/eventos/");
+  return publicFetch<Evento[]>(API_ENDPOINTS.eventos);
 }
 
 export async function createEvento(data: Omit<Evento, "id">): Promise<Evento> {

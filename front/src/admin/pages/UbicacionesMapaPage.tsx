@@ -5,6 +5,8 @@ import DataFormModal from "../components/DataFormModal";
 import type { FormField } from "../components/DataFormModal";
 import Button from "../../shared/components/ui/Button";
 import SearchInput from "../../shared/components/ui/SearchInput";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchUbicacionesMapa,
   updateUbicacionMapa,
@@ -84,9 +86,14 @@ const editFields: FormField[] = [
 
 export default function UbicacionesMapaPage() {
   // --- Sección 1: Ubicaciones/polígonos ---
+  const cachedUbicaciones = peekApiCache<UbicacionMapa[]>(
+    API_ENDPOINTS.ubicacionesMapa,
+  );
   const [activePiso, setActivePiso] = useState<PisoKey>("baja");
-  const [ubicaciones, setUbicaciones] = useState<UbicacionMapa[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [ubicaciones, setUbicaciones] = useState<UbicacionMapa[]>(
+    () => cachedUbicaciones ?? [],
+  );
+  const [loading, setLoading] = useState(() => !cachedUbicaciones);
   const [error, setError] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<UbicacionMapa | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -117,7 +124,6 @@ export default function UbicacionesMapaPage() {
     0;
 
   const cargarUbicaciones = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
       const data = await fetchUbicacionesMapa();

@@ -5,6 +5,8 @@ import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchEventos,
   createEvento,
@@ -115,15 +117,15 @@ const oneHourLater = new Date(now);
 oneHourLater.setHours(oneHourLater.getHours() + 1);
 
 export default function EventosPage() {
-  const [eventos, setEventos] = useState<Evento[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedEventos = peekApiCache<Evento[]>(API_ENDPOINTS.eventos);
+  const [eventos, setEventos] = useState<Evento[]>(() => cachedEventos ?? []);
+  const [loading, setLoading] = useState(() => !cachedEventos);
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<Evento | null>(null);
   const [deletingRow, setDeletingRow] = useState<Evento | null>(null);
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await fetchEventos();
       setEventos(data);
     } catch (err) {

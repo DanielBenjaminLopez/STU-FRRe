@@ -8,7 +8,9 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import ImportCsvModal from "../components/ImportCsvModal";
 import Button from "../../shared/components/ui/Button";
-import { fetchCarreras } from "../../shared/api/carreras";
+import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchMesasExamen,
   createMesaExamen,
@@ -20,6 +22,20 @@ import {
   type MesaExamen,
   type MateriaDTO,
 } from "../../features/examenes/api/mesasExamen";
+
+function normalizeMesasActivas(result: MesaExamen[]): MesaExamen[] {
+  const now = Date.now();
+  return result.map((mesa) => {
+    const fh =
+      mesa.fecha_hora ||
+      (mesa.fecha ? `${mesa.fecha}T${mesa.hora || "00:00"}` : "");
+    const fTime = fh ? new Date(fh).getTime() : 0;
+    return {
+      ...mesa,
+      activo: fTime > now && mesa.activo,
+    };
+  });
+}
 
 const columns: Column<MesaExamen>[] = [
   { key: "materia_nombre", label: "Materia", sortable: true },
@@ -85,13 +101,24 @@ const columns: Column<MesaExamen>[] = [
 ];
 
 export default function MesasExamenPage() {
-  const [data, setData] = useState<MesaExamen[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedMesas = peekApiCache<MesaExamen[]>(API_ENDPOINTS.mesasExamen);
+  const cachedCarreras = peekApiCache<Carrera[]>(API_ENDPOINTS.carreras);
+  const cachedMaterias = peekApiCache<MateriaDTO[]>(API_ENDPOINTS.materias);
+
+  const [data, setData] = useState<MesaExamen[]>(() =>
+    cachedMesas ? normalizeMesasActivas(cachedMesas) : [],
+  );
+  const [loading, setLoading] = useState(() => !cachedMesas);
 
   const [carreras, setCarreras] = useState<{ value: number; label: string }[]>(
-    [],
+    () =>
+      cachedCarreras
+        ? cachedCarreras.map((car) => ({ value: car.id, label: car.nombre }))
+        : [],
   );
-  const [materias, setMaterias] = useState<MateriaDTO[]>([]);
+  const [materias, setMaterias] = useState<MateriaDTO[]>(
+    () => cachedMaterias ?? [],
+  );
   const [selectedCarrera, setSelectedCarrera] = useState<number | null>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -101,21 +128,8 @@ export default function MesasExamenPage() {
 
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
       const result = await fetchMesasExamen();
-      const now = Date.now();
-      setData(
-        result.map((mesa) => {
-          const fh =
-            mesa.fecha_hora ||
-            (mesa.fecha ? `${mesa.fecha}T${mesa.hora || "00:00"}` : "");
-          const fTime = fh ? new Date(fh).getTime() : 0;
-          return {
-            ...mesa,
-            activo: fTime > now && mesa.activo,
-          };
-        }),
-      );
+      setData(normalizeMesasActivas(result));
     } catch (err) {
       sileo.error({
         title: "Error al cargar los datos",

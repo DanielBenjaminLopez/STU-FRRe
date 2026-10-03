@@ -30,6 +30,8 @@ import {
   type HorarioCursadoConNombres,
 } from "../../features/horarios/api/horariosAdmin";
 import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 
 interface HorarioRow {
   id: number;
@@ -151,10 +153,24 @@ const columns: Column<HorarioRow>[] = [
 ];
 
 export default function MateriasHorariosPage() {
-  const [horarios, setHorarios] = useState<HorarioCursadoConNombres[]>([]);
-  const [materias, setMaterias] = useState<Materia[]>([]);
-  const [carreras, setCarreras] = useState<Carrera[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedHorarios = peekApiCache<HorarioCursadoConNombres[]>(
+    API_ENDPOINTS.horarios,
+  );
+  const cachedMaterias = peekApiCache<Materia[]>(API_ENDPOINTS.materias);
+  const cachedCarreras = peekApiCache<Carrera[]>(API_ENDPOINTS.carreras);
+
+  const [horarios, setHorarios] = useState<HorarioCursadoConNombres[]>(
+    () => cachedHorarios ?? [],
+  );
+  const [materias, setMaterias] = useState<Materia[]>(
+    () => cachedMaterias ?? [],
+  );
+  const [carreras, setCarreras] = useState<Carrera[]>(
+    () => cachedCarreras ?? [],
+  );
+  const [loading, setLoading] = useState(
+    () => !cachedHorarios || !cachedMaterias || !cachedCarreras,
+  );
 
   const [filterCarrera, setFilterCarrera] = useState<number | "">("");
   const [filterNivel, setFilterNivel] = useState("");

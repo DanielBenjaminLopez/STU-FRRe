@@ -1,4 +1,5 @@
 import { apiFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface WidgetPosicionDTO {
   id: number;
@@ -29,7 +30,7 @@ export interface WidgetPosicionInput {
 }
 
 export async function fetchPlantillas(): Promise<PlantillaDTO[]> {
-  return apiFetch<PlantillaDTO[]>("/api/plantillas/");
+  return apiFetch<PlantillaDTO[]>(API_ENDPOINTS.plantillas);
 }
 
 export async function createPlantilla(data: {
