@@ -638,7 +638,7 @@ export default function MateriasHorariosPage() {
             { value: "", label: "Todas las carreras" },
             ...carrerasConDatos.map((c) => ({
               value: String(c.id),
-              label: c.codigo ? `${c.codigo} - ${c.nombre}` : c.nombre,
+              label: c.codigo || c.nombre,
             })),
           ]}
           triggerClassName="px-4 py-2 font-medium"
@@ -846,7 +846,7 @@ export default function MateriasHorariosPage() {
                     onChange={handleGridCarreraChange}
                     options={carrerasConDatos.map((c) => ({
                       value: String(c.id),
-                      label: c.codigo ? `${c.codigo} - ${c.nombre}` : c.nombre,
+                      label: c.codigo || c.nombre,
                     }))}
                     placeholder="Carrera"
                     triggerClassName="px-4 py-2 font-medium"

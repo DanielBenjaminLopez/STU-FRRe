@@ -391,14 +391,16 @@ export function Schedule({
 
   const gridRows = `3em ${rowTracks} 2.25em`;
   const gridColumns = `4.5em repeat(${layoutByDay.totalTracks}, minmax(0, 1fr))`;
+  const scheduleKey = `${deduplicatedItems[0]?.carrera_codigo ?? ""}-${deduplicatedItems[0]?.nivel ?? ""}-${deduplicatedItems[0]?.comision ?? ""}-${deduplicatedItems.length}`;
 
   return (
     <div
       className={compact ? "mx-auto w-full max-w-5xl p-4" : "w-full p-4 sm:p-8"}
     >
       <div
+        key={scheduleKey}
         id="schedule"
-        className="mx-auto grid w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
+        className="animate-fade-in mx-auto grid w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
         style={{
           gridTemplateColumns: gridColumns,
           gridTemplateRows: gridRows,

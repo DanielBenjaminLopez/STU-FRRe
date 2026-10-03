@@ -234,7 +234,7 @@ body,
 }
 
 .animate-fade-in {
-  animation: fade-in 0.25s ease-out forwards;
+  animation: fade-in 0.15s ease-out forwards;
 }
 
 @keyframes totem-switch {
