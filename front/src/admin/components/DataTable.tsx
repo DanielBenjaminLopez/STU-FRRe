@@ -19,7 +19,6 @@ interface DataTableProps<T> {
   label?: string;
   hideCount?: boolean;
   filterSlot?: React.ReactNode;
-  rightSlot?: React.ReactNode;
 }
 
 function DataTableInner<T extends { id: number }>({
@@ -32,7 +31,6 @@ function DataTableInner<T extends { id: number }>({
   label = "elementos",
   hideCount = false,
   filterSlot,
-  rightSlot,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
@@ -81,14 +79,11 @@ function DataTableInner<T extends { id: number }>({
           )}
           {filterSlot}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {rightSlot}
-          <SearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder={searchPlaceholder}
-          />
-        </div>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder={searchPlaceholder}
+        />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">

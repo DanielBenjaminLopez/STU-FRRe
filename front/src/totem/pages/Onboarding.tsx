@@ -4,6 +4,7 @@ import Logo from "../../assets/logo_negro.webp";
 import {
   ApiError,
   clearTotemToken,
+  getTotemToken,
   setTotemToken,
 } from "../../shared/api/client";
 import { createTotem, fetchTotemMe } from "../../features/totems/api/totems";
@@ -54,7 +55,7 @@ function clearCode() {
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(() => !!getTotemToken());
   const [codigo, setCodigo] = useState<string | null>(() => getStoredCode());
   const [segundosRestantes, setSegundosRestantes] = useState<number>(() =>
     getRemainingSeconds(),
@@ -88,6 +89,12 @@ export default function Onboarding() {
   }, [codigo]);
 
   useEffect(() => {
+    if (!getTotemToken()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setChecking(false);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {

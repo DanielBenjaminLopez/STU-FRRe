@@ -18,9 +18,19 @@ export default defineConfig({
       "three/addons": "three/examples/jsm",
     },
   },
+  optimizeDeps: {
+    entries: ["index.html", "src/**/*.{ts,tsx}"],
+  },
   server: {
     host: true,
     port: 5173,
+    warmup: {
+      clientFiles: [
+        "./src/main.tsx",
+        "./src/totem/App.tsx",
+        "./src/admin/App.tsx",
+      ],
+    },
     watch: {
       usePolling: true,
     },
