@@ -87,7 +87,7 @@ class HorarioCursado(models.Model):
     hora_fin = models.TimeField()
 
     class Meta:
-        ordering = ['materia', 'comision', 'dia_semana', 'hora_inicio']
+        ordering = ['materia', 'comision', 'dia_semana', 'hora_inicio', 'id']
         unique_together = [['materia', 'comision', 'espacio', 'dia_semana', 'hora_inicio', 'hora_fin']]
         verbose_name = 'Horario de cursado'
         verbose_name_plural = 'Horarios de cursado'

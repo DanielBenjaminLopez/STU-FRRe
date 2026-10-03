@@ -23,6 +23,35 @@ class CarreraResource(resources.ModelResource):
         fields = ('id', 'nombre', 'codigo')
 
 
+def normalizar_nivel(nivel_raw):
+    if not nivel_raw or not isinstance(nivel_raw, str):
+        return 'primero'
+    n = nivel_raw.strip().lower()
+    n = n.replace('º', '').replace('°', '')
+    mapping = {
+        '1': 'primero',
+        '1ro': 'primero',
+        '1er': 'primero',
+        'primer': 'primero',
+        'primero': 'primero',
+        '2': 'segundo',
+        '2do': 'segundo',
+        'segundo': 'segundo',
+        '3': 'tercero',
+        '3ro': 'tercero',
+        '3er': 'tercero',
+        'tercer': 'tercero',
+        'tercero': 'tercero',
+        '4': 'cuarto',
+        '4to': 'cuarto',
+        'cuarto': 'cuarto',
+        '5': 'quinto',
+        '5to': 'quinto',
+        'quinto': 'quinto',
+    }
+    return mapping.get(n, n)
+
+
 class MateriaResource(resources.ModelResource):
     carrera = fields.Field(
         column_name='carrera',
@@ -33,12 +62,11 @@ class MateriaResource(resources.ModelResource):
     def before_import_row(self, row, **kwargs):
         if not row.get('nombre') and row.get('materia'):
             row['nombre'] = str(row.get('materia')).strip()
-        if not row.get('nivel'):
-            row['nivel'] = 'primero'
+        row['nivel'] = normalizar_nivel(row.get('nivel'))
 
     class Meta:
         model = Materia
-        import_id_fields = ('carrera', 'nombre', 'nivel')
+        import_id_fields = ('carrera', 'nombre')
         fields = (
             'id',
             'carrera',

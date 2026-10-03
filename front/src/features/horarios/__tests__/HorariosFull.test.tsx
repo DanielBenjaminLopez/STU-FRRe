@@ -272,4 +272,52 @@ describe("HorariosFull", () => {
 
     expect(screen.getByText("Sáb")).toBeInTheDocument();
   });
+
+  it("muestra cada salón en su propia píldora cuando una misma clase se dicta en varios espacios a la vez", () => {
+    mockUseHorarios.mockReturnValue({
+      todas: [
+        {
+          id: 10,
+          carrera_codigo: "IEM",
+          carrera_nombre: "Ingeniería Electromecánica",
+          materia: 10,
+          nivel: "primero",
+          comision: "1ro A",
+          materia_nombre: "Química Gral",
+          hora_inicio: "14:15",
+          hora_fin: "16:35",
+          dia_semana: "miercoles",
+          aula: "X0.5",
+        },
+        {
+          id: 11,
+          carrera_codigo: "IEM",
+          carrera_nombre: "Ingeniería Electromecánica",
+          materia: 10,
+          nivel: "primero",
+          comision: "1ro A",
+          materia_nombre: "Química Gral",
+          hora_inicio: "14:15",
+          hora_fin: "16:35",
+          dia_semana: "miercoles",
+          aula: "Lab. Química",
+        },
+      ],
+      loading: false,
+      error: null,
+    });
+
+    render(<HorariosFull onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ingeniería Electromecánica" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "1ro" }));
+
+    expect(screen.getAllByText("Química Gral")).toHaveLength(1);
+    const pills = document.querySelectorAll(".schedule-class-aula");
+    expect(pills).toHaveLength(2);
+    expect(pills[0]).toHaveTextContent("X0.5");
+    expect(pills[1]).toHaveTextContent("Lab. Química");
+  });
 });
