@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
+import { motion } from "motion/react";
 import Button from "../../shared/components/ui/Button";
 import type { CsvImportResult } from "../../features/horarios/api/horariosAdmin";
+import { modalBackdropVariants, modalPanelVariants } from "./modalMotion";
 
 interface ImportCsvModalProps {
   title: string;
@@ -143,8 +145,17 @@ export default function ImportCsvModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-none border border-gray-200/80 space-y-4 max-h-[90vh] flex flex-col">
+    <motion.div
+      variants={modalBackdropVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    >
+      <motion.div
+        variants={modalPanelVariants}
+        className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-none border border-gray-200/80 space-y-4 max-h-[90vh] flex flex-col"
+      >
         <div className="pb-3 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">
             {step === "summary" ? "Resumen de Importación" : title}
@@ -533,7 +544,7 @@ export default function ImportCsvModal({
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import DataTable, { type Column } from "./DataTable";
 import DataFormModal, { type FormField } from "./DataFormModal";
@@ -177,29 +178,33 @@ export default function CrudAdminPage<T extends { id: number }>({
         label={entityName + "s"}
       />
 
-      {showForm && (
-        <DataFormModal
-          title={editingRow ? `Editar ${entityName}` : `Crear ${entityName}`}
-          fields={formFields}
-          initialData={
-            (editingRow as unknown as Record<string, unknown>) ?? undefined
-          }
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={editingRow ? `Editar ${entityName}` : `Crear ${entityName}`}
+            fields={formFields}
+            initialData={
+              (editingRow as unknown as Record<string, unknown>) ?? undefined
+            }
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+            }}
+          />
+        )}
 
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title={`Eliminar ${entityName}`}
-          itemName={labelFn(deletingRow)}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title={`Eliminar ${entityName}`}
+            itemName={labelFn(deletingRow)}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

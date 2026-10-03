@@ -1,4 +1,6 @@
+import { motion } from "motion/react";
 import Button from "../../shared/components/ui/Button";
+import { modalBackdropVariants, modalPanelVariants } from "./modalMotion";
 
 interface ConfirmDeleteModalProps {
   title: string;
@@ -19,8 +21,17 @@ export default function ConfirmDeleteModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-4xl shadow-xl w-full max-w-sm p-8 flex flex-col gap-6">
+    <motion.div
+      variants={modalBackdropVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    >
+      <motion.div
+        variants={modalPanelVariants}
+        className="bg-white rounded-4xl shadow-xl w-full max-w-sm p-8 flex flex-col gap-6"
+      >
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-semibold">{title}</h2>
           <p className="text-sm text-gray-500">
@@ -37,7 +48,7 @@ export default function ConfirmDeleteModal({
             Eliminar
           </Button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

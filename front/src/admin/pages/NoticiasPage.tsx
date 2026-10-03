@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
@@ -288,27 +289,31 @@ export default function NoticiasPage() {
         label="noticias"
       />
 
-      {showForm && (
-        <DataFormModal
-          title={editingRow ? "Editar noticia" : "Crear noticia"}
-          fields={noticiaFields}
-          initialData={getInitialData()}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={editingRow ? "Editar noticia" : "Crear noticia"}
+            fields={noticiaFields}
+            initialData={getInitialData()}
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+            }}
+          />
+        )}
 
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title="Eliminar noticia"
-          itemName={String(deletingRow.titulo ?? "")}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar noticia"
+            itemName={String(deletingRow.titulo ?? "")}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

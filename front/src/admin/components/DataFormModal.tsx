@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { sileo } from "sileo";
 import Button from "../../shared/components/ui/Button";
 import ImageDropzone from "../../shared/components/ui/ImageDropzone";
+import { modalBackdropVariants, modalPanelVariants } from "./modalMotion";
 
 export interface FormField {
   name: string;
@@ -129,8 +131,15 @@ export default function DataFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div
+    <motion.div
+      variants={modalBackdropVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    >
+      <motion.div
+        variants={modalPanelVariants}
         className={`bg-white rounded-4xl shadow-xl w-full ${
           MAX_WIDTH_CLASSES[maxWidth] || "max-w-md"
         } max-h-[90vh] overflow-hidden flex flex-col`}
@@ -274,7 +283,7 @@ export default function DataFormModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

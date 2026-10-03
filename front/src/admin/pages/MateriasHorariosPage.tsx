@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import ImportCsvModal from "../components/ImportCsvModal";
+import {
+  modalBackdropVariants,
+  modalPanelVariants,
+} from "../components/modalMotion";
 import Button from "../../shared/components/ui/Button";
 import Select from "../../shared/components/ui/Select";
 import { AdminSchedulesSkeleton } from "../../shared/components/ui/Skeleton";
@@ -341,7 +346,7 @@ export default function MateriasHorariosPage() {
       }));
   }, [allRows, gridCarrera, gridNivel, gridComision]);
 
-  function handleOpenGridModal() {
+  const handleOpenGridModal = useCallback(() => {
     const carrerasConHorarios = carrerasConDatos.filter((c) =>
       allRows.some((r) => r.carrera_id === c.id),
     );
@@ -367,7 +372,15 @@ export default function MateriasHorariosPage() {
     setGridNivel(defaultNivel);
     setGridComision(defaultComision);
     setShowGridModal(true);
-  }
+  }, [
+    carrerasConDatos,
+    allRows,
+    filterCarrera,
+    getNivelesForCarreraId,
+    filterNivel,
+    getComisionesForCarreraNivel,
+    filterComision,
+  ]);
 
   function handleGridCarreraChange(val: string) {
     const nextCarrera = val ? Number(val) : "";
@@ -395,15 +408,15 @@ export default function MateriasHorariosPage() {
     setGridComision(nextComision);
   }
 
-  function handleCarreraChange(value: number | "") {
+  const handleCarreraChange = useCallback((value: number | "") => {
     setFilterCarrera(value);
     setFilterComision("");
-  }
+  }, []);
 
-  function handleNivelChange(value: string) {
+  const handleNivelChange = useCallback((value: string) => {
     setFilterNivel(value);
     setFilterComision("");
-  }
+  }, []);
 
   function handleCreate() {
     setSelectedFormCarrera(filterCarrera !== "" ? Number(filterCarrera) : null);
@@ -411,11 +424,11 @@ export default function MateriasHorariosPage() {
     setShowForm(true);
   }
 
-  function handleEdit(row: HorarioRow) {
+  const handleEdit = useCallback((row: HorarioRow) => {
     setSelectedFormCarrera(row.carrera_id || null);
     setEditingRow(row);
     setShowForm(true);
-  }
+  }, []);
 
   function handleFormChange(
     name: string,
@@ -446,64 +459,67 @@ export default function MateriasHorariosPage() {
     });
   }, [materias, selectedFormCarrera]);
 
-  const formFields: FormField[] = [
-    {
-      name: "carrera",
-      label: "Carrera",
-      type: "select",
-      required: false,
-      options: carreras.map((c) => ({ value: c.id, label: c.nombre })),
-      placeholder: "Todas las carreras",
-    },
-    {
-      name: "materia",
-      label: "Materia",
-      type: "select",
-      required: true,
-      options: materiasOptions,
-      placeholder: "Seleccionar materia...",
-    },
-    {
-      name: "comision",
-      label: "Comisión",
-      type: "text",
-      required: true,
-      placeholder: "Ej: 1ro A, 1ro - C1, Recursantes",
-      half: true,
-    },
-    {
-      name: "espacio",
-      label: "Espacio / Aula",
-      type: "text",
-      required: false,
-      placeholder: "Ej: Aula 2.4, X0.5, Lab. Química",
-      half: true,
-    },
-    {
-      name: "dia_semana",
-      label: "Día de la semana",
-      type: "select",
-      required: true,
-      options: DIAS_SEMANA.map((d) => ({ value: d.value, label: d.label })),
-      placeholder: "Seleccionar día...",
-    },
-    {
-      name: "hora_inicio",
-      label: "Hora de inicio",
-      type: "time",
-      required: true,
-      defaultValue: "07:45",
-      half: true,
-    },
-    {
-      name: "hora_fin",
-      label: "Hora de fin",
-      type: "time",
-      required: true,
-      defaultValue: "10:00",
-      half: true,
-    },
-  ];
+  const formFields: FormField[] = useMemo(
+    () => [
+      {
+        name: "carrera",
+        label: "Carrera",
+        type: "select",
+        required: false,
+        options: carreras.map((c) => ({ value: c.id, label: c.nombre })),
+        placeholder: "Todas las carreras",
+      },
+      {
+        name: "materia",
+        label: "Materia",
+        type: "select",
+        required: true,
+        options: materiasOptions,
+        placeholder: "Seleccionar materia...",
+      },
+      {
+        name: "comision",
+        label: "Comisión",
+        type: "text",
+        required: true,
+        placeholder: "Ej: 1ro A, 1ro - C1, Recursantes",
+        half: true,
+      },
+      {
+        name: "espacio",
+        label: "Espacio / Aula",
+        type: "text",
+        required: false,
+        placeholder: "Ej: Aula 2.4, X0.5, Lab. Química",
+        half: true,
+      },
+      {
+        name: "dia_semana",
+        label: "Día de la semana",
+        type: "select",
+        required: true,
+        options: DIAS_SEMANA.map((d) => ({ value: d.value, label: d.label })),
+        placeholder: "Seleccionar día...",
+      },
+      {
+        name: "hora_inicio",
+        label: "Hora de inicio",
+        type: "time",
+        required: true,
+        defaultValue: "07:45",
+        half: true,
+      },
+      {
+        name: "hora_fin",
+        label: "Hora de fin",
+        type: "time",
+        required: true,
+        defaultValue: "10:00",
+        half: true,
+      },
+    ],
+    [carreras, materiasOptions],
+  );
 
   async function handleSubmit(formData: Record<string, unknown>) {
     const payload = {
@@ -522,8 +538,6 @@ export default function MateriasHorariosPage() {
       await createHorario(payload);
       sileo.success({ title: "Horario creado" });
     }
-    setShowForm(false);
-    setEditingRow(null);
     await loadData();
   }
 
@@ -539,8 +553,6 @@ export default function MateriasHorariosPage() {
         description:
           err instanceof Error ? err.message : "Error al eliminar el horario",
       });
-    } finally {
-      setDeletingRow(null);
     }
   }
 
@@ -609,92 +621,131 @@ export default function MateriasHorariosPage() {
             ? err.message
             : "No se pudieron eliminar los horarios",
       });
-    } finally {
-      setShowVaciarModal(false);
     }
   }
 
-  const filterSlot = (
-    <>
-      <Select
-        role="combobox"
-        align="left"
-        colorVariant="gray"
-        aria-label="Filtrar por carrera"
-        value={filterCarrera === "" ? "" : String(filterCarrera)}
-        onChange={(val) => handleCarreraChange(val ? Number(val) : "")}
-        options={[
-          { value: "", label: "Todas las carreras" },
-          ...carrerasConDatos.map((c) => ({
-            value: String(c.id),
-            label: c.codigo ? `${c.codigo} - ${c.nombre}` : c.nombre,
-          })),
-        ]}
-        triggerClassName="px-4 py-2 font-medium"
-      />
-
-      <Select
-        role="combobox"
-        align="left"
-        colorVariant="gray"
-        aria-label="Filtrar por nivel"
-        value={filterNivel}
-        onChange={handleNivelChange}
-        options={[
-          { value: "", label: "Todos los niveles" },
-          ...NIVELES.map((n) => ({ value: n.value, label: n.label })),
-        ]}
-        triggerClassName="px-4 py-2 font-medium"
-      />
-
-      {comisionesDisponibles.length > 0 && (
+  const filterSlot = useMemo(
+    () => (
+      <>
         <Select
           role="combobox"
           align="left"
           colorVariant="gray"
-          aria-label="Filtrar por comisión"
-          value={filterComision}
-          onChange={setFilterComision}
+          aria-label="Filtrar por carrera"
+          value={filterCarrera === "" ? "" : String(filterCarrera)}
+          onChange={(val) => handleCarreraChange(val ? Number(val) : "")}
           options={[
-            { value: "", label: "Todas las comisiones" },
-            ...comisionesDisponibles.map((com) => ({
-              value: com,
-              label: com,
+            { value: "", label: "Todas las carreras" },
+            ...carrerasConDatos.map((c) => ({
+              value: String(c.id),
+              label: c.codigo ? `${c.codigo} - ${c.nombre}` : c.nombre,
             })),
           ]}
           triggerClassName="px-4 py-2 font-medium"
         />
-      )}
 
-      <Select
-        role="combobox"
-        align="left"
-        colorVariant="gray"
-        aria-label="Filtrar por día"
-        value={filterDia}
-        onChange={setFilterDia}
-        options={[
-          { value: "", label: "Todos los días" },
-          ...DIAS_SEMANA.map((d) => ({ value: d.value, label: d.label })),
-        ]}
-        triggerClassName="px-4 py-2 font-medium"
-      />
+        <Select
+          role="combobox"
+          align="left"
+          colorVariant="gray"
+          aria-label="Filtrar por nivel"
+          value={filterNivel}
+          onChange={handleNivelChange}
+          options={[
+            { value: "", label: "Todos los niveles" },
+            ...NIVELES.map((n) => ({ value: n.value, label: n.label })),
+          ]}
+          triggerClassName="px-4 py-2 font-medium"
+        />
 
-      {hasActiveFilters && (
-        <button
-          type="button"
-          onClick={() => {
-            setFilterCarrera("");
-            setFilterNivel("");
-            setFilterComision("");
-            setFilterDia("");
-          }}
-          className="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+        {comisionesDisponibles.length > 0 && (
+          <Select
+            role="combobox"
+            align="left"
+            colorVariant="gray"
+            aria-label="Filtrar por comisión"
+            value={filterComision}
+            onChange={setFilterComision}
+            options={[
+              { value: "", label: "Todas las comisiones" },
+              ...comisionesDisponibles.map((com) => ({
+                value: com,
+                label: com,
+              })),
+            ]}
+            triggerClassName="px-4 py-2 font-medium"
+          />
+        )}
+
+        <Select
+          role="combobox"
+          align="left"
+          colorVariant="gray"
+          aria-label="Filtrar por día"
+          value={filterDia}
+          onChange={setFilterDia}
+          options={[
+            { value: "", label: "Todos los días" },
+            ...DIAS_SEMANA.map((d) => ({ value: d.value, label: d.label })),
+          ]}
+          triggerClassName="px-4 py-2 font-medium"
+        />
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={() => {
+              setFilterCarrera("");
+              setFilterNivel("");
+              setFilterComision("");
+              setFilterDia("");
+            }}
+            className="px-2.5 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+          >
+            Limpiar
+          </button>
+        )}
+      </>
+    ),
+    [
+      filterCarrera,
+      carrerasConDatos,
+      handleCarreraChange,
+      filterNivel,
+      handleNivelChange,
+      comisionesDisponibles,
+      filterComision,
+      filterDia,
+      hasActiveFilters,
+    ],
+  );
+
+  const rightSlot = useMemo(
+    () =>
+      allRows.length > 0 ? (
+        <Button
+          variant="secondary"
+          onClick={handleOpenGridModal}
+          className="gap-2"
         >
-          Limpiar
-        </button>
-      )}
-    </>
+          <svg
+            className="w-4 h-4 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+            />
+          </svg>
+          Vista semanal
+        </Button>
+      ) : undefined,
+    [allRows.length, handleOpenGridModal],
   );
 
   useEffect(() => {
@@ -751,208 +802,198 @@ export default function MateriasHorariosPage() {
         data={filteredRows}
         columns={columns}
         onEdit={handleEdit}
-        onDelete={(row) => setDeletingRow(row)}
+        onDelete={setDeletingRow}
         searchPlaceholder="Buscar por materia, comisión, aula o carrera..."
         label="horarios"
         filterSlot={filterSlot}
-        rightSlot={
-          allRows.length > 0 ? (
-            <Button
-              variant="secondary"
-              onClick={handleOpenGridModal}
-              className="gap-2"
-            >
-              <svg
-                className="w-4 h-4 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
-                />
-              </svg>
-              Vista semanal
-            </Button>
-          ) : undefined
-        }
+        rightSlot={rightSlot}
       />
 
-      {showGridModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 sm:p-8"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowGridModal(false);
-          }}
-        >
-          <div className="bg-white rounded-4xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200">
-            <div className="px-8 py-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4 shrink-0">
-              <div className="flex flex-col gap-0.5">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Vista semanal
-                </h2>
-                <span className="text-xs text-gray-500">
-                  Hacé clic en un bloque para editar su horario
-                </span>
+      <AnimatePresence>
+        {showGridModal && (
+          <motion.div
+            key="grid-modal"
+            variants={modalBackdropVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 sm:p-8"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowGridModal(false);
+            }}
+          >
+            <motion.div
+              variants={modalPanelVariants}
+              className="bg-white rounded-4xl shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200"
+            >
+              <div className="px-8 py-5 border-b border-gray-100 flex flex-wrap items-center justify-between gap-4 shrink-0">
+                <div className="flex flex-col gap-0.5">
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Vista semanal
+                  </h2>
+                  <span className="text-xs text-gray-500">
+                    Hacé clic en un bloque para editar su horario
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <Select
+                    role="combobox"
+                    align="left"
+                    colorVariant="gray"
+                    aria-label="Carrera de la grilla"
+                    value={gridCarrera === "" ? "" : String(gridCarrera)}
+                    onChange={handleGridCarreraChange}
+                    options={carrerasConDatos.map((c) => ({
+                      value: String(c.id),
+                      label: c.codigo ? `${c.codigo} - ${c.nombre}` : c.nombre,
+                    }))}
+                    placeholder="Carrera"
+                    triggerClassName="px-4 py-2 font-medium"
+                  />
+
+                  {gridNiveles.length > 0 && (
+                    <Select
+                      role="combobox"
+                      align="left"
+                      colorVariant="gray"
+                      aria-label="Nivel de la grilla"
+                      value={gridNivel}
+                      onChange={handleGridNivelChange}
+                      options={gridNiveles.map((n) => ({
+                        value: n.value,
+                        label: n.label,
+                      }))}
+                      placeholder="Nivel"
+                      triggerClassName="px-4 py-2 font-medium"
+                    />
+                  )}
+
+                  {gridComisiones.length > 0 && (
+                    <Select
+                      role="combobox"
+                      align="left"
+                      colorVariant="gray"
+                      aria-label="Comisión de la grilla"
+                      value={gridComision}
+                      onChange={setGridComision}
+                      options={gridComisiones.map((com) => ({
+                        value: com,
+                        label: com,
+                      }))}
+                      placeholder="Comisión"
+                      triggerClassName="px-4 py-2 font-medium"
+                    />
+                  )}
+
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowGridModal(false)}
+                  >
+                    Cerrar
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
-                <Select
-                  role="combobox"
-                  align="left"
-                  colorVariant="gray"
-                  aria-label="Carrera de la grilla"
-                  value={gridCarrera === "" ? "" : String(gridCarrera)}
-                  onChange={handleGridCarreraChange}
-                  options={carrerasConDatos.map((c) => ({
-                    value: String(c.id),
-                    label: c.codigo ? `${c.codigo} - ${c.nombre}` : c.nombre,
-                  }))}
-                  placeholder="Carrera"
-                  triggerClassName="px-4 py-2 font-medium"
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-gray-50/40">
+                <Schedule
+                  items={gridClases}
+                  compact
+                  onItemClick={(item) => {
+                    const row = allRows.find((r) => r.id === item.id);
+                    if (row) handleEdit(row);
+                  }}
                 />
-
-                {gridNiveles.length > 0 && (
-                  <Select
-                    role="combobox"
-                    align="left"
-                    colorVariant="gray"
-                    aria-label="Nivel de la grilla"
-                    value={gridNivel}
-                    onChange={handleGridNivelChange}
-                    options={gridNiveles.map((n) => ({
-                      value: n.value,
-                      label: n.label,
-                    }))}
-                    placeholder="Nivel"
-                    triggerClassName="px-4 py-2 font-medium"
-                  />
-                )}
-
-                {gridComisiones.length > 0 && (
-                  <Select
-                    role="combobox"
-                    align="left"
-                    colorVariant="gray"
-                    aria-label="Comisión de la grilla"
-                    value={gridComision}
-                    onChange={setGridComision}
-                    options={gridComisiones.map((com) => ({
-                      value: com,
-                      label: com,
-                    }))}
-                    placeholder="Comisión"
-                    triggerClassName="px-4 py-2 font-medium"
-                  />
-                )}
-
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowGridModal(false)}
-                >
-                  Cerrar
-                </Button>
               </div>
-            </div>
+            </motion.div>
+          </motion.div>
+        )}
 
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 bg-gray-50/40">
-              <Schedule
-                items={gridClases}
-                compact
-                onItemClick={(item) => {
-                  const row = allRows.find((r) => r.id === item.id);
-                  if (row) handleEdit(row);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showForm && (
-        <DataFormModal
-          title={
-            editingRow
-              ? "Editar horario de cursado"
-              : "Nuevo horario de cursado"
-          }
-          fields={formFields}
-          initialData={
-            editingRow
-              ? {
-                  carrera: editingRow.carrera_id || "",
-                  materia: editingRow.materia,
-                  comision: editingRow.comision,
-                  espacio: editingRow.espacio,
-                  dia_semana: editingRow.dia_semana,
-                  hora_inicio: editingRow.hora_inicio,
-                  hora_fin: editingRow.hora_fin,
-                }
-              : {
-                  carrera: filterCarrera !== "" ? filterCarrera : "",
-                  materia: "",
-                  comision: filterComision || "",
-                  espacio: "",
-                  dia_semana: filterDia || "lunes",
-                  hora_inicio: "07:45",
-                  hora_fin: "10:00",
-                }
-          }
-          onChange={handleFormChange}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-            setSelectedFormCarrera(null);
-          }}
-        />
-      )}
-
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title="Eliminar horario"
-          itemName={`${deletingRow.materia_nombre} (${deletingRow.comision}) - ${deletingRow.dia_label} ${deletingRow.horario_str}${deletingRow.espacio ? ` [${deletingRow.espacio}]` : ""}`}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
-
-      {showVaciarModal && (
-        <ConfirmDeleteModal
-          title="Vaciar horarios"
-          itemName={vaciarTargetLabel}
-          onConfirm={handleConfirmVaciar}
-          onClose={() => setShowVaciarModal(false)}
-        />
-      )}
-
-      {showImportModal && (
-        <ImportCsvModal
-          title="Importar horarios de cursado"
-          onClose={() => setShowImportModal(false)}
-          onImport={importarHorariosCSV}
-          onSuccess={(res: CsvImportResult) => {
-            const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
-            if (exito) {
-              sileo.success({
-                title: "Importación exitosa",
-                description:
-                  res.detail || "Importación realizada exitosamente.",
-              });
-            } else {
-              sileo.error({
-                title: "La importación falló",
-                description: res.detail || "No se guardó ningún registro.",
-              });
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={
+              editingRow
+                ? "Editar horario de cursado"
+                : "Nuevo horario de cursado"
             }
-            loadData();
-          }}
-        />
-      )}
+            fields={formFields}
+            initialData={
+              editingRow
+                ? {
+                    carrera: editingRow.carrera_id || "",
+                    materia: editingRow.materia,
+                    comision: editingRow.comision,
+                    espacio: editingRow.espacio,
+                    dia_semana: editingRow.dia_semana,
+                    hora_inicio: editingRow.hora_inicio,
+                    hora_fin: editingRow.hora_fin,
+                  }
+                : {
+                    carrera: filterCarrera !== "" ? filterCarrera : "",
+                    materia: "",
+                    comision: filterComision || "",
+                    espacio: "",
+                    dia_semana: filterDia || "lunes",
+                    hora_inicio: "07:45",
+                    hora_fin: "10:00",
+                  }
+            }
+            onChange={handleFormChange}
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+              setSelectedFormCarrera(null);
+            }}
+          />
+        )}
+
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar horario"
+            itemName={`${deletingRow.materia_nombre} (${deletingRow.comision}) - ${deletingRow.dia_label} ${deletingRow.horario_str}${deletingRow.espacio ? ` [${deletingRow.espacio}]` : ""}`}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+
+        {showVaciarModal && (
+          <ConfirmDeleteModal
+            key="vaciar-modal"
+            title="Vaciar horarios"
+            itemName={vaciarTargetLabel}
+            onConfirm={handleConfirmVaciar}
+            onClose={() => setShowVaciarModal(false)}
+          />
+        )}
+
+        {showImportModal && (
+          <ImportCsvModal
+            key="import-modal"
+            title="Importar horarios de cursado"
+            onClose={() => setShowImportModal(false)}
+            onImport={importarHorariosCSV}
+            onSuccess={(res: CsvImportResult) => {
+              const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
+              if (exito) {
+                sileo.success({
+                  title: "Importación exitosa",
+                  description:
+                    res.detail || "Importación realizada exitosamente.",
+                });
+              } else {
+                sileo.error({
+                  title: "La importación falló",
+                  description: res.detail || "No se guardó ningún registro.",
+                });
+              }
+              loadData();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

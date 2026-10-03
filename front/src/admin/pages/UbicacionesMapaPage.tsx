@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import DataFormModal from "../components/DataFormModal";
 import type { FormField } from "../components/DataFormModal";
@@ -546,18 +547,21 @@ export default function UbicacionesMapaPage() {
       </div>
 
       {/* Modal de edición de polígono */}
-      {editingItem && (
-        <DataFormModal
-          title={`Editar — ${editingItem.svg_id}`}
-          fields={editFields}
-          initialData={{
-            nombre: editingItem.nombre,
-            tipo: editingItem.tipo,
-          }}
-          onSubmit={handleEdit}
-          onClose={() => setEditingItem(null)}
-        />
-      )}
+      <AnimatePresence>
+        {editingItem && (
+          <DataFormModal
+            key="edit-modal"
+            title={`Editar — ${editingItem.svg_id}`}
+            fields={editFields}
+            initialData={{
+              nombre: editingItem.nombre,
+              tipo: editingItem.tipo,
+            }}
+            onSubmit={handleEdit}
+            onClose={() => setEditingItem(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

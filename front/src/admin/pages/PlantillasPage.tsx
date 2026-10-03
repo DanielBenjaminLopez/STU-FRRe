@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { useLocation } from "react-router";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import {
   DndContext,
@@ -914,16 +915,19 @@ export default function PlantillasPage() {
           })()}
       </DragOverlay>
 
-      {deletingId && (
-        <ConfirmDeleteModal
-          title="Eliminar plantilla"
-          itemName={
-            plantillas.find((p) => p.id === deletingId)?.nombre ?? "plantilla"
-          }
-          onConfirm={handleDeletePlantilla}
-          onClose={() => setDeletingId(null)}
-        />
-      )}
+      <AnimatePresence>
+        {deletingId && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar plantilla"
+            itemName={
+              plantillas.find((p) => p.id === deletingId)?.nombre ?? "plantilla"
+            }
+            onConfirm={handleDeletePlantilla}
+            onClose={() => setDeletingId(null)}
+          />
+        )}
+      </AnimatePresence>
     </DndContext>
   );
 }

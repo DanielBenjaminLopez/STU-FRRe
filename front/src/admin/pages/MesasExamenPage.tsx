@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 
 import DataTable, { type Column } from "../components/DataTable";
@@ -309,73 +310,80 @@ export default function MesasExamenPage() {
         label="mesas de examen"
       />
 
-      {showForm && (
-        <DataFormModal
-          title={editingRow ? "Editar mesa de examen" : "Cargar mesa de examen"}
-          fields={formFields}
-          initialData={
-            editingRow
-              ? {
-                  carrera:
-                    materias.find((m) => m.id === editingRow.materia)
-                      ?.carrera || "",
-                  materia: editingRow.materia,
-                  espacio: editingRow.espacio,
-                  fecha:
-                    editingRow.fecha ||
-                    (editingRow.fecha_hora
-                      ? editingRow.fecha_hora.split("T")[0]
-                      : ""),
-                  hora:
-                    editingRow.hora ||
-                    (editingRow.fecha_hora
-                      ? editingRow.fecha_hora.split("T")[1]?.slice(0, 5)
-                      : "08:00"),
-                }
-              : undefined
-          }
-          onChange={handleFormChange}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-            setSelectedCarrera(null);
-          }}
-        />
-      )}
-
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title="Eliminar mesa de examen"
-          itemName={`${deletingRow.materia_nombre} - ${deletingRow.turno} Llamado ${deletingRow.llamado}`}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
-
-      {showImportModal && (
-        <ImportCsvModal
-          title="Importar mesas de examen"
-          onClose={() => setShowImportModal(false)}
-          onImport={importarMesasExamenCSV}
-          onSuccess={(res) => {
-            const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
-            if (exito) {
-              sileo.success({
-                title: "Importación exitosa",
-                description:
-                  res.detail || "Importación realizada exitosamente.",
-              });
-            } else {
-              sileo.error({
-                title: "La importación falló",
-                description: res.detail || "No se guardó ningún registro.",
-              });
+      <AnimatePresence>
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={
+              editingRow ? "Editar mesa de examen" : "Cargar mesa de examen"
             }
-            loadData();
-          }}
-        />
-      )}
+            fields={formFields}
+            initialData={
+              editingRow
+                ? {
+                    carrera:
+                      materias.find((m) => m.id === editingRow.materia)
+                        ?.carrera || "",
+                    materia: editingRow.materia,
+                    espacio: editingRow.espacio,
+                    fecha:
+                      editingRow.fecha ||
+                      (editingRow.fecha_hora
+                        ? editingRow.fecha_hora.split("T")[0]
+                        : ""),
+                    hora:
+                      editingRow.hora ||
+                      (editingRow.fecha_hora
+                        ? editingRow.fecha_hora.split("T")[1]?.slice(0, 5)
+                        : "08:00"),
+                  }
+                : undefined
+            }
+            onChange={handleFormChange}
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+              setSelectedCarrera(null);
+            }}
+          />
+        )}
+
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar mesa de examen"
+            itemName={`${deletingRow.materia_nombre} - ${deletingRow.turno} Llamado ${deletingRow.llamado}`}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+
+        {showImportModal && (
+          <ImportCsvModal
+            key="import-modal"
+            title="Importar mesas de examen"
+            onClose={() => setShowImportModal(false)}
+            onImport={importarMesasExamenCSV}
+            onSuccess={(res) => {
+              const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
+              if (exito) {
+                sileo.success({
+                  title: "Importación exitosa",
+                  description:
+                    res.detail || "Importación realizada exitosamente.",
+                });
+              } else {
+                sileo.error({
+                  title: "La importación falló",
+                  description: res.detail || "No se guardó ningún registro.",
+                });
+              }
+              loadData();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import SearchInput from "../../shared/components/ui/SearchInput";
 
 export interface Column<T> {
@@ -22,7 +22,7 @@ interface DataTableProps<T> {
   rightSlot?: React.ReactNode;
 }
 
-export default function DataTable<T extends { id: number }>({
+function DataTableInner<T extends { id: number }>({
   data,
   columns,
   onEdit,
@@ -38,22 +38,26 @@ export default function DataTable<T extends { id: number }>({
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  const filtered = data.filter((row) => {
-    if (!search) return true;
+  const filtered = useMemo(() => {
+    if (!search) return data;
     const lower = search.toLowerCase();
-    return columns.some((col) => {
-      const val = row[col.key];
-      return String(val).toLowerCase().includes(lower);
-    });
-  });
+    return data.filter((row) =>
+      columns.some((col) => {
+        const val = row[col.key];
+        return String(val).toLowerCase().includes(lower);
+      }),
+    );
+  }, [data, search, columns]);
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (!sortKey) return 0;
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
-    const cmp = String(aVal).localeCompare(String(bVal), "es");
-    return sortDir === "asc" ? cmp : -cmp;
-  });
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      const cmp = String(aVal).localeCompare(String(bVal), "es");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [filtered, sortKey, sortDir]);
 
   function handleSort(key: keyof T) {
     if (sortKey === key) {
@@ -255,3 +259,6 @@ export default function DataTable<T extends { id: number }>({
     </div>
   );
 }
+
+const DataTable = memo(DataTableInner) as typeof DataTableInner;
+export default DataTable;

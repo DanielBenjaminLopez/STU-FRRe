@@ -216,33 +216,40 @@ export default function Home() {
         </div>
       </div>
 
-      {editing && (
-        <DataFormModal
-          title="Editar tótem"
-          fields={editFields}
-          initialData={{
-            ...editing,
-            plantilla_id: editing.plantilla_id ?? "",
-          }}
-          onSubmit={handleUpdate}
-          onClose={() => {
-            setEditing(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {editing && (
+          <DataFormModal
+            key="edit-modal"
+            title="Editar tótem"
+            fields={editFields}
+            initialData={{
+              ...editing,
+              plantilla_id: editing.plantilla_id ?? "",
+            }}
+            onSubmit={handleUpdate}
+            onClose={() => {
+              setEditing(null);
+            }}
+          />
+        )}
 
-      {deleting && (
-        <ConfirmDeleteModal
-          title="Eliminar tótem"
-          itemName={deleting.nombre || `Tótem #${deleting.id}`}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeleting(null)}
-        />
-      )}
+        {deleting && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar tótem"
+            itemName={deleting.nombre || `Tótem #${deleting.id}`}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeleting(null)}
+          />
+        )}
 
-      {vincularOpen && (
-        <VincularTotemModal onClose={() => setVincularOpen(false)} />
-      )}
+        {vincularOpen && (
+          <VincularTotemModal
+            key="vincular-modal"
+            onClose={() => setVincularOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

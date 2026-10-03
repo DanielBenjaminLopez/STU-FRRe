@@ -459,10 +459,8 @@ export function Schedule({
               clusterCols === 1 ? startCol : startCol + lane * span;
 
             return (
-              <motion.div
+              <div
                 key={`${item.dia_semana}-${item.hora_inicio}-${item.hora_fin}-${item.materia_nombre}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
                 className="schedule-class-wrapper"
                 style={{
                   gridColumn: `${colStart} / span ${span}`,
@@ -505,7 +503,7 @@ export function Schedule({
                     </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             );
           }),
         )}
