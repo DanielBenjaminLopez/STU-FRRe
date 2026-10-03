@@ -29,10 +29,11 @@ vi.mock(
     return {
       ...actual,
       fetchMaterias: vi.fn(),
-      deleteMateria: vi.fn(),
       fetchHorarios: vi.fn(),
       createHorario: vi.fn(),
+      updateHorario: vi.fn(),
       deleteHorario: vi.fn(),
+      vaciarHorarios: vi.fn(),
       importarHorariosCSV: vi.fn(),
     };
   },
@@ -55,13 +56,33 @@ describe("MateriasHorariosPage", () => {
         carrera: 1,
         nombre: "Matemática Discreta",
         carrera_nombre: "Ingeniería en Sistemas",
+        carrera_codigo: "ISI",
         carrera_tipo: "grado",
         nivel: "primero",
       },
     ]);
-    mockFetchHorarios.mockResolvedValue([]);
+    mockFetchHorarios.mockResolvedValue([
+      {
+        id: 100,
+        materia: 1,
+        materia_nombre: "Matemática Discreta",
+        carrera_codigo: "ISI",
+        carrera_nombre: "Ingeniería en Sistemas",
+        nivel: "primero",
+        comision: "1ro A",
+        espacio: "Aula 2.4",
+        dia_semana: "lunes",
+        hora_inicio: "08:00:00",
+        hora_fin: "10:15:00",
+      },
+    ]);
     mockFetchCarreras.mockResolvedValue([
-      { id: 1, nombre: "Ingeniería en Sistemas" } as never,
+      {
+        id: 1,
+        nombre: "Ingeniería en Sistemas",
+        codigo: "ISI",
+        tipo: "grado",
+      } as never,
     ]);
   });
 
@@ -69,25 +90,48 @@ describe("MateriasHorariosPage", () => {
     cleanup();
   });
 
-  it("no ofrece filtro por modalidad", async () => {
+  it("muestra los horarios en la tabla editable con sus columnas principales", async () => {
+    render(<MateriasHorariosPage />);
+
+    expect(await screen.findByText("Matemática Discreta")).toBeInTheDocument();
+    expect(screen.getAllByText("ISI").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("1ro A").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Aula 2.4")).toBeInTheDocument();
+    expect(screen.getByText("08:00 - 10:15")).toBeInTheDocument();
+  });
+
+  it("abre el modal de vista semanal directo con selectores y permite editar al hacer clic en un bloque", async () => {
     render(<MateriasHorariosPage />);
 
     await screen.findByText("Matemática Discreta");
 
-    expect(screen.queryByText("Modalidad")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Vista semanal" }));
+
     expect(
-      screen.queryByRole("button", { name: "Anual" }),
-    ).not.toBeInTheDocument();
+      await screen.findByRole("heading", { name: "Vista semanal" }),
+    ).toBeInTheDocument();
+    expect(document.getElementById("schedule")).not.toBeNull();
+
+    const card = document.querySelector(".schedule-class-card") as HTMLElement;
+    expect(card).not.toBeNull();
+    fireEvent.click(card);
+
     expect(
-      screen.queryByRole("button", { name: "Cuatrimestral" }),
-    ).not.toBeInTheDocument();
+      await screen.findByText("Editar horario de cursado"),
+    ).toBeInTheDocument();
   });
 
-  it("describe la materia sin modalidad, cuatrimestre ni plan de estudio", async () => {
+  it("permite abrir el modal de edición de un horario", async () => {
     render(<MateriasHorariosPage />);
 
-    const detalle = await screen.findByText(/Nivel 1ro/);
-    expect(detalle).toHaveTextContent("Ingeniería en Sistemas | Nivel 1ro");
+    await screen.findByText("Matemática Discreta");
+
+    fireEvent.click(screen.getByTitle("Editar"));
+
+    expect(
+      await screen.findByText("Editar horario de cursado"),
+    ).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Aula 2.4")).toBeInTheDocument();
   });
 
   describe("importación CSV", () => {

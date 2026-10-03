@@ -190,7 +190,15 @@ function SelectionStep({
   );
 }
 
-function Schedule({ items }: { items: Clase[] }) {
+export function Schedule({
+  items,
+  compact = false,
+  onItemClick,
+}: {
+  items: Clase[];
+  compact?: boolean;
+  onItemClick?: (item: Clase) => void;
+}) {
   const times = useMemo(() => {
     const eventTimes = items.flatMap((item) => [
       formatTime(item.hora_inicio),
@@ -385,11 +393,17 @@ function Schedule({ items }: { items: Clase[] }) {
   const gridColumns = `4.5em repeat(${layoutByDay.totalTracks}, minmax(0, 1fr))`;
 
   return (
-    <div className="w-full p-4 sm:p-8">
+    <div
+      className={compact ? "mx-auto w-full max-w-5xl p-4" : "w-full p-4 sm:p-8"}
+    >
       <div
         id="schedule"
         className="mx-auto grid w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
-        style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}
+        style={{
+          gridTemplateColumns: gridColumns,
+          gridTemplateRows: gridRows,
+          ...(compact ? { fontSize: "0.78rem" } : {}),
+        }}
       >
         <div className="schedule-corner" />
         {visibleDays.map((day, dayIndex) => {
@@ -456,21 +470,34 @@ function Schedule({ items }: { items: Clase[] }) {
                 }}
               >
                 <div
-                  className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)}`}
+                  onClick={onItemClick ? () => onItemClick(item) : undefined}
+                  className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)} ${
+                    onItemClick ? "cursor-pointer" : ""
+                  }`}
                   title={`${item.materia_nombre}\n[${item.comision}] · ${item.carrera_codigo}\nAula: ${item.aula}`}
                 >
-                  <span className="shrink-0 hyphens-auto break-words text-lg font-semibold leading-snug">
+                  <span
+                    className={`shrink-0 hyphens-auto break-words font-semibold leading-snug ${
+                      compact ? "text-xs" : "text-lg"
+                    }`}
+                  >
                     {item.materia_nombre}
                   </span>
-                  <span className="shrink-0 text-sm font-medium leading-snug opacity-75">
+                  <span
+                    className={`shrink-0 font-medium leading-snug opacity-75 ${
+                      compact ? "text-[11px]" : "text-sm"
+                    }`}
+                  >
                     {formatTime(item.hora_inicio)} - {formatTime(item.hora_fin)}
                   </span>
                   {item.aulas.length > 0 && (
-                    <div className="mt-0.5 flex max-w-full shrink-0 flex-wrap gap-1.5">
+                    <div className="mt-0.5 flex max-w-full shrink-0 flex-wrap gap-1">
                       {item.aulas.map((aula) => (
                         <span
                           key={aula}
-                          className="schedule-class-aula inline-block max-w-full shrink-0 break-words rounded-lg bg-white/60 px-2 py-0.5 text-sm font-semibold leading-snug"
+                          className={`schedule-class-aula inline-block max-w-full shrink-0 break-words rounded-lg bg-white/60 px-2 py-0.5 font-semibold leading-snug ${
+                            compact ? "text-[11px]" : "text-sm"
+                          }`}
                         >
                           {aula}
                         </span>

@@ -18,6 +18,8 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   label?: string;
   hideCount?: boolean;
+  filterSlot?: React.ReactNode;
+  rightSlot?: React.ReactNode;
 }
 
 export default function DataTable<T extends { id: number }>({
@@ -29,6 +31,8 @@ export default function DataTable<T extends { id: number }>({
   searchPlaceholder = "Buscar...",
   label = "elementos",
   hideCount = false,
+  filterSlot,
+  rightSlot,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
@@ -63,18 +67,24 @@ export default function DataTable<T extends { id: number }>({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`flex items-center ${hideCount ? "justify-end" : "justify-between"}`}
+        className={`flex flex-wrap items-center gap-3 ${hideCount && !filterSlot ? "justify-end" : "justify-between"}`}
       >
-        {!hideCount && (
-          <span className="text-sm text-gray-500">
-            {filtered.length} {label}
-          </span>
-        )}
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder={searchPlaceholder}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          {!hideCount && (
+            <span className="text-sm text-gray-500 mr-1">
+              {filtered.length} {label}
+            </span>
+          )}
+          {filterSlot}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          {rightSlot}
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={searchPlaceholder}
+          />
+        </div>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">

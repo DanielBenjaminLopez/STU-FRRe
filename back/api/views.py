@@ -249,6 +249,28 @@ class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+    @action(detail=False, methods=['delete'], url_path='vaciar')
+    def vaciar(self, request):
+        qs = HorarioCursado.objects.all()
+        carrera_id = request.query_params.get('carrera')
+        nivel = request.query_params.get('nivel')
+        comision = request.query_params.get('comision')
+        dia_semana = request.query_params.get('dia_semana')
+
+        if carrera_id:
+            qs = qs.filter(materia__carrera_id=carrera_id)
+        if nivel:
+            qs = qs.filter(materia__nivel=nivel)
+        if comision:
+            qs = qs.filter(comision=comision)
+        if dia_semana:
+            qs = qs.filter(dia_semana=dia_semana)
+
+        eliminados, _ = qs.delete()
+        if eliminados > 0:
+            self._notify_content()
+        return Response({"eliminados": eliminados}, status=status.HTTP_200_OK)
+
 
 class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'examenes'

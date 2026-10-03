@@ -22,6 +22,9 @@ export interface HorarioCursado {
 
 export interface HorarioCursadoConNombres extends HorarioCursado {
   materia_nombre?: string;
+  carrera_codigo?: string;
+  carrera_nombre?: string;
+  nivel?: string;
 }
 
 export const DIAS_SEMANA = [
@@ -54,29 +57,6 @@ export async function fetchMaterias(filters?: {
   return apiFetch<Materia[]>(`/api/materias/${qs ? `?${qs}` : ""}`);
 }
 
-export async function createMateria(
-  data: Omit<Materia, "id" | "carrera_nombre">,
-): Promise<Materia> {
-  return apiFetch<Materia>("/api/materias/", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function updateMateria(
-  id: number,
-  data: Partial<Materia>,
-): Promise<Materia> {
-  return apiFetch<Materia>(`/api/materias/${id}/`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function deleteMateria(id: number): Promise<void> {
-  await apiFetch(`/api/materias/${id}/`, { method: "DELETE" });
-}
-
 export async function fetchHorarios(): Promise<HorarioCursadoConNombres[]> {
   return apiFetch<HorarioCursadoConNombres[]>("/api/horarios/");
 }
@@ -102,6 +82,26 @@ export async function updateHorario(
 
 export async function deleteHorario(id: number): Promise<void> {
   await apiFetch(`/api/horarios/${id}/`, { method: "DELETE" });
+}
+
+export async function vaciarHorarios(filters?: {
+  carrera?: number;
+  nivel?: string;
+  comision?: string;
+  dia_semana?: string;
+}): Promise<{ eliminados: number }> {
+  const params = new URLSearchParams();
+  if (filters?.carrera) params.append("carrera", String(filters.carrera));
+  if (filters?.nivel) params.append("nivel", filters.nivel);
+  if (filters?.comision) params.append("comision", filters.comision);
+  if (filters?.dia_semana) params.append("dia_semana", filters.dia_semana);
+  const qs = params.toString();
+  return apiFetch<{ eliminados: number }>(
+    `/api/horarios/vaciar/${qs ? `?${qs}` : ""}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export interface CsvImportDetailRow {
