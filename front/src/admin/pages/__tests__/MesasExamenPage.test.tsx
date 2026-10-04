@@ -74,9 +74,10 @@ describe("MesasExamenPage", () => {
 
     expect(screen.queryByLabelText(/Turno/i)).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(/Carrera/i), {
-      target: { value: "1" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: /Carrera/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: "Ingeniería en Sistemas" }),
+    );
     fireEvent.change(screen.getByLabelText(/Materia/i), {
       target: { value: "Matemática Discreta (Libre)" },
     });
