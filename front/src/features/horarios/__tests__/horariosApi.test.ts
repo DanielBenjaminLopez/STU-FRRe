@@ -7,16 +7,14 @@ vi.mock("../../../shared/api/client", () => ({
   totemFetch: vi.fn().mockResolvedValue([
     {
       id: 1,
-      comision: 1,
-      espacio: 1,
+      materia: 1,
+      comision: "K2.1",
+      espacio: "Aula 1",
       materia_nombre: "Algoritmos",
-      espacio_nombre: "Aula 1",
       carrera_codigo: "ISI",
-      comision_nombre: "K2.1",
       dia_semana: "lunes",
       hora_inicio: "08:00",
       hora_fin: "10:00",
-      activo: true,
     },
   ]),
 }));

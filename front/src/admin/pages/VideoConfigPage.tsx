@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import { useTotem } from "../../shared/context/TotemContext";
 import VideoUpload from "../components/VideoUpload";
@@ -231,14 +232,17 @@ export default function VideoConfigPage() {
         </div>
       )}
 
-      {showDeleteModal && (
-        <ConfirmDeleteModal
-          title="Eliminar video"
-          itemName="el video"
-          onConfirm={handleDelete}
-          onClose={() => setShowDeleteModal(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar video"
+            itemName="el video"
+            onConfirm={handleDelete}
+            onClose={() => setShowDeleteModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

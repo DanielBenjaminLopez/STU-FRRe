@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
+import { peekApiCache } from "../../shared/api/client";
 import DataTable, { type Column } from "./DataTable";
 import DataFormModal, { type FormField } from "./DataFormModal";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
@@ -9,6 +11,7 @@ interface CrudConfig<T extends { id: number }> {
   title: string;
   subtitle?: string;
   entityName: string;
+  cacheKey?: string;
   columns: Column<T>[];
   formFields: FormField[];
   fetchList: () => Promise<T[]>;
@@ -34,6 +37,7 @@ export default function CrudAdminPage<T extends { id: number }>({
     title,
     subtitle,
     entityName,
+    cacheKey,
     columns,
     formFields,
     fetchList,
@@ -45,8 +49,12 @@ export default function CrudAdminPage<T extends { id: number }>({
     notifyOnUpdate = true,
   } = config;
 
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<T[]>(
+    () => (cacheKey ? peekApiCache<T[]>(cacheKey) : undefined) ?? [],
+  );
+  const [loading, setLoading] = useState(
+    () => !(cacheKey && peekApiCache<T[]>(cacheKey)),
+  );
 
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<T | null>(null);
@@ -55,7 +63,6 @@ export default function CrudAdminPage<T extends { id: number }>({
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
       const result = await fetchList();
       setData(result);
     } catch (err) {
@@ -177,29 +184,33 @@ export default function CrudAdminPage<T extends { id: number }>({
         label={entityName + "s"}
       />
 
-      {showForm && (
-        <DataFormModal
-          title={editingRow ? `Editar ${entityName}` : `Crear ${entityName}`}
-          fields={formFields}
-          initialData={
-            (editingRow as unknown as Record<string, unknown>) ?? undefined
-          }
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={editingRow ? `Editar ${entityName}` : `Crear ${entityName}`}
+            fields={formFields}
+            initialData={
+              (editingRow as unknown as Record<string, unknown>) ?? undefined
+            }
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+            }}
+          />
+        )}
 
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title={`Eliminar ${entityName}`}
-          itemName={labelFn(deletingRow)}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title={`Eliminar ${entityName}`}
+            itemName={labelFn(deletingRow)}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

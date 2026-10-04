@@ -25,7 +25,7 @@ class TotemViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrSecretaria]
 
     def get_queryset(self):
-        qs = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
+        qs = Totem.objects.select_related('plantilla').prefetch_related(
             'plantilla__widgets_posiciones__widget'
         )
         vinculado = self.request.query_params.get('vinculado')
@@ -53,7 +53,7 @@ class TotemMeView(APIView):
     permission_classes = [IsTotem]
 
     def get(self, request):
-        totem = Totem.objects.select_related('espacio', 'plantilla').prefetch_related(
+        totem = Totem.objects.select_related('plantilla').prefetch_related(
             'plantilla__widgets_posiciones__widget'
         ).get(pk=request.user.totem.id)
         return Response(TotemSerializer(totem, context={'request': request}).data)

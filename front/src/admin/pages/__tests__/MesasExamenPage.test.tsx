@@ -32,8 +32,7 @@ vi.mock(
       createMesaExamen: vi.fn(),
       updateMesaExamen: vi.fn(),
       deleteMesaExamen: vi.fn(),
-      fetchPlanMaterias: vi.fn(),
-      fetchEspaciosForSelect: vi.fn(),
+      vaciarMesasExamen: vi.fn(),
       importarMesasExamenCSV: vi.fn(),
     };
   },
@@ -44,25 +43,12 @@ vi.mock("../../../shared/api/carreras", () => ({
 }));
 
 const mockFetchMesas = vi.mocked(mesasApi.fetchMesasExamen);
-const mockFetchPlanMaterias = vi.mocked(mesasApi.fetchPlanMaterias);
-const mockFetchEspacios = vi.mocked(mesasApi.fetchEspaciosForSelect);
 const mockFetchCarreras = vi.mocked(carrerasApi.fetchCarreras);
 
 describe("MesasExamenPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetchMesas.mockResolvedValue([]);
-    mockFetchPlanMaterias.mockResolvedValue([
-      {
-        id: 1,
-        carrera: 1,
-        materia_nombre: "Matemática Discreta",
-        carrera_nombre: "Sistemas",
-      },
-    ]);
-    mockFetchEspacios.mockResolvedValue([
-      { id: 10, nombre: "Aula Magna", tipo: "aula" } as never,
-    ]);
     mockFetchCarreras.mockResolvedValue([
       { id: 1, nombre: "Ingeniería en Sistemas" } as never,
     ]);
@@ -72,7 +58,7 @@ describe("MesasExamenPage", () => {
     cleanup();
   });
 
-  it("no muestra el campo Turno en el modal y lo asigna automáticamente al enviar", async () => {
+  it("envía carrera, materia como string y espacio opcional al crear mesa", async () => {
     const mockCreate = vi.mocked(mesasApi.createMesaExamen);
     mockCreate.mockResolvedValue({} as never);
 
@@ -86,15 +72,17 @@ describe("MesasExamenPage", () => {
     });
     expect(heading).toBeInTheDocument();
 
-    // El campo Turno ya NO debe existir en el modal
     expect(screen.queryByLabelText(/Turno/i)).not.toBeInTheDocument();
 
-    // Completar campos requeridos
+    fireEvent.click(screen.getByRole("combobox", { name: /Carrera/i }));
+    fireEvent.click(
+      screen.getByRole("option", { name: "Ingeniería en Sistemas" }),
+    );
     fireEvent.change(screen.getByLabelText(/Materia/i), {
-      target: { value: "1" },
+      target: { value: "Matemática Discreta (Libre)" },
     });
     fireEvent.change(screen.getByLabelText(/Espacio/i), {
-      target: { value: "10" },
+      target: { value: "" },
     });
     fireEvent.change(screen.getByLabelText(/Fecha/i), {
       target: { value: "2026-03-15" },
@@ -103,79 +91,53 @@ describe("MesasExamenPage", () => {
       target: { value: "09:00" },
     });
 
-    // Guardar
     fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
     await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          plan_materia: 1,
-          espacio: 10,
-          fecha: "2026-03-15",
-          hora: "09:00",
-          turno: "marzo",
-        }),
-      );
+      expect(mockCreate).toHaveBeenCalledWith({
+        carrera: 1,
+        materia: "Matemática Discreta (Libre)",
+        espacio: "",
+        fecha: "2026-03-15",
+        hora: "09:00",
+      });
     });
   });
 
-  it("calcula automáticamente el turno en diciembre al crear mesa", async () => {
-    const mockCreate = vi.mocked(mesasApi.createMesaExamen);
-    mockCreate.mockResolvedValue({} as never);
-
-    render(<MesasExamenPage />);
-
-    const nuevoBtn = await screen.findByRole("button", { name: "Nuevo" });
-    fireEvent.click(nuevoBtn);
-
-    fireEvent.change(screen.getByLabelText(/Materia/i), {
-      target: { value: "1" },
-    });
-    fireEvent.change(screen.getByLabelText(/Espacio/i), {
-      target: { value: "10" },
-    });
-    fireEvent.change(screen.getByLabelText(/Fecha/i), {
-      target: { value: "2026-12-10" },
-    });
-    fireEvent.change(screen.getByLabelText(/Hora/i), {
-      target: { value: "14:00" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
-
-    await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          fecha: "2026-12-10",
-          turno: "diciembre",
-        }),
-      );
-    });
-  });
-
-  it("muestra la cantidad de mesas de examen en la esquina izquierda", async () => {
+  it("muestra la cantidad de mesas de examen y permite vaciarlas", async () => {
+    const mockVaciar = vi.mocked(mesasApi.vaciarMesasExamen);
+    mockVaciar.mockResolvedValue({ eliminados: 2 });
     mockFetchMesas.mockResolvedValue([
       {
         id: 1,
-        materia_nombre: "Física I",
-        espacio_nombre: "Aula 2",
+        materia: "Física I",
+        espacio: "Aula 2",
         fecha: "2026-04-10",
-        turno: "abril",
-        llamado: 3,
       } as never,
       {
         id: 2,
-        materia_nombre: "Química",
-        espacio_nombre: "Aula 3",
+        materia: "Química",
+        espacio: "Aula 3",
         fecha: "2026-04-12",
-        turno: "abril",
-        llamado: 3,
       } as never,
     ]);
 
     render(<MesasExamenPage />);
 
     expect(await screen.findByText("2 mesas de examen")).toBeInTheDocument();
+
+    const vaciarBtn = await screen.findByRole("button", { name: /Vaciar/i });
+    fireEvent.click(vaciarBtn);
+
+    expect(
+      await screen.findByRole("heading", { name: "Vaciar mesas de examen" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Eliminar"));
+
+    await waitFor(() => {
+      expect(mockVaciar).toHaveBeenCalledOnce();
+    });
   });
 
   describe("importación CSV", () => {

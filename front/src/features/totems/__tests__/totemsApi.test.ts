@@ -15,7 +15,6 @@ import {
   createTotem,
   updateTotem,
   deleteTotem,
-  fetchEspacios,
   vincularTotem,
   fetchTotemMe,
   updateTotemOrientacionMapa,
@@ -85,14 +84,6 @@ describe("totems API", () => {
     });
   });
 
-  it("fetchEspacios llama a /api/espacios/ y retorna datos", async () => {
-    const espacios = [{ id: 1, nombre: "Aula 1A", tipo: "Aula", piso: 1 }];
-    mockApiFetch.mockResolvedValue(espacios);
-    const result = await fetchEspacios();
-    expect(mockApiFetch).toHaveBeenCalledWith("/api/espacios/");
-    expect(result).toEqual(espacios);
-  });
-
   it("vincularTotem llama a /api/totems/vincular/ con POST", async () => {
     const totem = {
       id: 1,
@@ -104,7 +95,6 @@ describe("totems API", () => {
     const data = {
       codigo_vinculacion: "XYZ789",
       nombre: "Tótem Nuevo",
-      espacio_id: 1,
     };
     const result = await vincularTotem(data);
     expect(mockApiFetch).toHaveBeenCalledWith("/api/totems/vincular/", {

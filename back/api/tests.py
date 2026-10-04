@@ -470,15 +470,12 @@ class CsvImportAPITestCase(TestCase):
 
     def test_importar_horarios_csv_sin_duplicados(self):
         from io import BytesIO
-        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+        from api.models import Carrera, Materia, HorarioCursado
 
         car = Carrera.objects.create(nombre="Sistemas Test Duplicados", tipo="grado")
-        mat = Materia.objects.create(nombre="Física I Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
-        com = Comision.objects.create(plan_materia=pm, nombre="K1")
-        esp = Espacio.objects.create(nombre="Aula 10", tipo="aula", piso=1)
+        Materia.objects.create(carrera=car, nombre="Física I Test", nivel="primero")
 
-        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Duplicados,Física I Test,K1,Aula 10,lunes,08:00,10:00,2023\nSistemas Test Duplicados,Física I Test,K1,Aula 10,lunes,08:00,10:00,2023\n"
+        csv_content = "carrera,materia,comision,espacio,dia_semana,hora_inicio,hora_fin\nSistemas Test Duplicados,Física I Test,K1,Aula 10,lunes,08:00,10:00\nSistemas Test Duplicados,Física I Test,K1,Aula 10,lunes,08:00,10:00\n"
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "horarios.csv"
 
@@ -489,16 +486,12 @@ class CsvImportAPITestCase(TestCase):
 
     def test_importar_horarios_diferente_espacio_misma_comision(self):
         from io import BytesIO
-        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+        from api.models import Carrera, Materia, HorarioCursado
 
         car = Carrera.objects.create(nombre="ISI Test", tipo="grado")
-        mat = Materia.objects.create(nombre="SGBD Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
-        com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
-        Espacio.objects.create(nombre="Lab 5", tipo="laboratorio", piso=1)
-        Espacio.objects.create(nombre="Lab 6", tipo="laboratorio", piso=1)
+        Materia.objects.create(carrera=car, nombre="SGBD Test", nivel="tercero")
 
-        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nISI Test,SGBD Test,Curso 1,Lab 5,martes,18:10,22:45,2023\nISI Test,SGBD Test,Curso 1,Lab 6,martes,18:10,22:45,2023\n"
+        csv_content = "carrera,materia,comision,espacio,dia_semana,hora_inicio,hora_fin\nISI Test,SGBD Test,Curso 1,Lab 5,martes,18:10,22:45\nISI Test,SGBD Test,Curso 1,Lab 6,martes,18:10,22:45\n"
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "horarios.csv"
 
@@ -509,21 +502,18 @@ class CsvImportAPITestCase(TestCase):
 
     def test_importar_horarios_csv_con_errores_falla_atomicamente(self):
         from io import BytesIO
-        from api.models import Carrera, Materia, PlanMateria, Comision, Espacio, HorarioCursado
+        from api.models import Carrera, Materia, HorarioCursado
 
         car = Carrera.objects.create(nombre="Sistemas Test Errores", tipo="grado")
-        mat = Materia.objects.create(nombre="Análisis Numérico Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="primero", plan_estudio="2023")
-        Comision.objects.create(plan_materia=pm, nombre="Curso 1")
-        Espacio.objects.create(nombre="Aula Test Errores", tipo="aula", piso=1)
+        Materia.objects.create(carrera=car, nombre="Análisis Numérico Test", nivel="primero")
 
         csv_content = (
-            "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\n"
-            "Sistemas Test Errores,Materia Inexistente 99,Curso 1,Aula Test Errores,Lunes,08:00,10:00,2023\n"
-            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Fantasma 999,Lunes,15:50,18:05,2023\n"
-            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Test Errores,,15:50,18:05,2023\n"
-            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Test Errores,Lunes,hora_invalida,18:05,2023\n"
-            ",,Curso 1,Aula Test Errores,Lunes,15:50,18:05,2023\n"
+            "carrera,materia,comision,espacio,dia_semana,hora_inicio,hora_fin\n"
+            "Sistemas Test Errores,Materia Inexistente 99,Curso 1,Aula Test Errores,Lunes,08:00,10:00\n"
+            "Sistemas Test Errores,Análisis Numérico Test,,Aula Test Errores,Lunes,15:50,18:05\n"
+            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Test Errores,,15:50,18:05\n"
+            "Sistemas Test Errores,Análisis Numérico Test,Curso 1,Aula Test Errores,Lunes,hora_invalida,18:05\n"
+            ",,Curso 1,Aula Test Errores,Lunes,15:50,18:05\n"
         )
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "errores_importacion.csv"
@@ -538,14 +528,12 @@ class CsvImportAPITestCase(TestCase):
 
     def test_importar_horarios_csv_sin_espacio_exitoso(self):
         from io import BytesIO
-        from api.models import Carrera, Materia, PlanMateria, Comision, HorarioCursado
+        from api.models import Carrera, Materia, HorarioCursado
 
         car = Carrera.objects.create(nombre="Sistemas Test Sin Espacio", tipo="grado")
-        mat = Materia.objects.create(nombre="Diseño de Sistemas Test")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="tercero", plan_estudio="2023")
-        Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        Materia.objects.create(carrera=car, nombre="Diseño de Sistemas Test", nivel="tercero")
 
-        csv_content = "carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin,plan_estudio\nSistemas Test Sin Espacio,Diseño de Sistemas Test,Curso 1,,Miércoles,15:30,17:00,2023\n"
+        csv_content = "carrera,materia,comision,espacio,dia_semana,hora_inicio,hora_fin\nSistemas Test Sin Espacio,Diseño de Sistemas Test,Curso 1,,Miércoles,15:30,17:00\n"
         csv_file = BytesIO(csv_content.encode("utf-8"))
         csv_file.name = "horarios_sin_espacio.csv"
 
@@ -557,7 +545,7 @@ class CsvImportAPITestCase(TestCase):
         self.assertEqual(res_data["totales"]["errores"], 0)
         self.assertEqual(HorarioCursado.objects.count(), horarios_antes + 1)
         h = HorarioCursado.objects.latest("id")
-        self.assertIsNone(h.espacio)
+        self.assertEqual(h.espacio, "")
 
 
 class ScrapeNoticiasCommandTest(TestCase):
@@ -762,8 +750,8 @@ class NoticiasSyncAPITest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class PlanMateriaSinCuatrimestreTestCase(TestCase):
-    """Cubre la eliminación de cuatrimestre y modalidad en PlanMateria."""
+class MateriaSimplificadaTestCase(TestCase):
+    """Cubre la unificación de Materia y la simplificación de HorarioCursado."""
 
     def setUp(self):
         self.client = APIClient()
@@ -776,49 +764,65 @@ class PlanMateriaSinCuatrimestreTestCase(TestCase):
         self.admin_user.groups.add(admin_group)
         self.client.force_authenticate(user=self.admin_user)
 
-    def test_model_no_tiene_cuatrimestre_ni_modalidad(self):
-        from api.models import PlanMateria
+    def test_model_materia_no_tiene_cuatrimestre_modalidad_ni_plan_estudio(self):
+        from api.models import Materia, HorarioCursado, MesaExamen
 
-        campos = {f.name for f in PlanMateria._meta.get_fields()}
-        self.assertNotIn("cuatrimestre", campos)
-        self.assertNotIn("modalidad", campos)
-        self.assertIn("nivel", campos)
-        self.assertIn("plan_estudio", campos)
+        campos_mat = {f.name for f in Materia._meta.get_fields()}
+        self.assertNotIn("cuatrimestre", campos_mat)
+        self.assertNotIn("modalidad", campos_mat)
+        self.assertNotIn("plan_estudio", campos_mat)
+        self.assertIn("nivel", campos_mat)
+        self.assertIn("carrera", campos_mat)
 
-    def test_api_plan_materia_no_expone_cuatrimestre_ni_modalidad(self):
-        from api.models import Carrera, Materia, PlanMateria
+        campos_hor = {f.name for f in HorarioCursado._meta.get_fields()}
+        self.assertNotIn("plan_estudio", campos_hor)
+        self.assertNotIn("activo", campos_hor)
+        self.assertIn("materia", campos_hor)
+        self.assertIn("comision", campos_hor)
 
-        Carrera.objects.create(nombre="Test API Sin Cuatrimestre", tipo="grado", codigo="TAC")
-        mat = Materia.objects.create(nombre="Materia Test API Sin Cuatrimestre")
-        PlanMateria.objects.create(
-            carrera=Carrera.objects.get(codigo="TAC"),
-            materia=mat,
+        campos_mesa = {f.name for f in MesaExamen._meta.get_fields()}
+        self.assertNotIn("turno", campos_mesa)
+        self.assertNotIn("activo", campos_mesa)
+        self.assertNotIn("plan_estudio", campos_mesa)
+        self.assertNotIn("plan_materia", campos_mesa)
+        self.assertIn("carrera", campos_mesa)
+        self.assertIn("materia", campos_mesa)
+        self.assertIn("espacio", campos_mesa)
+        self.assertIn("fecha", campos_mesa)
+        self.assertIn("hora", campos_mesa)
+        self.assertIsNone(MesaExamen._meta.get_field("materia").related_model)
+
+    def test_api_materias_expone_carrera_y_nivel_sin_plan_estudio(self):
+        from api.models import Carrera, Materia
+
+        car = Carrera.objects.create(nombre="Test API Sin Cuatrimestre", tipo="grado", codigo="TAC")
+        mat = Materia.objects.create(
+            carrera=car,
+            nombre="Materia Test API Sin Cuatrimestre",
             nivel="primero",
-            plan_estudio="2023",
         )
 
-        response = self.client.get("/api/plan-materias/")
+        response = self.client.get("/api/materias/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        fila = next(f for f in response.json() if f["materia_nombre"] == mat.nombre)
+        fila = next(f for f in response.json() if f["nombre"] == mat.nombre)
         self.assertNotIn("cuatrimestre", fila)
         self.assertNotIn("modalidad", fila)
+        self.assertNotIn("plan_estudio", fila)
         self.assertEqual(fila["nivel"], "primero")
-        self.assertEqual(fila["plan_estudio"], "2023")
+        self.assertEqual(fila["carrera"], car.id)
 
-    def test_api_horarios_no_expone_cuatrimestre_ni_modalidad(self):
-        from api.models import Carrera, Comision, HorarioCursado, Materia, PlanMateria
+    def test_api_horarios_con_comision_string_sin_activo_ni_plan_estudio(self):
+        from api.models import Carrera, HorarioCursado, Materia
 
         car = Carrera.objects.create(nombre="Test API Horarios", tipo="grado", codigo="TAH")
-        mat = Materia.objects.create(nombre="Materia Test API Horarios")
-        pm = PlanMateria.objects.create(carrera=car, materia=mat, nivel="cuarto", plan_estudio="2023")
-        com = Comision.objects.create(plan_materia=pm, nombre="Curso 1")
+        mat = Materia.objects.create(carrera=car, nombre="Materia Test API Horarios", nivel="cuarto")
         HorarioCursado.objects.create(
-            comision=com,
+            materia=mat,
+            comision="Curso 1",
             dia_semana="lunes",
             hora_inicio="08:00",
             hora_fin="10:00",
-            activo=True,
         )
 
         response = self.client.get("/api/horarios/")
@@ -829,17 +833,52 @@ class PlanMateriaSinCuatrimestreTestCase(TestCase):
         )
         self.assertNotIn("cuatrimestre", fila)
         self.assertNotIn("modalidad", fila)
+        self.assertNotIn("plan_estudio", fila)
+        self.assertNotIn("activo", fila)
         self.assertEqual(fila["nivel"], "cuarto")
+        self.assertEqual(fila["comision"], "Curso 1")
 
-    def test_importar_plan_csv_ignora_columnas_eliminadas(self):
-        """Los CSV de seed siguen trayendo modalidad y cuatrimestre: se ignoran."""
+    def test_api_mesas_examen_sin_turno_activo_ni_plan_estudio(self):
+        from io import BytesIO
+        from api.models import Carrera, MesaExamen
+
+        car = Carrera.objects.create(nombre="Test API Mesas", tipo="grado", codigo="TAM")
+        MesaExamen.objects.create(
+            carrera=car,
+            materia="Materia Libre no existente en tabla Materia",
+            espacio="",
+            fecha="2026-12-10",
+            hora="08:00",
+        )
+
+        response = self.client.get("/api/mesas-examen/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        fila = next(
+            f for f in response.json() if f["materia"] == "Materia Libre no existente en tabla Materia"
+        )
+        self.assertNotIn("turno", fila)
+        self.assertNotIn("llamado", fila)
+        self.assertNotIn("activo", fila)
+        self.assertNotIn("plan_estudio", fila)
+        self.assertEqual(fila["carrera_codigo"], "TAM")
+        self.assertEqual(fila["espacio"], "")
+        self.assertEqual(fila["fecha"], "2026-12-10")
+
+        csv_content = "carrera,materia,espacio,fecha,hora\nTAM,Materia CSV Libre,,15/12/2026,14:00\n"
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "mesas.csv"
+        res_csv = self.client.post("/api/mesas-examen/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(res_csv.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_csv.json()["exito"])
+        self.assertTrue(MesaExamen.objects.filter(carrera=car, materia="Materia CSV Libre", espacio="").exists())
+
+    def test_importar_materia_csv_ignora_columnas_eliminadas(self):
         import tablib
-        from api.models import Carrera, Materia, PlanMateria
-        from api.resources import PlanMateriaResource
+        from api.models import Carrera, Materia
+        from api.resources import MateriaResource
 
-        Carrera.objects.create(nombre="Carrera Test CSV", tipo="grado", codigo="TCSV")
-        Materia.objects.create(nombre="Materia Test CSV")
-        Materia.objects.create(nombre="Materia Test CSV 2")
+        car = Carrera.objects.create(nombre="Carrera Test CSV", tipo="grado", codigo="TCSV")
 
         dataset = tablib.Dataset()
         dataset.headers = (
@@ -853,36 +892,10 @@ class PlanMateriaSinCuatrimestreTestCase(TestCase):
         dataset.append(("Carrera Test CSV", "Materia Test CSV", "primero", "anual", "segundo", "2023"))
         dataset.append(("Carrera Test CSV", "Materia Test CSV 2", "segundo", "cuatrimestral", "primero", "2023"))
 
-        antes = PlanMateria.objects.count()
-        result = PlanMateriaResource().import_data(dataset, dry_run=False)
+        antes = Materia.objects.count()
+        result = MateriaResource().import_data(dataset, dry_run=False)
         self.assertFalse(result.has_errors(), result.row_errors())
-        self.assertEqual(PlanMateria.objects.count(), antes + 2)
+        self.assertEqual(Materia.objects.count(), antes + 2)
 
-        car = Carrera.objects.get(codigo="TCSV")
-        pm1 = PlanMateria.objects.get(carrera=car, materia__nombre="Materia Test CSV")
-        self.assertEqual(pm1.nivel, "primero")
-        self.assertEqual(pm1.plan_estudio, "2023")
-
-    def test_importar_plan_csv_no_colapsa_planes_por_plan_estudio(self):
-        """Misma carrera, materia y nivel en dos planes: son dos PlanMateria."""
-        import tablib
-        from api.models import Carrera, Materia, PlanMateria
-        from api.resources import PlanMateriaResource
-
-        Carrera.objects.create(nombre="Química Test Planes", tipo="grado", codigo="TQP")
-        Materia.objects.create(nombre="Práctica Supervisada Test Planes")
-
-        dataset = tablib.Dataset()
-        dataset.headers = ("carrera", "materia", "nivel", "plan_estudio")
-        dataset.append(("Química Test Planes", "Práctica Supervisada Test Planes", "quinto", "2023"))
-        dataset.append(("Química Test Planes", "Práctica Supervisada Test Planes", "quinto", "1995"))
-
-        antes = PlanMateria.objects.count()
-        result = PlanMateriaResource().import_data(dataset, dry_run=False)
-        self.assertFalse(result.has_errors(), result.row_errors())
-        self.assertEqual(PlanMateria.objects.count(), antes + 2)
-
-        planes = PlanMateria.objects.filter(
-            carrera__codigo="TQP", materia__nombre="Práctica Supervisada Test Planes"
-        ).values_list("plan_estudio", flat=True)
-        self.assertEqual(sorted(planes), ["1995", "2023"])
+        m1 = Materia.objects.get(carrera=car, nombre="Materia Test CSV")
+        self.assertEqual(m1.nivel, "primero")

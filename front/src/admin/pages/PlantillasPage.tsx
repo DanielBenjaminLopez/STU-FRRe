@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { useLocation } from "react-router";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import {
   DndContext,
@@ -21,7 +22,12 @@ import TemplateCanvas from "../components/TemplateCanvas";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import { AdminTemplatesSkeleton } from "../../shared/components/ui/Skeleton";
 import Button from "../../shared/components/ui/Button";
-import { fetchWidgets } from "../../features/widgets/api/widgets";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
+import {
+  fetchWidgets,
+  type WidgetDTO,
+} from "../../features/widgets/api/widgets";
 import { updateTotem } from "../../features/totems/api/totems";
 import { useTotem } from "../../shared/context/TotemContext";
 import {
@@ -30,6 +36,7 @@ import {
   fetchPlantillas,
   replacePlantillaWidgets,
   updatePlantilla,
+  type PlantillaDTO,
 } from "../../features/widgets/api/plantillas";
 import {
   WIDGET_REGISTRY,
@@ -191,8 +198,19 @@ function DynamicPillInput({
 }
 
 export default function PlantillasPage() {
-  const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
-  const [selectedId, setSelectedId] = useState<string>("");
+  const cachedDtos = peekApiCache<PlantillaDTO[]>(API_ENDPOINTS.plantillas);
+  const cachedWidgets = peekApiCache<WidgetDTO[]>(API_ENDPOINTS.widgets);
+  const hasCachedInitial = Boolean(cachedDtos && cachedWidgets);
+
+  const [plantillas, setPlantillas] = useState<Plantilla[]>(() => {
+    if (!cachedDtos || !cachedWidgets) return [];
+    const local = cachedDtos.map(plantillaDTOToLocal);
+    return local.length > 0 ? local : [];
+  });
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    if (!cachedDtos || !cachedWidgets || cachedDtos.length === 0) return "";
+    return String(cachedDtos[0].id);
+  });
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>("");
@@ -203,15 +221,28 @@ export default function PlantillasPage() {
     row: number;
   } | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    () => !(hasCachedInitial && cachedDtos && cachedDtos.length > 0),
+  );
   const [saving, setSaving] = useState(false);
   const [widgetIdByTipo, setWidgetIdByTipo] = useState<
     Partial<Record<WidgetType, number>>
-  >({});
+  >(() => {
+    if (!cachedWidgets) return {};
+    const byTipo: Partial<Record<WidgetType, number>> = {};
+    for (const w of cachedWidgets) {
+      if (w.tipo in WIDGET_REGISTRY) byTipo[w.tipo as WidgetType] = w.id;
+    }
+    return byTipo;
+  });
   const [dirtyIds, setDirtyIds] = useState<Record<string, boolean>>({});
   const [effectiveRegistry, setEffectiveRegistry] = useState<
     Record<WidgetType, WidgetDefinition>
-  >({} as Record<WidgetType, WidgetDefinition>);
+  >(() =>
+    cachedWidgets
+      ? buildEffectiveRegistry(cachedWidgets)
+      : ({} as Record<WidgetType, WidgetDefinition>),
+  );
   const [isClearing, setIsClearing] = useState(false);
   const clearingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -596,7 +627,12 @@ export default function PlantillasPage() {
     try {
       const isNew = Boolean(plantilla.isNew);
       const saved = await savePlantillaHelper(plantilla);
-      if (selectedTotem) {
+      // Solo actualizar el tótem si la plantilla cambió o es nueva.
+      // Si ya estaba asignada, replacePlantillaWidgets ya notificó al tótem.
+      const needsTotemUpdate =
+        selectedTotem &&
+        (isNew || selectedTotem.plantilla_id !== Number(saved.id));
+      if (needsTotemUpdate) {
         await updateTotem(selectedTotem.id, {
           plantilla_id: Number(saved.id),
         });
@@ -914,16 +950,19 @@ export default function PlantillasPage() {
           })()}
       </DragOverlay>
 
-      {deletingId && (
-        <ConfirmDeleteModal
-          title="Eliminar plantilla"
-          itemName={
-            plantillas.find((p) => p.id === deletingId)?.nombre ?? "plantilla"
-          }
-          onConfirm={handleDeletePlantilla}
-          onClose={() => setDeletingId(null)}
-        />
-      )}
+      <AnimatePresence>
+        {deletingId && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar plantilla"
+            itemName={
+              plantillas.find((p) => p.id === deletingId)?.nombre ?? "plantilla"
+            }
+            onConfirm={handleDeletePlantilla}
+            onClose={() => setDeletingId(null)}
+          />
+        )}
+      </AnimatePresence>
     </DndContext>
   );
 }

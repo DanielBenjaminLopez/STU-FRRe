@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useTotem } from "../../shared/context/TotemContext";
 import { vincularTotem } from "../../features/totems/api/totems";
 import Button from "../../shared/components/ui/Button";
 import { sileo } from "sileo";
+import { modalBackdropVariants, modalPanelVariants } from "./modalMotion";
 
 interface VincularTotemModalProps {
   onClose: () => void;
@@ -66,8 +68,17 @@ export default function VincularTotemModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-4xl shadow-xl w-full max-w-md p-8 flex flex-col gap-6">
+    <motion.div
+      variants={modalBackdropVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    >
+      <motion.div
+        variants={modalPanelVariants}
+        className="bg-white rounded-4xl shadow-xl w-full max-w-md p-8 flex flex-col gap-6"
+      >
         <div>
           <h2 className="text-xl font-semibold text-gray-900">
             Vincular nuevo tótem
@@ -118,7 +129,7 @@ export default function VincularTotemModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

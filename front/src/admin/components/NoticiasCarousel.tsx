@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { AnimatePresence } from "motion/react";
 import type { ContenidoFeed } from "../../features/noticias/api/noticias";
 import NoticiaDetailModal from "./NoticiaDetailModal";
 
@@ -71,12 +72,15 @@ export default function NoticiasCarousel({ noticias }: NoticiasCarouselProps) {
 
   return (
     <>
-      {selected && (
-        <NoticiaDetailModal
-          noticia={selected}
-          onClose={() => setSelected(null)}
-        />
-      )}
+      <AnimatePresence>
+        {selected && (
+          <NoticiaDetailModal
+            key={selected.id}
+            noticia={selected}
+            onClose={() => setSelected(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <div
         className="relative w-full h-[560px] rounded-3xl overflow-hidden group"

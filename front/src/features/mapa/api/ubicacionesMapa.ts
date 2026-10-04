@@ -1,4 +1,5 @@
-import { apiFetch } from "../../../shared/api/client";
+import { apiFetch, publicFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface UbicacionMapa {
   id: number;
@@ -17,9 +18,9 @@ export async function fetchUbicacionesMapa(
   piso?: PisoKey,
 ): Promise<UbicacionMapa[]> {
   const params = piso ? `?piso=${piso}` : "";
-  const response = await fetch(`/api/ubicaciones-mapa/${params}`);
-  if (!response.ok) throw new Error(`Error ${response.status}`);
-  return response.json();
+  return publicFetch<UbicacionMapa[]>(
+    `${API_ENDPOINTS.ubicacionesMapa}${params}`,
+  );
 }
 
 /** Devuelve un diccionario svg_id → UbicacionMapa para un piso dado */

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { sileo } from "sileo";
 import Button from "../../shared/components/ui/Button";
 import ImageDropzone from "../../shared/components/ui/ImageDropzone";
+import Select from "../../shared/components/ui/Select";
+import { modalBackdropVariants, modalPanelVariants } from "./modalMotion";
 
 export interface FormField {
   name: string;
@@ -129,11 +132,18 @@ export default function DataFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div
+    <motion.div
+      variants={modalBackdropVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    >
+      <motion.div
+        variants={modalPanelVariants}
         className={`bg-white rounded-4xl shadow-xl w-full ${
           MAX_WIDTH_CLASSES[maxWidth] || "max-w-md"
-        } max-h-[90vh] overflow-hidden flex flex-col`}
+        } flex flex-col`}
       >
         <div className="px-8 pt-8 pb-3">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
@@ -141,7 +151,7 @@ export default function DataFormModal({
 
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-2 gap-4 px-8 pb-8 overflow-y-auto"
+          className="grid grid-cols-2 gap-4 px-8 pb-8"
         >
           {fields.map((field) =>
             field.type === "image" ? (
@@ -164,6 +174,47 @@ export default function DataFormModal({
                   disabled={loading}
                 />
               </div>
+            ) : field.type === "select" ? (
+              <div
+                key={field.name}
+                className={`flex flex-col gap-1 text-sm ${
+                  field.half ? "col-span-1" : "col-span-2"
+                }`}
+              >
+                <span className="font-medium text-gray-700">
+                  {field.label}
+                  {field.required && (
+                    <span className="text-red-400 ml-0.5">*</span>
+                  )}
+                </span>
+                <Select
+                  role="combobox"
+                  align="left"
+                  colorVariant="gray"
+                  aria-label={field.label}
+                  value={String(formData[field.name] ?? "")}
+                  onChange={(val) => handleChange(field.name, val)}
+                  disabled={loading || field.readOnly}
+                  placeholder={field.placeholder ?? "Seleccionar..."}
+                  options={[
+                    ...(!field.required
+                      ? [
+                          {
+                            value: "",
+                            label: field.placeholder ?? "Seleccionar...",
+                          },
+                        ]
+                      : []),
+                    ...(field.options?.map((opt) => ({
+                      value: String(opt.value),
+                      label: opt.label,
+                    })) ?? []),
+                  ]}
+                  className="w-full"
+                  triggerClassName="w-full px-4 py-2 font-medium"
+                  dropdownClassName="w-full"
+                />
+              </div>
             ) : (
               <label
                 key={field.name}
@@ -180,23 +231,7 @@ export default function DataFormModal({
                   </span>
                 )}
 
-                {field.type === "select" ? (
-                  <select
-                    value={String(formData[field.name] ?? "")}
-                    onChange={(e) => handleChange(field.name, e.target.value)}
-                    required={field.required}
-                    className="border border-gray-200 rounded-xl px-4 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black/10"
-                  >
-                    <option value="">
-                      {field.placeholder ?? "Seleccionar..."}
-                    </option>
-                    {field.options?.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : field.type === "textarea" ? (
+                {field.type === "textarea" ? (
                   <textarea
                     value={String(formData[field.name] ?? "")}
                     onChange={(e) => handleChange(field.name, e.target.value)}
@@ -274,7 +309,7 @@ export default function DataFormModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

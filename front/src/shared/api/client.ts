@@ -1,5 +1,39 @@
 const ADMIN_TOKEN_KEY = "admin_token";
 const TOTEM_TOKEN_KEY = "auth_token";
+const CACHE_TTL_MS = 60_000;
+
+interface CacheEntry {
+  data: unknown;
+  timestamp: number;
+}
+
+const responseCache = new Map<string, CacheEntry>();
+const inFlightGet = new Map<string, Promise<unknown>>();
+let lastFetchFn: typeof fetch | null = null;
+
+function syncFetchEnvironment(): void {
+  if (lastFetchFn !== globalThis.fetch) {
+    lastFetchFn = globalThis.fetch;
+    responseCache.clear();
+    inFlightGet.clear();
+  }
+}
+
+export function invalidateApiCache(): void {
+  responseCache.clear();
+  inFlightGet.clear();
+}
+
+export function peekApiCache<T>(url: string): T | undefined {
+  syncFetchEnvironment();
+  const entry = responseCache.get(url);
+  if (!entry) return undefined;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    responseCache.delete(url);
+    return undefined;
+  }
+  return entry.data as T;
+}
 
 export function getAdminToken(): string | null {
   return localStorage.getItem(ADMIN_TOKEN_KEY);
@@ -7,10 +41,12 @@ export function getAdminToken(): string | null {
 
 export function setAdminToken(token: string): void {
   localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  invalidateApiCache();
 }
 
 export function clearAdminToken(): void {
   localStorage.removeItem(ADMIN_TOKEN_KEY);
+  invalidateApiCache();
 }
 
 export function getTotemToken(): string | null {
@@ -19,10 +55,12 @@ export function getTotemToken(): string | null {
 
 export function setTotemToken(token: string): void {
   localStorage.setItem(TOTEM_TOKEN_KEY, token);
+  invalidateApiCache();
 }
 
 export function clearTotemToken(): void {
   localStorage.removeItem(TOTEM_TOKEN_KEY);
+  invalidateApiCache();
 }
 
 export async function apiFetch<T>(
@@ -47,6 +85,7 @@ export async function publicFetch<T>(
 }
 
 export async function apiUpload<T>(url: string, file: File): Promise<T> {
+  syncFetchEnvironment();
   const token = getAdminToken();
   const formData = new FormData();
   formData.append("file", file);
@@ -70,6 +109,7 @@ export async function apiUpload<T>(url: string, file: File): Promise<T> {
     );
   }
 
+  invalidateApiCache();
   return response.json();
 }
 
@@ -117,7 +157,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(
+async function performRequest<T>(
   url: string,
   options: RequestInit,
   scheme?: "Bearer" | "Totem",
@@ -144,6 +184,54 @@ async function request<T>(
 
   if (response.status === 204) return undefined as T;
   return response.json();
+}
+
+async function request<T>(
+  url: string,
+  options: RequestInit,
+  scheme?: "Bearer" | "Totem",
+): Promise<T> {
+  syncFetchEnvironment();
+  const method = (options.method ?? "GET").toUpperCase();
+
+  if (method !== "GET") {
+    const result = await performRequest<T>(url, options, scheme);
+    invalidateApiCache();
+    return result;
+  }
+
+  const bypassCache =
+    options.cache === "no-store" || options.cache === "reload";
+
+  if (!bypassCache) {
+    const cached = peekApiCache<T>(url);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const existing = inFlightGet.get(url);
+    if (existing) {
+      return existing as Promise<T>;
+    }
+  }
+
+  const promise = performRequest<T>(url, options, scheme)
+    .then((data) => {
+      if (!bypassCache) {
+        responseCache.set(url, { data, timestamp: Date.now() });
+      }
+      return data;
+    })
+    .finally(() => {
+      if (!bypassCache) {
+        inFlightGet.delete(url);
+      }
+    });
+
+  if (!bypassCache) {
+    inFlightGet.set(url, promise);
+  }
+  return promise;
 }
 
 export function wsUrl(path: string): string {

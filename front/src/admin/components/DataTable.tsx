@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import SearchInput from "../../shared/components/ui/SearchInput";
 
 export interface Column<T> {
@@ -7,6 +7,7 @@ export interface Column<T> {
   render?: (value: T[keyof T], row: T) => React.ReactNode;
   sortable?: boolean;
   align?: "left" | "center" | "right";
+  width?: string;
 }
 
 interface DataTableProps<T> {
@@ -18,9 +19,10 @@ interface DataTableProps<T> {
   searchPlaceholder?: string;
   label?: string;
   hideCount?: boolean;
+  filterSlot?: React.ReactNode;
 }
 
-export default function DataTable<T extends { id: number }>({
+function DataTableInner<T extends { id: number }>({
   data,
   columns,
   onEdit,
@@ -29,27 +31,32 @@ export default function DataTable<T extends { id: number }>({
   searchPlaceholder = "Buscar...",
   label = "elementos",
   hideCount = false,
+  filterSlot,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
-  const filtered = data.filter((row) => {
-    if (!search) return true;
+  const filtered = useMemo(() => {
+    if (!search) return data;
     const lower = search.toLowerCase();
-    return columns.some((col) => {
-      const val = row[col.key];
-      return String(val).toLowerCase().includes(lower);
-    });
-  });
+    return data.filter((row) =>
+      columns.some((col) => {
+        const val = row[col.key];
+        return String(val).toLowerCase().includes(lower);
+      }),
+    );
+  }, [data, search, columns]);
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (!sortKey) return 0;
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
-    const cmp = String(aVal).localeCompare(String(bVal), "es");
-    return sortDir === "asc" ? cmp : -cmp;
-  });
+  const sorted = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      const cmp = String(aVal).localeCompare(String(bVal), "es");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }, [filtered, sortKey, sortDir]);
 
   function handleSort(key: keyof T) {
     if (sortKey === key) {
@@ -63,13 +70,16 @@ export default function DataTable<T extends { id: number }>({
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`flex items-center ${hideCount ? "justify-end" : "justify-between"}`}
+        className={`flex flex-wrap items-center gap-3 ${hideCount && !filterSlot ? "justify-end" : "justify-between"}`}
       >
-        {!hideCount && (
-          <span className="text-sm text-gray-500">
-            {filtered.length} {label}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {!hideCount && (
+            <span className="text-sm text-gray-500 mr-1">
+              {filtered.length} {label}
+            </span>
+          )}
+          {filterSlot}
+        </div>
         <SearchInput
           value={search}
           onChange={setSearch}
@@ -97,7 +107,7 @@ export default function DataTable<T extends { id: number }>({
                 return (
                   <th
                     key={String(col.key)}
-                    className={`px-4 py-3 ${alignClass} font-semibold text-gray-600 ${col.sortable !== false ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
+                    className={`px-4 py-3 ${alignClass} ${col.width ?? ""} font-semibold text-gray-600 ${col.sortable !== false ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
                     onClick={() =>
                       col.sortable !== false ? handleSort(col.key) : undefined
                     }
@@ -245,3 +255,6 @@ export default function DataTable<T extends { id: number }>({
     </div>
   );
 }
+
+const DataTable = memo(DataTableInner) as typeof DataTableInner;
+export default DataTable;

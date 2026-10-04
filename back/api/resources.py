@@ -6,31 +6,14 @@ from import_export.widgets import ForeignKeyWidget
 from .models import (
     Aviso,
     Carrera,
-    Comision,
-    Espacio,
     Evento,
     EventoCalendario,
     HorarioCursado,
     Materia,
     MesaExamen,
     Noticias,
-    PlanMateria,
     Totem,
 )
-
-
-class EspacioResource(resources.ModelResource):
-    class Meta:
-        model = Espacio
-        import_id_fields = ('nombre',)
-        fields = ('id', 'nombre', 'edificio', 'tipo', 'tipo_otro', 'piso')
-
-    def before_import_row(self, row, **kwargs):
-        edificio_val = str(row.get('edificio') or '').strip().lower()
-        if edificio_val in ('anexo', 'edificio anexo'):
-            row['edificio'] = 'anexo'
-        else:
-            row['edificio'] = 'central'
 
 
 class CarreraResource(resources.ModelResource):
@@ -40,33 +23,61 @@ class CarreraResource(resources.ModelResource):
         fields = ('id', 'nombre', 'codigo')
 
 
+def normalizar_nivel(nivel_raw):
+    if not nivel_raw or not isinstance(nivel_raw, str):
+        return 'primero'
+    n = nivel_raw.strip().lower()
+    n = n.replace('º', '').replace('°', '')
+    mapping = {
+        '1': 'primero',
+        '1ro': 'primero',
+        '1er': 'primero',
+        'primer': 'primero',
+        'primero': 'primero',
+        '2': 'segundo',
+        '2do': 'segundo',
+        'segundo': 'segundo',
+        '3': 'tercero',
+        '3ro': 'tercero',
+        '3er': 'tercero',
+        'tercer': 'tercero',
+        'tercero': 'tercero',
+        '4': 'cuarto',
+        '4to': 'cuarto',
+        'cuarto': 'cuarto',
+        '5': 'quinto',
+        '5to': 'quinto',
+        'quinto': 'quinto',
+    }
+    return mapping.get(n, n)
+
+
 class MateriaResource(resources.ModelResource):
-    class Meta:
-        model = Materia
-        import_id_fields = ('nombre',)
-        fields = ('id', 'nombre')
-
-
-class PlanMateriaResource(resources.ModelResource):
     carrera = fields.Field(
         column_name='carrera',
         attribute='carrera',
         widget=ForeignKeyWidget(Carrera, field='nombre'),
     )
-    materia = fields.Field(
-        column_name='materia',
-        attribute='materia',
-        widget=ForeignKeyWidget(Materia, field='nombre'),
-    )
+
+    def before_import(self, dataset, **kwargs):
+        if dataset.headers and 'nombre' not in dataset.headers and 'materia' in dataset.headers:
+            dataset.headers = [
+                'nombre' if h == 'materia' else h for h in dataset.headers
+            ]
+
+    def before_import_row(self, row, **kwargs):
+        if not row.get('nombre') and row.get('materia'):
+            row['nombre'] = str(row.get('materia')).strip()
+        row['nivel'] = normalizar_nivel(row.get('nivel'))
 
     class Meta:
-        model = PlanMateria
+        model = Materia
+        import_id_fields = ('carrera', 'nombre')
         fields = (
             'id',
             'carrera',
-            'materia',
+            'nombre',
             'nivel',
-            'plan_estudio',
         )
 
 
@@ -142,120 +153,43 @@ def resolver_carrera(carrera_str):
     c_limpio = sin_tildes(c_str)
     for c in Carrera.objects.all():
         c_nom = sin_tildes(c.nombre)
-        if c_nom == c_limpio or c_limpio in c_nom or c_nom in c_limpio or c.codigo.lower() == c_limpio:
+        if c_nom == c_limpio or c_limpio in c_nom or c_nom in c_limpio or (c.codigo and c.codigo.lower() == c_limpio):
             return c
     return None
 
 
-def resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw=None):
+def resolver_materia(carrera_nombre, materia_nombre):
     if not carrera_nombre or not materia_nombre:
         return None
     raw_m = str(materia_nombre)
     m_str = raw_m.strip()
 
     m_filter = (
-        Q(materia__nombre__iexact=m_str)
-        | Q(materia__nombre__iexact=raw_m)
-        | Q(materia__nombre__istartswith=m_str)
+        Q(nombre__iexact=m_str)
+        | Q(nombre__iexact=raw_m)
+        | Q(nombre__istartswith=m_str)
     )
 
     car = resolver_carrera(carrera_nombre)
     if car:
-        qs = PlanMateria.objects.filter(carrera=car).filter(m_filter)
+        qs = Materia.objects.filter(carrera=car).filter(m_filter)
     else:
         c_str = str(carrera_nombre).strip()
-        qs = PlanMateria.objects.filter(
+        qs = Materia.objects.filter(
             Q(carrera__nombre__icontains=c_str) | Q(carrera__codigo__iexact=c_str)
         ).filter(m_filter)
 
     if not qs.exists():
-        qs = PlanMateria.objects.filter(m_filter)
-
-    if plan_estudio_raw and str(plan_estudio_raw).strip():
-        qs_plan = qs.filter(plan_estudio=str(plan_estudio_raw).strip())
-        if qs_plan.exists():
-            return qs_plan.first()
-
-    for preferido in ['2023', '2026', '2008', '1995']:
-        qs_pref = qs.filter(plan_estudio=preferido)
-        if qs_pref.exists():
-            return qs_pref.first()
+        qs = Materia.objects.filter(m_filter)
 
     return qs.first()
 
 
-def resolver_comision(carrera_nombre, materia_nombre, comision_nombre, plan_estudio_raw=None):
-    c_nom = str(comision_nombre).strip()
-    pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio_raw)
-    if pm:
-        com = Comision.objects.filter(plan_materia=pm, nombre__iexact=c_nom).first()
-        if com:
-            return com
-        # Si en la base de datos la comisión tiene nombre vacío o hay una única comisión
-        coms = Comision.objects.filter(plan_materia=pm)
-        if coms.count() == 1:
-            return coms.first()
-
-    # Fallback: buscar la comisión en cualquier otro plan registrado de la misma materia
-    car = resolver_carrera(carrera_nombre)
-    m_str = str(materia_nombre).strip()
-    raw_m = str(materia_nombre)
-    m_filter = (
-        Q(plan_materia__materia__nombre__iexact=m_str)
-        | Q(plan_materia__materia__nombre__iexact=raw_m)
-        | Q(plan_materia__materia__nombre__istartswith=m_str)
-    )
-    qs = Comision.objects.filter(m_filter)
-    if car:
-        qs = qs.filter(plan_materia__carrera=car)
-    else:
-        c_str = str(carrera_nombre).strip()
-        qs = qs.filter(
-            Q(plan_materia__carrera__nombre__icontains=c_str) | Q(plan_materia__carrera__codigo__iexact=c_str)
-        )
-
-    com = qs.filter(nombre__iexact=c_nom).first()
-    if com:
-        return com
-    if qs.count() == 1:
-        return qs.first()
-    return None
-
-
-class ComisionResource(resources.ModelResource):
-    plan_materia = fields.Field(
-        column_name='plan_materia',
-        attribute='plan_materia',
-        widget=ForeignKeyWidget(PlanMateria, field='id'),
-    )
-
-    def before_import_row(self, row, **kwargs):
-        """Permite resolver el plan_materia si se ingresan las columnas 'carrera' y 'materia'."""
-        if not row.get('plan_materia'):
-            carrera_nombre = row.get('carrera')
-            materia_nombre = row.get('materia')
-            plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
-
-            if carrera_nombre and materia_nombre:
-                pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio)
-                if pm:
-                    row['plan_materia'] = pm.id
-
-    class Meta:
-        model = Comision
-        fields = ('id', 'plan_materia', 'nombre')
-
-
 class HorarioCursadoResource(resources.ModelResource):
-    comision = fields.Field(
-        column_name='comision',
-        attribute='comision',
-        widget=ForeignKeyWidget(Comision, field='id'),
-    )
-    espacio = fields.Field(
-        column_name='espacio',
-        attribute='espacio',
-        widget=ForeignKeyWidget(Espacio, field='nombre'),
+    materia = fields.Field(
+        column_name='materia',
+        attribute='materia',
+        widget=ForeignKeyWidget(Materia, field='id'),
     )
     dia_semana = fields.Field(
         column_name='dia_semana',
@@ -267,32 +201,32 @@ class HorarioCursadoResource(resources.ModelResource):
         """Validación estricta fila por fila para HorarioCursado."""
         # 1. Validar Carrera y Materia
         carrera_nombre = row.get('carrera') or row.get('Carrera')
-        materia_nombre = row.get('materia') or row.get('Materia')
-        if not carrera_nombre or not materia_nombre:
+        materia_val = row.get('materia') or row.get('Materia')
+        if not carrera_nombre or not materia_val:
             raise ValidationError("Los campos 'carrera' y 'materia' son obligatorios.")
 
-        # 2. Validar Comisión
+        if not isinstance(materia_val, int):
+            mat = resolver_materia(carrera_nombre, materia_val)
+            if mat:
+                row['materia'] = mat.id
+            else:
+                raise ValidationError(
+                    f"No existe la materia '{materia_val}' para la carrera '{carrera_nombre}'."
+                )
+
+        # 2. Validar Comisión (string en HorarioCursado)
         comision_nombre = (
-            row.get('comision_nombre')
+            row.get('comision')
+            or row.get('comision_nombre')
             or row.get('nombre_comision')
-            or row.get('comision')
             or row.get('curso')
             or row.get('Curso')
         )
-        if not comision_nombre:
+        if not comision_nombre or not str(comision_nombre).strip():
             raise ValidationError("El campo 'comision' es obligatorio.")
+        row['comision'] = str(comision_nombre).strip()
 
-        plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
-        if not row.get('comision') or not isinstance(row.get('comision'), int):
-            com = resolver_comision(carrera_nombre, materia_nombre, comision_nombre, plan_estudio)
-            if com:
-                row['comision'] = com.id
-            else:
-                raise ValidationError(
-                    f"No existe la comisión '{comision_nombre}' para la materia '{materia_nombre}' (Carrera '{carrera_nombre}')."
-                )
-
-        # 3. Validar Espacio / Aula (opcional)
+        # 3. Espacio / Aula (string en HorarioCursado)
         espacio_val = (
             row.get('espacio')
             or row.get('aula')
@@ -303,13 +237,7 @@ class HorarioCursadoResource(resources.ModelResource):
             or row.get('laboratorio')
             or row.get('Laboratorio')
         )
-        if espacio_val and str(espacio_val).strip():
-            espacio_str = str(espacio_val).strip()
-            if not Espacio.objects.filter(nombre=espacio_str).exists():
-                raise ValidationError(f"No existe el espacio '{espacio_str}' en la base de datos.")
-            row['espacio'] = espacio_str
-        else:
-            row['espacio'] = None
+        row['espacio'] = str(espacio_val).strip() if espacio_val and str(espacio_val).strip() else ''
 
         # 4. Validar Día de la semana
         dia_val = (
@@ -341,8 +269,9 @@ class HorarioCursadoResource(resources.ModelResource):
         row['hora_fin'] = str(h_fin).strip()
 
     def get_instance(self, instance_loader, row):
-        comision_id = row.get('comision')
-        espacio_val = row.get('espacio') or row.get('aula') or row.get('Aula')
+        materia_id = row.get('materia')
+        comision = str(row.get('comision') or '').strip()
+        espacio_str = str(row.get('espacio') or row.get('aula') or row.get('Aula') or '').strip()
         dia_raw = (
             row.get('dia_semana')
             or row.get('dia')
@@ -353,31 +282,22 @@ class HorarioCursadoResource(resources.ModelResource):
         dia_semana = normalizar_dia_semana(dia_raw)
         hora_inicio = row.get('hora_inicio') or row.get('hora_ini')
         hora_fin = row.get('hora_fin') or row.get('hora_final')
-        if comision_id and dia_semana and hora_inicio and hora_fin:
-            espacio_id = None
-            if espacio_val:
-                espacio_id = (
-                    espacio_val
-                    if isinstance(espacio_val, int)
-                    else Espacio.objects.filter(nombre=str(espacio_val).strip()).values_list('id', flat=True).first()
-                )
+        if materia_id and comision and dia_semana and hora_inicio and hora_fin:
+            exact = self._meta.model.objects.filter(
+                materia_id=materia_id,
+                comision=comision,
+                espacio=espacio_str,
+                dia_semana=dia_semana,
+                hora_inicio=hora_inicio,
+                hora_fin=hora_fin,
+            ).first()
+            if exact:
+                return exact
 
-            # 1. Buscar coincidencia exacta (incluyendo el espacio si fue provisto)
-            if espacio_id is not None:
-                exact = self._meta.model.objects.filter(
-                    comision_id=comision_id,
-                    espacio_id=espacio_id,
-                    dia_semana=dia_semana,
-                    hora_inicio=hora_inicio,
-                    hora_fin=hora_fin,
-                ).first()
-                if exact:
-                    return exact
-
-            # 2. Si no hay coincidencia exacta, buscar si existe un registro huérfano sin aula (espacio=None)
             orphan = self._meta.model.objects.filter(
-                comision_id=comision_id,
-                espacio__isnull=True,
+                materia_id=materia_id,
+                comision=comision,
+                espacio='',
                 dia_semana=dia_semana,
                 hora_inicio=hora_inicio,
                 hora_fin=hora_fin,
@@ -393,82 +313,93 @@ class HorarioCursadoResource(resources.ModelResource):
         report_skipped = True
         fields = (
             'id',
+            'materia',
             'comision',
             'espacio',
             'dia_semana',
             'hora_inicio',
             'hora_fin',
-            'activo',
         )
 
 
 class MesaExamenResource(resources.ModelResource):
-    plan_materia = fields.Field(
-        column_name='plan_materia',
-        attribute='plan_materia',
-        widget=ForeignKeyWidget(PlanMateria, field='id'),
-    )
-    espacio = fields.Field(
-        column_name='espacio',
-        attribute='espacio',
-        widget=ForeignKeyWidget(Espacio, field='nombre'),
+    carrera = fields.Field(
+        column_name='carrera',
+        attribute='carrera',
+        widget=ForeignKeyWidget(Carrera, field='id'),
     )
 
     def before_import_row(self, row, **kwargs):
-        carrera_nombre = row.get('carrera') or row.get('Carrera')
-        materia_nombre = row.get('materia') or row.get('Materia')
-        if not carrera_nombre or not materia_nombre:
+        carrera_val = row.get('carrera') or row.get('Carrera')
+        materia_val = row.get('materia') or row.get('Materia')
+        if not carrera_val or not str(carrera_val).strip() or not materia_val or not str(materia_val).strip():
             raise ValidationError("Los campos 'carrera' y 'materia' son obligatorios.")
 
-        plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
-        if not row.get('plan_materia') or not isinstance(row.get('plan_materia'), int):
-            pm = resolver_plan_materia(carrera_nombre, materia_nombre, plan_estudio)
-            if pm:
-                row['plan_materia'] = pm.id
+        if not isinstance(carrera_val, int):
+            car = resolver_carrera(carrera_val)
+            if car:
+                row['carrera'] = car.id
             else:
                 raise ValidationError(
-                    f"No existe la materia '{materia_nombre}' para la carrera '{carrera_nombre}'."
+                    f"No existe la carrera '{carrera_val}'."
                 )
+
+        row['materia'] = str(materia_val).strip()
 
         espacio_val = (
             row.get('espacio')
             or row.get('aula')
             or row.get('Aula')
+            or row.get('AULA')
             or row.get('Espacio')
+            or row.get('ESPACIO')
+            or row.get('laboratorio')
+            or row.get('Laboratorio')
         )
-        if not espacio_val:
-            raise ValidationError("El campo 'espacio' o 'aula' es obligatorio.")
-        if not Espacio.objects.filter(nombre=espacio_val).exists():
-            raise ValidationError(f"No existe el espacio o aula '{espacio_val}' en la base de datos.")
-
-        row['espacio'] = espacio_val
+        row['espacio'] = str(espacio_val).strip() if espacio_val and str(espacio_val).strip() else ''
 
         fecha_val = row.get('fecha') or row.get('Fecha')
         if not fecha_val or not str(fecha_val).strip():
             raise ValidationError("El campo 'fecha' es obligatorio.")
 
+        fecha_str = str(fecha_val).strip()
+        if '/' in fecha_str:
+            partes = fecha_str.split('/')
+            if len(partes) == 3 and len(partes[2]) == 4:
+                fecha_str = f"{partes[2]}-{partes[1].zfill(2)}-{partes[0].zfill(2)}"
+        row['fecha'] = fecha_str
+
         hora_val = row.get('hora') or row.get('Hora')
         validar_hora(hora_val, "hora")
+        row['hora'] = str(hora_val).strip()
 
     def get_instance(self, instance_loader, row):
-        plan_materia_id = row.get('plan_materia')
-        espacio_val = row.get('espacio')
+        carrera_id = row.get('carrera')
+        materia_str = str(row.get('materia') or '').strip()
+        espacio_str = str(row.get('espacio') or '').strip()
         fecha = row.get('fecha')
         hora = row.get('hora')
-        turno = row.get('turno')
-        if plan_materia_id and espacio_val and fecha and hora and turno:
-            try:
-                espacio_id = espacio_val if isinstance(espacio_val, int) else Espacio.objects.filter(nombre=espacio_val).values_list('id', flat=True).first()
-                if espacio_id:
-                    return self._meta.model.objects.get(
-                        plan_materia_id=plan_materia_id,
-                        espacio_id=espacio_id,
-                        fecha=fecha,
-                        hora=hora,
-                        turno=turno,
-                    )
-            except self._meta.model.DoesNotExist:
-                return None
+        if carrera_id and materia_str and fecha and hora:
+            exact = self._meta.model.objects.filter(
+                carrera_id=carrera_id,
+                materia=materia_str,
+                espacio=espacio_str,
+                fecha=fecha,
+                hora=hora,
+            ).first()
+            if exact:
+                return exact
+
+            if espacio_str:
+                orphan = self._meta.model.objects.filter(
+                    carrera_id=carrera_id,
+                    materia=materia_str,
+                    espacio='',
+                    fecha=fecha,
+                    hora=hora,
+                ).first()
+                if orphan:
+                    return orphan
         return super().get_instance(instance_loader, row)
 
     class Meta:
@@ -477,22 +408,15 @@ class MesaExamenResource(resources.ModelResource):
         report_skipped = True
         fields = (
             'id',
-            'plan_materia',
+            'carrera',
+            'materia',
             'espacio',
             'fecha',
             'hora',
-            'turno',
-            'activo',
         )
 
 
 class EventoResource(resources.ModelResource):
-    espacio = fields.Field(
-        column_name='espacio',
-        attribute='espacio',
-        widget=ForeignKeyWidget(Espacio, field='nombre'),
-    )
-
     class Meta:
         model = Evento
         fields = (
@@ -524,15 +448,14 @@ class AvisoResource(resources.ModelResource):
         if not row.get('horario_cursado'):
             carrera = row.get('carrera')
             materia = row.get('materia')
-            comision_nombre = row.get('comision_nombre') or row.get('nombre_comision')
-            plan_estudio = row.get('plan_estudio') or row.get('Plan_Estudio')
+            comision_nombre = row.get('comision') or row.get('comision_nombre') or row.get('nombre_comision')
             dia_semana = row.get('dia_semana')
 
             if carrera and materia and comision_nombre:
                 try:
-                    com = resolver_comision(carrera, materia, comision_nombre, plan_estudio)
-                    if com:
-                        qs = HorarioCursado.objects.filter(comision=com)
+                    mat = resolver_materia(carrera, materia)
+                    if mat:
+                        qs = HorarioCursado.objects.filter(materia=mat, comision__iexact=str(comision_nombre).strip())
                         if dia_semana:
                             dia_norm = normalizar_dia_semana(dia_semana)
                             qs = qs.filter(dia_semana=dia_norm)
@@ -579,18 +502,11 @@ class NoticiasResource(resources.ModelResource):
 
 
 class TotemResource(resources.ModelResource):
-    espacio = fields.Field(
-        column_name='espacio',
-        attribute='espacio',
-        widget=ForeignKeyWidget(Espacio, field='nombre'),
-    )
-
     class Meta:
         model = Totem
         fields = (
             'id',
             'nombre',
-            'espacio',
             'codigo_vinculacion',
             'vinculado',
             'config_pantalla',

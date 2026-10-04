@@ -1,0 +1,353 @@
+carrera,materia,comision_nombre,espacio,dia_semana,hora_inicio,hora_fin
+ISI,Sistemas y Proc. de Neg.,1ro A,Aula 2.10,Lunes,07:45,10:00
+ISI,A Matemático I,1ro A,Aula 2.10,Lunes,10:10,12:25
+ISI,A Matemático I,1ro A,Aula 2.10,Martes,07:45,09:15
+ISI,Álgebra,1ro A,Aula 2.10,Martes,09:15,10:55
+ISI,Algoritmos,1ro A,Aula 2.10,Martes,10:55,12:25
+ISI,Física I,1ro A,Aula 2.10,Miércoles,07:45,10:55
+ISI,Álgebra,1ro A,Aula 2.10,Jueves,07:45,10:00
+ISI,Algoritmos,1ro A,Aula 2.10,Viernes,10:10,12:25
+ISI,Física I,1ro B,Aula 2.9,Lunes,07:45,10:55
+ISI,Algoritmos,1ro B,Aula 2.9,Lunes,10:55,12:25
+ISI,Sistemas y Proc. de Neg.,1ro B,Aula 2.9,Martes,07:45,10:00
+ISI,Álgebra,1ro B,Aula 2.9,Martes,10:10,11:40
+ISI,Álgebra,1ro B,Aula 2.9,Miércoles,07:45,10:00
+ISI,A Matemático I,1ro B,Aula 2.9,Miércoles,10:10,12:25
+ISI,A Matemático I,1ro B,Aula 2.9,Jueves,07:45,09:15
+ISI,A Matemático I,1ro B,Aula 2.1,Jueves,07:45,09:15
+ISI,Algoritmos,1ro B,Aula 2.9,Viernes,07:45,10:00
+ISI,Física I,1ro C,Aula 2.2,Miércoles,10:10,13:10
+ISI,A Matemático I,1ro C,Aula 2.9,Lunes,13:30,17:20
+ISI,Álgebra,1ro C,Aula 2.9,Martes,14:15,18:05
+ISI,Sistemas y Proc. de Neg.,1ro C,Aula 2.9,Miércoles,13:30,15:45
+ISI,Sistemas y Proc. de Neg.,1ro C,Aula 2.2,Miércoles,13:30,15:45
+ISI,Algoritmos,1ro C,Aula 2.9,Miércoles,15:50,18:05
+ISI,Algoritmos,1ro C,Aula 2.9,Viernes,16:35,18:05
+ISI,Física I,1ro D,Aula 2.6,Jueves,15:00,18:05
+ISI,Algoritmos,1ro D,Aula 2.9,Lunes,20:30,22:00
+ISI,A Matemático I,1ro D,Aula 2.9,Martes,18:10,22:00
+ISI,Algoritmos,1ro D,Aula 2.9,Miércoles,18:10,20:25
+ISI,Sistemas y Proc. de Neg.,1ro D,Aula 2.9,Miércoles,20:30,22:45
+ISI,Álgebra,1ro D,Aula 2.9,Jueves,18:10,22:00
+ISI,Inglés II,2do A,Virtual,Lunes,13:30,16:35
+ISI,A Matemático II,2do A,Aula 2.10,Lunes,16:35,18:05
+ISI,A Matemático II,2do A,Aula 2.10,Martes,12:45,15:00
+ISI,Sist. Operativos,2do A,Aula 2.10,Martes,15:00,18:05
+ISI,Paradigmas,2do A,Aula 2.10,Miércoles,13:30,15:45
+ISI,An.de Sistemas,2do A,Aula 2.10,Miércoles,15:50,18:05
+ISI,An.de Sistemas,2do A,Aula 2.2,Miércoles,15:50,18:05
+ISI,Paradigmas,2do A,Aula 2.10,Jueves,15:00,18:55
+ISI,Sist. Operativos,2do A,Aula 2.1,Viernes,12:00,15:00
+ISI,An.de Sistemas,2do A,Aula 2.10,Viernes,15:00,17:20
+ISI,Inglés II,2do B,Virtual,Lunes,13:30,16:35
+ISI,A Matemático II,2do B,Aula 2.10,Lunes,18:10,20:25
+ISI,Paradigmas,2do B,Aula 2.10,Lunes,20:30,22:45
+ISI,A Matemático II,2do B,Aula 2.10,Martes,18:10,19:40
+ISI,Sist. Operativos,2do B,Aula 2.10,Martes,19:40,22:45
+ISI,An.de Sistemas,2do B,Aula 2.10,Miércoles,18:10,20:25
+ISI,Paradigmas,2do B,Aula 2.10,Jueves,18:55,22:45
+ISI,Paradigmas,2do B,Lab. AI 1,Jueves,18:55,22:45
+ISI,Paradigmas,2do B,Lab. AI 2,Jueves,18:55,22:45
+ISI,An.de Sistemas,2do B,Aula 2.10,Viernes,17:20,19:40
+ISI,Sist. Operativos,2do B,Aula 2.10,Viernes,19:40,22:45
+ISI,Análisis Num.,3ro - C1,Aula 2.1,Lunes,15:50,18:05
+ISI,Análisis Num.,3ro - C2,Aula 2.1,Lunes,15:50,18:05
+ISI,Prob.y Estad,3ro - C2,Aula 2.1,Lunes,18:10,20:25
+ISI,Análisis Num.,3ro - C1,Aula 2.1,Lunes,20:30,22:45
+ISI,Análisis Num.,3ro - C2,Aula 2.1,Lunes,20:30,22:45
+ISI,Prob.y Estad,3ro - C1,Aula 2.1,Martes,15:50,18:05
+ISI,Sist- Gest. BD,3ro - C1,Lab. AI 5,Martes,18:10,22:45
+ISI,Sist- Gest. BD,3ro - C1,Lab. AI 6,Martes,18:10,22:45
+ISI,Sist- Gest. BD,3ro - C2,Lab. AI 5,Martes,18:10,22:45
+ISI,Sist- Gest. BD,3ro - C2,Lab. AI 6,Martes,18:10,22:45
+ISI,Planificación,3ro - C1,Aula 2.1,Martes,18:10,22:45
+ISI,Planificación,3ro - C2,Aula 2.1,Martes,18:10,22:45
+ISI,Diseño de Sistemas de Información,3ro - C1,Aula Magna,Miércoles,18:10,20:25
+ISI,Diseño de Sistemas de Información,3ro - C1,Aula 2.1,Miércoles,20:30,22:45
+ISI,Diseño de Sistemas de Información,3ro - C1,Aula 2.10,Miércoles,20:30,22:45
+ISI,Diseño de Sistemas de Información,3ro - C2,Aula Magna,Miércoles,18:10,20:25
+ISI,Diseño de Sistemas de Información,3ro - C2,Aula 2.1,Miércoles,20:30,22:45
+ISI,Diseño de Sistemas de Información,3ro - C2,Aula 2.10,Miércoles,20:30,22:45
+ISI,Desarrollo de Software,3ro - C1,Aula 2.1,Jueves,16:35,22:45
+ISI,Desarrollo de Software,3ro - C2,Aula 2.1,Jueves,16:35,22:45
+ISI,Prob.y Estad,3ro - C1,Aula 2.1,Viernes,15:50,18:05
+ISI,Prob.y Estad,3ro - C2,Aula 2.1,Viernes,18:10,20:25
+ISI,Seminario ADUSI,3ro - C2,X0.2,Miercoles,15:00,18:05
+ISI,A.A. Calidad de SW,4to,Aula 2.2,Lunes,15:50,18:05
+ISI,Tecnologías para la Automatización,4to,Aula 2.2,Lunes,18:10,22:45
+ISI,Redes de Datos,4to,Aula 2.2,Martes,16:35,20:25
+ISI,GIS,4to,Aula 2.2,Martes,20:30,22:45
+ISI,Administr.de Sistemas de Información,4to,Aula 2.2,Miércoles,18:10,22:45
+ISI,A.A. Calidad de SW,4to,Aula 2.2,Jueves,18:10,20:25
+ISI,GIS,4to,Aula 1.1,Jueves,18:10,20:25
+ISI,Redes de Datos,4to,Aula 2.2,Jueves,20:30,22:45
+ISI,Agilidad Avanzada,4to,Aula 2.2,Viernes,18:10,22:45
+ISI,Práct. Sup.,5to,Aula 1.2,Lunes,15:50,18:05
+ISI,DevOps,5to,Aula 1.4,Lunes,18:10,22:45
+ISI,Proyecto,5to,Aula 1.4,Martes,15:50,18:05
+ISI,Ciencia de Datos,5to,Aula 1.4,Martes,18:10,22:45
+ISI,Auditoría,5to,Aula 1.4,Miércoles,16:35,18:05
+ISI,Inteligencia Artificial,5to,Aula 1.4,Miércoles,18:10,22:45
+ISI,Proyecto,5to,Aula 1.4,Jueves,16:35,18:55
+ISI,Fundam. de Ciberseguridad,5to,Aula 1.4,Jueves,18:55,21:10
+ISI,Asp. Avanzados de Redes de Inf.,5to,Lab. CISCO,Jueves,18:55,21:10
+ISI,DevOps,5to,Aula 1.4,Viernes,17:20,18:55
+ISI,Fundam. de Ciberseguridad,5to,Aula 1.4,Viernes,18:55,21:10
+ISI,Auditoría,5to,Aula 2.8,Lunes,18:10,22:45
+ISI,A Matemático I,K1.6,Aula 2.1,Miércoles,10:10,12:25
+ISI,Álgebra,K1.6,Aula 1.2,Miércoles,07:45,10:00
+ISI,Álgebra,K1.7,Aula 1.5,Martes,14:15,15:45
+ISI,Álgebra,K1.7,Aula 1.5,Martes,15:50,18:05
+ISI,Sistemas y Proc. de Neg.,K1.7,Aula 2.2,Miércoles,13:30,15:45
+ISI,An.de Sistemas,K2.4,Aula 2.2,Miércoles,15:50,18:05
+ISI,Física I,Recursantes,Aula 2.2,Lunes,07:45,10:55
+ISI,Física I,Recursantes,Aula 2.2,Martes,07:45,10:55
+IQ,Álgebra,1ro - C1,Aula 2.5,Lunes,08:30,12:25
+IQ,Química,1ro - C1,Aula 2.5,Martes,07:45,09:15
+IQ,Ing.y Sociedad,1ro - C1,Aula 2.5,Martes,09:15,12:25
+IQ,Ing.y Sociedad,1ro - C2,Aula 2.5,Martes,09:15,12:25
+IQ,Fund.de Informática,1ro - C1,Lab. AI 5,Martes,14:15,17:20
+IQ,Fund.de Informática,1ro - C1,Lab. AI 6,Martes,14:15,17:20
+IQ,A Matemático I,1ro - C1,Aula 2.1,Miércoles,07:45,09:15
+IQ,A Matemático I,1ro - C2,Aula 2.1,Miércoles,07:45,09:15
+IQ,Química,1ro - C1,X0.5,Miércoles,09:15,11:40
+IQ,Química,1ro - C1,X0.6,Miércoles,09:15,11:40
+IQ,Química,1ro - C1,Lab. Química,Miércoles,09:15,11:40
+IQ,A Matemático I,1ro - C1,Aula 2.5,Jueves,07:45,10:00
+IQ,Sistemas de Representac.,1ro - C1,Aula 2.6,Jueves,10:10,12:25
+IQ,Física I,1ro - C1,Aula 2.5,Viernes,07:45,10:55
+IQ,Física I,1ro - C2,Aula 2.5,Viernes,07:45,10:55
+IQ,Química,1ro - C2,Aula 2.1,Lunes,07:45,09:15
+IQ,Álgebra,1ro - C2,Aula 2.1,Lunes,09:15,12:25
+IQ,Química,1ro - C2,X0.5,Martes,15:50,18:05
+IQ,Química,1ro - C2,X0.6,Martes,15:50,18:05
+IQ,Química,1ro - C2,Lab. Química,Martes,15:50,18:05
+IQ,Sistemas de Representac.,1ro - C2,Aula 2.6,Miércoles,09:15,12:25
+IQ,A Matemático I,1ro - C2,Aula 2.1,Jueves,07:45,10:00
+IQ,Fund.de Informática,1ro - C2,Lab. AI 5,Jueves,10:10,13:10
+IQ,Fund.de Informática,1ro - C2,Lab. AI 6,Jueves,10:10,13:10
+IQ,Prob.y Estad.,2do - C1,Aula 2.5,Lunes,13:30,18:05
+IQ,Inglés I,2do - C1,Virtual,Lunes,19:40,22:45
+IQ,Química Orgánica,2do - C1,X1.4,Martes,14:15,18:05
+IQ,Física II,2do - C1,Aula 2.5,Martes,18:10,22:00
+IQ,Introd. a Eq. y Procesos,2do - C1,Aula 2.5,Miércoles,18:10,20:25
+IQ,Introd. a Eq. y Procesos,2do - C1,Aula 2.6,Miércoles,18:10,20:25
+IQ,Física II,2do - C1,Aula 2.5,Miércoles,20:30,22:00
+IQ,Química Orgánica,2do - C1,X0.5,Jueves,14:15,18:05
+IQ,Química Orgánica,2do - C1,Lab. Química,Jueves,14:15,18:05
+IQ,Legislación,2do - C1,Aula 2.5,Jueves,18:10,21:15
+IQ,Física II,2do - C1,Aula 2.5,Viernes,19:40,22:00
+IQ,Química Orgánica,2do - C2,X0.5,Martes,08:30,12:25
+IQ,Prob.y Estad.,2do - C2,Aula 2.5,Lunes,13:30,18:05
+IQ,Inglés I,2do - C2,Virtual,Lunes,19:40,22:45
+IQ,Física II,2do - C2,Aula 2.5,Martes,18:10,22:00
+IQ,Introd. a Eq. y Procesos,2do - C2,Aula 2.5,Miércoles,18:10,20:25
+IQ,Introd. a Eq. y Procesos,2do - C2,Aula 2.6,Miércoles,18:10,20:25
+IQ,Física II,2do - C2,Aula 2.5,Miércoles,20:30,22:00
+IQ,Legislación,2do - C2,Aula 2.5,Jueves,18:10,21:15
+IQ,Química Orgánica,2do - C2,X0.5,Viernes,14:15,18:05
+IQ,Química Orgánica,2do - C2,Lab. Química,Viernes,14:15,18:05
+IQ,Física II,2do - C2,Aula 2.5,Viernes,19:40,22:00
+IQ,Físicoquímica,3ro,X0.5,Lunes,18:10,19:40
+IQ,Físicoquímica,3ro,X0.5,Lunes,19:40,22:45
+IQ,Físicoquímica,3ro,Lab. Química,Lunes,19:40,22:45
+IQ,Fenómenos de Transporte,3ro,Aula 1.3,Martes,18:10,22:00
+IQ,Mat.Sup.Apl.,3ro,Aula 1.2,Miércoles,15:50,18:05
+IQ,Balance de Masa y Energía,3ro,Aula 1.5,Miércoles,18:10,20:25
+IQ,Mat.Sup.Apl.,3ro,Aula 1.2,Jueves,15:50,18:05
+IQ,Fenómenos de Transporte,3ro,Aula 1.3,Jueves,18:10,22:00
+IQ,Físicoquímica,3ro,Aula 1.3,Viernes,18:10,19:40
+IQ,Quím.Aplicada,3ro,Aula 1.3,Viernes,19:40,22:45
+IQ,IRQUI,4to,Aula 2.11,Lunes,17:20,19:40
+IQ,Maq. E Inst. Elect.,4to,Aula 2.11,Lunes,19:40,22:45
+IQ,Org.Industrial,4to,Aula 2.11,Martes,17:20,19:40
+IQ,"Diseño, Simulac Opt. y Seguridad de Procesos",4to,Aula 2.11,Martes,19:40,22:45
+IQ,Operaciones Unitarias II,4to,X0.2,Miércoles,18:10,22:00
+IQ,IRQUI,4to,Aula 2.11,Jueves,18:10,20:25
+IQ,Org.Industrial,4to,Aula 2.11,Jueves,20:30,22:45
+IQ,Operaciones Unitarias II,4to,Aula 2.11,Viernes,18:10,22:00
+IQ,IRQUI,4to,Aula 2.11,Sábado,09:15,12:25
+IQ,Proyecto Final,5to,X1.1,Lunes,14:15,17:20
+IQ,Mecánica Ind.,5to,X1.1,Lunes,17:20,18:55
+IQ,CyCEP,5to,X1.1,Lunes,18:55,21:15
+IQ,Practica Sup.,5to,X1.1,Lunes,21:15,22:45
+IQ,Admin. de Negocios,5to,X1.1,Martes,15:00,18:55
+IQ,Ing. de las Instalaciones,5to,X1.1,Martes,18:55,21:15
+IQ,Ing. Ambiental,5to,X1.1,Miércoles,14:15,18:55
+IQ,CyCEP,5to,X1.1,Miércoles,18:55,21:15
+IQ,Energías Renovables,5to,X1.1,Jueves,13:30,18:05
+IQ,Métodos Tradicionales,5to,X1.1,Jueves,18:10,22:45
+IQ,Procedim.y Normativas en Alimentos,5to,X0.6,Jueves,13:30,17:20
+IQ,Gestión de RRHH,5to,X0.6,Jueves,18:10,22:00
+IQ,Tecn. de los Alimentos,5to,X0.6,Viernes,12:45,17:20
+IQ,Ing. de las Instalaciones,5to,X0.6,Viernes,17:20,19:40
+IQ,Mecánica Ind.,5to,X0.6,Viernes,19:40,22:45
+IQ,Física I,Recursantes,X0.5,Lunes,13:30,16:35
+IEM,A Matemático I,1ro A,Aula 2.10,Lunes,13:30,15:45
+IEM,Algebra,1ro A,Aula 1.3,Lunes,15:50,18:05
+IEM,A Matemático I,1ro A,Aula 1.3,Martes,13:30,15:00
+IEM,Ing.y Sociedad,1ro A,Aula 1.3,Martes,15:00,18:05
+IEM,Algebra,1ro A,X0.5,Miércoles,12:45,14:15
+IEM,Química Gral,1ro A,X0.5,Miércoles,14:15,16:35
+IEM,Química Gral,1ro A,Lab. Química,Miércoles,14:15,16:35
+IEM,Química Gral,1ro A,X0.5,Miércoles,16:35,18:05
+IEM,Electro I,1ro A,Aula 2.1,Jueves,14:15,15:45
+IEM,Física I,1ro A,Aula 1.3,Viernes,15:00,18:05
+IEM,Alfabetización Académica,1ro A,Aula 2.2,Sábado,07:45,10:45
+IEM,Ing.y Sociedad,1ro B,Aula 2.6,Lunes,18:10,19:40
+IEM,Electro I,1ro B,Aula 2.6,Lunes,19:40,21:15
+IEM,Química Gral,1ro B,X0.5,Martes,18:10,20:25
+IEM,Química Gral,1ro B,Lab. Química,Martes,18:10,20:25
+IEM,A Matemático I,1ro B,X0.5,Martes,20:30,22:45
+IEM,Química Gral,1ro B,X0.5,Miércoles,18:10,19:40
+IEM,A Matemático I,1ro B,X0.5,Miércoles,19:40,21:15
+IEM,Algebra,1ro B,X0.5,Miércoles,21:15,22:45
+IEM,Física I,1ro B,Aula 2.6,Jueves,18:10,21:15
+IEM,Ing.y Sociedad,1ro B,Aula 2.6,Viernes,18:55,20:25
+IEM,Algebra,1ro B,Aula 2.9,Viernes,20:30,22:45
+IEM,Alfabetización Académica,1ro B,Aula 2.2,Sábado,07:45,10:45
+IEM,Repres.Gráf.,2do,Lab. AI 1,Lunes,15:50,18:05
+IEM,Repres.Gráf.,2do,Lab. AI 2,Lunes,15:50,18:05
+IEM,Conoc.de Mat.,2do,Aula 1.2,Lunes,18:10,20:25
+IEM,Prob.y Estad.,2do,Aula 1.2,Martes,15:50,20:25
+IEM,Progr.en Comp,2do,Lab. AI 4,Martes,20:30,22:45
+IEM,Estabilidad,2do,Lab. AI 5,Miércoles,15:50,18:05
+IEM,Estabilidad,2do,Lab. AI 6,Miércoles,15:50,18:05
+IEM,Estabilidad,2do,Aula 1.2,Miércoles,18:10,20:25
+IEM,Matem.p/IEM,2do,Aula 1.2,Miércoles,20:30,22:45
+IEM,Conoc.de Mat.,2do,Aula 1.2,Jueves,18:10,22:00
+IEM,Matem.p/IEM,2do,Aula 1.1,Viernes,15:50,18:05
+IEM,Electro II,2do,Aula 2.8,Viernes,18:10,19:40
+IEM,Electrotecnia,3ro,X1.2,Lunes,18:10,20:25
+IEM,Tecn.Mecánica,3ro,X1.2,Lunes,20:30,22:45
+IEM,Electrotecnia,3ro,X1.2,Martes,18:10,20:25
+IEM,Doc. Tec. Elect.,3ro,X1.2,Martes,21:15,22:45
+IEM,Doc. Tec. Elect.,3ro,X1.2,Miércoles,16:35,18:05
+IEM,Electro III,3ro,X1.2,Miércoles,18:10,20:25
+IEM,Mecánica y Mecanismos,3ro,X1.2,Miércoles,20:30,22:45
+IEM,Tecn.Mecánica,3ro,X1.2,Jueves,18:10,22:45
+IEM,Mecánica y Mecanismos,3ro,X1.2,Viernes,18:10,22:00
+IEM,Mec.Fluidos,4to,Lab. AI 4,Lunes,16:35,18:55
+IEM,Mec.Fluidos,4to,Aula 2.4,Lunes,18:55,20:25
+IEM,E. Renov. Elect.,4to,Aula 2.4,Lunes,20:30,22:00
+IEM,Máq.Eléctricas,4to,Aula 1.5,Martes,19:40,21:15
+IEM,Legislación,4to,Aula 1.5,Martes,21:15,22:45
+IEM,Elementos de Máquinas,4to,Aula 1.1,Miércoles,15:00,17:20
+IEM,Elementos de Máquinas,4to,Aula 2.4,Miércoles,17:20,19:40
+IEM,Electrónica Industrial,4to,Aula 2.4,Miércoles,19:40,22:00
+IEM,Mediciones Eléctricas,4to,Aula 2.4,Jueves,18:10,20:25
+IEM,Electrónica Industrial,4to,Aula 1.5,Viernes,16:35,18:55
+IEM,Mediciones Eléctricas,4to,Aula 1.5,Viernes,18:55,22:45
+IEM,E. Renov. Elect.,4to,Aula 2.4,Sábado,07:45,10:00
+IEM,Máq.Eléctricas,4to,Aula 2.4,Sábado,10:10,12:25
+IEM,Instalaciones Térmicas Mecánicas y Frigoríficas,5to,Aula 2.3,Lunes,18:10,22:45
+IEM,Automatización y Control Industrial,5to,X0.6,Martes,18:10,22:45
+IEM,Redes de Distribuc. e Inst. Elec.,5to,Aula 2.3,Miércoles,18:10,22:00
+IEM,Oper.de Sist. Eléct.Potencia,5to,Aula 1.5,Jueves,16:35,19:40
+IEM,Robótica,5to,Aula 2.3,Jueves,19:40,22:45
+IEM,Proyecto Final,5to,Aula 2.3,Viernes,17:20,19:40
+IEM,Gestión y Mant. Electromecánico,5to,Aula 2.3,Viernes,19:40,22:45
+IEM,Maq. y Equipos de Transporte,5to,X0.6,Sábado,08:00,11:15
+IEM,Física I,Recursantes,X0.5,Lunes,13:30,16:35
+LAR,Producción Vegetal,1ro,Aula 2.11,Lunes,13:30,16:35
+LAR,Fund.de la Adm,1ro,Aula 2.11,Martes,13:30,16:35
+LAR,Fund. de Economía,1ro,Aula 2.11,Miércoles,13:30,16:35
+LAR,Contab. Adm.,1ro,Aula 2.11,Miércoles,16:35,18:05
+LAR,Producción Vegetal,1ro,Aula 2.11,Jueves,13:30,16:35
+LAR,Contab. Adm.,1ro,Aula 2.11,Jueves,16:35,18:05
+LAR,Fund. de Economía,1ro,Aula 2.11,Viernes,13:30,16:35
+LAR,Tecnología...,1ro,Aula 2.11,Viernes,16:35,18:05
+LAR,Análisis Matemático,1ro,Aula 1.2,Miércoles,13:30,15:45
+LAR,Hidrología Rural,1ro,Lab. AI 3,Jueves,15:50,18:05
+LAR,Análisis Matemático,1ro,Aula 1.2,Viernes,13:30,17:20
+LAR,Gestión de la Empr.Agrop.,2do,Aula 1.6,Lunes,13:30,16:35
+LAR,Ec.Empr.Agr.,2do,Aula 1.6,Lunes,16:35,18:05
+LAR,Estadística,2do,Aula 1.6,Martes,13:30,15:45
+LAR,Prod.Agr.II,2do,Aula 1.6,Martes,15:50,18:05
+LAR,Gestión de la Empr.Agrop.,2do,Aula 1.6,Miércoles,13:30,16:35
+LAR,Estadística,2do,Aula 1.6,Jueves,13:30,15:45
+LAR,Ec.Empr.Agr.,2do,Aula 1.6,Jueves,15:50,18:05
+LAR,Prod.Agr.II,2do,Aula 1.6,Viernes,13:30,15:45
+LAR,Ec.Empr.Agr.,2do,Aula 1.6,Viernes,15:50,18:05
+LAR,Administración Financiera,3ro,X0.2,Lunes,13:30,15:45
+LAR,Ctrl.de Gestión Empr.Agropec.,3ro,X0.2,Lunes,15:50,18:05
+LAR,Inglés II,3ro,Lab. AI 3,Martes,13:30,16:35
+LAR,Inv.Operativa,3ro,X0.2,Martes,16:35,18:05
+LAR,Inv.Operativa,3ro,X0.6,Miércoles,13:30,15:45
+LAR,Proc.Agroind. II,3ro,X0.6,Miércoles,15:50,18:55
+LAR,Administración Financiera,3ro,X0.2,Jueves,13:30,15:45
+LAR,Inv.Operativa,3ro,X0.2,Jueves,15:50,18:05
+LAR,Ctrl.de Gestión Empr.Agropec.,3ro,X1.2,Viernes,13:30,17:20
+LAR,Legislación,4to,X0.1,Lunes,13:30,16:35
+LAR,Política Agrop.,4to,X0.1,Lunes,16:35,18:05
+LAR,Seminario Final,4to,X0.1,Martes,13:30,18:05
+LAR,Práctica Soc.e Imposit.,4to,X0.1,Miércoles,13:30,16:35
+LAR,Inv.de Merc.,4to,X0.1,Miércoles,16:35,18:05
+LAR,Seminario Final,4to,X0.1,Jueves,13:30,15:00
+LAR,Inv.de Merc.,4to,X0.1,Jueves,15:00,18:05
+LAR,Seminario Final,4to,X0.1,Viernes,13:30,15:00
+LAR,Política Agrop.,4to,X0.1,Viernes,15:00,18:05
+TUP,Inglés I,1.1,Aula 1.1,Lunes,07:45,12:25
+TUP,Base de Datos I,1.1,Lab. AI 1,Jueves,07:45,12:25
+TUP,Base de Datos I,1.1,Lab. AI 2,Jueves,07:45,12:25
+TUP,Probabilidad y Estadística,1.1,Lab. AI 1,Miércoles,07:45,12:25
+TUP,Probabilidad y Estadística,1.1,Lab. AI 2,Miércoles,07:45,12:25
+TUP,Programación II,1.1,Lab. AI 1,Martes,07:45,12:25
+TUP,Programación II,1.1,Lab. AI 2,Martes,07:45,12:25
+TUP,Programación II,1.1,Lab. AI 1,Viernes,07:45,12:25
+TUP,Programación II,1.1,Lab. AI 2,Viernes,07:45,12:25
+TUP,Programación II,1.2,Lab. AI 5,Lunes,13:30,18:05
+TUP,Programación II,1.2,Lab. AI 6,Lunes,13:30,18:05
+TUP,Probabilidad y Estadística,1.2,Lab. AI 1,Martes,13:30,18:05
+TUP,Probabilidad y Estadística,1.2,Lab. AI 2,Martes,13:30,18:05
+TUP,Inglés I,1.2,Aula 1.5,Miércoles,13:30,18:05
+TUP,Base de Datos I,1.2,Lab. AI 1,Viernes,13:30,18:05
+TUP,Base de Datos I,1.2,Lab. AI 2,Viernes,13:30,18:05
+TUP,Programación II,1.2,Lab. AI 1,Jueves,13:30,18:05
+TUP,Programación II,1.2,Lab. AI 2,Jueves,13:30,18:05
+TUP,Probabilidad y Estadística,1.3,Lab. AI 5,Lunes,18:10,22:45
+TUP,Probabilidad y Estadística,1.3,Lab. AI 6,Lunes,18:10,22:45
+TUP,Programación II,1.3,Lab. AI 5,Martes,18:10,22:45
+TUP,Programación II,1.3,Lab. AI 6,Martes,18:10,22:45
+TUP,Inglés I,1.3,Aula 1.6,Miércoles,18:10,22:45
+TUP,Programación II,1.3,Lab. AI 1,Jueves,18:10,22:45
+TUP,Programación II,1.3,Lab. AI 2,Jueves,18:10,22:45
+TUP,Base de Datos I,1.3,Lab. AI 1,Viernes,18:10,22:45
+TUP,Base de Datos I,1.3,Lab. AI 2,Viernes,18:10,22:45
+TUP,Legislación,2.1,Aula 1.1,Lunes,13:30,15:45
+TUP,Intr.al Análisis de Datos,2.1,Aula 1.1,Lunes,15:50,18:05
+TUP,TFI,2.1,Aula 1.1,Lunes,18:10,20:25
+TUP,Metodología de Sistemas II,2.1,Aula 1.1,Martes,13:30,18:05
+TUP,Programación IV,2.1,Lab. AI 1,Miércoles,13:30,18:05
+TUP,Programación IV,2.1,Lab. AI 2,Miércoles,13:30,18:05
+TUP,Gestión de Desarrollo de Software,2.1,Aula 1.1,Jueves,13:30,18:05
+TUP,Programación IV,2.1,Lab. AI 5,Viernes,13:30,18:05
+TUP,Programación IV,2.1,Lab. AI 6,Viernes,13:30,18:05
+TUP,TFI,2.2,Aula 1.2,Lunes,13:30,15:45
+TUP,Intr.al Análisis de Datos,2.2,Aula 1.4,Lunes,18:10,20:25
+TUP,Legislación,2.2,Aula 1.1,Lunes,20:30,22:45
+TUP,Metodología de Sistemas II,2.2,Aula 1.1,Martes,18:10,22:45
+TUP,Programación IV,2.2,Lab. AI 1,Miércoles,18:15,22:30
+TUP,Programación IV,2.2,Lab. AI 2,Miércoles,18:15,22:30
+TUP,Programación IV,2.2,Lab. AI 5,Jueves,18:15,22:30
+TUP,Programación IV,2.2,Lab. AI 6,Jueves,18:15,22:30
+TUP,Gestión de Desarrollo de Software,2.2,Aula 1.1,Viernes,18:10,22:45
+TUM,Sist.de Repr.,1ro,Aula 2.6,Lunes,13:30,18:05
+TUM,Sist. Digitales,1ro,Aula 2.6,Martes,13:30,17:20
+TUM,Electrotecnia I,1ro,Aula 2.6,Miércoles,13:30,18:05
+TUM,Mecatrónica I,1ro,Aula 2.6,Viernes,15:50,18:05
+TUM,Materiales,1ro,X1.3,Sábado,07:45,11:40
+TUM,Tecn.de Fabr.,2do,X1.3,Lunes,14:15,18:05
+TUM,Mecatrónica II,2do,X1.3,Martes,15:00,17:20
+TUM,Automación Industrial,2do,X1.3,Miércoles,14:15,18:05
+TUM,Automación Industrial,2do,X1.3,Jueves,13:30,15:45
+TUM,Mecánica II,2do,X1.3,Jueves,15:50,18:55
+TUM,Gestión de la Calidad,2do,X1.3,Viernes,13:30,18:05
+TUOMRE,"Seguridad, Higiene y Protección Ambiental",1ro,,Sábado,08:10,10:10
+TUOMRE,"Generación, Transmisión y Distribución de la Energía Eléctrica II",1ro,,Sábado,10:10,12:50
+TUOMRE,"Generación, Transmisión y Distribución de la Energía Eléctrica II",1ro,,Martes,17:20,20:10
+TUOMRE,"Seguridad, Higiene y Protección Ambiental",1ro,,Jueves,18:50,22:10
+TUOMRE,Sistemas de Representación,3ro,,Sábado,07:45,11:40
+TUOMRE,"Generación, Transmisión y Distribución de la Energía Eléctrica I",3ro,,Sábado,11:40,15:45
+TUOMRE,Quimica,3ro,,Viernes,14:15,18:05
+TUOMRE,Elementos de Estabilidad,3ro,,Viernes,18:10,22:00

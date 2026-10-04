@@ -1,4 +1,5 @@
 import { apiFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 
 export interface EventoCalendarioAdmin {
   id: number;
@@ -27,7 +28,7 @@ export const TIPOS_EVENTO_CALENDARIO = [
 export async function fetchEventosCalendario(): Promise<
   EventoCalendarioAdmin[]
 > {
-  return apiFetch<EventoCalendarioAdmin[]>("/api/calendario/eventos/");
+  return apiFetch<EventoCalendarioAdmin[]>(API_ENDPOINTS.calendarioEventos);
 }
 
 export interface BulkEventData {

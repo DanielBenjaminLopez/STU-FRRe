@@ -102,9 +102,8 @@ describe("AvisosPage", () => {
     });
     fireEvent.click(screen.getByText("Crear aviso"));
 
-    fireEvent.change(screen.getByLabelText(/Tipo/i), {
-      target: { value: "general" },
-    });
+    fireEvent.click(screen.getByRole("combobox", { name: /Tipo/i }));
+    fireEvent.click(screen.getByRole("option", { name: "General" }));
     fireEvent.change(screen.getByLabelText(/Fecha/i), {
       target: { value: "2026-08-10" },
     });

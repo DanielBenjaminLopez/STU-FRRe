@@ -26,11 +26,29 @@ export function TotemProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    fetchTotems().then((data) => {
-      const vinculados = data.filter((t) => t.vinculado);
-      setTotems(vinculados);
-      if (vinculados.length > 0) setSelectedId(String(vinculados[0].id));
-    });
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const load = (attempt = 0) => {
+      fetchTotems()
+        .then((data) => {
+          if (cancelled) return;
+          const vinculados = data.filter((t) => t.vinculado);
+          setTotems(vinculados);
+          if (vinculados.length > 0) setSelectedId(String(vinculados[0].id));
+        })
+        .catch(() => {
+          if (!cancelled && attempt < 3) {
+            retryTimer = setTimeout(() => load(attempt + 1), 2000);
+          }
+        });
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, [isAuthenticated]);
 
   const refreshTotems = useCallback(async () => {

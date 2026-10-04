@@ -1,4 +1,5 @@
 import { apiFetch } from "./client";
+import { API_ENDPOINTS } from "./endpoints";
 
 export interface Carrera {
   id: number;
@@ -7,7 +8,7 @@ export interface Carrera {
 }
 
 export async function fetchCarreras(): Promise<Carrera[]> {
-  return apiFetch<Carrera[]>("/api/carreras/");
+  return apiFetch<Carrera[]>(API_ENDPOINTS.carreras);
 }
 
 export async function createCarrera(

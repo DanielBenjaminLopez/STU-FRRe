@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 
 import DataTable, { type Column } from "../components/DataTable";
@@ -7,37 +8,68 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import ImportCsvModal from "../components/ImportCsvModal";
 import Button from "../../shared/components/ui/Button";
-import { fetchCarreras } from "../../shared/api/carreras";
+import { fetchCarreras, type Carrera } from "../../shared/api/carreras";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchMesasExamen,
   createMesaExamen,
   updateMesaExamen,
   deleteMesaExamen,
-  fetchPlanMaterias,
-  fetchEspaciosForSelect,
+  vaciarMesasExamen,
   importarMesasExamenCSV,
-  getTurnoFromFecha,
   type MesaExamen,
-  type PlanMateriaDTO,
 } from "../../features/examenes/api/mesasExamen";
 
 const columns: Column<MesaExamen>[] = [
-  { key: "materia_nombre", label: "Materia", sortable: true },
-  { key: "espacio_nombre", label: "Espacio" },
   {
-    key: "fecha_hora",
+    key: "carrera_codigo",
+    label: "Carrera",
+    sortable: true,
+    align: "center",
+    width: "w-28",
+    render: (_, row) => (
+      <span
+        className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-800"
+        title={row.carrera_nombre}
+      >
+        {row.carrera_codigo || row.carrera_nombre || "-"}
+      </span>
+    ),
+  },
+  {
+    key: "materia",
+    label: "Materia",
+    sortable: true,
+    width: "w-[42%]",
+    render: (_, row) => (
+      <span className="font-medium text-gray-900">
+        {row.materia || row.materia_nombre || "-"}
+      </span>
+    ),
+  },
+  {
+    key: "espacio",
+    label: "Espacio",
+    sortable: true,
+    align: "center",
+    width: "w-[24%]",
+    render: (val) =>
+      val ? (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/70">
+          {String(val)}
+        </span>
+      ) : (
+        <span className="text-gray-400 text-xs italic">Sin asignar</span>
+      ),
+  },
+  {
+    key: "fecha",
     label: "Fecha y hora",
     sortable: true,
+    align: "center",
+    width: "w-[24%]",
     render: (_, row) => {
-      if (row.fecha_hora) {
-        const d = new Date(row.fecha_hora);
-        if (!isNaN(d.getTime())) {
-          return d.toLocaleString("es-ES", {
-            dateStyle: "short",
-            timeStyle: "short",
-          });
-        }
-      }
       if (row.fecha) {
         const parts = row.fecha.split("-");
         const fechaStr =
@@ -45,80 +77,41 @@ const columns: Column<MesaExamen>[] = [
             ? `${parts[2]}/${parts[1]}/${parts[0]}`
             : row.fecha;
         const horaStr = row.hora ? row.hora.slice(0, 5) : "";
-        return horaStr ? `${fechaStr} ${horaStr}` : fechaStr;
+        return (
+          <span className="tabular-nums font-medium text-gray-700">
+            {horaStr ? `${fechaStr} ${horaStr}` : fechaStr}
+          </span>
+        );
       }
-      return "-";
-    },
-  },
-  {
-    key: "turno",
-    label: "Turno",
-    sortable: true,
-    render: (val) => {
-      const str = String(val || "");
-      return str
-        ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-        : "-";
-    },
-  },
-  {
-    key: "llamado",
-    label: "Llamado",
-    render: (val, row) => {
-      const LLAMADO_MAP: Record<string, number> = {
-        febrero: 1,
-        marzo: 2,
-        abril: 3,
-        junio: 4,
-        agosto: 5,
-        septiembre: 6,
-        octubre: 7,
-        diciembre: 8,
-      };
-      const num =
-        val !== undefined && val !== null && val !== ""
-          ? Number(val)
-          : LLAMADO_MAP[String(row.turno).toLowerCase()];
-      return num ? `${num}º llamado` : "-";
+      return <span className="text-gray-400">-</span>;
     },
   },
 ];
 
 export default function MesasExamenPage() {
-  const [data, setData] = useState<MesaExamen[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedMesas = peekApiCache<MesaExamen[]>(API_ENDPOINTS.mesasExamen);
+  const cachedCarreras = peekApiCache<Carrera[]>(API_ENDPOINTS.carreras);
+
+  const [data, setData] = useState<MesaExamen[]>(() => cachedMesas ?? []);
+  const [loading, setLoading] = useState(() => !cachedMesas);
 
   const [carreras, setCarreras] = useState<{ value: number; label: string }[]>(
-    [],
-  );
-  const [planMaterias, setPlanMaterias] = useState<PlanMateriaDTO[]>([]);
-  const [selectedCarrera, setSelectedCarrera] = useState<number | null>(null);
-  const [espacios, setEspacios] = useState<{ value: number; label: string }[]>(
-    [],
+    () =>
+      cachedCarreras
+        ? cachedCarreras.map((car) => ({ value: car.id, label: car.nombre }))
+        : [],
   );
 
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<MesaExamen | null>(null);
   const [deletingRow, setDeletingRow] = useState<MesaExamen | null>(null);
+  const [showVaciarModal, setShowVaciarModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
       const result = await fetchMesasExamen();
-      const now = Date.now();
-      setData(
-        result.map((mesa) => {
-          const fh =
-            mesa.fecha_hora ||
-            (mesa.fecha ? `${mesa.fecha}T${mesa.hora || "00:00"}` : "");
-          const fTime = fh ? new Date(fh).getTime() : 0;
-          return {
-            ...mesa,
-            activo: fTime > now && mesa.activo,
-          };
-        }),
-      );
+      setData(result);
     } catch (err) {
       sileo.error({
         title: "Error al cargar los datos",
@@ -143,40 +136,6 @@ export default function MesasExamenPage() {
               );
           })
           .catch(() => {});
-        fetchPlanMaterias()
-          .then((pmList) => {
-            if (active) setPlanMaterias(pmList);
-          })
-          .catch(() => {});
-        fetchEspaciosForSelect()
-          .then((e) => {
-            if (active) {
-              const filtrados = e.filter((esp) => {
-                const t = String(esp.tipo).toLowerCase();
-                return (
-                  t === "aula" ||
-                  t === "laboratorio_informatico" ||
-                  t === "laboratorio informático" ||
-                  t.includes("aula") ||
-                  t.includes("laboratorio")
-                );
-              });
-              filtrados.sort((a, b) => {
-                const tipoA = String(a.tipo).toLowerCase().startsWith("aula")
-                  ? 0
-                  : 1;
-                const tipoB = String(b.tipo).toLowerCase().startsWith("aula")
-                  ? 0
-                  : 1;
-                if (tipoA !== tipoB) return tipoA - tipoB;
-                return String(a.nombre).localeCompare(String(b.nombre), "es");
-              });
-              setEspacios(
-                filtrados.map((esp) => ({ value: esp.id, label: esp.nombre })),
-              );
-            }
-          })
-          .catch(() => {});
       }
     }
     init();
@@ -185,44 +144,28 @@ export default function MesasExamenPage() {
     };
   }, [loadData]);
 
-  const materiasFilteredOptions = (
-    selectedCarrera
-      ? planMaterias.filter(
-          (pm) => Number(pm.carrera) === Number(selectedCarrera),
-        )
-      : planMaterias
-  ).map((pm) => ({
-    value: pm.id,
-    label: selectedCarrera
-      ? pm.materia_nombre || `Materia #${pm.id}`
-      : pm.carrera_nombre
-        ? `${pm.materia_nombre} (${pm.carrera_nombre})`
-        : pm.materia_nombre || `Materia #${pm.id}`,
-  }));
-
   const formFields: FormField[] = [
     {
       name: "carrera",
       label: "Carrera",
       type: "select",
-      required: false,
+      required: true,
       options: carreras,
-      placeholder: "Todas las carreras",
+      placeholder: "Seleccionar carrera...",
     },
     {
-      name: "plan_materia",
+      name: "materia",
       label: "Materia",
-      type: "select",
+      type: "text",
       required: true,
-      options: materiasFilteredOptions,
-      placeholder: "Seleccionar materia...",
+      placeholder: "Ej: Algoritmos y Estructuras de Datos",
     },
     {
       name: "espacio",
       label: "Espacio",
-      type: "select",
-      required: true,
-      options: espacios,
+      type: "text",
+      required: false,
+      placeholder: "Ej: Aula 10, Aula Magna (opcional)",
     },
     {
       name: "fecha",
@@ -239,43 +182,25 @@ export default function MesasExamenPage() {
   ];
 
   function handleCreate() {
-    setSelectedCarrera(null);
     setEditingRow(null);
     setShowForm(true);
   }
 
   function handleEdit(row: MesaExamen) {
-    const pmId = row.plan_materia || row.materia;
-    const pm = planMaterias.find((p) => p.id === pmId);
-    setSelectedCarrera(pm?.carrera ? Number(pm.carrera) : null);
     setEditingRow(row);
     setShowForm(true);
-  }
-
-  function handleFormChange(
-    name: string,
-    value: unknown,
-    setFormData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
-  ) {
-    if (name === "carrera") {
-      const cId = value ? Number(value) : null;
-      setSelectedCarrera(cId);
-      setFormData((prev) => ({ ...prev, plan_materia: "" }));
-    }
   }
 
   async function handleSubmit(formData: Record<string, unknown>) {
     try {
       const fecha = String(formData.fecha || "");
-      const autoTurno =
-        getTurnoFromFecha(fecha) || editingRow?.turno || "febrero";
 
       const payload = {
-        plan_materia: Number(formData.plan_materia || formData.materia),
-        espacio: Number(formData.espacio),
+        carrera: formData.carrera ? Number(formData.carrera) : null,
+        materia: String(formData.materia || "").trim(),
+        espacio: String(formData.espacio || "").trim(),
         fecha,
         hora: String(formData.hora || "08:00"),
-        turno: autoTurno,
       };
 
       if (editingRow) {
@@ -286,7 +211,6 @@ export default function MesasExamenPage() {
       }
       setShowForm(false);
       setEditingRow(null);
-      setSelectedCarrera(null);
       await loadData();
     } catch (err) {
       sileo.error({
@@ -319,6 +243,27 @@ export default function MesasExamenPage() {
     }
   }
 
+  async function handleConfirmVaciar() {
+    try {
+      const res = await vaciarMesasExamen();
+      sileo.success({
+        title: "Mesas de examen vaciadas",
+        description: `Se eliminaron ${res.eliminados} mesas de examen correctamente.`,
+      });
+      await loadData();
+    } catch (err) {
+      sileo.error({
+        title: "Error al vaciar mesas de examen",
+        description:
+          err instanceof Error
+            ? err.message
+            : "No se pudieron eliminar las mesas de examen",
+      });
+    } finally {
+      setShowVaciarModal(false);
+    }
+  }
+
   return (
     <div className="p-8">
       <PageHeader
@@ -327,6 +272,30 @@ export default function MesasExamenPage() {
         onCreate={handleCreate}
         createLabel="Nuevo"
       >
+        {data.length > 0 && (
+          <Button
+            variant="danger"
+            onClick={() => setShowVaciarModal(true)}
+            className="gap-2"
+          >
+            <svg
+              className="w-4 h-4 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Vaciar
+          </Button>
+        )}
+
         <Button variant="primary" onClick={() => setShowImportModal(true)}>
           Importar
         </Button>
@@ -342,76 +311,81 @@ export default function MesasExamenPage() {
         label="mesas de examen"
       />
 
-      {showForm && (
-        <DataFormModal
-          title={editingRow ? "Editar mesa de examen" : "Cargar mesa de examen"}
-          fields={formFields}
-          initialData={
-            editingRow
-              ? {
-                  carrera:
-                    planMaterias.find(
-                      (p) =>
-                        p.id ===
-                        (editingRow.plan_materia || editingRow.materia),
-                    )?.carrera || "",
-                  plan_materia: editingRow.plan_materia || editingRow.materia,
-                  espacio: editingRow.espacio,
-                  fecha:
-                    editingRow.fecha ||
-                    (editingRow.fecha_hora
-                      ? editingRow.fecha_hora.split("T")[0]
-                      : ""),
-                  hora:
-                    editingRow.hora ||
-                    (editingRow.fecha_hora
-                      ? editingRow.fecha_hora.split("T")[1]?.slice(0, 5)
-                      : "08:00"),
-                }
-              : undefined
-          }
-          onChange={handleFormChange}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-            setSelectedCarrera(null);
-          }}
-        />
-      )}
-
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title="Eliminar mesa de examen"
-          itemName={`${deletingRow.materia_nombre} - ${deletingRow.turno} Llamado ${deletingRow.llamado}`}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
-
-      {showImportModal && (
-        <ImportCsvModal
-          title="Importar mesas de examen"
-          onClose={() => setShowImportModal(false)}
-          onImport={importarMesasExamenCSV}
-          onSuccess={(res) => {
-            const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
-            if (exito) {
-              sileo.success({
-                title: "Importación exitosa",
-                description:
-                  res.detail || "Importación realizada exitosamente.",
-              });
-            } else {
-              sileo.error({
-                title: "La importación falló",
-                description: res.detail || "No se guardó ningún registro.",
-              });
+      <AnimatePresence>
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={
+              editingRow ? "Editar mesa de examen" : "Cargar mesa de examen"
             }
-            loadData();
-          }}
-        />
-      )}
+            fields={formFields}
+            initialData={
+              editingRow
+                ? {
+                    carrera: editingRow.carrera || "",
+                    materia:
+                      editingRow.materia || editingRow.materia_nombre || "",
+                    espacio: editingRow.espacio || "",
+                    fecha: editingRow.fecha || "",
+                    hora: editingRow.hora
+                      ? editingRow.hora.slice(0, 5)
+                      : "08:00",
+                  }
+                : undefined
+            }
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+            }}
+          />
+        )}
+
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar mesa de examen"
+            itemName={`${deletingRow.materia || deletingRow.materia_nombre}${deletingRow.fecha ? ` - ${deletingRow.fecha}` : ""}`}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+
+        {showVaciarModal && (
+          <ConfirmDeleteModal
+            key="vaciar-modal"
+            title="Vaciar mesas de examen"
+            itemName={`todas las mesas de examen cargadas (${data.length} registros)`}
+            onConfirm={handleConfirmVaciar}
+            onClose={() => setShowVaciarModal(false)}
+          />
+        )}
+
+        {showImportModal && (
+          <ImportCsvModal
+            key="import-modal"
+            title="Importar mesas de examen"
+            onClose={() => setShowImportModal(false)}
+            onImport={importarMesasExamenCSV}
+            onSuccess={(res) => {
+              const exito = res.exito ?? (res.totales?.errores ?? 0) === 0;
+              if (exito) {
+                sileo.success({
+                  title: "Importación exitosa",
+                  description:
+                    res.detail || "Importación realizada exitosamente.",
+                });
+              } else {
+                sileo.error({
+                  title: "La importación falló",
+                  description: res.detail || "No se guardó ningún registro.",
+                });
+              }
+              loadData();
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
