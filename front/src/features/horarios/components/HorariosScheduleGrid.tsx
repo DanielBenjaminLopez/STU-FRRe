@@ -34,6 +34,14 @@ const CARD_COLORS = [
   "bg-green-100 border-green-200 text-green-800",
   "bg-brown-100 border-brown-200 text-brown-800",
   "bg-purple-100 border-purple-200 text-purple-800",
+  "bg-indigo-100 border-indigo-200 text-indigo-800",
+  "bg-rose-100 border-rose-200 text-rose-800",
+  "bg-lime-100 border-lime-200 text-lime-800",
+  "bg-sky-100 border-sky-200 text-sky-800",
+  "bg-orange-100 border-orange-200 text-orange-800",
+  "bg-teal-100 border-teal-200 text-teal-800",
+  "bg-fuchsia-100 border-fuchsia-200 text-fuchsia-800",
+  "bg-amber-100 border-amber-200 text-amber-800",
 ];
 
 const OPTION_COLORS = [
@@ -134,6 +142,7 @@ function SelectionStep({
           const selected = option.value === selectedValue;
           const dimmed = hasSelection && !selected;
           const optionColor = OPTION_COLORS[index % OPTION_COLORS.length];
+          const isWideOption = !singleColumn && option.label.trim().length > 5;
 
           return (
             <motion.button
@@ -148,6 +157,8 @@ function SelectionStep({
               }}
               transition={{ duration: 0.2 }}
               className={`relative min-h-16 rounded-2xl border p-4 text-center text-sm font-semibold shadow-sm transition-shadow ${
+                isWideOption ? "col-span-2 whitespace-nowrap" : ""
+              } ${
                 selected
                   ? `${optionColor} ring-2 ${ACCENT.ring} shadow-md`
                   : `${optionColor} hover:shadow-md`
@@ -179,7 +190,15 @@ function SelectionStep({
   );
 }
 
-function Schedule({ items }: { items: Clase[] }) {
+export function Schedule({
+  items,
+  compact = false,
+  onItemClick,
+}: {
+  items: Clase[];
+  compact?: boolean;
+  onItemClick?: (item: Clase) => void;
+}) {
   const times = useMemo(() => {
     const eventTimes = items.flatMap((item) => [
       formatTime(item.hora_inicio),
@@ -207,21 +226,31 @@ function Schedule({ items }: { items: Clase[] }) {
     return colors;
   }, [items]);
 
-  const deduplicatedItems = useMemo(
-    () =>
-      [...items]
-        .sort((a, b) => (b.aula ? 1 : 0) - (a.aula ? 1 : 0))
-        .filter(
-          (item, index, arr) =>
-            arr.findIndex(
-              (other) =>
-                other.dia_semana === item.dia_semana &&
-                other.hora_inicio === item.hora_inicio &&
-                other.materia_nombre === item.materia_nombre,
-            ) === index,
-        ),
-    [items],
-  );
+  const deduplicatedItems = useMemo(() => {
+    const sorted = [...items].sort(
+      (a, b) => (b.aula ? 1 : 0) - (a.aula ? 1 : 0) || a.id - b.id,
+    );
+    const grouped = new Map<string, { base: Clase; aulas: string[] }>();
+
+    for (const item of sorted) {
+      const key = `${item.dia_semana}|${item.hora_inicio}|${item.hora_fin}|${item.materia_nombre}`;
+      let entry = grouped.get(key);
+      if (!entry) {
+        entry = { base: item, aulas: [] };
+        grouped.set(key, entry);
+      }
+      const aulaTrimmed = item.aula?.trim();
+      if (aulaTrimmed && !entry.aulas.includes(aulaTrimmed)) {
+        entry.aulas.push(aulaTrimmed);
+      }
+    }
+
+    return Array.from(grouped.values()).map(({ base, aulas }) => ({
+      ...base,
+      aula: aulas.join(", "),
+      aulas,
+    }));
+  }, [items]);
 
   const visibleDays = useMemo(
     () =>
@@ -234,8 +263,9 @@ function Schedule({ items }: { items: Clase[] }) {
   );
 
   const layoutByDay = useMemo(() => {
+    type GroupedClase = (typeof deduplicatedItems)[number];
     type PositionedItem = {
-      item: Clase;
+      item: GroupedClase;
       lane: number;
       clusterCols: number;
     };
@@ -259,8 +289,8 @@ function Schedule({ items }: { items: Clase[] }) {
         );
 
       // Agrupar clases que se solapan temporalmente en clusters
-      const clusters: Clase[][] = [];
-      let currentCluster: Clase[] = [];
+      const clusters: GroupedClase[][] = [];
+      let currentCluster: GroupedClase[] = [];
       let clusterMaxEnd = -1;
 
       for (const item of dayItems) {
@@ -284,7 +314,7 @@ function Schedule({ items }: { items: Clase[] }) {
 
       for (const cluster of clusters) {
         const laneEnds: number[] = [];
-        const clusterAssignments: { item: Clase; lane: number }[] = [];
+        const clusterAssignments: { item: GroupedClase; lane: number }[] = [];
 
         for (const item of cluster) {
           const start = minutes(item.hora_inicio);
@@ -361,13 +391,21 @@ function Schedule({ items }: { items: Clase[] }) {
 
   const gridRows = `3em ${rowTracks} 2.25em`;
   const gridColumns = `4.5em repeat(${layoutByDay.totalTracks}, minmax(0, 1fr))`;
+  const scheduleKey = `${deduplicatedItems[0]?.carrera_codigo ?? ""}-${deduplicatedItems[0]?.nivel ?? ""}-${deduplicatedItems[0]?.comision ?? ""}-${deduplicatedItems.length}`;
 
   return (
-    <div className="w-full p-4 sm:p-8">
+    <div
+      className={compact ? "mx-auto w-full max-w-5xl p-4" : "w-full p-4 sm:p-8"}
+    >
       <div
+        key={scheduleKey}
         id="schedule"
-        className="mx-auto grid w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
-        style={{ gridTemplateColumns: gridColumns, gridTemplateRows: gridRows }}
+        className="animate-fade-in mx-auto grid w-full overflow-hidden rounded-2xl border border-gray-200 bg-white/30"
+        style={{
+          gridTemplateColumns: gridColumns,
+          gridTemplateRows: gridRows,
+          ...(compact ? { fontSize: "0.78rem" } : {}),
+        }}
       >
         <div className="schedule-corner" />
         {visibleDays.map((day, dayIndex) => {
@@ -423,10 +461,8 @@ function Schedule({ items }: { items: Clase[] }) {
               clusterCols === 1 ? startCol : startCol + lane * span;
 
             return (
-              <motion.div
-                key={`${item.dia_semana}-${item.hora_inicio}-${item.materia_nombre}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+              <div
+                key={`${item.dia_semana}-${item.hora_inicio}-${item.hora_fin}-${item.materia_nombre}`}
                 className="schedule-class-wrapper"
                 style={{
                   gridColumn: `${colStart} / span ${span}`,
@@ -434,22 +470,42 @@ function Schedule({ items }: { items: Clase[] }) {
                 }}
               >
                 <div
-                  className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)}`}
+                  onClick={onItemClick ? () => onItemClick(item) : undefined}
+                  className={`schedule-class-card ${colorBySubject.get(item.materia_nombre)} ${
+                    onItemClick ? "cursor-pointer" : ""
+                  }`}
                   title={`${item.materia_nombre}\n[${item.comision}] · ${item.carrera_codigo}\nAula: ${item.aula}`}
                 >
-                  <span className="shrink-0 hyphens-auto break-words text-lg font-semibold leading-snug">
+                  <span
+                    className={`shrink-0 hyphens-auto break-words font-semibold leading-snug ${
+                      compact ? "text-xs" : "text-lg"
+                    }`}
+                  >
                     {item.materia_nombre}
                   </span>
-                  <span className="shrink-0 text-sm font-medium leading-snug opacity-75">
+                  <span
+                    className={`shrink-0 font-medium leading-snug opacity-75 ${
+                      compact ? "text-[11px]" : "text-sm"
+                    }`}
+                  >
                     {formatTime(item.hora_inicio)} - {formatTime(item.hora_fin)}
                   </span>
-                  {item.aula && (
-                    <span className="schedule-class-aula mt-0.5 inline-block max-w-full shrink-0 break-words rounded-lg bg-white/60 px-2 py-0.5 text-sm font-semibold leading-snug">
-                      {item.aula}
-                    </span>
+                  {item.aulas.length > 0 && (
+                    <div className="mt-0.5 flex max-w-full shrink-0 flex-wrap gap-1">
+                      {item.aulas.map((aula) => (
+                        <span
+                          key={aula}
+                          className={`schedule-class-aula inline-block max-w-full shrink-0 break-words rounded-lg bg-white/60 px-2 py-0.5 font-semibold leading-snug ${
+                            compact ? "text-[11px]" : "text-sm"
+                          }`}
+                        >
+                          {aula}
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </motion.div>
+              </div>
             );
           }),
         )}

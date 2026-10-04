@@ -26,8 +26,7 @@ const clases: Clase[] = [
     id: 1,
     carrera_codigo: "ISI",
     carrera_nombre: "Ingeniería en Sistemas de Información",
-    plan_materia: 1,
-    comision_id: 1,
+    materia: 1,
     nivel: "primero",
     comision: "K1",
     materia_nombre: "Algoritmos",
@@ -40,8 +39,7 @@ const clases: Clase[] = [
     id: 2,
     carrera_codigo: "ISI",
     carrera_nombre: "Ingeniería en Sistemas de Información",
-    plan_materia: 2,
-    comision_id: 2,
+    materia: 2,
     nivel: "primero",
     comision: "K1",
     materia_nombre: "Matemática",
@@ -54,8 +52,7 @@ const clases: Clase[] = [
     id: 3,
     carrera_codigo: "ISI",
     carrera_nombre: "Ingeniería en Sistemas de Información",
-    plan_materia: 3,
-    comision_id: 1,
+    materia: 3,
     nivel: "primero",
     comision: "K1",
     materia_nombre: LONGA,
@@ -201,8 +198,7 @@ describe("HorariosFull", () => {
           id: 4,
           carrera_codigo: "ISI",
           carrera_nombre: "Ingeniería en Sistemas de Información",
-          plan_materia: 4,
-          comision_id: 1,
+          materia: 4,
           nivel: "primero",
           comision: "K1",
           materia_nombre: "Proyecto",
@@ -256,8 +252,7 @@ describe("HorariosFull", () => {
           id: 5,
           carrera_codigo: "ISI",
           carrera_nombre: "Ingeniería en Sistemas de Información",
-          plan_materia: 5,
-          comision_id: 1,
+          materia: 5,
           nivel: "primero",
           comision: "K1",
           materia_nombre: "Inglés",
@@ -276,5 +271,53 @@ describe("HorariosFull", () => {
     selectCursoISI1roK1();
 
     expect(screen.getByText("Sáb")).toBeInTheDocument();
+  });
+
+  it("muestra cada salón en su propia píldora cuando una misma clase se dicta en varios espacios a la vez", () => {
+    mockUseHorarios.mockReturnValue({
+      todas: [
+        {
+          id: 10,
+          carrera_codigo: "IEM",
+          carrera_nombre: "Ingeniería Electromecánica",
+          materia: 10,
+          nivel: "primero",
+          comision: "1ro A",
+          materia_nombre: "Química Gral",
+          hora_inicio: "14:15",
+          hora_fin: "16:35",
+          dia_semana: "miercoles",
+          aula: "X0.5",
+        },
+        {
+          id: 11,
+          carrera_codigo: "IEM",
+          carrera_nombre: "Ingeniería Electromecánica",
+          materia: 10,
+          nivel: "primero",
+          comision: "1ro A",
+          materia_nombre: "Química Gral",
+          hora_inicio: "14:15",
+          hora_fin: "16:35",
+          dia_semana: "miercoles",
+          aula: "Lab. Química",
+        },
+      ],
+      loading: false,
+      error: null,
+    });
+
+    render(<HorariosFull onClose={vi.fn()} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ingeniería Electromecánica" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "1ro" }));
+
+    expect(screen.getAllByText("Química Gral")).toHaveLength(1);
+    const pills = document.querySelectorAll(".schedule-class-aula");
+    expect(pills).toHaveLength(2);
+    expect(pills[0]).toHaveTextContent("X0.5");
+    expect(pills[1]).toHaveTextContent("Lab. Química");
   });
 });

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
+import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import DataTable, { type Column } from "../components/DataTable";
 import DataFormModal, { type FormField } from "../components/DataFormModal";
@@ -6,6 +7,8 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import PageHeader from "../components/PageHeader";
 import NoticiasCarousel from "../components/NoticiasCarousel";
 import Button from "../../shared/components/ui/Button";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchNoticias,
   createNoticia,
@@ -17,20 +20,29 @@ import {
 } from "../../features/noticias/api/noticias";
 
 const columns: Column<Noticia>[] = [
-  { key: "titulo", label: "Título", sortable: true },
+  {
+    key: "titulo",
+    label: "Título",
+    sortable: true,
+    width: "w-[36%]",
+    render: (val) => (
+      <span className="font-medium text-gray-900">{String(val || "-")}</span>
+    ),
+  },
   {
     key: "origen",
     label: "Origen",
     sortable: true,
     align: "center",
+    width: "w-[15%]",
     render: (val) => {
       const isScraping = val === "scraping";
       return (
         <span
-          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${
             isScraping
-              ? "bg-blue-50 text-blue-700"
-              : "bg-purple-50 text-purple-700"
+              ? "bg-blue-50 text-blue-700 border-blue-200/70"
+              : "bg-purple-50 text-purple-700 border-purple-200/70"
           }`}
         >
           {isScraping ? "Scraping" : "Manual"}
@@ -43,10 +55,15 @@ const columns: Column<Noticia>[] = [
     label: "Fecha de publicación",
     sortable: true,
     align: "center",
+    width: "w-[19%]",
     render: (val) => {
-      if (!val) return "-";
+      if (!val) return <span className="text-gray-400">-</span>;
       const d = new Date(String(val));
-      return d.toLocaleDateString("es-ES");
+      return (
+        <span className="tabular-nums font-medium text-gray-700">
+          {d.toLocaleDateString("es-ES")}
+        </span>
+      );
     },
   },
   {
@@ -54,23 +71,29 @@ const columns: Column<Noticia>[] = [
     label: "Fecha de expiración",
     sortable: true,
     align: "center",
+    width: "w-[19%]",
     render: (val) => {
-      if (!val) return "-";
+      if (!val) return <span className="text-gray-400">-</span>;
       const d = new Date(String(val));
-      return d.toLocaleDateString("es-ES");
+      return (
+        <span className="tabular-nums font-medium text-gray-700">
+          {d.toLocaleDateString("es-ES")}
+        </span>
+      );
     },
   },
   {
     key: "imagen_url",
     label: "Imagen",
     align: "center",
+    width: "w-[11%]",
     render: (val) => {
-      if (!val) return "-";
+      if (!val) return <span className="text-gray-400">-</span>;
       return (
         <img
           src={String(val)}
           alt="Miniatura"
-          className="w-10 h-10 rounded-lg object-cover mx-auto"
+          className="w-10 h-10 rounded-lg object-cover mx-auto border border-gray-200/80"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}
@@ -123,8 +146,11 @@ const noticiaFields: FormField[] = [
 ];
 
 export default function NoticiasPage() {
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedNoticias = peekApiCache<Noticia[]>(API_ENDPOINTS.noticias);
+  const [noticias, setNoticias] = useState<Noticia[]>(
+    () => cachedNoticias ?? [],
+  );
+  const [loading, setLoading] = useState(() => !cachedNoticias);
   const [showForm, setShowForm] = useState(false);
   const [editingRow, setEditingRow] = useState<Noticia | null>(null);
   const [deletingRow, setDeletingRow] = useState<Noticia | null>(null);
@@ -132,7 +158,6 @@ export default function NoticiasPage() {
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await fetchNoticias();
       setNoticias(data);
     } catch (err) {
@@ -288,27 +313,31 @@ export default function NoticiasPage() {
         label="noticias"
       />
 
-      {showForm && (
-        <DataFormModal
-          title={editingRow ? "Editar noticia" : "Crear noticia"}
-          fields={noticiaFields}
-          initialData={getInitialData()}
-          onSubmit={handleSubmit}
-          onClose={() => {
-            setShowForm(false);
-            setEditingRow(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {showForm && (
+          <DataFormModal
+            key="form-modal"
+            title={editingRow ? "Editar noticia" : "Crear noticia"}
+            fields={noticiaFields}
+            initialData={getInitialData()}
+            onSubmit={handleSubmit}
+            onClose={() => {
+              setShowForm(false);
+              setEditingRow(null);
+            }}
+          />
+        )}
 
-      {deletingRow && (
-        <ConfirmDeleteModal
-          title="Eliminar noticia"
-          itemName={String(deletingRow.titulo ?? "")}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeletingRow(null)}
-        />
-      )}
+        {deletingRow && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar noticia"
+            itemName={String(deletingRow.titulo ?? "")}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeletingRow(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

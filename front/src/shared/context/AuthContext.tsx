@@ -6,7 +6,12 @@ import {
   type ReactNode,
 } from "react";
 import { fetchMe, login as apiLogin, type UserInfo } from "../api/auth";
-import { getAdminToken, setAdminToken, clearAdminToken } from "../api/client";
+import {
+  ApiError,
+  getAdminToken,
+  setAdminToken,
+  clearAdminToken,
+} from "../api/client";
 
 interface AuthState {
   user: UserInfo | null;
@@ -26,10 +31,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = getAdminToken();
     if (!token) return;
 
-    fetchMe()
-      .then(setUser)
-      .catch(() => clearAdminToken())
-      .finally(() => setIsLoading(false));
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const verify = (attempt = 0) => {
+      fetchMe()
+        .then((u) => {
+          if (!cancelled) {
+            setUser(u);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          const isAuthError =
+            err instanceof ApiError &&
+            (err.status === 401 || err.status === 403);
+          if (isAuthError) {
+            clearAdminToken();
+            setIsLoading(false);
+          } else if (attempt < 5) {
+            retryTimer = setTimeout(() => verify(attempt + 1), 2000);
+          } else {
+            setIsLoading(false);
+          }
+        });
+    };
+
+    verify();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
   }, []);
 
   const login = async (username: string, password: string) => {

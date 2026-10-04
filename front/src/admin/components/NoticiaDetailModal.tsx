@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { motion } from "motion/react";
 import Button from "../../shared/components/ui/Button";
 import type { ContenidoFeed } from "../../features/noticias/api/noticias";
+import { modalBackdropVariants, modalPanelVariants } from "./modalMotion";
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -52,8 +54,17 @@ export default function NoticiaDetailModal({
     : "text-blue-700 bg-blue-50";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8">
-      <div className="bg-white rounded-4xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+    <motion.div
+      variants={modalBackdropVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8"
+    >
+      <motion.div
+        variants={modalPanelVariants}
+        className="bg-white rounded-4xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
+      >
         {noticia.imagen_url && (
           <div className="relative h-64 shrink-0 overflow-hidden">
             <img
@@ -162,7 +173,7 @@ export default function NoticiaDetailModal({
             Cerrar
           </Button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

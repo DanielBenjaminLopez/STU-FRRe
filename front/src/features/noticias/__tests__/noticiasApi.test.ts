@@ -60,7 +60,6 @@ describe("noticias API", () => {
       fecha_hora_fin: "2026-09-05T18:00:00Z",
       imagen_url: "",
       espacio: null,
-      espacio_nombre: null,
       destacado: false,
     },
     {
@@ -73,7 +72,6 @@ describe("noticias API", () => {
       fecha_hora_fin: "2026-09-10T20:00:00Z",
       imagen_url: "",
       espacio: "Aula Magna",
-      espacio_nombre: "Aula Magna",
       destacado: true,
     },
   ];

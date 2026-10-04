@@ -1,12 +1,16 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router";
-import TotemApp from "./totem/App";
-import AdminApp from "./admin/App";
+
+const TotemApp = lazy(() => import("./totem/App"));
+const AdminApp = lazy(() => import("./admin/App"));
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/admin/*" element={<AdminApp />} />
-      <Route path="/*" element={<TotemApp />} />
-    </Routes>
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/*" element={<TotemApp />} />
+      </Routes>
+    </Suspense>
   );
 }

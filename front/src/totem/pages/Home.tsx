@@ -34,6 +34,7 @@ import { WIDGET_COMPONENTS } from "../../features/widgets";
 import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
 const POLLING_MS = 5 * 60_000;
+const RETRY_MS = 3_000;
 
 export default function Home() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export default function Home() {
   const lastInteractionRef = useRef(0);
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
-  const { lastMessage, rejected } = useTotemWebSocket(null, true);
+  const { lastMessage, isConnected, rejected } = useTotemWebSocket(null, true);
   const { avisos, visible: hayAvisos } = useAvisos();
   const { subscribe: subscribeReset, triggerReset } = useTotemResetController();
 
@@ -89,6 +90,19 @@ export default function Home() {
     const timer = setInterval(load, POLLING_MS);
     return () => clearInterval(timer);
   }, [navigate, load]);
+
+  useEffect(() => {
+    if (!blocked || blockedMessage === "Tótem desactivado") return;
+    const retryTimer = setInterval(load, RETRY_MS);
+    return () => clearInterval(retryTimer);
+  }, [blocked, blockedMessage, load]);
+
+  useEffect(() => {
+    if (isConnected && blocked && blockedMessage !== "Tótem desactivado") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      load();
+    }
+  }, [isConnected, blocked, blockedMessage, load]);
 
   useEffect(() => {
     if (lastMessage?.type === "totem_eliminado" || rejected) {

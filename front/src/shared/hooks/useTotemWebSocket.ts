@@ -55,7 +55,7 @@ export function useTotemWebSocket(codigo: string | null, linked = false) {
           if (
             event.code === 4403 ||
             event.code === 4001 ||
-            reconnectCountRef.current >= MAX_RECONNECTS
+            (!linked && reconnectCountRef.current >= MAX_RECONNECTS)
           ) {
             setRejected(true);
             return;

@@ -7,9 +7,6 @@ from .models import (
     Aviso,
     Carrera,
     EventoCalendario,
-    PlanMateria,
-    Comision,
-    Espacio,
     Evento,
     HorarioCursado,
     Materia,
@@ -182,93 +179,77 @@ class CarreraSerializer(serializers.ModelSerializer):
 
 
 class MateriaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Materia
-        fields = ['id', 'nombre']
-
-        
-class PlanMateriaSerializer(serializers.ModelSerializer):
     carrera_nombre = serializers.CharField(source='carrera.nombre', read_only=True)
     carrera_codigo = serializers.CharField(source='carrera.codigo', read_only=True)
-    materia_nombre = serializers.CharField(source='materia.__str__', read_only=True)
     carrera_tipo = serializers.CharField(source='carrera.tipo', read_only=True)
-    
-    class Meta:
-        model = PlanMateria
-        fields = ['id', 'carrera', 'materia', 'carrera_nombre', 'carrera_codigo', 'materia_nombre', 'carrera_tipo', 'nivel', 'plan_estudio']
-
-
-class ComisionSerializer(serializers.ModelSerializer):
-    display_name = serializers.SerializerMethodField()
-    materia_nombre = serializers.CharField(source='plan_materia.materia.nombre', read_only=True)
-    carrera_nombre = serializers.CharField(source='plan_materia.carrera.nombre', read_only=True)
-    nivel = serializers.CharField(source='plan_materia.nivel', read_only=True)
 
     class Meta:
-        model = Comision
-        fields = ['id', 'plan_materia', 'nombre', 'display_name',
-                  'materia_nombre', 'carrera_nombre', 'nivel']
+        model = Materia
+        fields = [
+            'id', 'nombre', 'carrera',
+            'carrera_nombre', 'carrera_codigo', 'carrera_tipo', 'nivel',
+        ]
 
-    def get_display_name(self, obj):
-        return str(obj)
 
-        
 class HorarioCursadoSerializer(serializers.ModelSerializer):
-    plan_materia = serializers.IntegerField(source='comision.plan_materia.id', read_only=True)
-    materia_nombre = serializers.CharField(source='comision.plan_materia.materia.__str__', read_only=True)
-    espacio_nombre = serializers.SerializerMethodField()
-    carrera_codigo = serializers.CharField(source='comision.plan_materia.carrera.codigo', read_only=True)
-    nivel = serializers.CharField(source='comision.plan_materia.nivel', read_only=True)
-    comision_nombre = serializers.CharField(source='comision.nombre', read_only=True)
-    espacio = serializers.PrimaryKeyRelatedField(
-        queryset=Espacio.objects.all(),
+    materia_nombre = serializers.CharField(source='materia.nombre', read_only=True)
+    carrera_codigo = serializers.CharField(source='materia.carrera.codigo', read_only=True)
+    carrera_nombre = serializers.CharField(source='materia.carrera.nombre', read_only=True)
+    nivel = serializers.CharField(source='materia.nivel', read_only=True)
+    espacio = serializers.CharField(
+        max_length=150,
         required=False,
-        allow_null=True,
+        allow_blank=True,
+        default='',
     )
-
-    def get_espacio_nombre(self, obj):
-        return str(obj.espacio) if obj.espacio else ""
 
     class Meta:
         model = HorarioCursado
         fields = [
-            'id', 'comision', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre',
-            'carrera_codigo', 'nivel', 'comision_nombre', 'dia_semana',
-            'hora_inicio', 'hora_fin', 'activo',
+            'id', 'materia', 'comision', 'espacio',
+            'materia_nombre', 'carrera_codigo',
+            'carrera_nombre', 'nivel', 'dia_semana', 'hora_inicio', 'hora_fin',
         ]
 
 
 class MesaExamenSerializer(serializers.ModelSerializer):
-    llamado = serializers.IntegerField(read_only=True)
     dia_semana = serializers.CharField(read_only=True)
-    materia_nombre = serializers.CharField(source='plan_materia.materia.__str__', read_only=True)
-    espacio_nombre = serializers.CharField(source='espacio.__str__', read_only=True)
+    materia_nombre = serializers.CharField(source='materia', read_only=True)
     carrera_codigo = serializers.SerializerMethodField()
+    carrera_nombre = serializers.SerializerMethodField()
+    espacio = serializers.CharField(
+        max_length=150,
+        required=False,
+        allow_blank=True,
+        default='',
+    )
 
     class Meta:
         model = MesaExamen
         fields = [
-            'id', 'plan_materia', 'espacio', 'materia_nombre', 'espacio_nombre',
-            'carrera_codigo', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo',
+            'id', 'carrera', 'carrera_codigo', 'carrera_nombre',
+            'materia', 'materia_nombre', 'espacio',
+            'fecha', 'hora', 'dia_semana',
         ]
 
     def get_carrera_codigo(self, obj):
-        if obj.plan_materia and obj.plan_materia.carrera and obj.plan_materia.carrera.codigo:
-            return obj.plan_materia.carrera.codigo
+        if obj.carrera and obj.carrera.codigo:
+            return obj.carrera.codigo
+        return ""
+
+    def get_carrera_nombre(self, obj):
+        if obj.carrera and obj.carrera.nombre:
+            return obj.carrera.nombre
         return ""
 
 
 class EventoSerializer(serializers.ModelSerializer):
-    espacio_nombre = serializers.SerializerMethodField()
     imagen_url = serializers.CharField(max_length=500, required=False, allow_blank=True)
     espacio = serializers.CharField(max_length=200, required=False, allow_blank=True, default='')
-    
+
     class Meta:
         model = Evento
-        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'espacio_nombre', 'destacado']
-        
-    def get_espacio_nombre(self, obj):
-        return obj.espacio or None
+        fields = ['id', 'titulo', 'tipo', 'tipo_otro', 'descripcion', 'fecha_hora_inicio', 'fecha_hora_fin', 'imagen_url', 'espacio', 'destacado']
 
 
 class AvisoSerializer(serializers.ModelSerializer):
@@ -304,14 +285,6 @@ class NoticiasSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
-class EspacioSerializer(serializers.ModelSerializer):
-    edificio_display = serializers.CharField(source='get_edificio_display', read_only=True)
-
-    class Meta:
-        model = Espacio
-        fields = ['id', 'nombre', 'edificio', 'edificio_display', 'tipo', 'piso']
-
-
 class UbicacionMapaSerializer(serializers.ModelSerializer):
     tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
     piso_display = serializers.CharField(source='get_piso_display', read_only=True)
@@ -344,7 +317,6 @@ class TotemNuevoSerializer(serializers.Serializer):
 class VincularTotemSerializer(serializers.Serializer):
     codigo_vinculacion = serializers.CharField(max_length=10)
     nombre = serializers.CharField(max_length=150)
-    espacio_id = serializers.IntegerField(required=False, allow_null=True)
 
     def validate_codigo_vinculacion(self, value):
         try:
@@ -363,17 +335,9 @@ class VincularTotemSerializer(serializers.Serializer):
         self._totem = totem
         return value
 
-    def validate_espacio_id(self, value):
-        if value is None:
-            return None
-        if not Espacio.objects.filter(id=value).exists():
-            raise serializers.ValidationError('El espacio seleccionado no existe.')
-        return value
-
     def create(self, validated_data):
         totem = self._totem
         totem.nombre = validated_data['nombre']
-        totem.espacio_id = validated_data.get('espacio_id')
         totem.vinculado = True
         totem.codigo_vinculacion = None
         totem.codigo_creado_en = None
@@ -382,7 +346,6 @@ class VincularTotemSerializer(serializers.Serializer):
 
 
 class TotemSerializer(serializers.ModelSerializer):
-    espacio_nombre = serializers.SerializerMethodField()
     plantilla = PlantillaSerializer(read_only=True)
     plantilla_id = serializers.PrimaryKeyRelatedField(
         source='plantilla',
@@ -395,16 +358,13 @@ class TotemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Totem
         fields = [
-            'id', 'nombre', 'espacio_id', 'espacio_nombre',
+            'id', 'nombre',
             'config_pantalla', 'vinculado', 'activo',
             'plantilla_id', 'plantilla', 'creado_en',
             'pin_mapa_piso', 'pin_mapa_svg_x', 'pin_mapa_svg_y', 'pin_mapa_orientacion',
             'video_archivo', 'video_url', 'video_intervalo', 'video_activo',
         ]
         read_only_fields = ['vinculado', 'creado_en']
-
-    def get_espacio_nombre(self, obj):
-        return str(obj.espacio) if obj.espacio else None
 
     def get_video_url(self, obj):
         if obj.video_archivo:

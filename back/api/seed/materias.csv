@@ -1,0 +1,153 @@
+carrera,nombre,nivel
+Ingeniería Electromecánica,A Matemático I,primero
+Ingeniería Electromecánica,Algebra,primero
+Ingeniería Electromecánica,Ing.y Sociedad,primero
+Ingeniería Electromecánica,Química Gral,primero
+Ingeniería Electromecánica,Electro I,primero
+Ingeniería Electromecánica,Física I,primero
+Ingeniería Electromecánica,Alfabetización Académica,primero
+Ingeniería Electromecánica,Repres.Gráf.,segundo
+Ingeniería Electromecánica,Conoc.de Mat.,segundo
+Ingeniería Electromecánica,Prob.y Estad.,segundo
+Ingeniería Electromecánica,Progr.en Comp,segundo
+Ingeniería Electromecánica,Estabilidad,segundo
+Ingeniería Electromecánica,Matem.p/IEM,segundo
+Ingeniería Electromecánica,Electro II,segundo
+Ingeniería Electromecánica,Electrotecnia,tercero
+Ingeniería Electromecánica,Tecn.Mecánica,tercero
+Ingeniería Electromecánica,Doc. Tec. Elect.,tercero
+Ingeniería Electromecánica,Electro III,tercero
+Ingeniería Electromecánica,Mecánica y Mecanismos,tercero
+Ingeniería Electromecánica,Mec.Fluidos,cuarto
+Ingeniería Electromecánica,E. Renov. Elect.,cuarto
+Ingeniería Electromecánica,Máq.Eléctricas,cuarto
+Ingeniería Electromecánica,Legislación,cuarto
+Ingeniería Electromecánica,Elementos de Máquinas,cuarto
+Ingeniería Electromecánica,Electrónica Industrial,cuarto
+Ingeniería Electromecánica,Mediciones Eléctricas,cuarto
+Ingeniería Electromecánica,Instalaciones Térmicas Mecánicas y Frigoríficas,quinto
+Ingeniería Electromecánica,Automatización y Control Industrial,quinto
+Ingeniería Electromecánica,Redes de Distribuc. e Inst. Elec.,quinto
+Ingeniería Electromecánica,Oper.de Sist. Eléct.Potencia,quinto
+Ingeniería Electromecánica,Robótica,quinto
+Ingeniería Electromecánica,Proyecto Final,quinto
+Ingeniería Electromecánica,Gestión y Mant. Electromecánico,quinto
+Ingeniería Electromecánica,Maq. y Equipos de Transporte,quinto
+Ingeniería en Sistemas de Información,Administr.de Sistemas de Información,cuarto
+Ingeniería en Sistemas de Información,Agilidad Avanzada,cuarto
+Ingeniería en Sistemas de Información,Álgebra,primero
+Ingeniería en Sistemas de Información,Algoritmos,primero
+Ingeniería en Sistemas de Información,An.de Sistemas,segundo
+Ingeniería en Sistemas de Información,A Matemático I,primero
+Ingeniería en Sistemas de Información,A Matemático II,segundo
+Ingeniería en Sistemas de Información,Análisis Num.,tercero
+Ingeniería en Sistemas de Información,A.A. Calidad de SW,cuarto
+Ingeniería en Sistemas de Información,Auditoría,quinto
+Ingeniería en Sistemas de Información,Ciencia de Datos,quinto
+Ingeniería en Sistemas de Información,Desarrollo de Software,tercero
+Ingeniería en Sistemas de Información,DevOps,quinto
+Ingeniería en Sistemas de Información,Diseño de Sistemas de Información,tercero
+Ingeniería en Sistemas de Información,Física I,primero
+Ingeniería en Sistemas de Información,Fundam. de Ciberseguridad,quinto
+Ingeniería en Sistemas de Información,Habilitación Profesional,tercero
+Ingeniería en Sistemas de Información,Seminario ADUSI,tercero
+Ingeniería en Sistemas de Información,Inglés II,segundo
+Ingeniería en Sistemas de Información,Inteligencia Artificial,quinto
+Ingeniería en Sistemas de Información,Paradigmas,segundo
+Ingeniería en Sistemas de Información,Planificación,tercero
+Ingeniería en Sistemas de Información,Práct. Sup.,quinto
+Ingeniería en Sistemas de Información,Prob.y Estad,tercero
+Ingeniería en Sistemas de Información,Proyecto,quinto
+Ingeniería en Sistemas de Información,Redes de Datos,cuarto
+Ingeniería en Sistemas de Información,Sist- Gest. BD,tercero
+Ingeniería en Sistemas de Información,GIS,cuarto
+Ingeniería en Sistemas de Información,Sist. Operativos,segundo
+Ingeniería en Sistemas de Información,Sistemas y Proc. de Neg.,primero
+Ingeniería en Sistemas de Información,Tecnologías para la Automatización,cuarto
+Ingeniería en Sistemas de Información,Asp. Avanzados de Redes de Inf.,quinto
+Ingeniería en Sistemas de Información,Lógica y Estr. Discretas,primero
+Ingeniería en Sistemas de Información,Arquitectura,primero
+Ingeniería Química,Álgebra,primero
+Ingeniería Química,Química,primero
+Ingeniería Química,Ing.y Sociedad,primero
+Ingeniería Química,Fund.de Informática,primero
+Ingeniería Química,A Matemático I,primero
+Ingeniería Química,Sistemas de Representac.,primero
+Ingeniería Química,Física I,primero
+Ingeniería Química,Prob.y Estad.,segundo
+Ingeniería Química,Inglés I,segundo
+Ingeniería Química,Química Orgánica,segundo
+Ingeniería Química,Física II,segundo
+Ingeniería Química,Introd. a Eq. y Procesos,segundo
+Ingeniería Química,Legislación,segundo
+Ingeniería Química,Físicoquímica,tercero
+Ingeniería Química,Fenómenos de Transporte,tercero
+Ingeniería Química,Mat.Sup.Apl.,tercero
+Ingeniería Química,Balance de Masa y Energía,tercero
+Ingeniería Química,Quím.Aplicada,tercero
+Ingeniería Química,IRQUI,cuarto
+Ingeniería Química,Maq. E Inst. Elect.,cuarto
+Ingeniería Química,Org.Industrial,cuarto
+Ingeniería Química,"Diseño, Simulac Opt. y Seguridad de Procesos",cuarto
+Ingeniería Química,Operaciones Unitarias II,cuarto
+Ingeniería Química,Proyecto Final,quinto
+Ingeniería Química,Mecánica Ind.,quinto
+Ingeniería Química,CyCEP,quinto
+Ingeniería Química,Practica Sup.,quinto
+Ingeniería Química,Admin. de Negocios,quinto
+Ingeniería Química,Ing. de las Instalaciones,quinto
+Ingeniería Química,Ing. Ambiental,quinto
+Ingeniería Química,Energías Renovables,quinto
+Ingeniería Química,Métodos Tradicionales,quinto
+Ingeniería Química,Procedim.y Normativas en Alimentos,quinto
+Ingeniería Química,Gestión de RRHH,quinto
+Ingeniería Química,Tecn. de los Alimentos,quinto
+Ingeniería Química,Integración V,quinto
+Ingeniería Química,CEP,quinto
+Licenciatura en Administracion Rural,Producción Vegetal,primero
+Licenciatura en Administracion Rural,Fund.de la Adm,primero
+Licenciatura en Administracion Rural,Fund. de Economía,primero
+Licenciatura en Administracion Rural,Contab. Adm.,primero
+Licenciatura en Administracion Rural,Tecnología...,primero
+Licenciatura en Administracion Rural,Análisis Matemático,primero
+Licenciatura en Administracion Rural,Hidrología Rural,primero
+Licenciatura en Administracion Rural,Gestión de la Empr.Agrop.,segundo
+Licenciatura en Administracion Rural,Ec.Empr.Agr.,segundo
+Licenciatura en Administracion Rural,Estadística,segundo
+Licenciatura en Administracion Rural,Prod.Agr.II,segundo
+Licenciatura en Administracion Rural,Administración Financiera,tercero
+Licenciatura en Administracion Rural,Ctrl.de Gestión Empr.Agropec.,tercero
+Licenciatura en Administracion Rural,Inglés II,tercero
+Licenciatura en Administracion Rural,Inv.Operativa,tercero
+Licenciatura en Administracion Rural,Proc.Agroind. II,tercero
+Licenciatura en Administracion Rural,Legislación,cuarto
+Licenciatura en Administracion Rural,Política Agrop.,cuarto
+Licenciatura en Administracion Rural,Seminario Final,cuarto
+Licenciatura en Administracion Rural,Práctica Soc.e Imposit.,cuarto
+Licenciatura en Administracion Rural,Inv.de Merc.,cuarto
+Tecnicatura Universitaria en Mecatrónica,Sist.de Repr.,primero
+Tecnicatura Universitaria en Mecatrónica,Sist. Digitales,primero
+Tecnicatura Universitaria en Mecatrónica,Electrotecnia I,primero
+Tecnicatura Universitaria en Mecatrónica,Mecatrónica I,primero
+Tecnicatura Universitaria en Mecatrónica,Materiales,primero
+Tecnicatura Universitaria en Mecatrónica,Tecn.de Fabr.,segundo
+Tecnicatura Universitaria en Mecatrónica,Mecatrónica II,segundo
+Tecnicatura Universitaria en Mecatrónica,Automación Industrial,segundo
+Tecnicatura Universitaria en Mecatrónica,Mecánica II,segundo
+Tecnicatura Universitaria en Mecatrónica,Gestión de la Calidad,segundo
+Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas,"Seguridad, Higiene y Protección Ambiental",primero
+Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas,"Generación, Transmisión y Distribución de la Energía Eléctrica II",primero
+Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas,Sistemas de Representación,tercero
+Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas,"Generación, Transmisión y Distribución de la Energía Eléctrica I",tercero
+Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas,Quimica,tercero
+Tecnicatura Universitaria en Operaciones y Mantenimiento de Redes Electricas,Elementos de Estabilidad,tercero
+Tecnicatura Universitaria en Programación,Inglés I,primero
+Tecnicatura Universitaria en Programación,Base de Datos I,primero
+Tecnicatura Universitaria en Programación,Probabilidad y Estadística,primero
+Tecnicatura Universitaria en Programación,Programación II,primero
+Tecnicatura Universitaria en Programación,Legislación,segundo
+Tecnicatura Universitaria en Programación,Intr.al Análisis de Datos,segundo
+Tecnicatura Universitaria en Programación,TFI,segundo
+Tecnicatura Universitaria en Programación,Metodología de Sistemas II,segundo
+Tecnicatura Universitaria en Programación,Programación IV,segundo
+Tecnicatura Universitaria en Programación,Gestión de Desarrollo de Software,segundo

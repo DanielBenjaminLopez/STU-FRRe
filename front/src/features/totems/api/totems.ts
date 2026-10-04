@@ -5,20 +5,9 @@ import {
 } from "../../../shared/api/client";
 import type { PlantillaDTO } from "../../widgets/api/plantillas";
 
-export interface Espacio {
-  id: number;
-  nombre: string;
-  edificio?: "central" | "anexo" | string;
-  edificio_display?: string;
-  tipo: string;
-  piso: number | string;
-}
-
 export interface Totem {
   id: number;
   nombre: string;
-  espacio_id: number | null;
-  espacio_nombre: string | null;
   activo: boolean;
   config_pantalla: Record<string, unknown>;
   vinculado: boolean;
@@ -48,7 +37,6 @@ export async function createTotem(): Promise<CreateTotemResponse> {
 export async function vincularTotem(data: {
   codigo_vinculacion: string;
   nombre: string;
-  espacio_id?: number;
 }): Promise<Totem> {
   return apiFetch<Totem>("/api/totems/vincular/", {
     method: "POST",
@@ -106,12 +94,8 @@ export async function updateTotemOrientacionMapa(
   });
 }
 
-export async function fetchEspacios(): Promise<Espacio[]> {
-  return apiFetch<Espacio[]>("/api/espacios/");
-}
-
 export async function fetchTotemMe(): Promise<Totem> {
-  return totemFetch<Totem>("/api/totems/me/");
+  return totemFetch<Totem>("/api/totems/me/", { cache: "no-store" });
 }
 
 export interface ConfiguracionVideo {

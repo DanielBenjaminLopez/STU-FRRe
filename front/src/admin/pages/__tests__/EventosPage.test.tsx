@@ -96,7 +96,6 @@ const EVENTOS: eventosApi.Evento[] = [
     fecha_hora_fin: "2026-09-15T18:00:00Z",
     imagen_url: "https://example.com/hackathon.jpg",
     espacio: "Aula Magna",
-    espacio_nombre: "Aula Magna",
     destacado: false,
   },
   {
@@ -109,7 +108,6 @@ const EVENTOS: eventosApi.Evento[] = [
     fecha_hora_fin: "2026-09-20T16:00:00Z",
     imagen_url: "",
     espacio: null,
-    espacio_nombre: null,
     destacado: true,
   },
 ];

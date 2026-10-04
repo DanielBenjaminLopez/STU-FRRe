@@ -11,6 +11,8 @@ import {
   type Totem,
 } from "../../features/totems/api/totems";
 import Button from "../../shared/components/ui/Button";
+import { peekApiCache } from "../../shared/api/client";
+import { API_ENDPOINTS } from "../../shared/api/endpoints";
 import {
   fetchPlantillas,
   type PlantillaDTO,
@@ -20,7 +22,9 @@ import { sileo } from "sileo";
 export default function Home() {
   const { totems, selectedId, setSelectedId, refreshTotems } = useTotem();
 
-  const [plantillas, setPlantillas] = useState<PlantillaDTO[]>([]);
+  const [plantillas, setPlantillas] = useState<PlantillaDTO[]>(
+    () => peekApiCache<PlantillaDTO[]>(API_ENDPOINTS.plantillas) ?? [],
+  );
   const [editing, setEditing] = useState<Totem | null>(null);
   const [deleting, setDeleting] = useState<Totem | null>(null);
   const [vincularOpen, setVincularOpen] = useState(false);
@@ -216,33 +220,40 @@ export default function Home() {
         </div>
       </div>
 
-      {editing && (
-        <DataFormModal
-          title="Editar tótem"
-          fields={editFields}
-          initialData={{
-            ...editing,
-            plantilla_id: editing.plantilla_id ?? "",
-          }}
-          onSubmit={handleUpdate}
-          onClose={() => {
-            setEditing(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {editing && (
+          <DataFormModal
+            key="edit-modal"
+            title="Editar tótem"
+            fields={editFields}
+            initialData={{
+              ...editing,
+              plantilla_id: editing.plantilla_id ?? "",
+            }}
+            onSubmit={handleUpdate}
+            onClose={() => {
+              setEditing(null);
+            }}
+          />
+        )}
 
-      {deleting && (
-        <ConfirmDeleteModal
-          title="Eliminar tótem"
-          itemName={deleting.nombre || `Tótem #${deleting.id}`}
-          onConfirm={handleConfirmDelete}
-          onClose={() => setDeleting(null)}
-        />
-      )}
+        {deleting && (
+          <ConfirmDeleteModal
+            key="delete-modal"
+            title="Eliminar tótem"
+            itemName={deleting.nombre || `Tótem #${deleting.id}`}
+            onConfirm={handleConfirmDelete}
+            onClose={() => setDeleting(null)}
+          />
+        )}
 
-      {vincularOpen && (
-        <VincularTotemModal onClose={() => setVincularOpen(false)} />
-      )}
+        {vincularOpen && (
+          <VincularTotemModal
+            key="vincular-modal"
+            onClose={() => setVincularOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

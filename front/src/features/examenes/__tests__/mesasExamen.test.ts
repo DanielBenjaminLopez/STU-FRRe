@@ -1,37 +1,59 @@
-import { describe, it, expect } from "vitest";
-import { getTurnoFromFecha } from "../api/mesasExamen";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  fetchMesasExamen,
+  createMesaExamen,
+  updateMesaExamen,
+  deleteMesaExamen,
+} from "../api/mesasExamen";
+import { apiFetch } from "../../../shared/api/client";
 
-describe("getTurnoFromFecha", () => {
-  it("determina el turno correcto para cada mes estándar en formato YYYY-MM-DD", () => {
-    expect(getTurnoFromFecha("2026-01-15")).toBe("febrero");
-    expect(getTurnoFromFecha("2026-02-20")).toBe("febrero");
-    expect(getTurnoFromFecha("2026-03-05")).toBe("marzo");
-    expect(getTurnoFromFecha("2026-04-18")).toBe("abril");
-    expect(getTurnoFromFecha("2026-05-10")).toBe("abril");
-    expect(getTurnoFromFecha("2026-05-25")).toBe("junio");
-    expect(getTurnoFromFecha("2026-06-12")).toBe("junio");
-    expect(getTurnoFromFecha("2026-07-08")).toBe("junio");
-    expect(getTurnoFromFecha("2026-07-28")).toBe("agosto");
-    expect(getTurnoFromFecha("2026-08-14")).toBe("agosto");
-    expect(getTurnoFromFecha("2026-09-22")).toBe("septiembre");
-    expect(getTurnoFromFecha("2026-10-10")).toBe("octubre");
-    expect(getTurnoFromFecha("2026-11-25")).toBe("diciembre");
-    expect(getTurnoFromFecha("2026-12-15")).toBe("diciembre");
+vi.mock("../../../shared/api/client", () => ({
+  apiFetch: vi.fn(),
+  apiUpload: vi.fn(),
+}));
+
+const mockApiFetch = vi.mocked(apiFetch);
+
+describe("mesasExamen API", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it("soporta formato con hora YYYY-MM-DDTHH:mm", () => {
-    expect(getTurnoFromFecha("2026-03-10T08:00")).toBe("marzo");
-    expect(getTurnoFromFecha("2026-12-05T14:30:00Z")).toBe("diciembre");
+  it("fetchMesasExamen consulta /api/mesas-examen/", async () => {
+    mockApiFetch.mockResolvedValueOnce([]);
+    const res = await fetchMesasExamen();
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/mesas-examen/");
+    expect(res).toEqual([]);
   });
 
-  it("soporta formato DD/MM/YYYY", () => {
-    expect(getTurnoFromFecha("15/02/2026")).toBe("febrero");
-    expect(getTurnoFromFecha("20/08/2026")).toBe("agosto");
+  it("createMesaExamen envía POST con materia string y sin turno ni activo", async () => {
+    const payload = {
+      carrera: 1,
+      materia: "Algoritmos y Estructuras de Datos",
+      espacio: "Aula 10",
+      fecha: "2026-12-10",
+      hora: "08:00",
+    };
+    mockApiFetch.mockResolvedValueOnce({ id: 5, ...payload });
+    await createMesaExamen(payload);
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/mesas-examen/", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   });
 
-  it("retorna null para valores vacíos o inválidos", () => {
-    expect(getTurnoFromFecha("")).toBeNull();
-    expect(getTurnoFromFecha("invalido")).toBeNull();
-    expect(getTurnoFromFecha("2026-")).toBeNull();
+  it("updateMesaExamen y deleteMesaExamen llaman al endpoint con id", async () => {
+    mockApiFetch.mockResolvedValueOnce({ id: 5 });
+    await updateMesaExamen(5, { espacio: "Aula 12" });
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/mesas-examen/5/", {
+      method: "PATCH",
+      body: JSON.stringify({ espacio: "Aula 12" }),
+    });
+
+    mockApiFetch.mockResolvedValueOnce(undefined);
+    await deleteMesaExamen(5);
+    expect(mockApiFetch).toHaveBeenCalledWith("/api/mesas-examen/5/", {
+      method: "DELETE",
+    });
   });
 });

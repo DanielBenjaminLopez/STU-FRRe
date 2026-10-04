@@ -72,4 +72,61 @@ describe("client API", () => {
       .mockResolvedValue(new Response("<html>error</html>", { status: 502 }));
     await expect(apiFetch("/x")).rejects.toThrow("Error 502");
   });
+
+  it("reutiliza la caché en memoria para peticiones GET repetidas y expone peekApiCache", async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify([{ id: 1 }]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    globalThis.fetch = fetchMock;
+
+    const first = await apiFetch("/api/test-cache/");
+    const second = await apiFetch("/api/test-cache/");
+
+    expect(first).toEqual([{ id: 1 }]);
+    expect(second).toEqual([{ id: 1 }]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("invalida la caché automáticamente al realizar una mutación", async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    globalThis.fetch = fetchMock;
+
+    await apiFetch("/api/items/");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await apiFetch("/api/items/", { method: "POST", body: "{}" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await apiFetch("/api/items/");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("respeta cache: no-store omitiendo la caché en memoria", async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      ),
+    );
+    globalThis.fetch = fetchMock;
+
+    await apiFetch("/api/no-store/", { cache: "no-store" });
+    await apiFetch("/api/no-store/", { cache: "no-store" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

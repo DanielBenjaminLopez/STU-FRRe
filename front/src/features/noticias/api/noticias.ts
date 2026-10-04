@@ -1,4 +1,5 @@
 import { apiFetch, publicFetch } from "../../../shared/api/client";
+import { API_ENDPOINTS } from "../../../shared/api/endpoints";
 import { fetchEventos, type Evento } from "./eventos";
 
 export interface Noticia {
@@ -81,7 +82,7 @@ function mapEventoToFeed(e: Evento): ContenidoFeed {
     imagen_url: e.imagen_url || "",
     tipo: "evento",
     tipo_evento: tipoLabel,
-    espacio_nombre: e.espacio_nombre || undefined,
+    espacio_nombre: e.espacio || undefined,
     destacado: Boolean(e.destacado),
   };
 }
@@ -135,7 +136,7 @@ export async function fetchFeedCreados(): Promise<ContenidoFeed[]> {
 }
 
 export async function fetchNoticias(): Promise<Noticia[]> {
-  return publicFetch<Noticia[]>("/api/noticias/");
+  return publicFetch<Noticia[]>(API_ENDPOINTS.noticias);
 }
 
 export async function fetchLatestNoticia(): Promise<Noticia | null> {
