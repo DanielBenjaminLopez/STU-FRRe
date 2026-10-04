@@ -338,7 +338,7 @@ export default function UbicacionesMapaPage() {
           </div>
 
           {/* Tabla */}
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-auto">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             {error ? (
               <div className="flex items-center justify-center h-40 text-sm text-red-500">
                 {error}
@@ -346,17 +346,17 @@ export default function UbicacionesMapaPage() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 text-left">
-                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-center">
+                  <tr className="border-b-2 border-gray-100 text-left">
+                    <th className="px-4 py-3 font-semibold text-gray-600 w-28 text-center">
                       ID SVG
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500">
+                    <th className="px-4 py-3 font-semibold text-gray-600 w-[52%]">
                       Nombre
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 w-40 text-left">
+                    <th className="px-4 py-3 font-semibold text-gray-600 w-[33%] text-center">
                       Tipo
                     </th>
-                    <th className="px-6 py-3 font-medium text-gray-500 w-24 text-center">
+                    <th className="px-4 py-3 font-semibold text-gray-600 w-24 text-right">
                       Acciones
                     </th>
                   </tr>
@@ -366,19 +366,19 @@ export default function UbicacionesMapaPage() {
                     Array.from({ length: 5 }).map((_, i) => (
                       <tr
                         key={`skeleton-${i}`}
-                        className="border-b border-gray-50 last:border-0"
+                        className="border-b border-gray-100 last:border-0"
                       >
-                        <td className="px-6 py-3 text-center">
-                          <div className="h-5 bg-gray-100 rounded-lg animate-pulse w-14 mx-auto" />
+                        <td className="px-4 py-3 text-center">
+                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-14 mx-auto" />
                         </td>
-                        <td className="px-6 py-3">
-                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-3/5" />
+                        <td className="px-4 py-3">
+                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-3/4" />
                         </td>
-                        <td className="px-6 py-3 text-left">
-                          <div className="h-6 bg-gray-100 rounded-full animate-pulse w-24" />
+                        <td className="px-4 py-3 text-center">
+                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-24 mx-auto" />
                         </td>
-                        <td className="px-6 py-3 text-center">
-                          <div className="h-7 w-7 bg-gray-100 rounded-lg animate-pulse mx-auto" />
+                        <td className="px-4 py-3">
+                          <div className="h-4 bg-gray-100 rounded-xl animate-pulse w-16 ml-auto" />
                         </td>
                       </tr>
                     ))
@@ -386,7 +386,7 @@ export default function UbicacionesMapaPage() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-6 py-12 text-center text-gray-400"
+                        className="px-4 py-8 text-center text-gray-400"
                       >
                         {searchQuery
                           ? "No se encontraron ubicaciones que coincidan."
@@ -397,19 +397,19 @@ export default function UbicacionesMapaPage() {
                     ubicacionesPiso.map((u) => (
                       <tr
                         key={u.id}
-                        className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                        className="border-b border-gray-100 last:border-0 hover:bg-gray-50/50 transition-colors"
                       >
-                        <td className="px-6 py-3 text-center">
-                          <span className="font-mono text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
+                        <td className="px-4 py-3 text-center">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg font-mono text-xs font-semibold bg-gray-100 text-gray-800">
                             {u.svg_id}
                           </span>
                         </td>
-                        <td className="px-6 py-3 font-medium text-gray-900">
+                        <td className="px-4 py-3 font-medium text-gray-900">
                           {u.nombre}
                         </td>
-                        <td className="px-6 py-3 text-left">
+                        <td className="px-4 py-3 text-center">
                           <span
-                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold"
                             style={{
                               backgroundColor:
                                 (TIPO_COLORS[u.tipo] ?? "#d1d5db") + "55",
@@ -419,8 +419,8 @@ export default function UbicacionesMapaPage() {
                             {u.tipo_display}
                           </span>
                         </td>
-                        <td className="px-6 py-3 text-center">
-                          <div className="flex justify-center">
+                        <td className="px-4 py-3">
+                          <div className="flex justify-end gap-2">
                             <button
                               type="button"
                               id={`edit-ubicacion-${u.id}`}

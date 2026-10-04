@@ -323,62 +323,83 @@ class HorarioCursadoResource(resources.ModelResource):
 
 
 class MesaExamenResource(resources.ModelResource):
-    materia = fields.Field(
-        column_name='materia',
-        attribute='materia',
-        widget=ForeignKeyWidget(Materia, field='id'),
+    carrera = fields.Field(
+        column_name='carrera',
+        attribute='carrera',
+        widget=ForeignKeyWidget(Carrera, field='id'),
     )
 
     def before_import_row(self, row, **kwargs):
-        carrera_nombre = row.get('carrera') or row.get('Carrera')
+        carrera_val = row.get('carrera') or row.get('Carrera')
         materia_val = row.get('materia') or row.get('Materia')
-        if not carrera_nombre or not materia_val:
+        if not carrera_val or not str(carrera_val).strip() or not materia_val or not str(materia_val).strip():
             raise ValidationError("Los campos 'carrera' y 'materia' son obligatorios.")
 
-        if not isinstance(materia_val, int):
-            mat = resolver_materia(carrera_nombre, materia_val)
-            if mat:
-                row['materia'] = mat.id
+        if not isinstance(carrera_val, int):
+            car = resolver_carrera(carrera_val)
+            if car:
+                row['carrera'] = car.id
             else:
                 raise ValidationError(
-                    f"No existe la materia '{materia_val}' para la carrera '{carrera_nombre}'."
+                    f"No existe la carrera '{carrera_val}'."
                 )
+
+        row['materia'] = str(materia_val).strip()
 
         espacio_val = (
             row.get('espacio')
             or row.get('aula')
             or row.get('Aula')
+            or row.get('AULA')
             or row.get('Espacio')
+            or row.get('ESPACIO')
+            or row.get('laboratorio')
+            or row.get('Laboratorio')
         )
-        if not espacio_val or not str(espacio_val).strip():
-            raise ValidationError("El campo 'espacio' o 'aula' es obligatorio.")
-
-        row['espacio'] = str(espacio_val).strip()
+        row['espacio'] = str(espacio_val).strip() if espacio_val and str(espacio_val).strip() else ''
 
         fecha_val = row.get('fecha') or row.get('Fecha')
         if not fecha_val or not str(fecha_val).strip():
             raise ValidationError("El campo 'fecha' es obligatorio.")
 
+        fecha_str = str(fecha_val).strip()
+        if '/' in fecha_str:
+            partes = fecha_str.split('/')
+            if len(partes) == 3 and len(partes[2]) == 4:
+                fecha_str = f"{partes[2]}-{partes[1].zfill(2)}-{partes[0].zfill(2)}"
+        row['fecha'] = fecha_str
+
         hora_val = row.get('hora') or row.get('Hora')
         validar_hora(hora_val, "hora")
+        row['hora'] = str(hora_val).strip()
 
     def get_instance(self, instance_loader, row):
-        materia_id = row.get('materia')
+        carrera_id = row.get('carrera')
+        materia_str = str(row.get('materia') or '').strip()
         espacio_str = str(row.get('espacio') or '').strip()
         fecha = row.get('fecha')
         hora = row.get('hora')
-        turno = row.get('turno')
-        if materia_id and espacio_str and fecha and hora and turno:
-            try:
-                return self._meta.model.objects.get(
-                    materia_id=materia_id,
-                    espacio=espacio_str,
+        if carrera_id and materia_str and fecha and hora:
+            exact = self._meta.model.objects.filter(
+                carrera_id=carrera_id,
+                materia=materia_str,
+                espacio=espacio_str,
+                fecha=fecha,
+                hora=hora,
+            ).first()
+            if exact:
+                return exact
+
+            if espacio_str:
+                orphan = self._meta.model.objects.filter(
+                    carrera_id=carrera_id,
+                    materia=materia_str,
+                    espacio='',
                     fecha=fecha,
                     hora=hora,
-                    turno=turno,
-                )
-            except self._meta.model.DoesNotExist:
-                return None
+                ).first()
+                if orphan:
+                    return orphan
         return super().get_instance(instance_loader, row)
 
     class Meta:
@@ -387,12 +408,11 @@ class MesaExamenResource(resources.ModelResource):
         report_skipped = True
         fields = (
             'id',
+            'carrera',
             'materia',
             'espacio',
             'fecha',
             'hora',
-            'turno',
-            'activo',
         )
 
 

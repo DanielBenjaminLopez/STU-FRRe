@@ -50,8 +50,7 @@ describe("ExamenesFull", () => {
 
     expect(screen.getByText("Exámenes")).toBeInTheDocument();
     expect(screen.getByText(LONGA)).toBeInTheDocument();
-    expect(screen.getByText("16:35 - 18:55")).toBeInTheDocument();
-    // El aula comparte nodo de texto con la comision y la carrera.
+    expect(screen.getByText("16:35 hs")).toBeInTheDocument();
     expect(screen.getByText(/Laboratorio informático 4/)).toBeInTheDocument();
   });
 

@@ -107,15 +107,14 @@ class HorarioCursadoAdmin(ImportExportModelAdmin):
 class MesaExamenAdmin(ImportExportModelAdmin):
     resource_class = MesaExamenResource
     list_display = [
+        'carrera',
         'materia',
         'espacio',
         'fecha',
         'hora',
-        'turno',
-        'activo',
     ]
-    list_filter = ['turno', 'activo', 'materia__carrera']
-    search_fields = ['materia__nombre']
+    list_filter = ['carrera']
+    search_fields = ['materia', 'carrera__nombre', 'carrera__codigo']
 
 
 @admin.register(Evento)

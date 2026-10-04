@@ -5,48 +5,31 @@ vi.mock("../../../shared/api/client", () => ({
   totemFetch: vi.fn().mockResolvedValue([
     {
       id: 1,
-      materia: 1,
+      carrera: 1,
+      materia: "Algoritmos y Estructuras de Datos",
       espacio: "Aula 1.1",
       materia_nombre: "Algoritmos y Estructuras de Datos",
       carrera_codigo: "ISI",
       fecha: "2026-09-21",
       hora: "08:00:00",
-      turno: "septiembre",
-      llamado: 1,
       dia_semana: "lunes",
-      activo: true,
     },
     {
       id: 2,
-      materia: 2,
+      carrera: 2,
+      materia: "Física II",
       espacio: "Aula 1.2",
       materia_nombre: "Física II",
       carrera_codigo: "IEM",
       fecha: "2026-09-22",
       hora: "10:00:00",
-      turno: "septiembre",
-      llamado: 1,
       dia_semana: "martes",
-      activo: true,
-    },
-    {
-      id: 3,
-      materia: 3,
-      espacio: "Aula 1.3",
-      materia_nombre: "Inactiva",
-      carrera_codigo: "IQ",
-      fecha: "2026-09-23",
-      hora: "14:00:00",
-      turno: "septiembre",
-      llamado: 1,
-      dia_semana: "miercoles",
-      activo: false,
     },
   ]),
 }));
 
 describe("fetchExamenes", () => {
-  it("retorna un array de exámenes activos mapeados", async () => {
+  it("retorna un array de exámenes mapeados", async () => {
     const examenes = await fetchExamenes();
     expect(Array.isArray(examenes)).toBe(true);
     expect(examenes.length).toBe(2);
@@ -71,7 +54,7 @@ describe("fetchExamenes", () => {
     expect(examenes[0]).toEqual({
       id: 1,
       carrera_codigo: "ISI",
-      comision: "1° llamado",
+      comision: "",
       materia_nombre: "Algoritmos y Estructuras de Datos",
       hora_inicio: "08:00",
       hora_fin: "10:00",

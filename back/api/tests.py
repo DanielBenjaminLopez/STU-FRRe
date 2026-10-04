@@ -765,7 +765,7 @@ class MateriaSimplificadaTestCase(TestCase):
         self.client.force_authenticate(user=self.admin_user)
 
     def test_model_materia_no_tiene_cuatrimestre_modalidad_ni_plan_estudio(self):
-        from api.models import Materia, HorarioCursado
+        from api.models import Materia, HorarioCursado, MesaExamen
 
         campos_mat = {f.name for f in Materia._meta.get_fields()}
         self.assertNotIn("cuatrimestre", campos_mat)
@@ -779,6 +779,18 @@ class MateriaSimplificadaTestCase(TestCase):
         self.assertNotIn("activo", campos_hor)
         self.assertIn("materia", campos_hor)
         self.assertIn("comision", campos_hor)
+
+        campos_mesa = {f.name for f in MesaExamen._meta.get_fields()}
+        self.assertNotIn("turno", campos_mesa)
+        self.assertNotIn("activo", campos_mesa)
+        self.assertNotIn("plan_estudio", campos_mesa)
+        self.assertNotIn("plan_materia", campos_mesa)
+        self.assertIn("carrera", campos_mesa)
+        self.assertIn("materia", campos_mesa)
+        self.assertIn("espacio", campos_mesa)
+        self.assertIn("fecha", campos_mesa)
+        self.assertIn("hora", campos_mesa)
+        self.assertIsNone(MesaExamen._meta.get_field("materia").related_model)
 
     def test_api_materias_expone_carrera_y_nivel_sin_plan_estudio(self):
         from api.models import Carrera, Materia
@@ -825,6 +837,41 @@ class MateriaSimplificadaTestCase(TestCase):
         self.assertNotIn("activo", fila)
         self.assertEqual(fila["nivel"], "cuarto")
         self.assertEqual(fila["comision"], "Curso 1")
+
+    def test_api_mesas_examen_sin_turno_activo_ni_plan_estudio(self):
+        from io import BytesIO
+        from api.models import Carrera, MesaExamen
+
+        car = Carrera.objects.create(nombre="Test API Mesas", tipo="grado", codigo="TAM")
+        MesaExamen.objects.create(
+            carrera=car,
+            materia="Materia Libre no existente en tabla Materia",
+            espacio="",
+            fecha="2026-12-10",
+            hora="08:00",
+        )
+
+        response = self.client.get("/api/mesas-examen/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        fila = next(
+            f for f in response.json() if f["materia"] == "Materia Libre no existente en tabla Materia"
+        )
+        self.assertNotIn("turno", fila)
+        self.assertNotIn("llamado", fila)
+        self.assertNotIn("activo", fila)
+        self.assertNotIn("plan_estudio", fila)
+        self.assertEqual(fila["carrera_codigo"], "TAM")
+        self.assertEqual(fila["espacio"], "")
+        self.assertEqual(fila["fecha"], "2026-12-10")
+
+        csv_content = "carrera,materia,espacio,fecha,hora\nTAM,Materia CSV Libre,,15/12/2026,14:00\n"
+        csv_file = BytesIO(csv_content.encode("utf-8"))
+        csv_file.name = "mesas.csv"
+        res_csv = self.client.post("/api/mesas-examen/importar-csv/", {"file": csv_file}, format="multipart")
+        self.assertEqual(res_csv.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_csv.json()["exito"])
+        self.assertTrue(MesaExamen.objects.filter(carrera=car, materia="Materia CSV Libre", espacio="").exists())
 
     def test_importar_materia_csv_ignora_columnas_eliminadas(self):
         import tablib

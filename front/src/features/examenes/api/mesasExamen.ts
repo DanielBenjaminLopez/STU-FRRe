@@ -4,82 +4,14 @@ import type { CsvImportResult } from "../../horarios/api/horariosAdmin";
 
 export interface MesaExamen {
   id: number;
-  materia: number;
+  carrera?: number | null;
+  carrera_codigo?: string;
+  carrera_nombre?: string;
+  materia: string;
+  materia_nombre?: string;
   espacio: string;
   fecha?: string;
   hora?: string;
-  fecha_hora?: string;
-  turno: string;
-  llamado?: number;
-  activo: boolean;
-  materia_nombre?: string;
-}
-
-export const TURNOS = [
-  { value: "febrero", label: "Febrero" },
-  { value: "marzo", label: "Marzo" },
-  { value: "abril", label: "Abril" },
-  { value: "junio", label: "Junio" },
-  { value: "agosto", label: "Agosto" },
-  { value: "septiembre", label: "Septiembre" },
-  { value: "octubre", label: "Octubre" },
-  { value: "diciembre", label: "Diciembre" },
-] as const;
-
-export type TurnoMesa = (typeof TURNOS)[number]["value"];
-
-/**
- * Determina automáticamente el turno de examen según la fecha seleccionada.
- * Acepta formatos YYYY-MM-DD, YYYY-MM-DDTHH:mm y DD/MM/YYYY.
- */
-export function getTurnoFromFecha(fechaStr: string): TurnoMesa | null {
-  if (!fechaStr) return null;
-  const cleanDate = fechaStr.split("T")[0].trim();
-  let month = 0;
-  let day = 0;
-
-  if (cleanDate.includes("-")) {
-    const parts = cleanDate.split("-");
-    if (parts.length >= 3) {
-      month = parseInt(parts[1], 10);
-      day = parseInt(parts[2], 10);
-    }
-  } else if (cleanDate.includes("/")) {
-    const parts = cleanDate.split("/");
-    if (parts.length >= 3) {
-      day = parseInt(parts[0], 10);
-      month = parseInt(parts[1], 10);
-    }
-  }
-
-  if (isNaN(month) || month < 1 || month > 12) return null;
-
-  switch (month) {
-    case 1:
-    case 2:
-      return "febrero";
-    case 3:
-      return "marzo";
-    case 4:
-      return "abril";
-    case 5:
-      return day <= 15 ? "abril" : "junio";
-    case 6:
-      return "junio";
-    case 7:
-      return day <= 15 ? "junio" : "agosto";
-    case 8:
-      return "agosto";
-    case 9:
-      return "septiembre";
-    case 10:
-      return "octubre";
-    case 11:
-    case 12:
-      return "diciembre";
-    default:
-      return null;
-  }
 }
 
 export async function fetchMesasExamen(): Promise<MesaExamen[]> {
@@ -109,15 +41,18 @@ export async function deleteMesaExamen(id: number): Promise<void> {
   await apiFetch(`${API_ENDPOINTS.mesasExamen}${id}/`, { method: "DELETE" });
 }
 
-export interface MateriaDTO {
-  id: number;
-  carrera: number;
-  nombre: string;
-  carrera_nombre?: string;
-}
-
-export async function fetchMateriasForSelect(): Promise<MateriaDTO[]> {
-  return apiFetch<MateriaDTO[]>(API_ENDPOINTS.materias);
+export async function vaciarMesasExamen(filters?: {
+  carrera?: number;
+}): Promise<{ eliminados: number }> {
+  const params = new URLSearchParams();
+  if (filters?.carrera) params.append("carrera", String(filters.carrera));
+  const qs = params.toString();
+  return apiFetch<{ eliminados: number }>(
+    `${API_ENDPOINTS.mesasExamen}vaciar/${qs ? `?${qs}` : ""}`,
+    {
+      method: "DELETE",
+    },
+  );
 }
 
 export async function importarMesasExamenCSV(

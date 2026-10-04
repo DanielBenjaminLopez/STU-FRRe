@@ -183,8 +183,9 @@ export default function EventosPage() {
         key: "titulo",
         label: "Evento",
         sortable: true,
+        width: "w-[28%]",
         render: (_val, row) => (
-          <div className="flex items-center gap-3 py-1">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-gray-100 border border-gray-200/80 flex items-center justify-center">
               {row.imagen_url ? (
                 <img
@@ -212,7 +213,7 @@ export default function EventosPage() {
               )}
             </div>
             <div className="flex flex-col min-w-0 max-w-xs">
-              <span className="font-semibold text-gray-900 truncate">
+              <span className="font-medium text-gray-900 truncate">
                 {row.titulo}
               </span>
               {row.descripcion && (
@@ -229,10 +230,11 @@ export default function EventosPage() {
         label: "Tipo",
         sortable: true,
         align: "center",
+        width: "w-[14%]",
         render: (val) => {
           const label = formatTipoEvento(String(val ?? ""));
           return (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/70">
               {label}
             </span>
           );
@@ -240,31 +242,17 @@ export default function EventosPage() {
       },
       {
         key: "espacio",
-        label: "Lugar",
+        label: "Espacio",
+        sortable: true,
         align: "center",
+        width: "w-[17%]",
         render: (val) => {
-          if (!val) return <span className="text-gray-400">-</span>;
+          if (!val)
+            return (
+              <span className="text-gray-400 text-xs italic">Sin asignar</span>
+            );
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-              <svg
-                className="w-3 h-3 text-gray-500 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/70">
               {String(val)}
             </span>
           );
@@ -272,16 +260,18 @@ export default function EventosPage() {
       },
       {
         key: "fecha_hora_inicio",
-        label: "Fecha y Horario",
+        label: "Fecha y horario",
         sortable: true,
+        align: "center",
+        width: "w-[18%]",
         render: (_val, row) => {
           const { fecha, horario } = formatFechaSimple(
             row.fecha_hora_inicio,
             row.fecha_hora_fin,
           );
           return (
-            <div className="flex flex-col text-sm py-0.5">
-              <span className="font-medium text-gray-900">{fecha}</span>
+            <div className="flex flex-col items-center text-sm tabular-nums">
+              <span className="font-medium text-gray-700">{fecha}</span>
               <span className="text-xs text-gray-500">{horario}</span>
             </div>
           );
@@ -291,6 +281,7 @@ export default function EventosPage() {
         key: "id",
         label: "Estado",
         align: "center",
+        width: "w-[13%]",
         render: (_val, row) => {
           const estado = getEstadoEvento(
             row.fecha_hora_inicio,
@@ -298,20 +289,20 @@ export default function EventosPage() {
           );
           if (estado === "en_curso") {
             return (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70">
                 En curso
               </span>
             );
           }
           if (estado === "proximo") {
             return (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-50 text-sky-700 border border-sky-200">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/70">
                 Próximo
               </span>
             );
           }
           return (
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200/70">
               Finalizado
             </span>
           );
@@ -321,6 +312,7 @@ export default function EventosPage() {
         key: "destacado",
         label: "Destacar",
         align: "center",
+        width: "w-[10%]",
         render: (_val, row) => {
           const isDestacado = Boolean(row.destacado);
           return (

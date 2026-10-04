@@ -100,34 +100,17 @@ class HorarioCursado(models.Model):
 
 
 class MesaExamen(models.Model):
-    TURNO = [
-        ('febrero', 'Febrero'),
-        ('marzo', 'Marzo'),
-        ('abril', 'Abril'),
-        ('junio', 'Junio'),
-        ('agosto', 'Agosto'),
-        ('septiembre', 'Septiembre'),
-        ('octubre', 'Octubre'),
-        ('diciembre', 'Diciembre'),
-    ]
-
-    LLAMADO_POR_TURNO = {
-        'febrero': 1,
-        'marzo': 2,
-        'abril': 3,
-        'junio': 4,
-        'agosto': 5,
-        'septiembre': 6,
-        'octubre': 7,
-        'diciembre': 8,
-    }
-
-    materia = models.ForeignKey(
-        Materia,
+    carrera = models.ForeignKey(
+        Carrera,
         on_delete=models.CASCADE,
         related_name='mesas_examen',
         null=True,
         blank=True,
+    )
+    materia = models.CharField(
+        max_length=200,
+        default='',
+        help_text='Nombre de la materia',
     )
     espacio = models.CharField(
         max_length=150,
@@ -137,27 +120,19 @@ class MesaExamen(models.Model):
     )
     fecha = models.DateField(default='2025-01-01')
     hora = models.TimeField(default='00:00')
-    turno = models.CharField(max_length=15, choices=TURNO, default='febrero')
-    activo = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['fecha', 'hora']
-        unique_together = [['materia', 'espacio', 'fecha', 'hora', 'turno']]
+        unique_together = [['carrera', 'materia', 'espacio', 'fecha', 'hora']]
         verbose_name = 'Mesa de examen'
         verbose_name_plural = 'Mesas de exámen'
 
     def __str__(self):
         if self.materia:
-            return f'{self.materia.nombre} - {self.get_turno_display()} ({self.llamado}° llamado)'
-        return f'Mesa #{self.id or "nueva"} - {self.get_turno_display()}'
-
-    @property
-    def llamado(self):
-        return self.LLAMADO_POR_TURNO.get(self.turno)
+            return f'{self.materia} - {self.fecha} {self.hora}'
+        return f'Mesa #{self.id or "nueva"} - {self.fecha} {self.hora}'
 
     @property
     def dia_semana(self):
         dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
         return dias[self.fecha.weekday()]
-
-

@@ -78,6 +78,7 @@ const columns: Column<HorarioRow>[] = [
     label: "Carrera",
     sortable: true,
     align: "center",
+    width: "w-28",
     render: (_, row) => (
       <span
         className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-800"
@@ -91,6 +92,7 @@ const columns: Column<HorarioRow>[] = [
     key: "materia_nombre",
     label: "Materia",
     sortable: true,
+    width: "w-[28%]",
     render: (val) => (
       <span className="font-medium text-gray-900">{String(val || "-")}</span>
     ),
@@ -100,6 +102,7 @@ const columns: Column<HorarioRow>[] = [
     label: "Nivel",
     sortable: true,
     align: "center",
+    width: "w-[11%]",
     render: (val) => (
       <span className="text-gray-600 text-xs font-medium">
         {String(val || "-")}
@@ -111,6 +114,7 @@ const columns: Column<HorarioRow>[] = [
     label: "Comisión",
     sortable: true,
     align: "center",
+    width: "w-[13%]",
     render: (val) =>
       val ? (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
@@ -124,12 +128,18 @@ const columns: Column<HorarioRow>[] = [
     key: "dia_label",
     label: "Día",
     sortable: true,
+    align: "center",
+    width: "w-[12%]",
+    render: (val) => (
+      <span className="text-gray-700 font-medium">{String(val || "-")}</span>
+    ),
   },
   {
     key: "horario_str",
     label: "Horario",
     sortable: true,
     align: "center",
+    width: "w-[14%]",
     render: (val) => (
       <span className="tabular-nums font-medium text-gray-700">
         {String(val)}
@@ -141,6 +151,7 @@ const columns: Column<HorarioRow>[] = [
     label: "Espacio / Aula",
     sortable: true,
     align: "center",
+    width: "w-[15%]",
     render: (val) =>
       val ? (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/70">

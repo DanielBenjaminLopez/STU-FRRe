@@ -20,20 +20,29 @@ import {
 } from "../../features/noticias/api/noticias";
 
 const columns: Column<Noticia>[] = [
-  { key: "titulo", label: "Título", sortable: true },
+  {
+    key: "titulo",
+    label: "Título",
+    sortable: true,
+    width: "w-[36%]",
+    render: (val) => (
+      <span className="font-medium text-gray-900">{String(val || "-")}</span>
+    ),
+  },
   {
     key: "origen",
     label: "Origen",
     sortable: true,
     align: "center",
+    width: "w-[15%]",
     render: (val) => {
       const isScraping = val === "scraping";
       return (
         <span
-          className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${
             isScraping
-              ? "bg-blue-50 text-blue-700"
-              : "bg-purple-50 text-purple-700"
+              ? "bg-blue-50 text-blue-700 border-blue-200/70"
+              : "bg-purple-50 text-purple-700 border-purple-200/70"
           }`}
         >
           {isScraping ? "Scraping" : "Manual"}
@@ -46,10 +55,15 @@ const columns: Column<Noticia>[] = [
     label: "Fecha de publicación",
     sortable: true,
     align: "center",
+    width: "w-[19%]",
     render: (val) => {
-      if (!val) return "-";
+      if (!val) return <span className="text-gray-400">-</span>;
       const d = new Date(String(val));
-      return d.toLocaleDateString("es-ES");
+      return (
+        <span className="tabular-nums font-medium text-gray-700">
+          {d.toLocaleDateString("es-ES")}
+        </span>
+      );
     },
   },
   {
@@ -57,23 +71,29 @@ const columns: Column<Noticia>[] = [
     label: "Fecha de expiración",
     sortable: true,
     align: "center",
+    width: "w-[19%]",
     render: (val) => {
-      if (!val) return "-";
+      if (!val) return <span className="text-gray-400">-</span>;
       const d = new Date(String(val));
-      return d.toLocaleDateString("es-ES");
+      return (
+        <span className="tabular-nums font-medium text-gray-700">
+          {d.toLocaleDateString("es-ES")}
+        </span>
+      );
     },
   },
   {
     key: "imagen_url",
     label: "Imagen",
     align: "center",
+    width: "w-[11%]",
     render: (val) => {
-      if (!val) return "-";
+      if (!val) return <span className="text-gray-400">-</span>;
       return (
         <img
           src={String(val)}
           alt="Miniatura"
-          className="w-10 h-10 rounded-lg object-cover mx-auto"
+          className="w-10 h-10 rounded-lg object-cover mx-auto border border-gray-200/80"
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = "none";
           }}

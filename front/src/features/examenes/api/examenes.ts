@@ -14,16 +14,14 @@ export interface Examen {
 
 interface MesaExamenBackend {
   id: number;
-  materia?: number | null;
-  espacio?: string;
-  materia_nombre?: string;
+  carrera?: number | null;
   carrera_codigo?: string;
+  materia?: string;
+  materia_nombre?: string;
+  espacio?: string;
   fecha?: string;
   hora?: string;
-  turno?: string;
-  llamado?: number;
   dia_semana?: string;
-  activo?: boolean;
 }
 
 function calculateHoraFin(horaInicio: string): string {
@@ -35,20 +33,18 @@ function calculateHoraFin(horaInicio: string): string {
 
 export async function fetchExamenes(): Promise<Examen[]> {
   const data = await totemFetch<MesaExamenBackend[]>("/api/mesas-examen/");
-  return data
-    .filter((m) => m.activo !== false)
-    .map((m) => {
-      const horaInicio = m.hora ? m.hora.slice(0, 5) : "08:00";
-      return {
-        id: m.id,
-        carrera_codigo: m.carrera_codigo || "",
-        comision: m.llamado ? `${m.llamado}° llamado` : "",
-        materia_nombre: m.materia_nombre || "",
-        hora_inicio: horaInicio,
-        hora_fin: calculateHoraFin(horaInicio),
-        dia_semana: m.dia_semana || "",
-        aula: m.espacio || "",
-        fecha: m.fecha,
-      };
-    });
+  return data.map((m) => {
+    const horaInicio = m.hora ? m.hora.slice(0, 5) : "08:00";
+    return {
+      id: m.id,
+      carrera_codigo: m.carrera_codigo || "",
+      comision: "",
+      materia_nombre: m.materia || m.materia_nombre || "",
+      hora_inicio: horaInicio,
+      hora_fin: calculateHoraFin(horaInicio),
+      dia_semana: m.dia_semana || "",
+      aula: m.espacio || "",
+      fecha: m.fecha,
+    };
+  });
 }

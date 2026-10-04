@@ -7,6 +7,7 @@ export interface Column<T> {
   render?: (value: T[keyof T], row: T) => React.ReactNode;
   sortable?: boolean;
   align?: "left" | "center" | "right";
+  width?: string;
 }
 
 interface DataTableProps<T> {
@@ -106,7 +107,7 @@ function DataTableInner<T extends { id: number }>({
                 return (
                   <th
                     key={String(col.key)}
-                    className={`px-4 py-3 ${alignClass} font-semibold text-gray-600 ${col.sortable !== false ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
+                    className={`px-4 py-3 ${alignClass} ${col.width ?? ""} font-semibold text-gray-600 ${col.sortable !== false ? "cursor-pointer select-none hover:text-gray-900" : ""}`}
                     onClick={() =>
                       col.sortable !== false ? handleSort(col.key) : undefined
                     }

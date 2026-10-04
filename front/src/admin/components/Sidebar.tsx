@@ -5,10 +5,7 @@ import {
   fetchMaterias,
 } from "../../features/horarios/api/horariosAdmin";
 import { fetchCarreras } from "../../shared/api/carreras";
-import {
-  fetchMesasExamen,
-  fetchMateriasForSelect,
-} from "../../features/examenes/api/mesasExamen";
+import { fetchMesasExamen } from "../../features/examenes/api/mesasExamen";
 import { fetchNoticias } from "../../features/noticias/api/noticias";
 import { fetchEventos } from "../../features/noticias/api/eventos";
 import { fetchEventosCalendario } from "../../features/calendario/api/calendarioAdmin";
@@ -44,12 +41,7 @@ const navItems: {
   {
     to: "/admin/mesas-examen",
     label: "Mesas de examen",
-    prefetch: () =>
-      prefetchAll(
-        fetchMesasExamen(),
-        fetchCarreras(),
-        fetchMateriasForSelect(),
-      ),
+    prefetch: () => prefetchAll(fetchMesasExamen(), fetchCarreras()),
   },
   {
     to: "/admin/noticias",

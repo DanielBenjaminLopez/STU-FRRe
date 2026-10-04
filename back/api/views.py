@@ -275,7 +275,7 @@ class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     content_resource = 'examenes'
     queryset = MesaExamen.objects.select_related(
-        'materia__carrera',
+        'carrera',
     ).all()
     serializer_class = MesaExamenSerializer
     permission_classes = [AllowAny]
@@ -326,6 +326,18 @@ class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
                 {"detail": f"Error al procesar el archivo CSV: {e}"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+    @action(detail=False, methods=['delete'], url_path='vaciar')
+    def vaciar(self, request):
+        qs = MesaExamen.objects.all()
+        carrera_id = request.query_params.get('carrera')
+        if carrera_id:
+            qs = qs.filter(carrera_id=carrera_id)
+
+        eliminados, _ = qs.delete()
+        if eliminados > 0:
+            self._notify_content()
+        return Response({"eliminados": eliminados}, status=status.HTTP_200_OK)
 
 
 class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):

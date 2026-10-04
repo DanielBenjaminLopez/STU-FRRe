@@ -213,21 +213,33 @@ class HorarioCursadoSerializer(serializers.ModelSerializer):
 
 
 class MesaExamenSerializer(serializers.ModelSerializer):
-    llamado = serializers.IntegerField(read_only=True)
     dia_semana = serializers.CharField(read_only=True)
-    materia_nombre = serializers.CharField(source='materia.nombre', read_only=True)
+    materia_nombre = serializers.CharField(source='materia', read_only=True)
     carrera_codigo = serializers.SerializerMethodField()
+    carrera_nombre = serializers.SerializerMethodField()
+    espacio = serializers.CharField(
+        max_length=150,
+        required=False,
+        allow_blank=True,
+        default='',
+    )
 
     class Meta:
         model = MesaExamen
         fields = [
-            'id', 'materia', 'espacio', 'materia_nombre',
-            'carrera_codigo', 'fecha', 'hora', 'turno', 'llamado', 'dia_semana', 'activo',
+            'id', 'carrera', 'carrera_codigo', 'carrera_nombre',
+            'materia', 'materia_nombre', 'espacio',
+            'fecha', 'hora', 'dia_semana',
         ]
 
     def get_carrera_codigo(self, obj):
-        if obj.materia and obj.materia.carrera and obj.materia.carrera.codigo:
-            return obj.materia.carrera.codigo
+        if obj.carrera and obj.carrera.codigo:
+            return obj.carrera.codigo
+        return ""
+
+    def get_carrera_nombre(self, obj):
+        if obj.carrera and obj.carrera.nombre:
+            return obj.carrera.nombre
         return ""
 
 
