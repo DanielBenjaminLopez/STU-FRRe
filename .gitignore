@@ -1,48 +1,25 @@
-# Configuración del Sistema y Editores
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# Configuración de Docker y Entorno
+# Env files
 .env
 .env.local
 .env.*.local
-*.env
+!.env.example
+!.env.prod.example
+!.env.development.example
 
-# Frontend (Vite / Node)
-front/node_modules/
-front/.pnp
-front/.pnp.js
-front/dist/
-front/build/
-
-# Logs y almacenamiento local de herramientas
-front/npm-debug.log*
-front/yarn-debug.log*
-front/yarn-error.log*
-front/.eslintcache
-front/.vite
-
-# Backend (Django / Python)
-**/__pycache__/
+# Python/Django
+__pycache__/
 *.py[cod]
 *$py.class
+staticfiles/
+media/
 
-back/venv/
-back/env/
-back/.venv/
+# Node
+node_modules/
+dist/
+build/
 
-# Base de datos local
-back/*.sqlite3
-
-# Archivos estáticos y media
-back/staticfiles/
-back/media/
-
-# Base de Datos (Docker)
-.postgres_data/
-
-# Storybook
-*storybook.log
-storybook-static
+# System
+.DS_Store
+*.log
+.vscode/
+.idea/

@@ -1,0 +1,12 @@
+# Desarrollo: cargado automáticamente con `docker compose up`
+# Usa variables de .env.local
+services:
+  db:
+    env_file:
+      - .env.local
+  backend:
+    env_file:
+      - .env.local
+  frontend:
+    env_file:
+      - .env.local
