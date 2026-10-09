@@ -899,3 +899,24 @@ class MateriaSimplificadaTestCase(TestCase):
 
         m1 = Materia.objects.get(carrera=car, nombre="Materia Test CSV")
         self.assertEqual(m1.nivel, "primero")
+
+
+class AvisosActivosAPITestCase(TestCase):
+    def test_avisos_activos_es_publico(self):
+        from django.utils import timezone
+        from rest_framework import status
+        from api.models import Aviso
+
+        hoy = timezone.now().date()
+        Aviso.objects.create(
+            fecha=hoy,
+            motivo="Paro docente",
+            tipo="paro",
+        )
+
+        res = self.client.get("/api/avisos-activos/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        data = res.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["motivo"], "Paro docente")
+

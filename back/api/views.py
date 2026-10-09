@@ -472,7 +472,7 @@ class NoticiasViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 
 
 class AvisosActivosView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         hoy = timezone.now().date()

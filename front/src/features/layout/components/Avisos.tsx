@@ -9,16 +9,6 @@ function formatFecha(fecha: string): string {
   });
 }
 
-function getTipoLabel(tipo: string): string {
-  const labels: Record<string, string> = {
-    paro: "Paro",
-    inasistencia: "Inasistencia",
-    feriado: "Feriado",
-    otro: "Aviso",
-  };
-  return labels[tipo] ?? tipo;
-}
-
 interface AvisosProps {
   avisos: Aviso[];
 }
@@ -67,7 +57,6 @@ export default function Avisos({ avisos }: AvisosProps) {
               <span className="rounded-full bg-white/50 px-3 py-1 text-sm font-semibold tabular-nums text-black shadow-sm">
                 {formatFecha(aviso.fecha)}
               </span>
-              <span className="font-semibold">{getTipoLabel(aviso.tipo)}:</span>
               <span className="font-normal">{aviso.motivo}</span>
             </span>
           ))}
