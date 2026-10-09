@@ -107,7 +107,7 @@ docker compose up -d
 | :--- | :--- | :--- |
 | **Frontend (Tótem / Kiosco)** | http://localhost:5173 | Pantalla pública táctil del tótem. |
 | **Panel Administrativo Web** | http://localhost:5173/admin/ | Gestión de tótems, plantillas, horarios y noticias. |
-| **Django Admin** | http://localhost:8000/admin/ | Administración avanzada del backend e importación masiva. |
+| **Django Admin** | http://localhost:8000/django-admin/ | Administración avanzada del backend e importación masiva. |
 | **API REST** | http://localhost:8000/api/ | Endpoints del backend. |
 
 ---

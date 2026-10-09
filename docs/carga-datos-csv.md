@@ -191,7 +191,7 @@ A continuación se detalla la estructura requerida para cada archivo CSV junto c
 ### Método A: A través de Django Admin (Recomendado para carga inicial completa)
 El panel nativo de Django cuenta con `django-import-export`, lo que permite previsualizar altas y modificaciones antes de impactar en la base de datos.
 
-1. Acceder al panel en `http://localhost:8000/admin/` con credenciales de superusuario.
+1. Acceder al panel en `http://localhost:8000/django-admin/` con credenciales de superusuario.
 2. Navegar a la sección del modelo a importar (por ejemplo, **Horarios de cursado** o **Mesas de exámen**).
 3. En la esquina superior derecha, hacer clic en el botón **Importar**.
 4. Seleccionar el archivo `.csv` desde el equipo.
