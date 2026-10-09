@@ -107,7 +107,7 @@ docker compose up -d
 | :--- | :--- | :--- |
 | **Frontend (Tótem / Kiosco)** | http://localhost:5173 | Pantalla pública táctil del tótem. |
 | **Panel Administrativo Web** | http://localhost:5173/admin/ | Gestión de tótems, plantillas, horarios y noticias. |
-| **Django Admin** | http://localhost:8000/admin/ | Administración avanzada del backend e importación masiva. |
+| **Django Admin** | http://localhost:8000/django-admin/ | Administración avanzada del backend e importación masiva. |
 | **API REST** | http://localhost:8000/api/ | Endpoints del backend. |
 
 ---
@@ -142,3 +142,21 @@ Para consultar guías técnicas y operativas detalladas, revisar los documentos 
 - [Guía de Carga de Datos CSV](docs/carga-datos-csv.md): Preparación en Excel y carga masiva en el sistema.
 - [Guía de Modo Kiosco](docs/modo-kiosco.md): Configuración de computadoras (Windows y Linux) para pantallas táctiles.
 - [Guía de Instalación Local](docs/instalacion-local.md): Ejecución alternativa paso a paso sin Docker.
+
+---
+
+### 4. Despliegue en producción
+
+Para levantar el proyecto en modo producción (imágenes optimizadas, build de Vite+Nginx, healthchecks, sin mounts de código), consulta la [Guía de Despliegue Docker en Producción](docs/DOCKER_PROD.md).
+
+Acceso rápido:
+```bash
+cp .env.prod.example .env
+# Editar .env (SECRET_KEY, DB_PASSWORD, ALLOWED_HOSTS)
+docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+```
+
+### Notas sobre archivos .env
+
+- **Desarrollo**: usar `.env.local` (copia de `.env.example` o `.env`). El override `docker-compose.override.yml` carga `.env.local` automáticamente.
+- **Producción**: usar `.env` con `--env-file .env` junto a `docker-compose.prod.yml`.

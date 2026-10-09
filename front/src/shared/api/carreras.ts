@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from "./endpoints";
 export interface Carrera {
   id: number;
   nombre: string;
+  codigo?: string;
   tipo: "grado" | "tecnica" | "posgrado" | "diplomatura";
 }
 
