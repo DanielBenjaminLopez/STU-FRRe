@@ -21,12 +21,34 @@ function getMinutes(time: string): number {
   return h * 60 + m;
 }
 
-function getTodayDateString(): string {
+export function getTodayDateString(): string {
   const d = new Date();
   const year = d.getFullYear();
   const month = (d.getMonth() + 1).toString().padStart(2, "0");
   const day = d.getDate().toString().padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function isMesaVigente(
+  fecha?: string,
+  todayDateStr: string = getTodayDateString(),
+): boolean {
+  if (!fecha) return true;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return fecha >= todayDateStr;
+  }
+  const parts = fecha.split(/[-/]/).map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    if (parts[0] > 1900) {
+      const formatted = `${parts[0]}-${parts[1].toString().padStart(2, "0")}-${parts[2].toString().padStart(2, "0")}`;
+      return formatted >= todayDateStr;
+    }
+    if (parts[2] > 1900) {
+      const formatted = `${parts[2]}-${parts[1].toString().padStart(2, "0")}-${parts[0].toString().padStart(2, "0")}`;
+      return formatted >= todayDateStr;
+    }
+  }
+  return true;
 }
 
 export function useExamenes() {
@@ -75,6 +97,11 @@ export function useExamenes() {
 
   const today = getTodayDayName();
   const todayDate = getTodayDateString();
+
+  const vigentes = useMemo(() => {
+    return todas.filter((c) => isMesaVigente(c.fecha, todayDate));
+  }, [todas, todayDate]);
+
   const examenesHoy = todas.filter((c) =>
     c.fecha ? c.fecha === todayDate : c.dia_semana === today,
   );
@@ -96,9 +123,11 @@ export function useExamenes() {
 
   const uniqueCarreras = useMemo(
     () =>
-      [...new Set(todas.map((c) => c.carrera_codigo).filter(Boolean))].sort(),
-    [todas],
+      [
+        ...new Set(vigentes.map((c) => c.carrera_codigo).filter(Boolean)),
+      ].sort(),
+    [vigentes],
   );
 
-  return { ahora, siguiente, todas, uniqueCarreras, loading, error };
+  return { ahora, siguiente, todas: vigentes, uniqueCarreras, loading, error };
 }

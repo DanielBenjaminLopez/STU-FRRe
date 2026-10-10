@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { ScheduleGridSkeleton } from "../../../shared/components/ui/Skeleton";
+import {
+  ExamenesScheduleGridSkeleton,
+  Skeleton,
+} from "../../../shared/components/ui/Skeleton";
 import {
   overlayContainerVariants,
   overlayPanelVariants,
@@ -340,6 +343,20 @@ export default function ScheduleGrid({
           </div>
         </div>
 
+        {loading && (
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 sm:px-8 py-3.5 border-b border-gray-200/80 bg-white/40">
+            <div className="flex w-full items-center gap-3">
+              <Skeleton className="shrink-0 h-4 w-12 rounded-md" />
+              <div className="flex flex-1 items-center gap-1 rounded-2xl border border-gray-200 bg-white/60 p-1">
+                <Skeleton className="h-9 flex-1 rounded-xl" />
+                <Skeleton className="h-9 flex-1 rounded-xl" />
+                <Skeleton className="h-9 flex-1 rounded-xl" />
+                <Skeleton className="h-9 flex-1 rounded-xl" />
+              </div>
+            </div>
+          </div>
+        )}
+
         {!loading &&
           !error &&
           items.length > 0 &&
@@ -394,7 +411,7 @@ export default function ScheduleGrid({
           )}
 
         <div className="flex-1 overflow-hidden">
-          {loading && <ScheduleGridSkeleton />}
+          {loading && <ExamenesScheduleGridSkeleton />}
 
           {error && (
             <div className="flex items-center justify-center h-full">
