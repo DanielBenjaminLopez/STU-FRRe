@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import transaction
 from import_export.admin import ImportExportModelAdmin
 
 from .models import (
@@ -16,6 +17,7 @@ from .models import (
     UbicacionMapa,
     Widget,
 )
+from .realtime import notify_content
 from .resources import (
     AvisoResource,
     CarreraResource,
@@ -27,6 +29,31 @@ from .resources import (
     NoticiasResource,
     TotemResource,
 )
+
+
+class RealtimeAdminMixin:
+    content_resource = None
+
+    def _notify(self):
+        if self.content_resource:
+            transaction.on_commit(lambda: notify_content(self.content_resource))
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        self._notify()
+
+    def delete_model(self, request, obj):
+        super().delete_model(request, obj)
+        self._notify()
+
+    def delete_queryset(self, request, queryset):
+        super().delete_queryset(request, queryset)
+        self._notify()
+
+    def process_result(self, result, request):
+        response = super().process_result(result, request)
+        self._notify()
+        return response
 
 
 @admin.register(Widget)
@@ -86,7 +113,8 @@ class MateriaAdmin(ImportExportModelAdmin):
 
 
 @admin.register(HorarioCursado)
-class HorarioCursadoAdmin(ImportExportModelAdmin):
+class HorarioCursadoAdmin(RealtimeAdminMixin, ImportExportModelAdmin):
+    content_resource = 'horarios'
     resource_class = HorarioCursadoResource
     list_display = [
         'materia',
@@ -104,7 +132,8 @@ class HorarioCursadoAdmin(ImportExportModelAdmin):
 
 
 @admin.register(MesaExamen)
-class MesaExamenAdmin(ImportExportModelAdmin):
+class MesaExamenAdmin(RealtimeAdminMixin, ImportExportModelAdmin):
+    content_resource = 'examenes'
     resource_class = MesaExamenResource
     list_display = [
         'carrera',
@@ -118,7 +147,8 @@ class MesaExamenAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Evento)
-class EventoAdmin(ImportExportModelAdmin):
+class EventoAdmin(RealtimeAdminMixin, ImportExportModelAdmin):
+    content_resource = 'eventos'
     resource_class = EventoResource
     list_display = [
         'titulo',
@@ -132,7 +162,8 @@ class EventoAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Aviso)
-class AvisoAdmin(ImportExportModelAdmin):
+class AvisoAdmin(RealtimeAdminMixin, ImportExportModelAdmin):
+    content_resource = 'avisos'
     resource_class = AvisoResource
     list_display = ['horario_cursado', 'evento', 'fecha', 'motivo', 'tipo']
     list_filter = ['tipo']
@@ -140,14 +171,16 @@ class AvisoAdmin(ImportExportModelAdmin):
 
 
 @admin.register(Noticias)
-class NoticiasAdmin(ImportExportModelAdmin):
+class NoticiasAdmin(RealtimeAdminMixin, ImportExportModelAdmin):
+    content_resource = 'noticias'
     resource_class = NoticiasResource
     list_display = ['titulo', 'fecha_publicacion', 'fecha_expiracion']
     search_fields = ['titulo', 'contenido']
 
 
 @admin.register(EventoCalendario)
-class EventoCalendarioAdmin(ImportExportModelAdmin):
+class EventoCalendarioAdmin(RealtimeAdminMixin, ImportExportModelAdmin):
+    content_resource = 'calendario'
     resource_class = EventoCalendarioResource
     list_display = ['titulo', 'tipo', 'fecha_inicio', 'fecha_fin', 'creado_en']
     list_filter = ['tipo']

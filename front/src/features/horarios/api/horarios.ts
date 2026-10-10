@@ -29,7 +29,9 @@ interface HorarioBackend {
 }
 
 export async function fetchHorarios(): Promise<Clase[]> {
-  const data = await totemFetch<HorarioBackend[]>("/api/horarios/");
+  const data = await totemFetch<HorarioBackend[]>("/api/horarios/", {
+    cache: "no-store",
+  });
 
   return data.map((h) => ({
     id: h.id,

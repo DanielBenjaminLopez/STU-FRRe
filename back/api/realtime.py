@@ -46,7 +46,10 @@ def notify_content(resource):
     channel_layer = get_channel_layer()
     if channel_layer is None:
         return
-    async_to_sync(channel_layer.group_send)(
-        CONTENT_GROUP,
-        {"type": "contenido_actualizado", "resource": resource},
-    )
+    try:
+        async_to_sync(channel_layer.group_send)(
+            CONTENT_GROUP,
+            {"type": "contenido_actualizado", "resource": resource},
+        )
+    except Exception:
+        logger.exception("Failed to notify content %s", resource)

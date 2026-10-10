@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Clase } from "../api/horarios";
 import { fetchHorarios } from "../api/horarios";
 import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
+import { invalidateApiCache } from "../../../shared/api/client";
 
 function getTodayDayName(): string {
   const days = [
@@ -43,6 +44,7 @@ export function useHorarios(enabled = true) {
           setLoading(true);
         }
         setError(null);
+        invalidateApiCache();
         const clases = await fetchHorarios();
         if (!mounted) return;
         hasLoadedRef.current = true;
@@ -63,7 +65,7 @@ export function useHorarios(enabled = true) {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, [enabled, relevantEvent]);
+  }, [enabled, relevantEvent, realtimeEvent?.type]);
 
   useEffect(() => {
     if (!enabled) return;

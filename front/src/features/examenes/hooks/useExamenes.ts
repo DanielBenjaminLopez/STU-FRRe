@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Examen } from "../api/examenes";
 import { fetchExamenes } from "../api/examenes";
 import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
+import { invalidateApiCache } from "../../../shared/api/client";
 
 function getTodayDayName(): string {
   const days = [
@@ -29,24 +30,29 @@ export function getTodayDateString(): string {
   return `${year}-${month}-${day}`;
 }
 
+export function normalizeDate(fecha?: string): string {
+  if (!fecha) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
+  const parts = fecha.split(/[-/]/).map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    if (parts[0] > 1900) {
+      return `${parts[0]}-${parts[1].toString().padStart(2, "0")}-${parts[2].toString().padStart(2, "0")}`;
+    }
+    if (parts[2] > 1900) {
+      return `${parts[2]}-${parts[1].toString().padStart(2, "0")}-${parts[0].toString().padStart(2, "0")}`;
+    }
+  }
+  return fecha;
+}
+
 export function isMesaVigente(
   fecha?: string,
   todayDateStr: string = getTodayDateString(),
 ): boolean {
   if (!fecha) return true;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
-    return fecha >= todayDateStr;
-  }
-  const parts = fecha.split(/[-/]/).map(Number);
-  if (parts.length === 3 && !parts.some(isNaN)) {
-    if (parts[0] > 1900) {
-      const formatted = `${parts[0]}-${parts[1].toString().padStart(2, "0")}-${parts[2].toString().padStart(2, "0")}`;
-      return formatted >= todayDateStr;
-    }
-    if (parts[2] > 1900) {
-      const formatted = `${parts[2]}-${parts[1].toString().padStart(2, "0")}-${parts[0].toString().padStart(2, "0")}`;
-      return formatted >= todayDateStr;
-    }
+  const norm = normalizeDate(fecha);
+  if (norm) {
+    return norm >= todayDateStr;
   }
   return true;
 }
@@ -69,6 +75,7 @@ export function useExamenes() {
       try {
         setLoading(true);
         setError(null);
+        invalidateApiCache();
         const data = await fetchExamenes();
         if (!mounted) return;
         setTodas(data);
@@ -103,7 +110,7 @@ export function useExamenes() {
   }, [todas, todayDate]);
 
   const examenesHoy = todas.filter((c) =>
-    c.fecha ? c.fecha === todayDate : c.dia_semana === today,
+    c.fecha ? normalizeDate(c.fecha) === todayDate : c.dia_semana === today,
   );
 
   const now = getMinutes(

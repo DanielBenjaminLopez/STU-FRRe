@@ -920,3 +920,97 @@ class AvisosActivosAPITestCase(TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["motivo"], "Paro docente")
 
+
+class RealtimeAdminMixinTestCase(TestCase):
+    def setUp(self):
+        from django.contrib.admin.sites import AdminSite
+        from api.admin import HorarioCursadoAdmin, MesaExamenAdmin
+        from api.models import Carrera, Materia, HorarioCursado, MesaExamen
+
+        self.site = AdminSite()
+        self.horario_admin = HorarioCursadoAdmin(HorarioCursado, self.site)
+        self.mesa_admin = MesaExamenAdmin(MesaExamen, self.site)
+
+        self.carrera, _ = Carrera.objects.get_or_create(
+            codigo="TEST_CAR",
+            defaults={"nombre": "Carrera Test", "tipo": "grado"},
+        )
+        self.materia, _ = Materia.objects.get_or_create(
+            carrera=self.carrera,
+            nombre="Algoritmos Test",
+            defaults={"nivel": "primero"},
+        )
+
+    def test_horario_admin_notifica_al_guardar_borrar_y_bulk(self):
+        from api.models import HorarioCursado
+
+        horario = HorarioCursado.objects.create(
+            materia=self.materia,
+            comision="1K1",
+            dia_semana="lunes",
+            hora_inicio="08:00",
+            hora_fin="10:00",
+        )
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.horario_admin.save_model(None, horario, None, change=True)
+            mock_notify.assert_called_with("horarios")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.horario_admin.delete_model(None, horario)
+            mock_notify.assert_called_with("horarios")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.horario_admin.delete_queryset(None, HorarioCursado.objects.none())
+            mock_notify.assert_called_with("horarios")
+
+    def test_mesa_admin_notifica_al_guardar_borrar_y_bulk(self):
+        from api.models import MesaExamen
+
+        mesa = MesaExamen.objects.create(
+            carrera=self.carrera,
+            materia="Algoritmos",
+            fecha="2026-10-10",
+            hora="08:00",
+        )
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.mesa_admin.save_model(None, mesa, None, change=True)
+            mock_notify.assert_called_with("examenes")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.mesa_admin.delete_model(None, mesa)
+            mock_notify.assert_called_with("examenes")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.mesa_admin.delete_queryset(None, MesaExamen.objects.none())
+            mock_notify.assert_called_with("examenes")
+
+    def test_import_process_result_notifica(self):
+        from unittest.mock import MagicMock
+
+        mock_result = MagicMock()
+        mock_result.has_errors.return_value = False
+        mock_request = MagicMock()
+
+        with patch("import_export.admin.ImportExportModelAdmin.process_result") as mock_super_process:
+            mock_super_process.return_value = "response"
+            with patch("api.admin.notify_content") as mock_notify:
+                with self.captureOnCommitCallbacks(execute=True):
+                    res = self.horario_admin.process_result(mock_result, mock_request)
+                self.assertEqual(res, "response")
+                mock_notify.assert_called_with("horarios")
+
+            with patch("api.admin.notify_content") as mock_notify:
+                with self.captureOnCommitCallbacks(execute=True):
+                    res = self.mesa_admin.process_result(mock_result, mock_request)
+                self.assertEqual(res, "response")
+                mock_notify.assert_called_with("examenes")
+
+

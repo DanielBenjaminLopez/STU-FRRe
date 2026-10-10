@@ -97,11 +97,16 @@ export default function Examenes() {
   useOnTotemReset(() => setShowFull(false));
   const [selectedCarrera, setSelectedCarrera] = useState<string>("");
 
-  const ahoraFiltrado = selectedCarrera
-    ? ahora.filter((e) => e.carrera_codigo === selectedCarrera)
+  const effectiveCarrera =
+    selectedCarrera && uniqueCarreras.includes(selectedCarrera)
+      ? selectedCarrera
+      : "";
+
+  const ahoraFiltrado = effectiveCarrera
+    ? ahora.filter((e) => e.carrera_codigo === effectiveCarrera)
     : ahora;
-  const siguienteFiltrado = selectedCarrera
-    ? siguiente.filter((e) => e.carrera_codigo === selectedCarrera)
+  const siguienteFiltrado = effectiveCarrera
+    ? siguiente.filter((e) => e.carrera_codigo === effectiveCarrera)
     : siguiente;
 
   return (
@@ -119,7 +124,7 @@ export default function Examenes() {
               <Select
                 align="center"
                 colorVariant="green"
-                value={selectedCarrera}
+                value={effectiveCarrera}
                 onChange={setSelectedCarrera}
                 options={[
                   { value: "", label: "Todas" },

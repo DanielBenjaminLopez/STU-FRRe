@@ -41,7 +41,7 @@ export function useCalendario() {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, [relevantEvent]);
+  }, [relevantEvent, realtimeEvent?.type]);
 
   return { eventos, loading, error };
 }
