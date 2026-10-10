@@ -124,4 +124,20 @@ describe("useAvisos", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
+
+  it("vuelve a pedir los avisos cuando se pasa un evento realtime override de avisos", async () => {
+    mockFetch.mockResolvedValue([makeAviso()]);
+
+    let eventOverride: { type: string; resource: "avisos" } | null = null;
+    const { rerender } = renderHook(() => useAvisos(eventOverride));
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+
+    eventOverride = {
+      type: "contenido_actualizado",
+      resource: "avisos",
+    };
+    rerender();
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
+  });
 });

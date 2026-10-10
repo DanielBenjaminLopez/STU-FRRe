@@ -18,10 +18,14 @@ import {
   ApiError,
   getTotemToken,
   clearTotemToken,
+  invalidateApiCache,
 } from "../../shared/api/client";
 import { fetchTotemMe, type Totem } from "../../features/totems/api/totems";
 import { useTotemWebSocket } from "../../shared/hooks/useTotemWebSocket";
-import { TotemRealtimeProvider } from "../../shared/context/TotemRealtimeContext";
+import {
+  TotemRealtimeProvider,
+  type RealtimeEvent,
+} from "../../shared/context/TotemRealtimeContext";
 import {
   TotemPinProvider,
   getTotemPinPosition,
@@ -47,7 +51,9 @@ export default function Home() {
   const totemRef = useRef<Totem | null>(null);
   const { containerRef, scale } = useTotemScale();
   const { lastMessage, isConnected, rejected } = useTotemWebSocket(null, true);
-  const { avisos, visible: hayAvisos } = useAvisos();
+  const { avisos, visible: hayAvisos } = useAvisos(
+    lastMessage as RealtimeEvent | null,
+  );
   const { subscribe: subscribeReset, triggerReset } = useTotemResetController();
 
   const load = useCallback(async () => {
@@ -115,8 +121,13 @@ export default function Home() {
 
     if (lastMessage?.type === "configuracion_actualizada") {
       // The message invalidates the cached configuration; fetch the source of truth.
+      invalidateApiCache();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       load();
+    }
+
+    if (lastMessage?.type === "contenido_actualizado") {
+      invalidateApiCache();
     }
   }, [lastMessage, rejected, load, navigate]);
 
@@ -216,16 +227,36 @@ export default function Home() {
                 }`}
               >
                 <Encabezado size="lg" />
-                {hayAvisos && <Avisos avisos={avisos} />}
+                <AnimatePresence>
+                  {hayAvisos && (
+                    <motion.div
+                      key="totem-avisos"
+                      className={`w-full shrink-0 ${
+                        showVideo ? "pointer-events-none" : ""
+                      }`}
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={
+                        showVideo ? { y: 30, opacity: 0 } : { y: 0, opacity: 1 }
+                      }
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{
+                        duration: 0.6,
+                        ease: [0.4, 0, 0.2, 1],
+                      }}
+                    >
+                      <Avisos avisos={avisos} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="relative flex-1 min-h-0 grid grid-cols-4 grid-rows-6 gap-4">
                   <AnimatePresence>
                     {showVideo && (
                       <motion.div
                         key="video"
                         className="absolute inset-0 z-0 overflow-hidden rounded-4xl bg-black"
-                        initial={{ opacity: 1, height: 0 }}
-                        animate={{ opacity: 1, height: "100%", scale: 1.05 }}
-                        exit={{ opacity: 1, height: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
                         transition={{
                           duration: 0.6,
                           ease: [0.4, 0, 0.2, 1],

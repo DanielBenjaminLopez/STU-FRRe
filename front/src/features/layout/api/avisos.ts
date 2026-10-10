@@ -21,7 +21,7 @@ export async function fetchAvisos(): Promise<Aviso[]> {
 }
 
 export async function fetchAvisosActivos(): Promise<Aviso[]> {
-  return totemFetch<Aviso[]>("/api/avisos-activos/");
+  return totemFetch<Aviso[]>("/api/avisos-activos/", { cache: "no-store" });
 }
 
 export async function createAviso(data: Omit<Aviso, "id">): Promise<Aviso> {

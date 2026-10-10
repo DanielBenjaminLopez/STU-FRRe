@@ -339,4 +339,38 @@ describe("totem Home", () => {
       vi.useRealTimers();
     }
   });
+
+  it("desvanece y oculta el banner de avisos al activar el salvapantallas", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      mockAvisos([makeAviso()]);
+      mockFetchTotemMe.mockResolvedValue(
+        makeTotem({
+          video_activo: true,
+          video_url: "https://example.com/video.mp4",
+          video_intervalo: 5,
+        }),
+      );
+
+      render(<Home />);
+      await screen.findByText(
+        "Próximamente encontrarás aquí los horarios de cursada y novedades del campus.",
+      );
+      await screen.findByTestId("mock-avisos");
+      fireEvent.click(screen.getByTestId("mock-encabezado"));
+      expect(screen.getByTestId("mock-encabezado").parentElement).toHaveClass(
+        "gap-4",
+      );
+
+      await act(async () => {
+        vi.advanceTimersByTime(10000);
+      });
+
+      const bannerWrapper = screen.getByTestId("mock-avisos").parentElement;
+      expect(bannerWrapper).toHaveClass("pointer-events-none");
+      expect(bannerWrapper).toHaveStyle({ opacity: "0" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
