@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Examen } from "../api/examenes";
 import { fetchExamenes } from "../api/examenes";
 import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
@@ -57,27 +57,36 @@ export function isMesaVigente(
   return true;
 }
 
-export function useExamenes() {
+export function useExamenes(enabled = true) {
   const [todas, setTodas] = useState<Examen[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [, setTick] = useState(0);
+  const hasLoadedRef = useRef(false);
   const realtimeEvent = useTotemRealtime();
   const relevantEvent =
     realtimeEvent?.resource === "examenes" ? realtimeEvent : null;
 
   useEffect(() => {
+    if (!enabled) return;
     let mounted = true;
 
     async function load() {
-      if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
+      if (
+        hasLoadedRef.current &&
+        realtimeEvent?.type === "contenido_actualizado" &&
+        !relevantEvent
+      )
         return;
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) {
+          setLoading(true);
+        }
         setError(null);
         invalidateApiCache();
         const data = await fetchExamenes();
         if (!mounted) return;
+        hasLoadedRef.current = true;
         setTodas(data);
       } catch (e) {
         if (mounted) {
@@ -95,12 +104,13 @@ export function useExamenes() {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, [relevantEvent, realtimeEvent?.type]);
+  }, [enabled, relevantEvent, realtimeEvent?.type]);
 
   useEffect(() => {
+    if (!enabled) return;
     const interval = setInterval(() => setTick((t) => t + 1), 30_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [enabled]);
 
   const today = getTodayDayName();
   const todayDate = getTodayDateString();

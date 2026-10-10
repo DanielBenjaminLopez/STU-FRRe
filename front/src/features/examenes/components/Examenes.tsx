@@ -89,6 +89,7 @@ export default function Examenes() {
   const {
     ahora,
     siguiente,
+    todas,
     uniqueCarreras = [],
     loading,
     error,
@@ -112,7 +113,14 @@ export default function Examenes() {
   return (
     <>
       <AnimatePresence>
-        {showFull && <ExamenesFull onClose={() => setShowFull(false)} />}
+        {showFull && (
+          <ExamenesFull
+            onClose={() => setShowFull(false)}
+            items={todas}
+            loading={loading}
+            error={error}
+          />
+        )}
       </AnimatePresence>
       <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
         <div className="relative flex flex-row items-center justify-between w-full">

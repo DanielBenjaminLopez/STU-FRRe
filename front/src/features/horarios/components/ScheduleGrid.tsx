@@ -154,7 +154,13 @@ function getItemColors(item: ScheduleItem) {
   return CARRERA_COLORS[item.carrera_codigo] ?? DEFAULT_COLORS;
 }
 
-function ListView({ items }: { items: ScheduleItem[] }) {
+function ListView({
+  items,
+  totalItems = 0,
+}: {
+  items: ScheduleItem[];
+  totalItems?: number;
+}) {
   const grouped = useMemo(() => {
     const hasFechas = items.some((i) => Boolean(i.fecha));
 
@@ -210,7 +216,9 @@ function ListView({ items }: { items: ScheduleItem[] }) {
       {grouped.length === 0 && (
         <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
           <span className="text-base font-medium">
-            No hay exámenes para mostrar en esta selección
+            {totalItems === 0
+              ? "No hay mesas de examen programadas"
+              : "No hay exámenes para mostrar en esta selección"}
           </span>
         </div>
       )}
@@ -419,7 +427,9 @@ export default function ScheduleGrid({
             </div>
           )}
 
-          {!loading && !error && <ListView items={filteredItems} />}
+          {!loading && !error && (
+            <ListView items={filteredItems} totalItems={items.length} />
+          )}
         </div>
       </motion.div>
     </motion.div>
