@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { wsUrl, wsUrlWithTotemToken, getTotemToken } from "../api/client";
+import {
+  wsUrl,
+  wsUrlWithTotemToken,
+  getTotemToken,
+  invalidateApiCache,
+} from "../api/client";
 
 const RECONNECT_DELAY = 3000;
 const MAX_RECONNECTS = 5;
@@ -42,6 +47,12 @@ export function useTotemWebSocket(codigo: string | null, linked = false) {
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (
+            data?.type === "contenido_actualizado" ||
+            data?.type === "configuracion_actualizada"
+          ) {
+            invalidateApiCache();
+          }
           if (mounted) setLastMessage(data);
         } catch {
           /* ignore invalid JSON */

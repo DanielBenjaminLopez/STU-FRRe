@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { useHorarios } from "../hooks/useHorarios";
 import type { Clase } from "../api/horarios";
@@ -115,23 +115,30 @@ export default function Horarios() {
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper: iniciar intervalo de auto-rotate desde un índice
-  function startAutoRotate(fromIndex: number) {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setSelectedCarrera(uniqueCarreras[fromIndex]);
-    isAutoRotating.current = true;
+  const startAutoRotate = useCallback(
+    (fromIndex: number) => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setSelectedCarrera(uniqueCarreras[fromIndex]);
+      isAutoRotating.current = true;
 
-    timerRef.current = setInterval(() => {
-      setSelectedCarrera((prev) => {
-        const currentIdx = uniqueCarreras.indexOf(prev ?? "");
-        const next = (currentIdx + 1) % uniqueCarreras.length;
-        return uniqueCarreras[next];
-      });
-    }, AUTO_ROTATE_MS);
-  }
+      timerRef.current = setInterval(() => {
+        setSelectedCarrera((prev) => {
+          const currentIdx = uniqueCarreras.indexOf(prev ?? "");
+          const next = (currentIdx + 1) % uniqueCarreras.length;
+          return uniqueCarreras[next];
+        });
+      }, AUTO_ROTATE_MS);
+    },
+    [uniqueCarreras],
+  );
 
   // Iniciar auto-rotate cuando hay carreras disponibles
   useEffect(() => {
-    if (uniqueCarreras.length === 0) return;
+    if (uniqueCarreras.length === 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      return;
+    }
     if (!isAutoRotating.current) return;
 
     startAutoRotate(0);
@@ -139,7 +146,7 @@ export default function Horarios() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [uniqueCarreras]);
+  }, [uniqueCarreras, startAutoRotate]);
 
   // Handler para selección manual
   function handleSelect(codigo: string | null) {
@@ -156,11 +163,16 @@ export default function Horarios() {
   }
 
   // Filtrar por carrera seleccionada
-  const ahoraFiltrado = selectedCarrera
-    ? ahora.filter((c) => c.carrera_codigo === selectedCarrera)
+  const effectiveCarrera =
+    selectedCarrera && uniqueCarreras.includes(selectedCarrera)
+      ? selectedCarrera
+      : null;
+
+  const ahoraFiltrado = effectiveCarrera
+    ? ahora.filter((c) => c.carrera_codigo === effectiveCarrera)
     : ahora;
-  const siguienteFiltrado = selectedCarrera
-    ? siguiente.filter((c) => c.carrera_codigo === selectedCarrera)
+  const siguienteFiltrado = effectiveCarrera
+    ? siguiente.filter((c) => c.carrera_codigo === effectiveCarrera)
     : siguiente;
 
   return (
@@ -185,7 +197,7 @@ export default function Horarios() {
               <Select
                 align="center"
                 colorVariant="blue"
-                value={selectedCarrera ?? ""}
+                value={effectiveCarrera ?? ""}
                 onChange={(val) => handleSelect(val ? val : null)}
                 options={[
                   { value: "", label: "Todas" },

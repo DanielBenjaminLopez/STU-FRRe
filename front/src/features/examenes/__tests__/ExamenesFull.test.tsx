@@ -54,6 +54,20 @@ describe("ExamenesFull", () => {
     expect(screen.getByText(/Laboratorio informático 4/)).toBeInTheDocument();
   });
 
+  it("muestra el skeleton actualizado de exámenes cuando está cargando", () => {
+    mockUseExamenes.mockReturnValue({
+      todas: [],
+      loading: true,
+      error: null,
+    });
+
+    render(<ExamenesFull onClose={vi.fn()} />);
+
+    expect(
+      screen.getByTestId("examenes-schedule-grid-skeleton"),
+    ).toBeInTheDocument();
+  });
+
   it("deja wrappear los nombres largos en vez de truncarlos", () => {
     render(<ExamenesFull onClose={vi.fn()} />);
 

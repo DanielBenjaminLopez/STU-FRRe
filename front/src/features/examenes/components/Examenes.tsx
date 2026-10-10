@@ -89,6 +89,7 @@ export default function Examenes() {
   const {
     ahora,
     siguiente,
+    todas,
     uniqueCarreras = [],
     loading,
     error,
@@ -97,17 +98,29 @@ export default function Examenes() {
   useOnTotemReset(() => setShowFull(false));
   const [selectedCarrera, setSelectedCarrera] = useState<string>("");
 
-  const ahoraFiltrado = selectedCarrera
-    ? ahora.filter((e) => e.carrera_codigo === selectedCarrera)
+  const effectiveCarrera =
+    selectedCarrera && uniqueCarreras.includes(selectedCarrera)
+      ? selectedCarrera
+      : "";
+
+  const ahoraFiltrado = effectiveCarrera
+    ? ahora.filter((e) => e.carrera_codigo === effectiveCarrera)
     : ahora;
-  const siguienteFiltrado = selectedCarrera
-    ? siguiente.filter((e) => e.carrera_codigo === selectedCarrera)
+  const siguienteFiltrado = effectiveCarrera
+    ? siguiente.filter((e) => e.carrera_codigo === effectiveCarrera)
     : siguiente;
 
   return (
     <>
       <AnimatePresence>
-        {showFull && <ExamenesFull onClose={() => setShowFull(false)} />}
+        {showFull && (
+          <ExamenesFull
+            onClose={() => setShowFull(false)}
+            items={todas}
+            loading={loading}
+            error={error}
+          />
+        )}
       </AnimatePresence>
       <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
         <div className="relative flex flex-row items-center justify-between w-full">
@@ -119,7 +132,7 @@ export default function Examenes() {
               <Select
                 align="center"
                 colorVariant="green"
-                value={selectedCarrera}
+                value={effectiveCarrera}
                 onChange={setSelectedCarrera}
                 options={[
                   { value: "", label: "Todas" },
