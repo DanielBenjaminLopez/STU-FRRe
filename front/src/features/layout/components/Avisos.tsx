@@ -40,11 +40,14 @@ export default function Avisos({ avisos }: AvisosProps) {
   } as CSSProperties;
 
   return (
-    <div className="flex w-full items-center overflow-hidden rounded-4xl bg-red-300/50 px-5 pr-0 text-black">
+    <div className="flex w-full items-center overflow-hidden rounded-4xl bg-red-300/50 px-8 text-black">
       <h1 className="z-10 shrink-0 border-r border-red-950/20 pr-4 text-xl font-semibold select-none">
         Avisos
       </h1>
-      <div ref={viewportRef} className="min-w-0 flex-1 overflow-hidden py-2">
+      <div
+        ref={viewportRef}
+        className="min-w-0 flex-1 overflow-hidden py-2 pl-3"
+      >
         <div
           ref={trackRef}
           style={marqueeStyle}

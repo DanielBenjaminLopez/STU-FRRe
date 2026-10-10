@@ -54,6 +54,15 @@ export default function Home() {
   const { avisos, visible: hayAvisos } = useAvisos(
     lastMessage as RealtimeEvent | null,
   );
+  const [prevHayAvisos, setPrevHayAvisos] = useState(hayAvisos);
+  const [avisosExiting, setAvisosExiting] = useState(false);
+
+  if (prevHayAvisos !== hayAvisos) {
+    setPrevHayAvisos(hayAvisos);
+    if (!hayAvisos) {
+      setAvisosExiting(true);
+    }
+  }
   const { subscribe: subscribeReset, triggerReset } = useTotemResetController();
 
   const load = useCallback(async () => {
@@ -223,24 +232,24 @@ export default function Home() {
             >
               <div
                 className={`flex flex-col w-full h-full p-16 ${
-                  hayAvisos ? "gap-4" : "gap-16"
+                  hayAvisos || avisosExiting ? "gap-4" : "gap-16"
                 }`}
               >
                 <Encabezado size="lg" />
-                <AnimatePresence>
+                <AnimatePresence onExitComplete={() => setAvisosExiting(false)}>
                   {hayAvisos && (
                     <motion.div
                       key="totem-avisos"
                       className={`w-full shrink-0 ${
                         showVideo ? "pointer-events-none" : ""
                       }`}
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={
-                        showVideo ? { y: 30, opacity: 0 } : { y: 0, opacity: 1 }
-                      }
-                      exit={{ opacity: 0, y: -20 }}
+                      initial={{ opacity: 0 }}
+                      animate={{
+                        opacity: showVideo ? 0 : 1,
+                      }}
+                      exit={{ opacity: 0 }}
                       transition={{
-                        duration: 0.6,
+                        duration: 0.3,
                         ease: [0.4, 0, 0.2, 1],
                       }}
                     >
