@@ -82,7 +82,7 @@ describe("Examenes", () => {
     });
     render(<Examenes />);
     expect(screen.getByText("ISI")).toBeInTheDocument();
-    expect(screen.getByText(/\[K2\.1\]/)).toBeInTheDocument();
+    expect(screen.getByText("K2.1")).toBeInTheDocument();
     expect(
       screen.getByText("Algoritmos y Estructuras de Datos"),
     ).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("Examenes", () => {
     });
     render(<Examenes />);
     expect(screen.getByText("IEM")).toBeInTheDocument();
-    expect(screen.getByText(/\[M1\.1\]/)).toBeInTheDocument();
+    expect(screen.getByText("M1.1")).toBeInTheDocument();
     expect(screen.getByText("Física II")).toBeInTheDocument();
     expect(screen.getByText(/10:00/)).toBeInTheDocument();
   });
@@ -178,7 +178,7 @@ describe("Examenes", () => {
         "Generación, Transmisión y Distribución de la Energía Eléctrica II",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/\[Curso 1\]/)).toBeInTheDocument();
+    expect(screen.getByText("Curso 1")).toBeInTheDocument();
     expect(screen.getByText("TUOMRE")).toBeInTheDocument();
     expect(screen.getByText("Aula 12")).toBeInTheDocument();
   });
