@@ -281,7 +281,7 @@ export default function Home() {
 
                   {hasWidgets ? (
                     <motion.div
-                      className={`relative z-10 col-span-4 row-span-6 grid grid-cols-4 grid-rows-6 gap-4 min-h-0 bg-white rounded-4xl ${
+                      className={`relative z-10 col-span-4 row-span-6 w-full h-full grid grid-cols-4 grid-rows-6 gap-4 min-h-0 bg-white rounded-4xl ${
                         showVideo ? "pointer-events-none" : ""
                       }`}
                       initial={{ y: "110%", opacity: 0 }}
