@@ -43,24 +43,40 @@ function ExamenRow({ examen }: { examen: Examen }) {
   const badgeBorderColor =
     badgeBorderColors[examen.carrera_codigo] ?? defaultBadgeBorderColor;
 
+  const horarioTexto =
+    examen.hora_inicio && examen.hora_fin
+      ? `${examen.hora_inicio.slice(0, 5)} - ${examen.hora_fin.slice(0, 5)}`
+      : (examen.hora_inicio?.slice(0, 5) ?? "");
+
   return (
-    <div className="flex flex-col justify-between gap-2 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition">
-      {/* Fila 1: Carrera, Comisión limpia y Materia */}
-      <div className="flex items-center gap-2 w-full min-w-0">
-        {examen.carrera_codigo && (
-          <div
-            className={`flex justify-center py-0.5 px-2.5 w-fit ${badgeColor} ${badgeBorderColor} border text-xs font-semibold rounded-xl shrink-0`}
-          >
-            <span className={`${badgeTextColor} truncate`}>
-              {examen.carrera_codigo}
-            </span>
-          </div>
+    <div className="flex flex-col justify-between gap-1.5 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition">
+      {/* Fila 1: Header contextual (Carrera + Comisión y Horario) */}
+      <div className="flex items-center justify-between gap-2 w-full min-w-0 text-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          {examen.carrera_codigo && (
+            <div
+              className={`w-14 text-center py-0.5 ${badgeColor} ${badgeBorderColor} border font-semibold rounded-xl shrink-0`}
+            >
+              <span className={`${badgeTextColor} truncate block`}>
+                {examen.carrera_codigo}
+              </span>
+            </div>
+          )}
+          {examen.comision && (
+            <div className="text-center py-0.5 px-2.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-700 rounded-xl shrink-0">
+              <span className="truncate block">{examen.comision}</span>
+            </div>
+          )}
+        </div>
+        {horarioTexto && (
+          <span className="font-semibold text-gray-500 tabular-nums shrink-0">
+            {horarioTexto}
+          </span>
         )}
-        {examen.comision && (
-          <div className="flex justify-center py-0.5 px-2 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-700 rounded-xl shrink-0">
-            <span className="truncate">{examen.comision}</span>
-          </div>
-        )}
+      </div>
+
+      {/* Fila 2: Materia (máximo ancho libre) y Aula */}
+      <div className="flex items-center justify-between gap-2.5 w-full pt-0.5 min-w-0">
         <div
           className="text-sm font-medium text-gray-900 min-w-0 flex-1 truncate"
           title={
@@ -71,18 +87,12 @@ function ExamenRow({ examen }: { examen: Examen }) {
         >
           <span>{examen.materia_nombre}</span>
         </div>
-      </div>
 
-      {/* Fila 2: Aula y Horario juntos */}
-      <div className="flex items-center gap-2.5 w-full pt-0.5">
         {examen.aula && (
-          <div className="flex justify-center py-0.5 px-2.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-700 rounded-xl shrink-0">
-            <span className="truncate">{formatAula(examen.aula)}</span>
+          <div className="w-22 text-center py-0.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-800 rounded-xl shrink-0">
+            <span className="truncate block">{formatAula(examen.aula)}</span>
           </div>
         )}
-        <span className="text-xs font-semibold text-gray-500 shrink-0">
-          {examen.hora_inicio?.slice(0, 5)} - {examen.hora_fin?.slice(0, 5)}
-        </span>
       </div>
     </div>
   );

@@ -4,15 +4,17 @@ export function Skeleton({ className = "" }: { className?: string }) {
 
 export function ClaseRowSkeleton() {
   return (
-    <div className="flex flex-col justify-between gap-2 w-full p-3 border border-gray-200 bg-white/50 rounded-2xl">
-      <div className="flex items-center gap-2 w-full">
-        <Skeleton className="h-5 w-12 rounded-xl shrink-0" />
-        <Skeleton className="h-5 w-10 rounded-xl shrink-0" />
-        <Skeleton className="h-4 flex-1 rounded-md" />
+    <div className="flex flex-col justify-between gap-1.5 w-full p-3 border border-gray-200 bg-white/50 rounded-2xl">
+      <div className="flex items-center justify-between gap-2 w-full text-xs">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-14 rounded-xl shrink-0" />
+          <Skeleton className="h-5 w-12 rounded-xl shrink-0" />
+        </div>
+        <Skeleton className="h-3.5 w-20 rounded-md shrink-0" />
       </div>
-      <div className="flex items-center gap-2.5 w-full pt-0.5">
-        <Skeleton className="h-5 w-16 rounded-xl shrink-0" />
-        <Skeleton className="h-3 w-16 shrink-0" />
+      <div className="flex items-center justify-between gap-2.5 w-full pt-0.5">
+        <Skeleton className="h-4 flex-1 rounded-md" />
+        <Skeleton className="h-5 w-22 rounded-xl shrink-0" />
       </div>
     </div>
   );
