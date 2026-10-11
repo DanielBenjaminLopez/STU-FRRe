@@ -90,7 +90,7 @@ describe("Horarios", () => {
     });
     render(<Horarios />);
     expect(screen.getAllByText("ISI").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/\[K2\.1\]/)).toBeInTheDocument();
+    expect(screen.getByText("K2.1")).toBeInTheDocument();
     expect(
       screen.getByText("Algoritmos y Estructuras de Datos"),
     ).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe("Horarios", () => {
     });
     render(<Horarios />);
     expect(screen.getAllByText("IEM").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/\[M1\.1\]/)).toBeInTheDocument();
+    expect(screen.getByText("M1.1")).toBeInTheDocument();
     expect(screen.getByText("Física II")).toBeInTheDocument();
     expect(screen.getByText(/10:00.*-.*12:00/)).toBeInTheDocument();
   });
@@ -194,7 +194,7 @@ describe("Horarios", () => {
         "Generación, Transmisión y Distribución de la Energía Eléctrica II",
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/\[Curso 1\]/)).toBeInTheDocument();
+    expect(screen.getByText("Curso 1")).toBeInTheDocument();
     expect(screen.getAllByText("TUOMRE").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Aula 12")).toBeInTheDocument();
   });

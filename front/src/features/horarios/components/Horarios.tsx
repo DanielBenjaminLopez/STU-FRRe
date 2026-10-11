@@ -43,33 +43,54 @@ function ClaseRow({ clase }: { clase: Clase }) {
   const badgeBorderColor =
     badgeBorderColors[clase.carrera_codigo] ?? defaultBadgeBorderColor;
 
+  const horarioTexto =
+    clase.hora_inicio && clase.hora_fin
+      ? `${clase.hora_inicio.slice(0, 5)} - ${clase.hora_fin.slice(0, 5)}`
+      : (clase.hora_inicio?.slice(0, 5) ?? "");
+
   return (
-    <div className="flex flex-col justify-center gap-2 items-start w-full min-w-0 max-w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
-      <span className="text-xs font-medium shrink-0">
-        {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
-      </span>
-      <div
-        className="text-sm font-normal min-w-0 w-full line-clamp-2 break-words"
-        title={`[${clase.comision}] ${clase.materia_nombre}`}
-      >
-        <span className="font-semibold mr-1.5 shrink-0">
-          [{clase.comision}]
-        </span>
-        <span>{clase.materia_nombre}</span>
-      </div>
-      <div className="flex flex-wrap gap-2 max-w-full">
-        <div
-          className={`flex justify-center py-1 px-3 w-fit max-w-full ${badgeColor} ${badgeBorderColor} border text-sm font-semibold rounded-2xl shrink-0`}
-        >
-          <span className={`${badgeTextColor} truncate`}>
-            {clase.carrera_codigo}
-          </span>
+    <div className="flex flex-col justify-between gap-1.5 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition">
+      {/* Fila 1: Header contextual (Carrera + Comisión y Horario) */}
+      <div className="flex items-center justify-between gap-2 w-full min-w-0 text-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          {clase.carrera_codigo && (
+            <div
+              className={`w-14 text-center py-0.5 ${badgeColor} ${badgeBorderColor} border font-semibold rounded-xl shrink-0`}
+            >
+              <span className={`${badgeTextColor} truncate block`}>
+                {clase.carrera_codigo}
+              </span>
+            </div>
+          )}
+          {clase.comision && (
+            <div className="text-center py-0.5 px-2.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-700 rounded-xl shrink-0">
+              <span className="truncate block">{clase.comision}</span>
+            </div>
+          )}
         </div>
+        {horarioTexto && (
+          <span className="font-semibold text-gray-500 tabular-nums shrink-0">
+            {horarioTexto}
+          </span>
+        )}
+      </div>
+
+      {/* Fila 2: Materia (máximo ancho libre) y Aula */}
+      <div className="flex items-center justify-between gap-2.5 w-full pt-0.5 min-w-0">
+        <div
+          className="text-sm font-medium text-gray-900 min-w-0 flex-1 truncate"
+          title={
+            clase.comision
+              ? `[${clase.comision}] ${clase.materia_nombre}`
+              : clase.materia_nombre
+          }
+        >
+          <span>{clase.materia_nombre}</span>
+        </div>
+
         {clase.aula && (
-          <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit max-w-full shrink-0">
-            <span className="font-semibold truncate">
-              {formatAula(clase.aula)}
-            </span>
+          <div className="w-22 text-center py-0.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-800 rounded-xl shrink-0">
+            <span className="truncate block">{formatAula(clase.aula)}</span>
           </div>
         )}
       </div>

@@ -18,42 +18,79 @@ const badgeColors: Record<string, string> = {
 
 const defaultBadgeColor = "bg-gray-100";
 
+const badgeTextColors: Record<string, string> = {
+  ISI: "text-cyan-800",
+  IEM: "text-amber-800",
+  IQ: "text-green-800",
+  LAR: "text-yellow-800",
+};
+
+const defaultBadgeTextColor = "text-gray-800";
+
+const badgeBorderColors: Record<string, string> = {
+  ISI: "border-cyan-200",
+  IEM: "border-amber-200",
+  IQ: "border-green-200",
+  LAR: "border-yellow-200",
+};
+
+const defaultBadgeBorderColor = "border-gray-200";
+
 function ExamenRow({ examen }: { examen: Examen }) {
   const badgeColor = badgeColors[examen.carrera_codigo] ?? defaultBadgeColor;
+  const badgeTextColor =
+    badgeTextColors[examen.carrera_codigo] ?? defaultBadgeTextColor;
+  const badgeBorderColor =
+    badgeBorderColors[examen.carrera_codigo] ?? defaultBadgeBorderColor;
+
+  const horarioTexto =
+    examen.hora_inicio && examen.hora_fin
+      ? `${examen.hora_inicio.slice(0, 5)} - ${examen.hora_fin.slice(0, 5)}`
+      : (examen.hora_inicio?.slice(0, 5) ?? "");
 
   return (
-    <div className="flex flex-col justify-center gap-2 items-start w-full min-w-0 max-w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
-      <span className="text-xs font-medium shrink-0">
-        {examen.hora_inicio?.slice(0, 5)} - {examen.hora_fin?.slice(0, 5)}
-      </span>
-      <div
-        className="text-sm font-normal min-w-0 w-full line-clamp-2 break-words"
-        title={
-          examen.comision
-            ? `[${examen.comision}] ${examen.materia_nombre}`
-            : examen.materia_nombre
-        }
-      >
-        {examen.comision && (
-          <span className="font-semibold mr-1.5 shrink-0">
-            [{examen.comision}]
+    <div className="flex flex-col justify-between gap-1.5 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition">
+      {/* Fila 1: Header contextual (Carrera + Comisión y Horario) */}
+      <div className="flex items-center justify-between gap-2 w-full min-w-0 text-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          {examen.carrera_codigo && (
+            <div
+              className={`w-14 text-center py-0.5 ${badgeColor} ${badgeBorderColor} border font-semibold rounded-xl shrink-0`}
+            >
+              <span className={`${badgeTextColor} truncate block`}>
+                {examen.carrera_codigo}
+              </span>
+            </div>
+          )}
+          {examen.comision && (
+            <div className="text-center py-0.5 px-2.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-700 rounded-xl shrink-0">
+              <span className="truncate block">{examen.comision}</span>
+            </div>
+          )}
+        </div>
+        {horarioTexto && (
+          <span className="font-semibold text-gray-500 tabular-nums shrink-0">
+            {horarioTexto}
           </span>
         )}
-        <span>{examen.materia_nombre}</span>
       </div>
-      <div className="flex flex-wrap gap-2 max-w-full">
-        {examen.carrera_codigo && (
-          <div
-            className={`flex justify-center py-1 px-3 w-fit max-w-full ${badgeColor} text-sm font-semibold rounded-2xl shrink-0`}
-          >
-            <span className="truncate">{examen.carrera_codigo}</span>
-          </div>
-        )}
+
+      {/* Fila 2: Materia (máximo ancho libre) y Aula */}
+      <div className="flex items-center justify-between gap-2.5 w-full pt-0.5 min-w-0">
+        <div
+          className="text-sm font-medium text-gray-900 min-w-0 flex-1 truncate"
+          title={
+            examen.comision
+              ? `[${examen.comision}] ${examen.materia_nombre}`
+              : examen.materia_nombre
+          }
+        >
+          <span>{examen.materia_nombre}</span>
+        </div>
+
         {examen.aula && (
-          <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit max-w-full shrink-0">
-            <span className="font-semibold truncate">
-              {formatAula(examen.aula)}
-            </span>
+          <div className="w-22 text-center py-0.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-800 rounded-xl shrink-0">
+            <span className="truncate block">{formatAula(examen.aula)}</span>
           </div>
         )}
       </div>
