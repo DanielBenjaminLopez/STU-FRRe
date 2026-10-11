@@ -145,7 +145,7 @@ export default function TemplateCanvas({
   onSelectWidget,
   isClearing,
 }: TemplateCanvasProps) {
-  const { containerRef, scale, isReady } = useTotemScale();
+  const { containerRef, scale, isReady } = useTotemScale({ mode: "fit" });
 
   useEffect(() => {
     onScaleChange?.(scale);

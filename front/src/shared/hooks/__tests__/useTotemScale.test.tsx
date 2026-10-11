@@ -35,15 +35,22 @@ function triggerResize(width: number, height: number) {
   );
 }
 
-function TestComponent({ onScale }: { onScale?: (s: number) => void }) {
-  const { containerRef, scale } = useTotemScale();
-  onScale?.(scale);
+function TestComponent({
+  mode = "adaptive",
+  onMetrics,
+}: {
+  mode?: "adaptive" | "fit";
+  onMetrics?: (m: { scale: number; stageHeight: number }) => void;
+}) {
+  const { containerRef, scale, stageHeight } = useTotemScale({ mode });
+  onMetrics?.({ scale, stageHeight });
   return (
     <div
       ref={containerRef}
       style={{ width: 800, height: 600 }}
       data-testid="scale-value"
       data-scale={scale}
+      data-stage-height={stageHeight}
     />
   );
 }
@@ -61,35 +68,29 @@ describe("useTotemScale", () => {
     expect(scale).toBeGreaterThan(0);
   });
 
-  it("calcula scale basado en el ancho del contenedor", () => {
-    const { getByTestId } = render(<TestComponent />);
+  it("en modo adaptive calcula scale por ancho y adapta stageHeight", () => {
+    const { getByTestId } = render(<TestComponent mode="adaptive" />);
     act(() => {
-      triggerResize(540, 3000);
+      triggerResize(1080, 2160);
     });
     const el = getByTestId("scale-value");
     const scale = Number(el.dataset.scale);
-    expect(scale).toBeCloseTo(540 / TOTEM_WIDTH, 2);
+    const stageHeight = Number(el.dataset.stageHeight);
+    expect(scale).toBeCloseTo(1080 / TOTEM_WIDTH, 4);
+    expect(stageHeight).toBe(4320); // 2160 / (1080/2160) = 4320
   });
 
-  it("calcula scale basado en el alto del contenedor", () => {
-    const { getByTestId } = render(<TestComponent />);
-    act(() => {
-      triggerResize(3000, 960);
-    });
-    const el = getByTestId("scale-value");
-    const scale = Number(el.dataset.scale);
-    expect(scale).toBeCloseTo(960 / TOTEM_HEIGHT, 2);
-  });
-
-  it("usa el minimo entre ancho y alto", () => {
-    const { getByTestId } = render(<TestComponent />);
+  it("en modo fit usa el minimo entre ancho y alto", () => {
+    const { getByTestId } = render(<TestComponent mode="fit" />);
     act(() => {
       triggerResize(540, 960);
     });
     const el = getByTestId("scale-value");
     const scale = Number(el.dataset.scale);
+    const stageHeight = Number(el.dataset.stageHeight);
     const expected = Math.min(540 / TOTEM_WIDTH, 960 / TOTEM_HEIGHT);
     expect(scale).toBeCloseTo(expected, 2);
+    expect(stageHeight).toBe(TOTEM_HEIGHT);
   });
 
   it("no actualiza si las dimensiones son 0", () => {

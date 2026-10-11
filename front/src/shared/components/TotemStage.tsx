@@ -31,7 +31,6 @@ export function TotemStageCSS({
         className={`totem-scale-stage totem-scale-stage--css overflow-hidden ${bgClass} ${className}`}
         style={{
           width: TOTEM_WIDTH,
-          height: TOTEM_HEIGHT,
         }}
       >
         {children}
@@ -48,11 +47,13 @@ export function TotemStageCSS({
 export function TotemStageJS({
   children,
   scale,
+  stageHeight = TOTEM_HEIGHT,
   containerRef,
-  origin = "center",
+  origin = "top",
 }: {
   children: React.ReactNode;
   scale: number;
+  stageHeight?: number;
   containerRef: React.RefObject<HTMLDivElement | null>;
   origin?: "center" | "top";
 }) {
@@ -62,7 +63,7 @@ export function TotemStageJS({
         className="totem-scale-stage bg-white overflow-hidden"
         style={{
           width: TOTEM_WIDTH,
-          height: TOTEM_HEIGHT,
+          height: stageHeight,
           transform: `scale(${scale})`,
           transformOrigin: origin === "top" ? "top center" : "center center",
           willChange: "transform",

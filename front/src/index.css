@@ -92,7 +92,7 @@ body,
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   overflow: hidden;
 }
 
@@ -106,7 +106,7 @@ body,
   overflow: hidden;
   /* Opción A: optimización de capa compuesta para transform: scale() */
   will-change: transform;
-  transform-origin: center center;
+  transform-origin: top center;
   /* 4K 2x: sobreescribe variables Tailwind solo dentro del tótem/preview.
      --spacing 0.25rem→0.5rem duplica p-*, m-*, gap-*, w-*, h-*, etc.
      --text-* y --radius-* duplican tipografía y radios. No afecta admin. */
@@ -141,16 +141,19 @@ body,
 }
 
 /* Opción B: CSS-only sin JS. Usa container queries (cqw/cqh) para
-   calcular scale = min(100cqw/2160px, 100cqh/3840px) de forma unitless.
-   No requiere ResizeObserver ni state de React. 4K nativo. */
+   escala anclada al ancho y alto adaptativo que elimina letterbox en 18:9 / 16:9. */
 .totem-scale-stage--css {
-  transform: scale(min(calc(100cqw / 2160px), calc(100cqh / 3840px)));
+  transform: scale(calc(100cqw / 2160px));
+  transform-origin: top center;
+  height: calc(2160px * 100cqh / 100cqw);
 }
 
 @supports not (width: 100cqw) {
   .totem-scale-stage--css {
     /* Fallback viewport si no hay soporte para container queries */
-    transform: scale(min(calc(100vw / 2160px), calc(100vh / 3840px)));
+    transform: scale(calc(100vw / 2160px));
+    transform-origin: top center;
+    height: calc(2160px * 100vh / 100vw);
   }
 }
 

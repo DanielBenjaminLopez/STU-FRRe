@@ -14,7 +14,7 @@ import { WIDGET_COMPONENTS } from "../../features/widgets";
 import { useAvisos } from "../../features/layout/hooks/useAvisos";
 
 export default function TotemPreview() {
-  const { containerRef, scale, isReady } = useTotemScale();
+  const { containerRef, scale, isReady } = useTotemScale({ mode: "fit" });
   const { selectedTotem } = useTotem();
   const { avisos, visible: hayAvisos } = useAvisos();
 

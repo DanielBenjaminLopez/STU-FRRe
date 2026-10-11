@@ -295,9 +295,8 @@ describe("CalendarioAdminPage", () => {
 
   it("el layout tiene calendario a la izquierda y resumen a la derecha", async () => {
     render(<CalendarioAdminPage />);
-    await screen.findByTestId("event-count");
-    const calendar = screen.getByTestId("mock-calendar");
-    const summary = screen.getByTestId("mock-event-summary");
+    const calendar = await screen.findByTestId("mock-calendar");
+    const summary = await screen.findByTestId("mock-event-summary");
     expect(calendar.compareDocumentPosition(summary)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );

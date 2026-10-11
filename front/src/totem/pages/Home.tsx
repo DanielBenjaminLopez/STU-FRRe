@@ -4,11 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Avisos, Encabezado } from "../../features/layout";
 import VideoPanel from "../../shared/components/VideoPanel";
 import Logo from "../../assets/logo_negro.webp";
-import {
-  useTotemScale,
-  TOTEM_WIDTH,
-  TOTEM_HEIGHT,
-} from "../../shared/hooks/useTotemScale";
+import { useTotemScale, TOTEM_WIDTH } from "../../shared/hooks/useTotemScale";
 import { TotemStageCSS } from "../../shared/components/TotemStage";
 import {
   plantillaDTOToLocal,
@@ -49,7 +45,9 @@ export default function Home() {
   const [modoVideo, setModoVideo] = useState(false);
   const lastInteractionRef = useRef(0);
   const totemRef = useRef<Totem | null>(null);
-  const { containerRef, scale } = useTotemScale();
+  const { containerRef, scale, stageHeight } = useTotemScale({
+    mode: "adaptive",
+  });
   const { lastMessage, isConnected, rejected } = useTotemWebSocket(null, true);
   const { avisos, visible: hayAvisos } = useAvisos(
     lastMessage as RealtimeEvent | null,
@@ -224,9 +222,9 @@ export default function Home() {
               className="totem-scale-stage bg-white overflow-hidden"
               style={{
                 width: TOTEM_WIDTH,
-                height: TOTEM_HEIGHT,
+                height: stageHeight,
                 transform: `scale(${scale})`,
-                transformOrigin: "center center",
+                transformOrigin: "top center",
                 willChange: "transform",
               }}
             >
