@@ -12,7 +12,9 @@ módulos. Los modelos y serializers compartidos de Django permanecen en `api`
 por ahora para conservar el app label y las migraciones existentes; no son
 fachadas públicas de los features.
 
-Para agregar un widget nativo:
+Para agregar un widget nativo, la forma recomendada es el generador
+(`npm run feature:add -- <Nombre>`, ver [agentes-features.md](agentes-features.md)),
+que realiza automáticamente los pasos 1 a 5. El proceso manual equivale a:
 
 1. Crear `front/src/features/<nombre>/`.
 2. Incorporar allí el componente, hooks, API, tipos y tests del widget.
