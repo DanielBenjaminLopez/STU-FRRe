@@ -131,10 +131,49 @@ docker compose up -d
 
 ---
 
+## Crear y eliminar features (widgets)
+
+Para agregar un widget nuevo al tótem hay comandos que generan toda la estructura. Solo requieren Node/npm y se ejecutan desde la raíz del repositorio (o desde `front/`):
+
+```bash
+# Crear (pregunta el nombre si no se indica)
+npm run feature:add
+npm run feature:add -- Biblioteca
+
+# Eliminar (pide confirmación; --yes la omite)
+npm run feature:delete -- Biblioteca
+```
+
+`feature:add` crea `front/src/features/<nombre>/` con:
+
+| Ruta | Contenido |
+| --- | --- |
+| `components/<Nombre>.tsx` | Versión base: el widget chico dentro de la plantilla |
+| `components/<Nombre>Full.tsx` | Versión full: overlay a pantalla completa ("Ver más") |
+| `hooks/use<Nombre>.ts` | Carga de datos con estados de carga y error |
+| `api/<nombre>.ts` | Conexión a datos **mockeada** (a reemplazar por la API real) |
+| `__tests__/` | Test de ejemplo |
+| `index.ts` | Exporta el componente, la versión full y el hook |
+
+Además lo registra en `front/src/features/widgets/registry.ts` (aparece en la paleta del admin) y en `back/api/widgets_manifest.json`. El backend crea el widget en la base de datos al iniciar (`sync_widgets`); si ya está corriendo, ejecutar:
+
+```bash
+docker compose exec backend python manage.py sync_widgets
+```
+
+> Sin ese paso el widget desaparece al guardar una plantilla.
+
+Al terminar, el comando imprime las instrucciones de los pasos siguientes (formatear con prettier, reemplazar el mock por un endpoint real, ajustar tamaño y colores, agregarlo a una plantilla).
+
+`feature:delete` borra la carpeta y sus registros. No elimina la fila de la base de datos: al finalizar imprime el comando para hacerlo. Solo permite borrar features creadas con `feature:add` (usar `--force` para otras). Más detalle en [Guía para agentes](docs/agentes-features.md).
+
+---
+
 ## Documentación del proyecto
 
 Para consultar guías técnicas y operativas detalladas, revisar los documentos en la carpeta [`docs/`](docs/):
 
+- [Guía para agentes: features](docs/agentes-features.md): Uso de `feature:add` y `feature:delete`, y reglas para agentes.
 - [Arquitectura y Configuración](docs/arquitectura-y-configuracion.md): Stack técnico, capas, Docker y variables.
 - [Arquitectura por Features](docs/arquitectura-features.md): Organización modular del frontend y backend.
 - [Catálogo de Endpoints de la API](docs/api-endpoints.md): Referencia rápida en tablas de rutas REST y WebSockets.

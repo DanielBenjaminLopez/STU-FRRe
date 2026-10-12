@@ -11,6 +11,9 @@ echo "PostgreSQL está listo."
 echo "Ejecutando migraciones..."
 python manage.py migrate --noinput
 
+echo "Sincronizando widgets..."
+python manage.py sync_widgets
+
 echo "Recolectando archivos estáticos..."
 python manage.py collectstatic --noinput || true
 
