@@ -89,17 +89,16 @@ describe("MapaRaw helpers", () => {
     ]);
   });
 
-  it("shouldShowIdMarker oculta IDs internos en el tótem y los muestra en Admin", () => {
+  it("shouldShowIdMarker muestra marcadores para números (1..74) e íconos especiales", () => {
     expect(shouldShowIdMarker("1", "oficina", false)).toBe(true);
     expect(shouldShowIdMarker("68", "servicio", false)).toBe(true);
+    expect(shouldShowIdMarker("69", "otro", false)).toBe(true);
+    expect(shouldShowIdMarker("74", "otro", false)).toBe(true);
     expect(shouldShowIdMarker("baño1", "baños", false)).toBe(true);
     expect(shouldShowIdMarker("escaleras1", "escaleras", false)).toBe(true);
     expect(shouldShowIdMarker("ascensor1", "ascensor", false)).toBe(true);
 
-    expect(shouldShowIdMarker("sn1", "otro", false)).toBe(false);
-    expect(shouldShowIdMarker("terraza", "otro", false)).toBe(false);
-
-    expect(shouldShowIdMarker("sn1", "otro", true)).toBe(true);
-    expect(shouldShowIdMarker("terraza", "otro", true)).toBe(true);
+    expect(shouldShowIdMarker("texto_no_numerico", "otro", false)).toBe(false);
+    expect(shouldShowIdMarker("texto_no_numerico", "otro", true)).toBe(true);
   });
 });
