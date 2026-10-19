@@ -1057,4 +1057,32 @@ class UbicacionMapaParityTests(TestCase):
             invalido.clean()
         self.assertIn("svg_id", ctx.exception.message_dict)
 
+    def test_full_clean_rechaza_svg_id_no_numerico(self):
+        from django.core.exceptions import ValidationError
+        from api.models import UbicacionMapa
+
+        alfanumerico = UbicacionMapa(
+            piso="baja",
+            svg_id="aula_alfa_1",
+            nombre="Aula Invalida",
+            tipo="aula",
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            alfanumerico.full_clean()
+        self.assertIn("svg_id", ctx.exception.message_dict)
+
+    def test_endpoint_retorna_ubicaciones_ordenadas_numericamente(self):
+        from rest_framework.test import APIClient
+
+        client = APIClient()
+        response = client.get("/api/ubicaciones-mapa/?piso=baja")
+        self.assertEqual(response.status_code, 200)
+        items = response.json()
+        ids_numericos = [int(item["svg_id"]) for item in items]
+        self.assertEqual(
+            ids_numericos,
+            sorted(ids_numericos),
+            "Las ubicaciones deben retornar ordenadas numéricamente de menor a mayor.",
+        )
+
 

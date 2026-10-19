@@ -81,12 +81,12 @@ Instalaciones físicas del predio universitario (aulas, laboratorios, oficinas).
 ### 3.2. UbicacionMapa (`api_ubicacionmapa`)
 Polígonos interactivos representados sobre el SVG del mapa del tótem.
 - `id` (AutoField, PK)
-- `svg_id` (CharField 50): Identificador del elemento `<polygon>` dentro del archivo vectorial SVG (ej: `"1"`, `"escaleras1"`, `"baño2"`).
+- `svg_id` (CharField 50, validador de sólo dígitos numéricos): Identificador numérico del polígono dentro del plano vectorial SVG (rango `"1"` al `"89"`).
 - `nombre` (CharField 150): Nombre visible al hacer clic o buscar.
 - `tipo` (CharField 20, default=`'otro'`): `aula`, `oficina`, `departamento`, `secretaria`, `laboratorio`, `servicio`, `escaleras`, `ascensor`, `baños`, `otro`.
 - `piso` (CharField 10): `baja`, `primero`, `segundo`.
 - **Restricción de unicidad:** `unique_together = [('svg_id', 'piso')]`.
-- **Contrato geométrico:** La fuente de verdad geométrica son los archivos SVG (`front/src/features/mapa/assets/*.svg`), sincronizados hacia `back/api/mapa_polygon_ids.json` mediante `npm run mapa:ids`. El método `UbicacionMapa.clean()` valida que `(piso, svg_id)` exista en dicho manifiesto.
+- **Contrato geométrico:** La fuente de verdad geométrica son los archivos SVG (`front/src/features/mapa/assets/*.svg`), sincronizados hacia `back/api/mapa_polygon_ids.json` mediante `npm run mapa:ids`. El método `UbicacionMapa.clean()` valida que `(piso, svg_id)` exista en dicho manifiesto, y `full_clean()` valida que el ID sea estrictamente numérico. Los registros se ordenan naturalmente por número (`Cast('svg_id', IntegerField())`).
 
 ---
 

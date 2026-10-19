@@ -75,7 +75,7 @@ vi.mock("../../../features/mapa/components/MapaRaw", () => ({
 const mockUbicacionesData = [
   {
     id: 1,
-    svg_id: "aula_1",
+    svg_id: "1",
     piso: "baja",
     nombre: "Aula Magna",
     tipo: "aula",
@@ -83,7 +83,7 @@ const mockUbicacionesData = [
   },
   {
     id: 2,
-    svg_id: "lab_1",
+    svg_id: "2",
     piso: "primero",
     nombre: "Laboratorio de Redes",
     tipo: "laboratorio",
@@ -121,10 +121,50 @@ describe("UbicacionesMapaPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Aula Magna")).toBeInTheDocument();
-      expect(screen.getByText("aula_1")).toBeInTheDocument();
+      expect(screen.getByText("#1")).toBeInTheDocument();
     });
 
     expect(mockFetchUbicaciones).toHaveBeenCalled();
+  });
+
+  it("orders ubicaciones numerically in the table (1, 2 before 10)", async () => {
+    mockFetchUbicaciones.mockResolvedValue([
+      {
+        id: 1,
+        svg_id: "10",
+        piso: "baja",
+        nombre: "Espacio Diez",
+        tipo: "otro",
+        tipo_display: "Otro",
+      },
+      {
+        id: 2,
+        svg_id: "2",
+        piso: "baja",
+        nombre: "Espacio Dos",
+        tipo: "otro",
+        tipo_display: "Otro",
+      },
+      {
+        id: 3,
+        svg_id: "1",
+        piso: "baja",
+        nombre: "Espacio Uno",
+        tipo: "otro",
+        tipo_display: "Otro",
+      },
+    ]);
+
+    render(<UbicacionesMapaPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("#1")).toBeInTheDocument();
+    });
+
+    const rows = screen.getAllByRole("row");
+    expect(rows[1]).toHaveTextContent("#1");
+    expect(rows[2]).toHaveTextContent("#2");
+    expect(rows[3]).toHaveTextContent("#10");
   });
 
   it("shows sileo.error when loading ubicaciones fails", async () => {
@@ -152,7 +192,7 @@ describe("UbicacionesMapaPage", () => {
     const editButton = screen.getByLabelText("Editar ubicación");
     fireEvent.click(editButton);
 
-    expect(screen.getByText("Editar — aula_1")).toBeInTheDocument();
+    expect(screen.getByText("Editar Espacio #1")).toBeInTheDocument();
 
     const submitBtn = screen.getByRole("button", { name: "Guardar" });
     fireEvent.click(submitBtn);

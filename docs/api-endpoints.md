@@ -100,7 +100,7 @@ Base URL de WebSockets: `ws://localhost:8000/ws`
 | Método | Endpoint | Descripción | Autenticación |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/espacios/` | Listado de espacios físicos (aulas, laboratorios, secretarías, oficinas). | Público |
-| `GET` | `/api/ubicaciones-mapa/` | Listar polígonos e identificadores SVG del plano interactivo (filtrable con `?piso=`). | Público |
+| `GET` | `/api/ubicaciones-mapa/` | Listar polígonos del plano interactivo ordenados numéricamente (1..89), filtrable con `?piso=`. | Público |
 | `PATCH` | `/api/ubicaciones-mapa/{id}/` | Editar `nombre` y `tipo` de una ubicación existente del plano SVG (`svg_id` y `piso` son de solo lectura). | Admin / Secretaría |
 
 ---

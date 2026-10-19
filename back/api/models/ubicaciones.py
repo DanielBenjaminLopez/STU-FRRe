@@ -2,9 +2,15 @@ import json
 from pathlib import Path
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 
 MAPA_POLYGON_MANIFEST = Path(__file__).resolve().parents[1] / "mapa_polygon_ids.json"
+
+NUMERICO_VALIDATOR = RegexValidator(
+    regex=r'^\d+$',
+    message='El identificador del espacio en el mapa debe ser estrictamente numérico (solo dígitos).',
+)
 
 
 class UbicacionMapa(models.Model):
@@ -31,7 +37,8 @@ class UbicacionMapa(models.Model):
 
     svg_id = models.CharField(
         max_length=50,
-        help_text='Identificador del polígono en el SVG (ej: "1", "escaleras1", "baño2").',
+        validators=[NUMERICO_VALIDATOR],
+        help_text='Identificador numérico del espacio/polígono en el SVG (ej: "1", "69").',
     )
     nombre = models.CharField(max_length=150)
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='otro')

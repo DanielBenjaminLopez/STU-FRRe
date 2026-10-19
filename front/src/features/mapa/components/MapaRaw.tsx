@@ -9,6 +9,7 @@ import ascensorUrl from "../assets/ascensor.svg?url";
 import wcUrl from "../assets/wc.svg?url";
 import { fetchUbicacionesMapa } from "../api/ubicacionesMapa";
 import type { PisoKey } from "../api/ubicacionesMapa";
+import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
 
 const TYPE_COLORS: Record<
   string,
@@ -720,6 +721,7 @@ export default function MapaRaw({
   orientation = 0,
   onPinPlaced,
   externalFloor,
+  refreshKey,
 }: {
   initialFloor?: FloorKey;
   compact?: boolean;
@@ -731,6 +733,8 @@ export default function MapaRaw({
   onPinPlaced?: (pos: PinPosition) => void;
   /** Permite que un componente padre controle el piso activo sin remountar MapaRaw. */
   externalFloor?: FloorKey;
+  /** Incrementar para forzar recarga de ubicaciones desde un contenedor padre (ej. Admin). */
+  refreshKey?: number;
 } = {}) {
   const [internalFloor, setFloor] = useState<FloorKey>(
     () => pinPosition?.floor ?? initialFloor,
@@ -753,9 +757,18 @@ export default function MapaRaw({
     Record<FloorKey, Record<string, RoomData>>
   >({ baja: {}, primero: {}, segundo: {} });
 
+  const realtimeEvent = useTotemRealtime();
+  const relevantEvent =
+    realtimeEvent?.resource === "mapa" ? realtimeEvent : null;
+
   useEffect(() => {
+    if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent) {
+      return;
+    }
+    let mounted = true;
     fetchUbicacionesMapa()
       .then((ubicaciones) => {
+        if (!mounted) return;
         const byFloor: Record<FloorKey, Record<string, RoomData>> = {
           baja: {},
           primero: {},
@@ -772,11 +785,20 @@ export default function MapaRaw({
           }
         }
         setFloorsData(byFloor);
+        setSelectedRoom((prev) => {
+          if (!prev) return null;
+          const prevPiso = prev.data.piso as FloorKey;
+          const updated = byFloor[prevPiso]?.[prev.id];
+          return updated ? { id: prev.id, data: updated } : prev;
+        });
       })
       .catch(() => {
         // Si falla la red, el mapa queda vacío pero funcional
       });
-  }, []);
+    return () => {
+      mounted = false;
+    };
+  }, [relevantEvent, realtimeEvent?.type, refreshKey]);
 
   const floors = useMemo<Record<FloorKey, FloorConfig>>(
     () => ({
