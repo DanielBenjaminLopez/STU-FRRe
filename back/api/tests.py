@@ -1014,3 +1014,47 @@ class RealtimeAdminMixinTestCase(TestCase):
                 mock_notify.assert_called_with("examenes")
 
 
+class UbicacionMapaParityTests(TestCase):
+    """Verifica el contrato de paridad entre mapa_polygon_ids.json y UbicacionMapa en BD."""
+
+    def test_paridad_exacta_manifiesto_y_bd_por_piso(self):
+        import json
+        from pathlib import Path
+        from api.models import UbicacionMapa
+
+        manifest_path = Path(__file__).resolve().parent / "mapa_polygon_ids.json"
+        self.assertTrue(
+            manifest_path.exists(),
+            "Falta back/api/mapa_polygon_ids.json (correr `npm run mapa:ids` en front/).",
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        for piso, svg_ids in manifest.items():
+            expected = set(svg_ids)
+            actual = set(
+                UbicacionMapa.objects.filter(piso=piso).values_list("svg_id", flat=True)
+            )
+            huerfanos_bd = sorted(actual - expected)
+            faltantes_bd = sorted(expected - actual)
+            self.assertEqual(
+                actual,
+                expected,
+                f"Divergencia en piso '{piso}': "
+                f"huérfanos en BD={huerfanos_bd}, polígonos sin registro={faltantes_bd}",
+            )
+
+    def test_clean_rechaza_svg_id_inexistente_en_manifiesto(self):
+        from django.core.exceptions import ValidationError
+        from api.models import UbicacionMapa
+
+        invalido = UbicacionMapa(
+            piso="baja",
+            svg_id="poligono_fantasma_999",
+            nombre="Fantasma",
+            tipo="otro",
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            invalido.clean()
+        self.assertIn("svg_id", ctx.exception.message_dict)
+
+

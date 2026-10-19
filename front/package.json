@@ -11,6 +11,7 @@
     "prepare": "cd .. && husky front/.husky",
     "feature:add": "node scripts/feature-add.mjs",
     "feature:delete": "node scripts/feature-delete.mjs",
+    "mapa:ids": "node scripts/mapa-ids.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

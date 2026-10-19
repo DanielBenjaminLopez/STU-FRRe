@@ -93,7 +93,8 @@ interface PolygonData {
   tipo: string;
 }
 
-function parsePolygons(
+// eslint-disable-next-line react-refresh/only-export-components
+export function parsePolygons(
   svg: string,
   floorData: Record<string, RoomData>,
 ): PolygonData[] {
@@ -167,6 +168,17 @@ function getSpecialIconByTipo(tipo: string): string | null {
   if (tipo === "baños") return wcUrl;
   if (tipo === "ascensor") return ascensorUrl;
   return null;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function shouldShowIdMarker(
+  id: string,
+  tipo: string,
+  showInternalIds = false,
+): boolean {
+  if (showInternalIds) return true;
+  if (getSpecialIconByTipo(tipo) !== null) return true;
+  return /^\d+$/.test(id);
 }
 
 function pointInPolygon(x: number, y: number, pts: number[]): boolean {
@@ -350,7 +362,10 @@ function buildIdMarker(
   topHeight: number,
   buildingGroup: THREE.Group,
   onTextureUpdate?: () => void,
+  showInternalIds = false,
 ) {
+  if (!shouldShowIdMarker(id, tipo, showInternalIds)) return;
+
   const x = (center.x - bounds.cx) * SCALE;
   const z = (center.y - bounds.cy) * SCALE;
   const y = topHeight + 0.4;
@@ -509,6 +524,7 @@ function buildMeshes(
   materialsByTipo: Map<string, THREE.MeshLambertMaterial>,
   edgeMaterial: THREE.LineBasicMaterial,
   onTextureUpdate?: () => void,
+  showInternalIds = false,
 ): Map<string, THREE.Mesh[]> {
   const meshes = new Map<string, THREE.Mesh[]>();
 
@@ -534,6 +550,7 @@ function buildMeshes(
         top,
         buildingGroup,
         onTextureUpdate,
+        showInternalIds,
       );
       return;
     }
@@ -581,6 +598,7 @@ function buildMeshes(
       depth,
       buildingGroup,
       onTextureUpdate,
+      showInternalIds,
     );
   });
 
@@ -673,6 +691,27 @@ export type PinPosition = {
 };
 
 const FLOOR_ORDER = Object.keys(FLOORS_META) as FloorKey[];
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function filterRoomsByPolygons(
+  floors: Record<FloorKey, FloorConfig>,
+): { id: string; data: RoomData; floor: FloorKey }[] {
+  const rooms: { id: string; data: RoomData; floor: FloorKey }[] = [];
+  for (const [floorKey, config] of Object.entries(floors) as [
+    FloorKey,
+    FloorConfig,
+  ][]) {
+    const validIds = new Set(
+      parsePolygons(config.svg, config.data).map((p) => p.id),
+    );
+    for (const [id, data] of Object.entries(config.data)) {
+      if (validIds.has(id)) {
+        rooms.push({ id, data, floor: floorKey });
+      }
+    }
+  }
+  return rooms;
+}
 
 export default function MapaRaw({
   initialFloor = "baja",
@@ -782,18 +821,7 @@ export default function MapaRaw({
     return Math.max(w, h);
   }, [bounds]);
 
-  const allRooms = useMemo(() => {
-    const rooms: { id: string; data: RoomData; floor: FloorKey }[] = [];
-    for (const [floorKey, config] of Object.entries(floors) as [
-      FloorKey,
-      FloorConfig,
-    ][]) {
-      for (const [id, data] of Object.entries(config.data)) {
-        rooms.push({ id, data, floor: floorKey });
-      }
-    }
-    return rooms;
-  }, [floors]);
+  const allRooms = useMemo(() => filterRoomsByPolygons(floors), [floors]);
 
   const availableTypes = useMemo(() => {
     const excludedTypes = new Set(["escaleras", "ascensor"]);
@@ -1026,13 +1054,14 @@ export default function MapaRaw({
       () => {
         needsRenderRef.current = true;
       },
+      isPinEditor,
     );
     raycastTargetsRef.current = Array.from(meshesRef.current.values()).flat();
     hoveredRef.current = null;
     ghostPinRef.current = null;
     needsRenderRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [polygons, bounds, floor, compact]);
+  }, [polygons, bounds, floor, compact, isPinEditor]);
 
   // --- Efecto dedicado al pin y la orientación (sin reconstruir meshes) ---
   useEffect(() => {
