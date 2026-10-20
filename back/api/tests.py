@@ -1014,3 +1014,75 @@ class RealtimeAdminMixinTestCase(TestCase):
                 mock_notify.assert_called_with("examenes")
 
 
+class UbicacionMapaParityTests(TestCase):
+    """Verifica el contrato de paridad entre mapa_polygon_ids.json y UbicacionMapa en BD."""
+
+    def test_paridad_exacta_manifiesto_y_bd_por_piso(self):
+        import json
+        from pathlib import Path
+        from api.models import UbicacionMapa
+
+        manifest_path = Path(__file__).resolve().parent / "mapa_polygon_ids.json"
+        self.assertTrue(
+            manifest_path.exists(),
+            "Falta back/api/mapa_polygon_ids.json (correr `npm run mapa:ids` en front/).",
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        for piso, svg_ids in manifest.items():
+            expected = set(svg_ids)
+            actual = set(
+                UbicacionMapa.objects.filter(piso=piso).values_list("svg_id", flat=True)
+            )
+            huerfanos_bd = sorted(actual - expected)
+            faltantes_bd = sorted(expected - actual)
+            self.assertEqual(
+                actual,
+                expected,
+                f"Divergencia en piso '{piso}': "
+                f"huérfanos en BD={huerfanos_bd}, polígonos sin registro={faltantes_bd}",
+            )
+
+    def test_clean_rechaza_svg_id_inexistente_en_manifiesto(self):
+        from django.core.exceptions import ValidationError
+        from api.models import UbicacionMapa
+
+        invalido = UbicacionMapa(
+            piso="baja",
+            svg_id="poligono_fantasma_999",
+            nombre="Fantasma",
+            tipo="otro",
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            invalido.clean()
+        self.assertIn("svg_id", ctx.exception.message_dict)
+
+    def test_full_clean_rechaza_svg_id_no_numerico(self):
+        from django.core.exceptions import ValidationError
+        from api.models import UbicacionMapa
+
+        alfanumerico = UbicacionMapa(
+            piso="baja",
+            svg_id="aula_alfa_1",
+            nombre="Aula Invalida",
+            tipo="aula",
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            alfanumerico.full_clean()
+        self.assertIn("svg_id", ctx.exception.message_dict)
+
+    def test_endpoint_retorna_ubicaciones_ordenadas_numericamente(self):
+        from rest_framework.test import APIClient
+
+        client = APIClient()
+        response = client.get("/api/ubicaciones-mapa/?piso=baja")
+        self.assertEqual(response.status_code, 200)
+        items = response.json()
+        ids_numericos = [int(item["svg_id"]) for item in items]
+        self.assertEqual(
+            ids_numericos,
+            sorted(ids_numericos),
+            "Las ubicaciones deben retornar ordenadas numéricamente de menor a mayor.",
+        )
+
+

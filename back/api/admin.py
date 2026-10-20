@@ -90,7 +90,8 @@ class TotemAdmin(ImportExportModelAdmin):
 
 
 @admin.register(UbicacionMapa)
-class UbicacionMapaAdmin(admin.ModelAdmin):
+class UbicacionMapaAdmin(RealtimeAdminMixin, admin.ModelAdmin):
+    content_resource = 'mapa'
     list_display = ['svg_id', 'nombre', 'tipo', 'piso']
     list_filter = ['piso', 'tipo']
     search_fields = ['nombre', 'svg_id']

@@ -16,6 +16,7 @@ media/
 # Node
 node_modules/
 dist/
+.dist*/
 build/
 
 # System
