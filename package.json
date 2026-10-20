@@ -1,0 +1,9 @@
+{
+  "name": "stu-frre",
+  "private": true,
+  "description": "Atajos para ejecutar scripts del front desde la raíz",
+  "scripts": {
+    "feature:add": "npm --prefix front run feature:add --",
+    "feature:delete": "npm --prefix front run feature:delete --"
+  }
+}

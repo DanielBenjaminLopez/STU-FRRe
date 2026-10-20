@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { sileo } from "sileo";
 import DataFormModal from "../components/DataFormModal";
@@ -240,14 +240,26 @@ export default function UbicacionesMapaPage() {
     }
   }, [selectedTotem, refreshTotems]);
 
-  const ubicacionesPiso = ubicaciones
-    .filter((u) => u.piso === activePiso)
-    .filter(
-      (u) =>
-        !searchQuery ||
-        u.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.svg_id.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+  const [mapRefreshKey, setMapRefreshKey] = useState(0);
+
+  const ubicacionesPiso = useMemo(() => {
+    return ubicaciones
+      .filter((u) => u.piso === activePiso)
+      .filter(
+        (u) =>
+          !searchQuery ||
+          u.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.svg_id.includes(searchQuery.trim()),
+      )
+      .sort((a, b) => {
+        const na = Number(a.svg_id);
+        const nb = Number(b.svg_id);
+        if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+        if (!Number.isNaN(na)) return -1;
+        if (!Number.isNaN(nb)) return 1;
+        return a.svg_id.localeCompare(b.svg_id);
+      });
+  }, [ubicaciones, activePiso, searchQuery]);
 
   async function handleEdit(data: Record<string, unknown>) {
     if (!editingItem) return;
@@ -256,6 +268,7 @@ export default function UbicacionesMapaPage() {
       tipo: String(data.tipo),
     });
     await cargarUbicaciones();
+    setMapRefreshKey((k) => k + 1);
   }
 
   const noTotems = totems.filter((t) => t.vinculado).length === 0;
@@ -348,7 +361,7 @@ export default function UbicacionesMapaPage() {
                 <thead>
                   <tr className="border-b-2 border-gray-100 text-left">
                     <th className="px-4 py-3 font-semibold text-gray-600 w-28 text-center">
-                      ID SVG
+                      Nº Espacio
                     </th>
                     <th className="px-4 py-3 font-semibold text-gray-600 w-[52%]">
                       Nombre
@@ -401,7 +414,7 @@ export default function UbicacionesMapaPage() {
                       >
                         <td className="px-4 py-3 text-center">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg font-mono text-xs font-semibold bg-gray-100 text-gray-800">
-                            {u.svg_id}
+                            #{u.svg_id}
                           </span>
                         </td>
                         <td className="px-4 py-3 font-medium text-gray-900">
@@ -545,6 +558,7 @@ export default function UbicacionesMapaPage() {
                   pinPosition={currentPinPosition}
                   orientation={currentOrientacion}
                   onPinPlaced={handlePinPlaced}
+                  refreshKey={mapRefreshKey}
                 />
               </div>
             </div>
@@ -557,7 +571,7 @@ export default function UbicacionesMapaPage() {
         {editingItem && (
           <DataFormModal
             key="edit-modal"
-            title={`Editar — ${editingItem.svg_id}`}
+            title={`Editar Espacio #${editingItem.svg_id}`}
             fields={editFields}
             initialData={{
               nombre: editingItem.nombre,

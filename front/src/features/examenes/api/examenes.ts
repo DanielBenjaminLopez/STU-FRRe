@@ -32,7 +32,9 @@ function calculateHoraFin(horaInicio: string): string {
 }
 
 export async function fetchExamenes(): Promise<Examen[]> {
-  const data = await totemFetch<MesaExamenBackend[]>("/api/mesas-examen/");
+  const data = await totemFetch<MesaExamenBackend[]>("/api/mesas-examen/", {
+    cache: "no-store",
+  });
   return data.map((m) => {
     const horaInicio = m.hora ? m.hora.slice(0, 5) : "08:00";
     return {

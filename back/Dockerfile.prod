@@ -1,0 +1,59 @@
+# Etapa 1: build dependencies
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential gcc libpq-dev libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+
+# Etapa 2: runtime
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/home/appuser/.local/bin:$PATH"
+
+# Dependencias runtime necesarias (OCR, PDF, netcat para healthchecks/entrypoint)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libpq-dev \
+    tesseract-ocr tesseract-ocr-spa \
+    poppler-utils \
+    netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+# Crear usuario no root
+RUN addgroup --system appgroup && \
+    adduser --system --ingroup appgroup --home /home/appuser appuser
+
+# Copiar wheels e instalar
+COPY --from=builder /wheels /wheels
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir /wheels/* && \
+    rm -rf /wheels
+
+# Copiar código
+COPY . /app
+
+# Permisos
+RUN chmod +x /app/entrypoint.sh && \
+    chown -R appuser:appgroup /app
+
+USER appuser
+
+EXPOSE 8000
+
+ENTRYPOINT ["/app/entrypoint.sh"]

@@ -28,7 +28,8 @@ SECRET_KEY = "django-insecure-kw^*q8^vf@hs(&p))6)18=@ixwp646tmyn6y#j+8rw)py7-v^h
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"] if DEBUG else ["localhost", "127.0.0.1", "backend"]
+import os
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",") if os.getenv("ALLOWED_HOSTS") else (["*"] if DEBUG else ["localhost", "127.0.0.1", "backend"])
 
 
 # Application definition

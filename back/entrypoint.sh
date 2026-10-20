@@ -11,8 +11,11 @@ echo "PostgreSQL está listo."
 echo "Ejecutando migraciones..."
 python manage.py migrate --noinput
 
+echo "Sincronizando widgets..."
+python manage.py sync_widgets
+
 echo "Recolectando archivos estáticos..."
-python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput || true
 
 # Scraping diario de noticias a las 03:00 UTC (00:00 Argentina).
 # Corre en background: hereda el env de este script, asi que no hace falta

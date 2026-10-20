@@ -899,3 +899,190 @@ class MateriaSimplificadaTestCase(TestCase):
 
         m1 = Materia.objects.get(carrera=car, nombre="Materia Test CSV")
         self.assertEqual(m1.nivel, "primero")
+
+
+class AvisosActivosAPITestCase(TestCase):
+    def test_avisos_activos_es_publico(self):
+        from django.utils import timezone
+        from rest_framework import status
+        from api.models import Aviso
+
+        hoy = timezone.now().date()
+        Aviso.objects.create(
+            fecha=hoy,
+            motivo="Paro docente",
+            tipo="paro",
+        )
+
+        res = self.client.get("/api/avisos-activos/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        data = res.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["motivo"], "Paro docente")
+
+
+class RealtimeAdminMixinTestCase(TestCase):
+    def setUp(self):
+        from django.contrib.admin.sites import AdminSite
+        from api.admin import HorarioCursadoAdmin, MesaExamenAdmin
+        from api.models import Carrera, Materia, HorarioCursado, MesaExamen
+
+        self.site = AdminSite()
+        self.horario_admin = HorarioCursadoAdmin(HorarioCursado, self.site)
+        self.mesa_admin = MesaExamenAdmin(MesaExamen, self.site)
+
+        self.carrera, _ = Carrera.objects.get_or_create(
+            codigo="TEST_CAR",
+            defaults={"nombre": "Carrera Test", "tipo": "grado"},
+        )
+        self.materia, _ = Materia.objects.get_or_create(
+            carrera=self.carrera,
+            nombre="Algoritmos Test",
+            defaults={"nivel": "primero"},
+        )
+
+    def test_horario_admin_notifica_al_guardar_borrar_y_bulk(self):
+        from api.models import HorarioCursado
+
+        horario = HorarioCursado.objects.create(
+            materia=self.materia,
+            comision="1K1",
+            dia_semana="lunes",
+            hora_inicio="08:00",
+            hora_fin="10:00",
+        )
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.horario_admin.save_model(None, horario, None, change=True)
+            mock_notify.assert_called_with("horarios")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.horario_admin.delete_model(None, horario)
+            mock_notify.assert_called_with("horarios")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.horario_admin.delete_queryset(None, HorarioCursado.objects.none())
+            mock_notify.assert_called_with("horarios")
+
+    def test_mesa_admin_notifica_al_guardar_borrar_y_bulk(self):
+        from api.models import MesaExamen
+
+        mesa = MesaExamen.objects.create(
+            carrera=self.carrera,
+            materia="Algoritmos",
+            fecha="2026-10-10",
+            hora="08:00",
+        )
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.mesa_admin.save_model(None, mesa, None, change=True)
+            mock_notify.assert_called_with("examenes")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.mesa_admin.delete_model(None, mesa)
+            mock_notify.assert_called_with("examenes")
+
+        with patch("api.admin.notify_content") as mock_notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                self.mesa_admin.delete_queryset(None, MesaExamen.objects.none())
+            mock_notify.assert_called_with("examenes")
+
+    def test_import_process_result_notifica(self):
+        from unittest.mock import MagicMock
+
+        mock_result = MagicMock()
+        mock_result.has_errors.return_value = False
+        mock_request = MagicMock()
+
+        with patch("import_export.admin.ImportExportModelAdmin.process_result") as mock_super_process:
+            mock_super_process.return_value = "response"
+            with patch("api.admin.notify_content") as mock_notify:
+                with self.captureOnCommitCallbacks(execute=True):
+                    res = self.horario_admin.process_result(mock_result, mock_request)
+                self.assertEqual(res, "response")
+                mock_notify.assert_called_with("horarios")
+
+            with patch("api.admin.notify_content") as mock_notify:
+                with self.captureOnCommitCallbacks(execute=True):
+                    res = self.mesa_admin.process_result(mock_result, mock_request)
+                self.assertEqual(res, "response")
+                mock_notify.assert_called_with("examenes")
+
+
+class UbicacionMapaParityTests(TestCase):
+    """Verifica el contrato de paridad entre mapa_polygon_ids.json y UbicacionMapa en BD."""
+
+    def test_paridad_exacta_manifiesto_y_bd_por_piso(self):
+        import json
+        from pathlib import Path
+        from api.models import UbicacionMapa
+
+        manifest_path = Path(__file__).resolve().parent / "mapa_polygon_ids.json"
+        self.assertTrue(
+            manifest_path.exists(),
+            "Falta back/api/mapa_polygon_ids.json (correr `npm run mapa:ids` en front/).",
+        )
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        for piso, svg_ids in manifest.items():
+            expected = set(svg_ids)
+            actual = set(
+                UbicacionMapa.objects.filter(piso=piso).values_list("svg_id", flat=True)
+            )
+            huerfanos_bd = sorted(actual - expected)
+            faltantes_bd = sorted(expected - actual)
+            self.assertEqual(
+                actual,
+                expected,
+                f"Divergencia en piso '{piso}': "
+                f"huérfanos en BD={huerfanos_bd}, polígonos sin registro={faltantes_bd}",
+            )
+
+    def test_clean_rechaza_svg_id_inexistente_en_manifiesto(self):
+        from django.core.exceptions import ValidationError
+        from api.models import UbicacionMapa
+
+        invalido = UbicacionMapa(
+            piso="baja",
+            svg_id="poligono_fantasma_999",
+            nombre="Fantasma",
+            tipo="otro",
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            invalido.clean()
+        self.assertIn("svg_id", ctx.exception.message_dict)
+
+    def test_full_clean_rechaza_svg_id_no_numerico(self):
+        from django.core.exceptions import ValidationError
+        from api.models import UbicacionMapa
+
+        alfanumerico = UbicacionMapa(
+            piso="baja",
+            svg_id="aula_alfa_1",
+            nombre="Aula Invalida",
+            tipo="aula",
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            alfanumerico.full_clean()
+        self.assertIn("svg_id", ctx.exception.message_dict)
+
+    def test_endpoint_retorna_ubicaciones_ordenadas_numericamente(self):
+        from rest_framework.test import APIClient
+
+        client = APIClient()
+        response = client.get("/api/ubicaciones-mapa/?piso=baja")
+        self.assertEqual(response.status_code, 200)
+        items = response.json()
+        ids_numericos = [int(item["svg_id"]) for item in items]
+        self.assertEqual(
+            ids_numericos,
+            sorted(ids_numericos),
+            "Las ubicaciones deben retornar ordenadas numéricamente de menor a mayor.",
+        )
+
+

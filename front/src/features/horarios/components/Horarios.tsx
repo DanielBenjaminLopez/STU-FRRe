@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { useHorarios } from "../hooks/useHorarios";
 import type { Clase } from "../api/horarios";
@@ -43,33 +43,54 @@ function ClaseRow({ clase }: { clase: Clase }) {
   const badgeBorderColor =
     badgeBorderColors[clase.carrera_codigo] ?? defaultBadgeBorderColor;
 
+  const horarioTexto =
+    clase.hora_inicio && clase.hora_fin
+      ? `${clase.hora_inicio.slice(0, 5)} - ${clase.hora_fin.slice(0, 5)}`
+      : (clase.hora_inicio?.slice(0, 5) ?? "");
+
   return (
-    <div className="flex flex-col justify-center gap-2 items-start w-full min-w-0 max-w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
-      <span className="text-xs font-medium shrink-0">
-        {clase.hora_inicio?.slice(0, 5)} - {clase.hora_fin?.slice(0, 5)}
-      </span>
-      <div
-        className="text-sm font-normal min-w-0 w-full line-clamp-2 break-words"
-        title={`[${clase.comision}] ${clase.materia_nombre}`}
-      >
-        <span className="font-semibold mr-1.5 shrink-0">
-          [{clase.comision}]
-        </span>
-        <span>{clase.materia_nombre}</span>
-      </div>
-      <div className="flex flex-wrap gap-2 max-w-full">
-        <div
-          className={`flex justify-center py-1 px-3 w-fit max-w-full ${badgeColor} ${badgeBorderColor} border text-sm font-semibold rounded-2xl shrink-0`}
-        >
-          <span className={`${badgeTextColor} truncate`}>
-            {clase.carrera_codigo}
-          </span>
+    <div className="flex flex-col justify-between gap-1.5 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition">
+      {/* Fila 1: Header contextual (Carrera + Comisión y Horario) */}
+      <div className="flex items-center justify-between gap-2 w-full min-w-0 text-xs">
+        <div className="flex items-center gap-2 min-w-0">
+          {clase.carrera_codigo && (
+            <div
+              className={`w-14 text-center py-0.5 ${badgeColor} ${badgeBorderColor} border font-semibold rounded-xl shrink-0`}
+            >
+              <span className={`${badgeTextColor} truncate block`}>
+                {clase.carrera_codigo}
+              </span>
+            </div>
+          )}
+          {clase.comision && (
+            <div className="text-center py-0.5 px-2.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-700 rounded-xl shrink-0">
+              <span className="truncate block">{clase.comision}</span>
+            </div>
+          )}
         </div>
+        {horarioTexto && (
+          <span className="font-semibold text-gray-500 tabular-nums shrink-0">
+            {horarioTexto}
+          </span>
+        )}
+      </div>
+
+      {/* Fila 2: Materia (máximo ancho libre) y Aula */}
+      <div className="flex items-center justify-between gap-2.5 w-full pt-0.5 min-w-0">
+        <div
+          className="text-sm font-medium text-gray-900 min-w-0 flex-1 truncate"
+          title={
+            clase.comision
+              ? `[${clase.comision}] ${clase.materia_nombre}`
+              : clase.materia_nombre
+          }
+        >
+          <span>{clase.materia_nombre}</span>
+        </div>
+
         {clase.aula && (
-          <div className="flex justify-center py-1 px-2 bg-white/50 text-sm font-semibold rounded-2xl w-fit max-w-full shrink-0">
-            <span className="font-semibold truncate">
-              {formatAula(clase.aula)}
-            </span>
+          <div className="w-22 text-center py-0.5 bg-white/70 border border-gray-200 text-xs font-semibold text-gray-800 rounded-xl shrink-0">
+            <span className="truncate block">{formatAula(clase.aula)}</span>
           </div>
         )}
       </div>
@@ -115,23 +136,30 @@ export default function Horarios() {
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper: iniciar intervalo de auto-rotate desde un índice
-  function startAutoRotate(fromIndex: number) {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setSelectedCarrera(uniqueCarreras[fromIndex]);
-    isAutoRotating.current = true;
+  const startAutoRotate = useCallback(
+    (fromIndex: number) => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setSelectedCarrera(uniqueCarreras[fromIndex]);
+      isAutoRotating.current = true;
 
-    timerRef.current = setInterval(() => {
-      setSelectedCarrera((prev) => {
-        const currentIdx = uniqueCarreras.indexOf(prev ?? "");
-        const next = (currentIdx + 1) % uniqueCarreras.length;
-        return uniqueCarreras[next];
-      });
-    }, AUTO_ROTATE_MS);
-  }
+      timerRef.current = setInterval(() => {
+        setSelectedCarrera((prev) => {
+          const currentIdx = uniqueCarreras.indexOf(prev ?? "");
+          const next = (currentIdx + 1) % uniqueCarreras.length;
+          return uniqueCarreras[next];
+        });
+      }, AUTO_ROTATE_MS);
+    },
+    [uniqueCarreras],
+  );
 
   // Iniciar auto-rotate cuando hay carreras disponibles
   useEffect(() => {
-    if (uniqueCarreras.length === 0) return;
+    if (uniqueCarreras.length === 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      return;
+    }
     if (!isAutoRotating.current) return;
 
     startAutoRotate(0);
@@ -139,7 +167,7 @@ export default function Horarios() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [uniqueCarreras]);
+  }, [uniqueCarreras, startAutoRotate]);
 
   // Handler para selección manual
   function handleSelect(codigo: string | null) {
@@ -156,11 +184,16 @@ export default function Horarios() {
   }
 
   // Filtrar por carrera seleccionada
-  const ahoraFiltrado = selectedCarrera
-    ? ahora.filter((c) => c.carrera_codigo === selectedCarrera)
+  const effectiveCarrera =
+    selectedCarrera && uniqueCarreras.includes(selectedCarrera)
+      ? selectedCarrera
+      : null;
+
+  const ahoraFiltrado = effectiveCarrera
+    ? ahora.filter((c) => c.carrera_codigo === effectiveCarrera)
     : ahora;
-  const siguienteFiltrado = selectedCarrera
-    ? siguiente.filter((c) => c.carrera_codigo === selectedCarrera)
+  const siguienteFiltrado = effectiveCarrera
+    ? siguiente.filter((c) => c.carrera_codigo === effectiveCarrera)
     : siguiente;
 
   return (
@@ -185,7 +218,7 @@ export default function Horarios() {
               <Select
                 align="center"
                 colorVariant="blue"
-                value={selectedCarrera ?? ""}
+                value={effectiveCarrera ?? ""}
                 onChange={(val) => handleSelect(val ? val : null)}
                 options={[
                   { value: "", label: "Todas" },

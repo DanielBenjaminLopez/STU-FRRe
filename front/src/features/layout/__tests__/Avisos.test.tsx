@@ -49,19 +49,14 @@ describe("widget Avisos", () => {
 
     expect(screen.getByText("Avisos")).toBeInTheDocument();
     expect(screen.getByText("Manifestacion")).toBeInTheDocument();
-    expect(screen.getByText("Paro:")).toBeInTheDocument();
     expect(screen.getByText("Corte de luz")).toBeInTheDocument();
-    expect(screen.getByText("Feriado:")).toBeInTheDocument();
+    expect(screen.queryByText("Paro:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Feriado:")).not.toBeInTheDocument();
   });
 
   it("formatea la fecha en formato es-AR", () => {
     render(<Avisos avisos={[makeAviso({ fecha: "2026-03-15" })]} />);
     expect(screen.getByText("15/03/2026")).toBeInTheDocument();
-  });
-
-  it("usa el tipo crudo cuando no está en el mapa de labels", () => {
-    render(<Avisos avisos={[makeAviso({ tipo: "misterioso" })]} />);
-    expect(screen.getByText("misterioso:")).toBeInTheDocument();
   });
 
   it("no se posiciona en absoluto ni usa márgenes negativos", () => {

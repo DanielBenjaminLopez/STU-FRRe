@@ -6,7 +6,8 @@ export type ContentResource =
   | "avisos"
   | "horarios"
   | "examenes"
-  | "eventos";
+  | "eventos"
+  | "mapa";
 
 export interface RealtimeEvent {
   type: string;

@@ -4,12 +4,17 @@ export function Skeleton({ className = "" }: { className?: string }) {
 
 export function ClaseRowSkeleton() {
   return (
-    <div className="flex flex-col justify-center gap-2 items-start w-full p-4 border border-gray-200 bg-white/50 rounded-2xl">
-      <Skeleton className="h-3 w-20" />
-      <Skeleton className="h-4 w-48" />
-      <div className="flex gap-2">
-        <Skeleton className="h-6 w-14 rounded-2xl" />
-        <Skeleton className="h-6 w-12 rounded-2xl" />
+    <div className="flex flex-col justify-between gap-1.5 w-full p-3 border border-gray-200 bg-white/50 rounded-2xl">
+      <div className="flex items-center justify-between gap-2 w-full text-xs">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-14 rounded-xl shrink-0" />
+          <Skeleton className="h-5 w-12 rounded-xl shrink-0" />
+        </div>
+        <Skeleton className="h-3.5 w-20 rounded-md shrink-0" />
+      </div>
+      <div className="flex items-center justify-between gap-2.5 w-full pt-0.5">
+        <Skeleton className="h-4 flex-1 rounded-md" />
+        <Skeleton className="h-5 w-22 rounded-xl shrink-0" />
       </div>
     </div>
   );
@@ -51,6 +56,76 @@ export function ScheduleGridSkeleton({ count = 6 }: { count?: number }) {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ExamenesScheduleGridSkeleton() {
+  return (
+    <div
+      data-testid="examenes-schedule-grid-skeleton"
+      className="flex h-full w-full flex-col gap-6 overflow-hidden p-6 sm:p-8"
+    >
+      {/* Grupo 1: Simula exámenes de hoy */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between rounded-3xl bg-white/95 border border-gray-200/80 px-5 py-3.5 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-6 w-48 rounded-lg" />
+            <Skeleton className="h-8 w-14 rounded-xl" />
+          </div>
+          <Skeleton className="h-4 w-16 rounded-md" />
+        </div>
+
+        <div className="flex flex-col gap-3 w-full">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex w-full items-center gap-4 px-5 py-3.5 rounded-3xl border border-gray-200 bg-white/50 shadow-xs"
+            >
+              <div className="w-1.5 h-10 rounded-full bg-emerald-300/60 shrink-0" />
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+                <Skeleton className="h-6 w-1/3 rounded-lg" />
+                <div className="flex shrink-0 items-center justify-end gap-2">
+                  <Skeleton className="h-9 w-20 rounded-xl" />
+                  <Skeleton className="h-9 w-24 rounded-xl" />
+                  <Skeleton className="h-9 w-16 rounded-xl" />
+                  <Skeleton className="h-9 w-16 rounded-xl" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Grupo 2: Simula próximas fechas */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between rounded-3xl bg-white/95 border border-gray-200/80 px-5 py-3.5 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="h-6 w-44 rounded-lg" />
+          </div>
+          <Skeleton className="h-4 w-16 rounded-md" />
+        </div>
+
+        <div className="flex flex-col gap-3 w-full">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex w-full items-center gap-4 px-5 py-3.5 rounded-3xl border border-gray-200 bg-white/50 shadow-xs"
+            >
+              <div className="w-1.5 h-10 rounded-full bg-emerald-300/60 shrink-0" />
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+                <Skeleton className="h-6 w-2/5 rounded-lg" />
+                <div className="flex shrink-0 items-center justify-end gap-2">
+                  <Skeleton className="h-9 w-20 rounded-xl" />
+                  <Skeleton className="h-9 w-24 rounded-xl" />
+                  <Skeleton className="h-9 w-16 rounded-xl" />
+                  <Skeleton className="h-9 w-16 rounded-xl" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

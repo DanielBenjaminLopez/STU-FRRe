@@ -322,11 +322,41 @@ class HorarioCursadoResource(resources.ModelResource):
         )
 
 
+class FlexibleDateWidget(widgets.DateWidget):
+    def __init__(self, format=None):
+        super().__init__(format=format or '%Y-%m-%d')
+
+    def clean(self, value, row=None, **kwargs):
+        if not value:
+            return None
+        val_str = str(value).strip()
+        if '/' in val_str:
+            partes = val_str.split('/')
+            if len(partes) == 3:
+                if len(partes[2]) == 4:
+                    val_str = f"{partes[2]}-{partes[1].zfill(2)}-{partes[0].zfill(2)}"
+                elif len(partes[0]) == 4:
+                    val_str = f"{partes[0]}-{partes[1].zfill(2)}-{partes[2].zfill(2)}"
+        elif '-' in val_str:
+            partes = val_str.split('-')
+            if len(partes) == 3:
+                if len(partes[2]) == 4:
+                    val_str = f"{partes[2]}-{partes[1].zfill(2)}-{partes[0].zfill(2)}"
+                elif len(partes[0]) == 4:
+                    val_str = f"{partes[0]}-{partes[1].zfill(2)}-{partes[2].zfill(2)}"
+        return super().clean(val_str, row=row, **kwargs)
+
+
 class MesaExamenResource(resources.ModelResource):
     carrera = fields.Field(
         column_name='carrera',
         attribute='carrera',
         widget=ForeignKeyWidget(Carrera, field='id'),
+    )
+    fecha = fields.Field(
+        column_name='fecha',
+        attribute='fecha',
+        widget=FlexibleDateWidget(),
     )
 
     def before_import_row(self, row, **kwargs):
@@ -367,6 +397,14 @@ class MesaExamenResource(resources.ModelResource):
             partes = fecha_str.split('/')
             if len(partes) == 3 and len(partes[2]) == 4:
                 fecha_str = f"{partes[2]}-{partes[1].zfill(2)}-{partes[0].zfill(2)}"
+            elif len(partes) == 3 and len(partes[0]) == 4:
+                fecha_str = f"{partes[0]}-{partes[1].zfill(2)}-{partes[2].zfill(2)}"
+        elif '-' in fecha_str:
+            partes = fecha_str.split('-')
+            if len(partes) == 3 and len(partes[2]) == 4:
+                fecha_str = f"{partes[2]}-{partes[1].zfill(2)}-{partes[0].zfill(2)}"
+            elif len(partes) == 3 and len(partes[0]) == 4:
+                fecha_str = f"{partes[0]}-{partes[1].zfill(2)}-{partes[2].zfill(2)}"
         row['fecha'] = fecha_str
 
         hora_val = row.get('hora') or row.get('Hora')

@@ -39,6 +39,7 @@ interface EventoCalendarioBackend {
 export async function fetchEventosCalendario(): Promise<EventoCalendario[]> {
   const data = await totemFetch<EventoCalendarioBackend[]>(
     "/api/calendario/eventos/",
+    { cache: "no-store" },
   );
 
   return data.map((e) => {

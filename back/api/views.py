@@ -5,7 +5,8 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, Value, When
+from django.db.models.functions import Cast
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status, viewsets
@@ -472,7 +473,7 @@ class NoticiasViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 
 
 class AvisosActivosView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         hoy = timezone.now().date()
@@ -481,8 +482,9 @@ class AvisosActivosView(APIView):
         return Response(serializer.data)
 
 
-class UbicacionMapaViewSet(viewsets.ModelViewSet):
+class UbicacionMapaViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
     """CRUD de ubicaciones del mapa SVG. Solo nombre y tipo son editables."""
+    content_resource = 'mapa'
     serializer_class = UbicacionMapaSerializer
     http_method_names = ['get', 'patch', 'head', 'options']
 
@@ -492,7 +494,16 @@ class UbicacionMapaViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated(), IsAdminOrSecretaria()]
 
     def get_queryset(self):
-        qs = UbicacionMapa.objects.all()
+        qs = UbicacionMapa.objects.annotate(
+            num_id=Case(
+                When(
+                    svg_id__regex=r'^\d+$',
+                    then=Cast('svg_id', output_field=IntegerField()),
+                ),
+                default=Value(999999),
+                output_field=IntegerField(),
+            )
+        ).order_by('piso', 'num_id', 'svg_id')
         piso = self.request.query_params.get('piso')
         if piso:
             qs = qs.filter(piso=piso)

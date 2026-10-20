@@ -1,15 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchAvisosActivos, type Aviso } from "../api/avisos";
-import { useTotemRealtime } from "../../../shared/context/TotemRealtimeContext";
+import {
+  useTotemRealtime,
+  type RealtimeEvent,
+} from "../../../shared/context/TotemRealtimeContext";
 
 const REFRESH_MS = 5 * 60_000;
 
-export function useAvisos() {
+export function useAvisos(realtimeEventOverride?: RealtimeEvent | null) {
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const mountedRef = useRef(true);
-  const realtimeEvent = useTotemRealtime();
+  const contextEvent = useTotemRealtime();
+  const realtimeEvent =
+    realtimeEventOverride !== undefined ? realtimeEventOverride : contextEvent;
   const relevantEvent =
     realtimeEvent?.resource === "avisos" ? realtimeEvent : null;
 

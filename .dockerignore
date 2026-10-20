@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+.env.*
+*.log
+node_modules
+__pycache__
+*.pyc
+.DS_Store
+back/staticfiles
+back/media

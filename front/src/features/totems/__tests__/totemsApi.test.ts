@@ -108,7 +108,9 @@ describe("totems API", () => {
     const me = { id: 1, nombre: "Tótem A", activo: true, vinculado: true };
     mockTotemFetch.mockResolvedValue(me);
     const result = await fetchTotemMe();
-    expect(mockTotemFetch).toHaveBeenCalledWith("/api/totems/me/");
+    expect(mockTotemFetch).toHaveBeenCalledWith("/api/totems/me/", {
+      cache: "no-store",
+    });
     expect(result).toEqual(me);
   });
 });

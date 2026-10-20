@@ -99,4 +99,4 @@ CREATE DATABASE totem_db OWNER totem_user;
 | :--- | :--- |
 | **Frontend (Tótem y Panel)** | http://localhost:5173 |
 | **API REST** | http://localhost:8000/api/ |
-| **Django Admin** | http://localhost:8000/admin/ |
+| **Django Admin** | http://localhost:8000/django-admin/ |
