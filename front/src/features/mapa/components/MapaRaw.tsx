@@ -1000,16 +1000,23 @@ export default function MapaRaw({
     const handleResize = () => {
       const w = container.clientWidth;
       const h = container.clientHeight;
+      if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
       needsRenderRef.current = true;
     };
     window.addEventListener("resize", handleResize);
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(handleResize)
+        : null;
+    resizeObserver?.observe(container);
 
     return () => {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
+      resizeObserver?.disconnect();
       controls.removeEventListener("start", handleControlStart);
       controls.removeEventListener("end", handleControlEnd);
       controls.removeEventListener("change", handleControlChange);

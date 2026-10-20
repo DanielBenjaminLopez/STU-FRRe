@@ -59,6 +59,14 @@ export default defineConfig({
           environment: "jsdom",
           setupFiles: ["./src/test-setup.ts"],
           include: ["src/**/*.test.{ts,tsx}"],
+          // Node >=25 expone su propio `localStorage` en `globalThis` (Web Storage
+          // experimental) que devuelve `undefined` sin `--localstorage-file`. El
+          // `populateGlobal` de Vitest no pisa claves ya existentes en el global, así
+          // que el `localStorage` real de jsdom nunca llega al entorno de test y todo
+          // código que lo use truena con "Cannot read properties of undefined".
+          // Deshabilitamos el webstorage de Node para que jsdom instale el suyo.
+          // Ver https://github.com/vitest-dev/vitest/issues/8757
+          execArgv: ["--no-experimental-webstorage"],
         },
       },
     ],

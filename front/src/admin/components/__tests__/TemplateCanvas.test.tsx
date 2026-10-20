@@ -204,4 +204,23 @@ describe("TemplateCanvas", () => {
     expect(screen.getByTestId("mock-horarios")).toBeInTheDocument();
     expect(screen.getByTestId("mock-examenes")).toBeInTheDocument();
   });
+
+  it("muestra el selector de variantes de tamaño al seleccionar un widget con variantes y permite redimensionar", () => {
+    const onResizeWidget = vi.fn();
+    render(
+      <TemplateCanvas
+        {...defaultProps}
+        widgets={mockWidgets}
+        selectedWidgetId="w1"
+        onResizeWidget={onResizeWidget}
+      />,
+    );
+    const btn4x2 = screen.getByRole("button", { name: "Tamaño 4×2" });
+    const btn2x2 = screen.getByRole("button", { name: "Tamaño 2×2" });
+    expect(btn4x2).toHaveAttribute("aria-pressed", "true");
+    expect(btn2x2).toHaveAttribute("aria-pressed", "false");
+
+    fireEvent.click(btn2x2);
+    expect(onResizeWidget).toHaveBeenCalledWith("w1", 2, 2);
+  });
 });

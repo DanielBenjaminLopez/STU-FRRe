@@ -211,7 +211,7 @@ export default function Novedades() {
       {loading && <NovedadesCarouselSkeleton />}
 
       {!loading && error && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6">
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Eventos</span>
           </div>
@@ -222,7 +222,7 @@ export default function Novedades() {
       )}
 
       {!loading && !error && feed.length === 0 && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
+        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6">
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Eventos</span>
           </div>
@@ -307,7 +307,7 @@ export default function Novedades() {
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/70 pointer-events-none" />
 
-                  <div className="absolute bottom-4 left-0 right-0 z-10 px-16 pb-8 flex flex-col gap-2 pointer-events-none">
+                  <div className="absolute bottom-4 left-0 right-0 z-10 px-16 pb-6 flex flex-col gap-2 pointer-events-none">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`inline-flex items-center justify-center h-6 px-3 text-xs font-semibold text-white rounded-full backdrop-blur-sm shadow-xs border border-transparent ${badgeColor}`}
@@ -422,7 +422,7 @@ export default function Novedades() {
           )}
 
           {/* Title Header */}
-          <div className="absolute top-8 left-8 z-20 flex flex-col gap-2 justify-between pointer-events-none">
+          <div className="absolute top-6 left-6 z-20 flex flex-col gap-2 justify-between pointer-events-none">
             <span className="text-xl text-white font-semibold">Eventos</span>
           </div>
 
@@ -431,7 +431,7 @@ export default function Novedades() {
             <button
               type="button"
               onClick={() => setShowFull(true)}
-              className="absolute top-8 right-8 z-20 shadow-xs text-sm font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border border-white/20 px-4 py-1 rounded-2xl transition-colors cursor-pointer pointer-events-auto"
+              className="absolute top-6 right-6 z-20 shadow-xs text-sm font-medium bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border border-white/20 px-4 py-1 rounded-2xl transition-colors cursor-pointer pointer-events-auto"
             >
               Ver todas
             </button>

@@ -109,4 +109,24 @@ describe("checkCollision", () => {
     expect(WIDGET_REGISTRY.novedades.colSpan).toBe(4);
     expect(WIDGET_REGISTRY.novedades.rowSpan).toBe(2);
   });
+
+  it("registra las variantes de tamaño para horarios, examenes, calendario y mapa", () => {
+    expect(WIDGET_REGISTRY.horarios.variants).toEqual([
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 2 },
+    ]);
+    expect(WIDGET_REGISTRY.examenes.variants).toEqual([
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 2 },
+    ]);
+    expect(WIDGET_REGISTRY.calendario.variants).toEqual([
+      { colSpan: 2, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 1 },
+      { colSpan: 1, rowSpan: 1 },
+    ]);
+    expect(WIDGET_REGISTRY.mapa.variants).toEqual([
+      { colSpan: 2, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 1 },
+    ]);
+  });
 });

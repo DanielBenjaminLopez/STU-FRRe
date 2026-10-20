@@ -4,6 +4,7 @@ import type {
   WidgetPlacement,
   WidgetType,
   WidgetDefinition,
+  WidgetSizeVariant,
 } from "../../features/widgets/placement";
 import { GRID_COLS, GRID_ROWS } from "../../features/widgets/placement";
 import {
@@ -16,7 +17,9 @@ import { Encabezado } from "../../features/layout";
 
 interface PlacedWidgetProps {
   widget: WidgetPlacement;
+  variants?: WidgetSizeVariant[];
   onRemove: (id: string) => void;
+  onResize?: (id: string, colSpan: number, rowSpan: number) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
   isClearing?: boolean;
@@ -24,7 +27,9 @@ interface PlacedWidgetProps {
 
 const PlacedWidget = memo(function PlacedWidget({
   widget,
+  variants,
   onRemove,
+  onResize,
   isSelected = false,
   onSelect,
   isClearing = false,
@@ -41,10 +46,17 @@ const PlacedWidget = memo(function PlacedWidget({
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `placed-${widget.id}`,
-    data: { widgetId: widget.id, widgetType: widget.type, type: widget.type },
+    data: {
+      widgetId: widget.id,
+      widgetType: widget.type,
+      type: widget.type,
+      colSpan: widget.colSpan,
+      rowSpan: widget.rowSpan,
+    },
   });
 
   const isActuallySelected = isSelected && !isDragging;
+  const hasMultipleVariants = Boolean(variants && variants.length > 1);
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -61,7 +73,7 @@ const PlacedWidget = memo(function PlacedWidget({
         e.stopPropagation();
         onSelect?.(widget.id);
       }}
-      className={`relative overflow-hidden w-full h-full rounded-3xl cursor-pointer transition-all duration-200 ${
+      className={`relative overflow-hidden w-full h-full rounded-4xl cursor-pointer transition-all duration-200 ${
         isDragging ? "opacity-30" : ""
       } ${
         isRemoving || isClearing
@@ -84,7 +96,7 @@ const PlacedWidget = memo(function PlacedWidget({
           gridTemplateRows: `repeat(${widget.rowSpan}, minmax(0, 1fr))`,
         }}
       >
-        <Component />
+        <Component colSpan={widget.colSpan} rowSpan={widget.rowSpan} />
       </div>
 
       {isActuallySelected && !isRemoving && (
@@ -95,7 +107,50 @@ const PlacedWidget = memo(function PlacedWidget({
       )}
 
       {isActuallySelected && !isRemoving && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 pointer-events-none z-30">
+          {hasMultipleVariants && onResize && (
+            <div
+              role="group"
+              aria-label="Cambiar tamaño del widget"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="pointer-events-auto flex items-center gap-1.5 bg-gray-900 p-1.5 rounded-full ring-4 ring-white/30 select-none animate-widget-pop-in"
+            >
+              {variants!.map((variant) => {
+                const isActive =
+                  widget.colSpan === variant.colSpan &&
+                  widget.rowSpan === variant.rowSpan;
+                const label =
+                  variant.label ?? `${variant.colSpan}×${variant.rowSpan}`;
+                return (
+                  <button
+                    key={`${variant.colSpan}x${variant.rowSpan}`}
+                    type="button"
+                    aria-label={`Tamaño ${label}`}
+                    aria-pressed={isActive}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isActive) {
+                        onResize(widget.id, variant.colSpan, variant.rowSpan);
+                      }
+                    }}
+                    className={`${
+                      widget.colSpan === 1
+                        ? "px-2.5 py-1 text-xs"
+                        : "px-4 py-1.5 text-sm"
+                    } rounded-full font-semibold transition-all cursor-pointer select-none ${
+                      isActive
+                        ? "bg-white text-gray-900 shadow-xs"
+                        : "text-white/80 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={handleRemove}
@@ -125,9 +180,11 @@ const PlacedWidget = memo(function PlacedWidget({
 interface TemplateCanvasProps {
   widgets: WidgetPlacement[];
   onRemoveWidget: (id: string) => void;
+  onResizeWidget?: (id: string, colSpan: number, rowSpan: number) => void;
   onScaleChange?: (scale: number) => void;
   hoverCell: { col: number; row: number } | null;
   activeType: WidgetType | null;
+  activeSpan?: { colSpan: number; rowSpan: number } | null;
   registry: Record<WidgetType, WidgetDefinition>;
   selectedWidgetId?: string | null;
   onSelectWidget?: (id: string | null) => void;
@@ -137,9 +194,11 @@ interface TemplateCanvasProps {
 export default function TemplateCanvas({
   widgets,
   onRemoveWidget,
+  onResizeWidget,
   onScaleChange,
   hoverCell,
   activeType,
+  activeSpan,
   registry,
   selectedWidgetId,
   onSelectWidget,
@@ -197,6 +256,8 @@ export default function TemplateCanvas({
               (() => {
                 const def = registry[activeType];
                 if (!def) return null;
+                const dropColSpan = activeSpan?.colSpan ?? def.colSpan;
+                const dropRowSpan = activeSpan?.rowSpan ?? def.rowSpan;
                 const isNovedades = activeType === "novedades";
                 const isNoticias = activeType === "noticias";
                 const indicatorClass = isNovedades
@@ -210,8 +271,8 @@ export default function TemplateCanvas({
                     aria-label={`Zona para soltar ${def.label}`}
                     className={`overflow-hidden rounded-4xl border-2 border-dashed pointer-events-none transition-all duration-75 ${indicatorClass}`}
                     style={{
-                      gridColumn: `${hoverCell.col + 1} / span ${def.colSpan}`,
-                      gridRow: `${hoverCell.row + 1} / span ${def.rowSpan}`,
+                      gridColumn: `${hoverCell.col + 1} / span ${dropColSpan}`,
+                      gridRow: `${hoverCell.row + 1} / span ${dropRowSpan}`,
                     }}
                   />
                 );
@@ -221,7 +282,9 @@ export default function TemplateCanvas({
               <PlacedWidget
                 key={w.id}
                 widget={w}
+                variants={registry[w.type]?.variants}
                 onRemove={onRemoveWidget}
+                onResize={onResizeWidget}
                 isSelected={selectedWidgetId === w.id}
                 onSelect={(id) => onSelectWidget?.(id)}
                 isClearing={isClearing}
