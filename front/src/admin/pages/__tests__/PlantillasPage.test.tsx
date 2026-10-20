@@ -25,12 +25,15 @@ import type {
   WidgetPosicionDTO,
 } from "../../../features/widgets/api/plantillas";
 
-const { mockSileo } = vi.hoisted(() => ({
+const { mockSileo, dndHandlers } = vi.hoisted(() => ({
   mockSileo: {
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
     warning: vi.fn(),
+  },
+  dndHandlers: {
+    onDragEnd: null as ((event: unknown) => void) | null,
   },
 }));
 
@@ -39,9 +42,16 @@ vi.mock("sileo", () => ({
 }));
 
 vi.mock("@dnd-kit/core", () => ({
-  DndContext: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  DndContext: ({
+    children,
+    onDragEnd,
+  }: {
+    children: React.ReactNode;
+    onDragEnd?: (event: unknown) => void;
+  }) => {
+    dndHandlers.onDragEnd = onDragEnd ?? null;
+    return <div>{children}</div>;
+  },
   DragOverlay: ({ children }: { children?: React.ReactNode }) => (
     <div>{children}</div>
   ),
@@ -692,5 +702,123 @@ describe("PlantillasPage", () => {
         title: "Creá tu plantilla",
       }),
     );
+  });
+
+  it("permite cambiar la variante de tamaño de Horarios a 2×2 y guardarla", async () => {
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla por defecto");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+
+    fireEvent.click(widgetEl);
+    const btn2x2 = within(canvas).getByRole("button", { name: "Tamaño 2×2" });
+    fireEvent.click(btn2x2);
+
+    fireEvent.click(screen.getByText("Guardar"));
+    await waitFor(() => {
+      expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(1, [
+        {
+          widget: 1,
+          col_pos: 0,
+          fila_pos: 0,
+          col_tam: 2,
+          fila_tam: 2,
+        },
+      ]);
+    });
+  });
+
+  it("muestra advertencia si al redimensionar un widget colisiona con otro", async () => {
+    mockFetchPlantillas.mockResolvedValue([
+      plantillaDTO(1, "Plantilla con dos widgets", [
+        { ...HORARIO_POS, col_pos: 0, fila_pos: 0, col_tam: 2, fila_tam: 2 },
+        {
+          id: 11,
+          plantilla: 1,
+          widget: 2,
+          widget_nombre: "Exámenes",
+          widget_tipo: "examenes",
+          col_pos: 2,
+          fila_pos: 0,
+          col_tam: 2,
+          fila_tam: 2,
+        },
+      ]),
+    ]);
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla con dos widgets");
+    const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+    const widgetEl = within(canvas).getByTestId("mock-horarios");
+
+    fireEvent.click(widgetEl);
+    const btn4x2 = within(canvas).getByRole("button", { name: "Tamaño 4×2" });
+    fireEvent.click(btn4x2);
+
+    expect(mockSileo.warning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Espacio no disponible",
+      }),
+    );
+  });
+
+  it("coloca el widget con el tamaño de la variante arrastrada desde la paleta", async () => {
+    mockFetchPlantillas.mockResolvedValue([
+      plantillaDTO(1, "Plantilla vacía", []),
+    ]);
+    const { container } = render(<PlantillasPage />);
+    await screen.findByText("Plantilla vacía");
+
+    const gridEl = container.querySelector<HTMLDivElement>("[data-grid]")!;
+    Object.defineProperty(gridEl, "offsetWidth", {
+      value: 400,
+      configurable: true,
+    });
+    vi.spyOn(gridEl, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 400,
+      height: 600,
+      right: 400,
+      bottom: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    window.dispatchEvent(
+      Object.assign(new Event("pointermove"), { clientX: 20, clientY: 20 }),
+    );
+
+    dndHandlers.onDragEnd?.({
+      active: {
+        id: "palette-examenes-2x2",
+        data: {
+          current: {
+            type: "examenes",
+            colSpan: 2,
+            rowSpan: 2,
+          },
+        },
+        rect: { current: { initial: null } },
+      },
+    });
+
+    await waitFor(() => {
+      const canvas = container.querySelector<HTMLElement>("[data-canvas]")!;
+      expect(within(canvas).getByTestId("mock-examenes")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("Guardar"));
+    await waitFor(() => {
+      expect(mockReplacePlantillaWidgets).toHaveBeenCalledWith(1, [
+        {
+          widget: 2,
+          col_pos: 0,
+          fila_pos: 0,
+          col_tam: 2,
+          fila_tam: 2,
+        },
+      ]);
+    });
   });
 });

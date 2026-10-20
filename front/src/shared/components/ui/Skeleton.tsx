@@ -171,7 +171,7 @@ export function CalendarGridSkeleton() {
 
 export function CalendarSkeleton() {
   return (
-    <div className="w-full h-full flex flex-col justify-between items-center rounded-4xl bg-white/50 border border-gray-200 p-4">
+    <div className="w-full h-full flex flex-col justify-between items-center rounded-3xl bg-white/50 border border-gray-200 p-4">
       <div className="flex flex-col gap-2 items-center w-full">
         <Skeleton className="h-5 w-32" />
         <div className="grid grid-cols-7 gap-1 w-full">
@@ -232,10 +232,10 @@ export function NoticiaCarouselSkeleton() {
         <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
         <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
       </div>
-      <div className="absolute top-8 left-8 z-20">
+      <div className="absolute top-6 left-6 z-20">
         <Skeleton className="h-5 w-40 bg-white/20" />
       </div>
-      <Skeleton className="absolute top-8 right-8 z-20 h-8 w-24 rounded-2xl bg-white/20" />
+      <Skeleton className="absolute top-6 right-6 z-20 h-8 w-24 rounded-2xl bg-white/20" />
     </div>
   );
 }
@@ -257,10 +257,10 @@ export function NovedadesCarouselSkeleton() {
         <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
         <Skeleton className="w-2 h-2 rounded-full bg-white/20" />
       </div>
-      <div className="absolute top-8 left-8 z-20">
+      <div className="absolute top-6 left-6 z-20">
         <Skeleton className="h-5 w-48 bg-white/20" />
       </div>
-      <Skeleton className="absolute top-8 right-8 z-20 h-8 w-24 rounded-2xl bg-white/20" />
+      <Skeleton className="absolute top-6 right-6 z-20 h-8 w-24 rounded-2xl bg-white/20" />
     </div>
   );
 }
@@ -343,23 +343,29 @@ export function AdminTemplatesSkeleton() {
     <div className="flex flex-col h-full bg-white">
       <div className="flex flex-1 overflow-hidden">
         {/* Barra lateral de widgets */}
-        <div className="w-72 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
+        <div className="w-80 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-200 flex flex-col gap-1.5">
             <Skeleton className="h-7 w-40 rounded-lg" />
             <Skeleton className="h-3.5 w-52 rounded-md" />
           </div>
-          <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
+          <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-5">
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-gray-200 bg-white overflow-hidden flex flex-col"
+                className="flex flex-col gap-2.5 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
               >
-                <div className="h-36 bg-gray-50/50 p-3 flex items-center justify-center">
-                  <Skeleton className="w-full h-full rounded-xl" />
-                </div>
-                <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between">
-                  <Skeleton className="h-3.5 w-20 rounded-md" />
-                  <Skeleton className="h-3.5 w-8 rounded-md" />
+                <Skeleton className="h-4 w-24 rounded-md" />
+                <div className="grid grid-cols-2 gap-3">
+                  {Array.from({ length: 2 }).map((__, j) => (
+                    <div key={j} className="flex flex-col items-center gap-1.5">
+                      <div className="w-full rounded-2xl border border-gray-200 bg-white overflow-hidden">
+                        <div className="h-24 bg-gray-50/50 p-2 flex items-center justify-center">
+                          <Skeleton className="w-full h-full rounded-xl" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-3 w-8 rounded-md" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}

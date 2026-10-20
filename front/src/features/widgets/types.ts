@@ -2,13 +2,25 @@ import type { ComponentType } from "react";
 
 export type WidgetType = string;
 
+export interface WidgetComponentProps {
+  colSpan?: number;
+  rowSpan?: number;
+}
+
+export interface WidgetSizeVariant {
+  colSpan: number;
+  rowSpan: number;
+  label?: string;
+}
+
 export interface WidgetDefinition {
   type: WidgetType;
   label: string;
-  component: ComponentType;
+  component: ComponentType<WidgetComponentProps>;
   preview?: ComponentType;
   colSpan: number;
   rowSpan: number;
+  variants?: WidgetSizeVariant[];
   color?: string;
 }
 

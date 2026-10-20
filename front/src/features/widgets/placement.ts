@@ -5,7 +5,13 @@ export { GRID_COLS, GRID_ROWS } from "./types";
 export { WIDGET_REGISTRY } from "./registry";
 import type { WidgetDefinition, WidgetPlacement, WidgetType } from "./types";
 import { WIDGET_REGISTRY } from "./registry";
-export type { WidgetDefinition, WidgetPlacement, WidgetType } from "./types";
+export type {
+  WidgetComponentProps,
+  WidgetDefinition,
+  WidgetPlacement,
+  WidgetSizeVariant,
+  WidgetType,
+} from "./types";
 
 export interface Plantilla {
   id: string;
