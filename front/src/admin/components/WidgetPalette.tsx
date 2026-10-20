@@ -3,48 +3,78 @@ import { useDraggable } from "@dnd-kit/core";
 import type {
   WidgetType,
   WidgetDefinition,
+  WidgetComponentProps,
+  WidgetSizeVariant,
 } from "../../features/widgets/placement";
 
-interface WidgetCardProps {
-  widget: WidgetDefinition;
-  component: ComponentType;
+function getPreviewScale(colSpan: number, rowSpan: number): number {
+  if (colSpan === 1 && rowSpan === 1) return 0.4;
+  if (colSpan === 2 && rowSpan === 1) return 0.28;
+  if (colSpan === 2 && rowSpan === 2) return 0.25;
+  return 0.22;
 }
 
-function WidgetCard({ widget, component: Component }: WidgetCardProps) {
+interface WidgetVariantCardProps {
+  widget: WidgetDefinition;
+  variant: WidgetSizeVariant;
+  component: ComponentType<WidgetComponentProps>;
+}
+
+function WidgetVariantCard({
+  widget,
+  variant,
+  component: Component,
+}: WidgetVariantCardProps) {
+  const variantKey = `${variant.colSpan}x${variant.rowSpan}`;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `palette-${widget.type}`,
-    data: { type: widget.type },
+    id: `palette-${widget.type}-${variantKey}`,
+    data: {
+      type: widget.type,
+      colSpan: variant.colSpan,
+      rowSpan: variant.rowSpan,
+    },
   });
+
+  const scale = getPreviewScale(variant.colSpan, variant.rowSpan);
+  const inversePercent = `${(100 / scale).toFixed(2)}%`;
+  const dimensionLabel =
+    variant.label ?? `${variant.colSpan}\u00d7${variant.rowSpan}`;
 
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className={`rounded-2xl border border-gray-200 bg-white cursor-grab active:cursor-grabbing select-none transition-all hover:shadow-md hover:border-gray-300 ${
-        isDragging ? "opacity-40 shadow-none" : ""
+      data-testid={`palette-item-${widget.type}-${variantKey}`}
+      aria-label={`${widget.label} ${dimensionLabel}`}
+      className={`group flex flex-col items-center gap-1.5 cursor-grab active:cursor-grabbing select-none ${
+        isDragging ? "opacity-40" : ""
       }`}
     >
-      <div className="relative h-36 overflow-hidden">
-        <div
-          className="absolute top-0 left-0 origin-top-left pointer-events-none animate-fade-in"
-          style={{ width: "250%", height: "250%", transform: "scale(0.4)" }}
-        >
-          <Component />
+      <div className="w-full rounded-2xl border border-gray-200 bg-white overflow-hidden transition-all group-hover:shadow-md group-hover:border-gray-300">
+        <div className="relative h-24 overflow-hidden">
+          <div
+            className="absolute top-0 left-0 origin-top-left pointer-events-none animate-fade-in"
+            style={{
+              width: inversePercent,
+              height: inversePercent,
+              transform: `scale(${scale})`,
+            }}
+          >
+            <Component colSpan={variant.colSpan} rowSpan={variant.rowSpan} />
+          </div>
         </div>
       </div>
-      <div className="px-4 py-2 border-t border-gray-100">
-        <span className="text-xs font-medium text-gray-500">
-          {widget.label} ({widget.colSpan}&times;{widget.rowSpan})
-        </span>
-      </div>
+      <span className="text-xs font-medium text-gray-500">
+        {dimensionLabel}
+      </span>
     </div>
   );
 }
 
 interface WidgetPaletteProps {
   widgets: WidgetDefinition[];
-  components: Record<WidgetType, ComponentType>;
+  components: Record<WidgetType, ComponentType<WidgetComponentProps>>;
 }
 
 export default function WidgetPalette({
@@ -52,7 +82,7 @@ export default function WidgetPalette({
   components,
 }: WidgetPaletteProps) {
   return (
-    <div className="w-72 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
+    <div className="w-80 shrink-0 bg-gray-50 border-r border-gray-200 flex flex-col overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-200">
         <h2 className="text-2xl font-semibold text-gray-900">Widgets</h2>
         <p className="text-sm text-gray-500 mt-1">
@@ -60,14 +90,34 @@ export default function WidgetPalette({
         </p>
       </div>
       <div className="flex-1 overflow-y-auto px-5 py-4 custom-scrollbar">
-        <div className="flex flex-col gap-4">
-          {widgets.map((w) => (
-            <WidgetCard
-              key={w.type}
-              widget={w}
-              component={components[w.type]}
-            />
-          ))}
+        <div className="flex flex-col gap-5">
+          {widgets.map((w) => {
+            const variants =
+              w.variants && w.variants.length > 0
+                ? w.variants
+                : [{ colSpan: w.colSpan, rowSpan: w.rowSpan }];
+            return (
+              <div
+                key={w.type}
+                data-testid={`palette-section-${w.type}`}
+                className="flex flex-col gap-2.5 pb-4 border-b border-gray-200 last:border-b-0 last:pb-0"
+              >
+                <h3 className="text-sm font-semibold text-gray-800">
+                  {w.label}
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {variants.map((variant) => (
+                    <WidgetVariantCard
+                      key={`${w.type}-${variant.colSpan}x${variant.rowSpan}`}
+                      widget={w}
+                      variant={variant}
+                      component={components[w.type]}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

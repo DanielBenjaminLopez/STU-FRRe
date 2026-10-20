@@ -61,7 +61,7 @@ export default function TotemPreview() {
                   return (
                     <div
                       key={w.id}
-                      className="overflow-hidden grid rounded-3xl"
+                      className="overflow-hidden grid rounded-4xl"
                       style={{
                         gridColumn: `${w.col + 1} / span ${w.colSpan}`,
                         gridRow: `${w.row + 1} / span ${w.rowSpan}`,
@@ -69,7 +69,7 @@ export default function TotemPreview() {
                         gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
                       }}
                     >
-                      <Component />
+                      <Component colSpan={w.colSpan} rowSpan={w.rowSpan} />
                     </div>
                   );
                 })

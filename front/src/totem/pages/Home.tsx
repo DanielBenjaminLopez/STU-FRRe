@@ -316,7 +316,10 @@ export default function Home() {
                               gridTemplateRows: `repeat(${w.rowSpan}, minmax(0, 1fr))`,
                             }}
                           >
-                            <Component />
+                            <Component
+                              colSpan={w.colSpan}
+                              rowSpan={w.rowSpan}
+                            />
                           </div>
                         );
                       })}

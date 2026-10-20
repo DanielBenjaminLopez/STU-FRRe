@@ -4,7 +4,11 @@ import { Examenes } from "../examenes";
 import { Horarios } from "../horarios";
 import { Mapa } from "../mapa";
 import { Noticias, Novedades } from "../noticias";
-import type { WidgetDefinition, WidgetType } from "./types";
+import type {
+  WidgetComponentProps,
+  WidgetDefinition,
+  WidgetType,
+} from "./types";
 
 export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
   horarios: {
@@ -13,6 +17,10 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Horarios,
     colSpan: 4,
     rowSpan: 2,
+    variants: [
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 2 },
+    ],
     color: "from-gray-100 to-gray-200",
   },
   examenes: {
@@ -21,6 +29,10 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Examenes,
     colSpan: 4,
     rowSpan: 2,
+    variants: [
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 2 },
+    ],
     color: "from-green-100 to-green-200",
   },
   calendario: {
@@ -29,6 +41,11 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Calendario,
     colSpan: 2,
     rowSpan: 2,
+    variants: [
+      { colSpan: 2, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 1 },
+      { colSpan: 1, rowSpan: 1 },
+    ],
     color: "from-blue-100 to-blue-200",
   },
   mapa: {
@@ -37,6 +54,10 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Mapa,
     colSpan: 2,
     rowSpan: 2,
+    variants: [
+      { colSpan: 2, rowSpan: 2 },
+      { colSpan: 2, rowSpan: 1 },
+    ],
     color: "from-orange-100 to-orange-200",
   },
   noticias: {
@@ -45,6 +66,7 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Noticias,
     colSpan: 4,
     rowSpan: 2,
+    variants: [{ colSpan: 4, rowSpan: 2 }],
     color: "from-purple-100 to-purple-200",
   },
   novedades: {
@@ -53,14 +75,17 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Novedades,
     colSpan: 4,
     rowSpan: 2,
+    variants: [{ colSpan: 4, rowSpan: 2 }],
     color: "from-amber-100 to-amber-200",
   },
 };
 
-export const WIDGET_COMPONENTS: Record<WidgetType, ComponentType> =
-  Object.fromEntries(
-    Object.entries(WIDGET_REGISTRY).map(([type, definition]) => [
-      type,
-      definition.component,
-    ]),
-  );
+export const WIDGET_COMPONENTS: Record<
+  WidgetType,
+  ComponentType<WidgetComponentProps>
+> = Object.fromEntries(
+  Object.entries(WIDGET_REGISTRY).map(([type, definition]) => [
+    type,
+    definition.component,
+  ]),
+);

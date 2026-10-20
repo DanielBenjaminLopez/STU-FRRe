@@ -6,10 +6,10 @@ describe("VerButton Component", () => {
   beforeEach(() => {
     cleanup();
   });
-  it("renderiza con el texto por defecto 'Ver horario completo'", () => {
+  it("renderiza con el texto por defecto 'Ver horario'", () => {
     render(<VerButton />);
     expect(
-      screen.getByRole("button", { name: "Ver horario completo" }),
+      screen.getByRole("button", { name: "Ver horario" }),
     ).toBeInTheDocument();
   });
 

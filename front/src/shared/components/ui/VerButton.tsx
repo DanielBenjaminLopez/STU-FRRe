@@ -5,7 +5,7 @@ export interface VerButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 export default function VerButton({
-  children = "Ver horario completo",
+  children = "Ver horario",
   className = "",
   type = "button",
   ...props

@@ -7,8 +7,10 @@ export {
 } from "./placement";
 export type {
   Plantilla,
+  WidgetComponentProps,
   WidgetDefinition,
   WidgetPlacement,
+  WidgetSizeVariant,
   WidgetType,
 } from "./placement";
 export { GRID_COLS, GRID_ROWS } from "./types";

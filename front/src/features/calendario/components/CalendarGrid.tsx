@@ -216,12 +216,14 @@ export function MesGrilla({
   mes,
   eventos,
   grillaAnual = false,
+  compact = false,
   onSeleccionarEvento,
 }: {
   anio: number;
   mes: number;
   eventos: EventoCalendario[];
   grillaAnual?: boolean;
+  compact?: boolean;
   onSeleccionarEvento?: (evento: EventoCalendario) => void;
 }) {
   const semanas = construirGrilla(anio, mes);
@@ -229,17 +231,23 @@ export function MesGrilla({
   const hoy = new Date();
   const esMesActual = hoy.getFullYear() === anio && hoy.getMonth() === mes;
 
-  const tamCelda = grillaAnual ? "h-9" : "h-10";
-  const anchoCelda = grillaAnual ? "w-9" : "w-10";
-  const altoCelda = `${tamCelda} text-[17px]`;
+  const tamCelda = compact ? "h-5" : grillaAnual ? "h-9" : "h-10";
+  const anchoCelda = compact ? "w-5" : grillaAnual ? "w-9" : "w-10";
+  const altoCelda = compact ? `${tamCelda} text-xs` : `${tamCelda} text-[17px]`;
 
   return (
-    <div>
-      <div className="grid grid-cols-7 mb-1">
+    <div className={compact ? "w-full" : ""}>
+      <div className={`grid grid-cols-7 ${compact ? "mb-0.5" : "mb-1"}`}>
         {DIAS_SEMANA.map((d) => (
           <div
             key={d}
-            className={`text-center font-semibold text-slate-500 text-sm ${grillaAnual ? "py-1" : "py-1.5"}`}
+            className={`text-center font-semibold text-slate-500 ${
+              compact
+                ? "text-xs py-0.5"
+                : grillaAnual
+                  ? "text-sm py-1"
+                  : "text-sm py-1.5"
+            }`}
           >
             {d}
           </div>
@@ -256,7 +264,7 @@ export function MesGrilla({
               esMesActual && !celda.fueraDeMes && celda.dia === hoy.getDate();
 
             return (
-              <div key={j} className="py-0.5">
+              <div key={j} className={compact ? "py-px" : "py-0.5"}>
                 <div
                   title={evento?.titulo}
                   onClick={

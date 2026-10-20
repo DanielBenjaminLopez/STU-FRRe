@@ -116,12 +116,16 @@ function getGhostDimensions(
   scale: number,
   activeType: WidgetType | null,
   registry: Record<WidgetType, WidgetDefinition>,
+  activeSpan?: { colSpan: number; rowSpan: number } | null,
 ): { width: number; height: number } | null {
   const gridEl = document.querySelector<HTMLDivElement>("[data-grid]");
   if (!gridEl || !activeType) return null;
 
   const def = registry[activeType];
   if (!def) return null;
+
+  const colSpan = activeSpan?.colSpan ?? def.colSpan;
+  const rowSpan = activeSpan?.rowSpan ?? def.rowSpan;
 
   const rect = gridEl.getBoundingClientRect();
   const gap = 32; // gap-4 con --spacing 0.5rem (2x) = 32px
@@ -130,8 +134,8 @@ function getGhostDimensions(
   const cellW = (layoutW - (GRID_COLS - 1) * gap) / GRID_COLS;
   const cellH = (layoutH - (GRID_ROWS - 1) * gap) / GRID_ROWS;
 
-  const width = def.colSpan * cellW + (def.colSpan - 1) * gap;
-  const height = def.rowSpan * cellH + (def.rowSpan - 1) * gap;
+  const width = colSpan * cellW + (colSpan - 1) * gap;
+  const height = rowSpan * cellH + (rowSpan - 1) * gap;
 
   return { width, height };
 }
@@ -216,6 +220,10 @@ export default function PlantillasPage() {
   const [editingName, setEditingName] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<WidgetType | null>(null);
+  const [activeSpan, setActiveSpan] = useState<{
+    colSpan: number;
+    rowSpan: number;
+  } | null>(null);
   const [hoverCell, setHoverCell] = useState<{
     col: number;
     row: number;
@@ -432,6 +440,49 @@ export default function PlantillasPage() {
     [updateSelectedPlantilla],
   );
 
+  const handleResizeWidget = useCallback(
+    (widgetId: string, newColSpan: number, newRowSpan: number) => {
+      const currentWidgets =
+        plantillas.find((p) => p.id === selectedId)?.widgets ?? [];
+      const target = currentWidgets.find((w) => w.id === widgetId);
+      if (!target) return;
+      if (target.colSpan === newColSpan && target.rowSpan === newRowSpan) {
+        return;
+      }
+
+      const nextCol = Math.max(0, Math.min(target.col, GRID_COLS - newColSpan));
+      const nextRow = Math.max(0, Math.min(target.row, GRID_ROWS - newRowSpan));
+      const otherWidgets = currentWidgets.filter((w) => w.id !== widgetId);
+
+      if (
+        checkCollision(otherWidgets, nextCol, nextRow, newColSpan, newRowSpan)
+      ) {
+        sileo.warning({
+          title: "Espacio no disponible",
+          description:
+            "No hay espacio suficiente para cambiar al tamaño seleccionado.",
+        });
+        return;
+      }
+
+      updateSelectedPlantilla((p) => ({
+        ...p,
+        widgets: p.widgets.map((w) =>
+          w.id === widgetId
+            ? {
+                ...w,
+                col: nextCol,
+                row: nextRow,
+                colSpan: newColSpan,
+                rowSpan: newRowSpan,
+              }
+            : w,
+        ),
+      }));
+    },
+    [plantillas, selectedId, updateSelectedPlantilla],
+  );
+
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const rawCell = getCellFromEvent(event, pointerPosRef.current);
@@ -439,13 +490,21 @@ export default function PlantillasPage() {
         setHoverCell(null);
         return;
       }
-      const widgetType = (event.active.data.current?.widgetType ??
-        event.active.data.current?.type) as WidgetType | undefined;
+      const data = event.active.data.current as
+        | Record<string, unknown>
+        | undefined;
+      const widgetType = (data?.widgetType ?? data?.type) as
+        | WidgetType
+        | undefined;
       const def = widgetType ? effectiveRegistry[widgetType] : null;
-      if (def) {
+      const colSpan =
+        typeof data?.colSpan === "number" ? data.colSpan : def?.colSpan;
+      const rowSpan =
+        typeof data?.rowSpan === "number" ? data.rowSpan : def?.rowSpan;
+      if (colSpan != null && rowSpan != null) {
         setHoverCell({
-          col: Math.max(0, Math.min(rawCell.col, GRID_COLS - def.colSpan)),
-          row: Math.max(0, Math.min(rawCell.row, GRID_ROWS - def.rowSpan)),
+          col: Math.max(0, Math.min(rawCell.col, GRID_COLS - colSpan)),
+          row: Math.max(0, Math.min(rawCell.row, GRID_ROWS - rowSpan)),
         });
       } else {
         setHoverCell(rawCell);
@@ -457,6 +516,7 @@ export default function PlantillasPage() {
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       setActiveType(null);
+      setActiveSpan(null);
       setHoverCell(null);
       setSelectedWidgetId(null);
 
@@ -472,6 +532,22 @@ export default function PlantillasPage() {
       const def = effectiveRegistry[widgetType];
       if (!def) return;
 
+      const currentWidgets =
+        plantillas.find((p) => p.id === selectedId)?.widgets ?? [];
+      const movingWidget = moveWidgetId
+        ? currentWidgets.find((w) => w.id === moveWidgetId)
+        : undefined;
+      const dataColSpan =
+        typeof active.data.current?.colSpan === "number"
+          ? active.data.current.colSpan
+          : undefined;
+      const dataRowSpan =
+        typeof active.data.current?.rowSpan === "number"
+          ? active.data.current.rowSpan
+          : undefined;
+      const colSpan = movingWidget?.colSpan ?? dataColSpan ?? def.colSpan;
+      const rowSpan = movingWidget?.rowSpan ?? dataRowSpan ?? def.rowSpan;
+
       const cell = getCellFromEvent(event, pointerPosRef.current);
       if (!cell) {
         sileo.warning({
@@ -481,17 +557,14 @@ export default function PlantillasPage() {
         return;
       }
 
-      const col = Math.max(0, Math.min(cell.col, GRID_COLS - def.colSpan));
-      const row = Math.max(0, Math.min(cell.row, GRID_ROWS - def.rowSpan));
-
-      const currentWidgets =
-        plantillas.find((p) => p.id === selectedId)?.widgets ?? [];
+      const col = Math.max(0, Math.min(cell.col, GRID_COLS - colSpan));
+      const row = Math.max(0, Math.min(cell.row, GRID_ROWS - rowSpan));
 
       const widgetsToCheck = moveWidgetId
         ? currentWidgets.filter((w) => w.id !== moveWidgetId)
         : currentWidgets;
 
-      if (checkCollision(widgetsToCheck, col, row, def.colSpan, def.rowSpan)) {
+      if (checkCollision(widgetsToCheck, col, row, colSpan, rowSpan)) {
         sileo.warning({
           title: "Espacio no disponible",
           description: "No hay espacio suficiente en esa posición.",
@@ -512,8 +585,8 @@ export default function PlantillasPage() {
           type: widgetType,
           col,
           row,
-          colSpan: def.colSpan,
-          rowSpan: def.rowSpan,
+          colSpan,
+          rowSpan,
         };
         updateSelectedPlantilla((p) => ({
           ...p,
@@ -539,14 +612,22 @@ export default function PlantillasPage() {
         | Record<string, unknown>
         | undefined;
       const type = (data?.widgetType ?? data?.type) as WidgetType | undefined;
+      const colSpan =
+        typeof data?.colSpan === "number" ? data.colSpan : undefined;
+      const rowSpan =
+        typeof data?.rowSpan === "number" ? data.rowSpan : undefined;
       setSelectedWidgetId(null);
       setActiveType(type ?? null);
+      setActiveSpan(
+        colSpan != null && rowSpan != null ? { colSpan, rowSpan } : null,
+      );
     },
     [],
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveType(null);
+    setActiveSpan(null);
     setHoverCell(null);
     setSelectedWidgetId(null);
   }, []);
@@ -768,9 +849,11 @@ export default function PlantillasPage() {
             <TemplateCanvas
               widgets={selected?.widgets ?? []}
               onRemoveWidget={handleRemoveWidget}
+              onResizeWidget={handleResizeWidget}
               onScaleChange={setCanvasScale}
               hoverCell={hoverCell}
               activeType={activeType}
+              activeSpan={activeSpan}
               registry={effectiveRegistry}
               selectedWidgetId={selectedWidgetId}
               onSelectWidget={setSelectedWidgetId}
@@ -922,8 +1005,11 @@ export default function PlantillasPage() {
               canvasScale,
               activeType,
               effectiveRegistry,
+              activeSpan,
             );
             if (!RealWidget || !dims || !def) return null;
+            const ghostColSpan = activeSpan?.colSpan ?? def.colSpan;
+            const ghostRowSpan = activeSpan?.rowSpan ?? def.rowSpan;
             return (
               <div
                 className={`totem-scale-stage pointer-events-none rounded-4xl overflow-hidden opacity-90 transition-opacity grid ${
@@ -936,15 +1022,15 @@ export default function PlantillasPage() {
                 style={{
                   width: dims.width,
                   height: dims.height,
-                  gridTemplateColumns: `repeat(${def.colSpan}, minmax(0, 1fr))`,
-                  gridTemplateRows: `repeat(${def.rowSpan}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `repeat(${ghostColSpan}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${ghostRowSpan}, minmax(0, 1fr))`,
                   transform: `scale(${canvasScale})`,
                   transformOrigin: "top left",
                   willChange: "transform",
                   overflow: "hidden",
                 }}
               >
-                <RealWidget />
+                <RealWidget colSpan={ghostColSpan} rowSpan={ghostRowSpan} />
               </div>
             );
           })()}

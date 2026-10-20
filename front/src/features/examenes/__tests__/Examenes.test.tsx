@@ -44,7 +44,7 @@ describe("Examenes", () => {
       error: null,
     });
     render(<Examenes />);
-    expect(screen.getByText("Horario de examenes")).toBeInTheDocument();
+    expect(screen.getByText("Exámenes")).toBeInTheDocument();
     expect(screen.getByText("Cursando ahora")).toBeInTheDocument();
     expect(screen.getByText("A continuación")).toBeInTheDocument();
   });
@@ -127,7 +127,7 @@ describe("Examenes", () => {
     expect(screen.getByText("No hay más examenes hoy")).toBeInTheDocument();
   });
 
-  it("muestra el enlace 'Ver horario completo'", () => {
+  it("muestra el enlace 'Ver horario'", () => {
     mockUseExamenes.mockReturnValue({
       ahora: [],
       siguiente: [],
@@ -135,7 +135,7 @@ describe("Examenes", () => {
       error: null,
     });
     render(<Examenes />);
-    expect(screen.getByText("Ver horario completo")).toBeInTheDocument();
+    expect(screen.getByText("Ver horario")).toBeInTheDocument();
   });
 
   it("muestra el selector de carreras cuando hay carreras disponibles", () => {
@@ -181,5 +181,39 @@ describe("Examenes", () => {
     expect(screen.getByText("Curso 1")).toBeInTheDocument();
     expect(screen.getByText("TUOMRE")).toBeInTheDocument();
     expect(screen.getByText("Aula 12")).toBeInTheDocument();
+  });
+
+  it("renderiza los cuadros en fila (grid-cols-2) por defecto (4x2)", () => {
+    mockUseExamenes.mockReturnValue({
+      ahora: [mockExamenAhora],
+      siguiente: [mockExamenSiguiente],
+      uniqueCarreras: ["ISI", "IEM"],
+      loading: false,
+      error: null,
+    });
+    render(<Examenes colSpan={4} rowSpan={2} />);
+    const widget = screen.getByTestId("examenes-widget");
+    const container = screen.getByTestId("examenes-boxes-container");
+    expect(widget).toHaveClass("col-span-4", "row-span-2");
+    expect(container).toHaveClass("grid-cols-2");
+    expect(container).not.toHaveClass("grid-cols-1");
+  });
+
+  it("renderiza los cuadros de cursando ahora y a continuación en columna en la variante 2x2", () => {
+    mockUseExamenes.mockReturnValue({
+      ahora: [mockExamenAhora],
+      siguiente: [mockExamenSiguiente],
+      uniqueCarreras: ["ISI", "IEM"],
+      loading: false,
+      error: null,
+    });
+    render(<Examenes colSpan={2} rowSpan={2} />);
+    const widget = screen.getByTestId("examenes-widget");
+    const container = screen.getByTestId("examenes-boxes-container");
+    expect(widget).toHaveAttribute("data-variant", "2x2");
+    expect(widget).toHaveClass("col-span-2", "row-span-2");
+    expect(container).toHaveClass("grid-cols-1", "grid-rows-2");
+    expect(screen.getByText("Cursando ahora")).toBeInTheDocument();
+    expect(screen.getByText("A continuación")).toBeInTheDocument();
   });
 });

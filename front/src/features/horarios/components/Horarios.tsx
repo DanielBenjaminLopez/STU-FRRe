@@ -125,7 +125,13 @@ function ClaseList({
 const AUTO_ROTATE_MS = 15_000;
 const INACTIVITY_MS = 30_000;
 
-export default function Horarios() {
+export interface HorariosProps {
+  colSpan?: number;
+  rowSpan?: number;
+}
+
+export default function Horarios({ colSpan = 4, rowSpan = 2 }: HorariosProps) {
+  const isCompact = colSpan <= 2;
   const { ahora, siguiente, todas, uniqueCarreras, loading, error } =
     useHorarios();
   const [showFull, setShowFull] = useState(false);
@@ -208,12 +214,16 @@ export default function Horarios() {
           />
         )}
       </AnimatePresence>
-      <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-8">
-        <div className="relative flex flex-row items-center justify-between w-full">
-          <span className="text-xl font-semibold shrink-0">
-            Horario general
-          </span>
-          <div className="flex items-center gap-3">
+      <div
+        data-testid="horarios-widget"
+        data-variant={`${colSpan}x${rowSpan}`}
+        className={`w-full h-full ${
+          isCompact ? "col-span-2 row-span-2" : "col-span-4 row-span-2"
+        } bg-linear-to-b from-blue-300/50 to-blue-300/60 rounded-4xl flex flex-col gap-4 items-center p-6 overflow-hidden`}
+      >
+        <div className="relative flex flex-row items-center justify-between w-full gap-2">
+          <span className="text-xl font-semibold shrink-0">Horario</span>
+          <div className="flex items-center gap-3 min-w-0">
             {uniqueCarreras.length > 0 && (
               <Select
                 align="center"
@@ -225,11 +235,14 @@ export default function Horarios() {
                   ...uniqueCarreras.map((c) => ({ value: c, label: c })),
                 ]}
                 placeholder="Todas"
-                triggerClassName="px-6"
+                triggerClassName={isCompact ? "px-4" : "px-6"}
                 aria-label="Filtrar horarios por carrera"
               />
             )}
-            <VerButton onClick={() => setShowFull(true)} />
+            <VerButton
+              onClick={() => setShowFull(true)}
+              className={isCompact ? "px-4" : ""}
+            />
           </div>
         </div>
         {!loading && error && (
@@ -237,13 +250,18 @@ export default function Horarios() {
             <span className="text-red-400 text-sm">{error}</span>
           </div>
         )}
-        <div className="grid grid-cols-2 gap-4 w-full h-full min-w-0 overflow-hidden">
-          <div className="flex flex-col w-full min-w-0 justify-center items-center gap-2 overflow-hidden">
-            <div className="w-full min-w-0 bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-              <span className="text-base font-normal flex flex-col">
+        <div
+          data-testid="horarios-boxes-container"
+          className={`grid ${
+            isCompact ? "grid-cols-1 grid-rows-2" : "grid-cols-2"
+          } gap-4 w-full h-full flex-1 min-h-0 min-w-0 overflow-hidden`}
+        >
+          <div className="flex flex-col w-full min-w-0 min-h-0 justify-center items-center gap-2 overflow-hidden">
+            <div className="w-full min-w-0 min-h-0 bg-white/50 border border-gray-200 rounded-3xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+              <span className="text-base font-normal flex flex-col shrink-0">
                 Cursando ahora
               </span>
-              {loading && <ClaseListSkeleton count={2} />}
+              {loading && <ClaseListSkeleton count={isCompact ? 1 : 2} />}
               {!loading && (
                 <ClaseList
                   clases={ahoraFiltrado}
@@ -255,12 +273,12 @@ export default function Horarios() {
               )}
             </div>
           </div>
-          <div className="flex flex-col w-full min-w-0 justify-center items-center gap-2 overflow-hidden">
-            <div className="w-full min-w-0 bg-white/50 border border-gray-200 rounded-4xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-              <span className="text-base font-normal flex flex-col">
+          <div className="flex flex-col w-full min-w-0 min-h-0 justify-center items-center gap-2 overflow-hidden">
+            <div className="w-full min-w-0 min-h-0 bg-white/50 border border-gray-200 rounded-3xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+              <span className="text-base font-normal flex flex-col shrink-0">
                 A continuación
               </span>
-              {loading && <ClaseListSkeleton count={2} />}
+              {loading && <ClaseListSkeleton count={isCompact ? 1 : 2} />}
               {!loading && (
                 <ClaseList
                   clases={siguienteFiltrado}

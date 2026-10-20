@@ -134,4 +134,43 @@ describe("Calendar", () => {
 
     expect(screen.getByTestId("calendar-full")).toBeInTheDocument();
   });
+
+  it("renderiza la variante 2x1 con título y botón a la izquierda y el calendario pequeño a la derecha", () => {
+    mockUseCalendario.mockReturnValue({
+      eventos: mockEventos,
+      loading: false,
+      error: null,
+    });
+    render(<Calendar colSpan={2} rowSpan={1} />);
+    const widget = screen.getByTestId("calendario-widget");
+    expect(widget).toHaveAttribute("data-variant", "2x1");
+    expect(widget).toHaveClass("col-span-2", "row-span-1", "flex-row");
+    expect(screen.getByText("Calendario")).toBeInTheDocument();
+    expect(screen.getByText("Abrir calendario")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("calendario-preview-container"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Julio 2026")).toBeInTheDocument();
+  });
+
+  it("renderiza la variante 1x1 mostrando solo la fecha de hoy junto al botón sin título", () => {
+    mockUseCalendario.mockReturnValue({
+      eventos: mockEventos,
+      loading: false,
+      error: null,
+    });
+    render(<Calendar colSpan={1} rowSpan={1} />);
+    const widget = screen.getByTestId("calendario-widget");
+    expect(widget).toHaveAttribute("data-variant", "1x1");
+    expect(widget).toHaveClass("col-span-1", "row-span-1");
+    expect(screen.queryByText("Calendario")).not.toBeInTheDocument();
+    expect(screen.getByText("Abrir calendario")).toBeInTheDocument();
+    expect(screen.getByTestId("calendario-hoy-card")).toBeInTheDocument();
+    expect(screen.getByTestId("calendario-dia-hoy")).toHaveTextContent("15");
+    expect(screen.getByText("Miércoles")).toBeInTheDocument();
+    expect(screen.getByText("Julio 2026")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("calendario-preview-container"),
+    ).not.toBeInTheDocument();
+  });
 });
