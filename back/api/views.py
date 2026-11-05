@@ -38,6 +38,17 @@ from .realtime import notify_content, notify_totem, notify_totems, notify_totem_
 from .throttling import TotemNewRateThrottle
 
 
+class PublicReadAdminWriteMixin:
+    """Permite lectura pública (GET) y restringe escritura a Admin o Secretaría."""
+
+    public_read_actions = ('list', 'retrieve')
+
+    def get_permissions(self):
+        if self.action in self.public_read_actions:
+            return [AllowAny()]
+        return [IsAuthenticated(), IsAdminOrSecretaria()]
+
+
 class RealtimeContentMixin:
     content_resource = None
 
@@ -98,12 +109,12 @@ class MeView(APIView):
         )
 
 
-class CarreraViewSet(viewsets.ModelViewSet):
+class CarreraViewSet(PublicReadAdminWriteMixin, viewsets.ModelViewSet):
     queryset = Carrera.objects.all()
     serializer_class = CarreraSerializer
 
 
-class MateriaViewSet(viewsets.ModelViewSet):
+class MateriaViewSet(PublicReadAdminWriteMixin, viewsets.ModelViewSet):
     queryset = Materia.objects.select_related('carrera').all()
     serializer_class = MateriaSerializer
 
@@ -195,13 +206,14 @@ def extract_import_details(result, dataset):
     return totales, detalles, base_errs
 
 
-class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+class HorarioCursadoViewSet(
+    PublicReadAdminWriteMixin, RealtimeContentMixin, viewsets.ModelViewSet
+):
     content_resource = 'horarios'
     queryset = HorarioCursado.objects.select_related(
         'materia__carrera',
     ).all()
     serializer_class = HorarioCursadoSerializer
-    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['post'], url_path='importar-csv')
     def importar_csv(self, request):
@@ -273,13 +285,14 @@ class HorarioCursadoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
         return Response({"eliminados": eliminados}, status=status.HTTP_200_OK)
 
 
-class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+class MesaExamenViewSet(
+    PublicReadAdminWriteMixin, RealtimeContentMixin, viewsets.ModelViewSet
+):
     content_resource = 'examenes'
     queryset = MesaExamen.objects.select_related(
         'carrera',
     ).all()
     serializer_class = MesaExamenSerializer
-    permission_classes = [AllowAny]
 
     @action(detail=False, methods=['post'], url_path='importar-csv')
     def importar_csv(self, request):
@@ -341,11 +354,12 @@ class MesaExamenViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
         return Response({"eliminados": eliminados}, status=status.HTTP_200_OK)
 
 
-class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+class EventoViewSet(
+    PublicReadAdminWriteMixin, RealtimeContentMixin, viewsets.ModelViewSet
+):
     content_resource = 'eventos'
     queryset = Evento.objects.all()
     serializer_class = EventoSerializer
-    permission_classes = [AllowAny]
 
     def perform_create(self, serializer):
         with transaction.atomic():
@@ -375,17 +389,12 @@ class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='upload-imagen', parser_classes=[MultiPartParser, FormParser])
     def upload_imagen(self, request):
+        from PIL import Image, UnidentifiedImageError
+
         file_obj = request.FILES.get('file')
         if not file_obj:
             return Response(
                 {"detail": "No se proporcionó ningún archivo de imagen."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml']
-        if file_obj.content_type not in allowed_types:
-            return Response(
-                {"detail": "El archivo debe ser una imagen válida (JPEG, PNG, WebP, GIF, SVG)."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -395,7 +404,37 @@ class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        ext = os.path.splitext(file_obj.name)[1]
+        allowed_types = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
+        format_to_ext = {
+            'JPEG': '.jpg',
+            'PNG': '.png',
+            'WEBP': '.webp',
+            'GIF': '.gif',
+        }
+        if file_obj.content_type not in allowed_types:
+            return Response(
+                {"detail": "El archivo debe ser una imagen válida (JPEG, PNG, WebP, GIF)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            with Image.open(file_obj) as img:
+                img_format = img.format
+                img.verify()
+        except (UnidentifiedImageError, OSError, ValueError):
+            return Response(
+                {"detail": "El archivo no es una imagen válida o está dañado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ext = format_to_ext.get(img_format)
+        if not ext:
+            return Response(
+                {"detail": "El archivo debe ser una imagen válida (JPEG, PNG, WebP, GIF)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        file_obj.seek(0)
         unique_name = f"{uuid.uuid4().hex}{ext}"
         saved_path = default_storage.save(f"eventos/{unique_name}", file_obj)
         url = default_storage.url(saved_path)
@@ -405,17 +444,21 @@ class EventoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
         return Response({"url": url}, status=status.HTTP_200_OK)
 
 
-class AvisoViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+class AvisoViewSet(
+    PublicReadAdminWriteMixin, RealtimeContentMixin, viewsets.ModelViewSet
+):
     content_resource = 'avisos'
     queryset = Aviso.objects.select_related('horario_cursado', 'evento').all()
     serializer_class = AvisoSerializer
 
 
-class NoticiasViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+class NoticiasViewSet(
+    PublicReadAdminWriteMixin, RealtimeContentMixin, viewsets.ModelViewSet
+):
     content_resource = 'noticias'
     queryset = Noticias.objects.all()
     serializer_class = NoticiasSerializer
-    permission_classes = [AllowAny]
+    public_read_actions = ('list', 'retrieve', 'latest')
 
     def get_queryset(self):
         if self.action in ('update', 'partial_update', 'destroy'):
@@ -510,11 +553,12 @@ class UbicacionMapaViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
         return qs
 
 
-class EventoCalendarioViewSet(RealtimeContentMixin, viewsets.ModelViewSet):
+class EventoCalendarioViewSet(
+    PublicReadAdminWriteMixin, RealtimeContentMixin, viewsets.ModelViewSet
+):
     content_resource = 'calendario'
     queryset = EventoCalendario.objects.all()
     serializer_class = EventoCalendarioSerializer
-    permission_classes = [AllowAny]
 
 
 class BulkCalendarView(APIView):

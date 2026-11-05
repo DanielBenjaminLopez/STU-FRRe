@@ -209,4 +209,32 @@ describe("Noticias", () => {
       vi.advanceTimersByTime(5000);
     });
   });
+
+  it("aplica la variante 4x4 cuando recibe colSpan=4 y rowSpan=4", () => {
+    mockUseNoticias.mockReturnValue({
+      feed: mockFeed,
+      loading: false,
+      error: null,
+    });
+    render(<Noticias colSpan={4} rowSpan={4} />);
+
+    const widget = screen.getByTestId("noticias-widget");
+    expect(widget).toHaveAttribute("data-variant", "4x4");
+    expect(widget.className).toContain("col-span-4");
+    expect(widget.className).toContain("row-span-4");
+  });
+
+  it("aplica la variante 4x6 cuando recibe colSpan=4 y rowSpan=6", () => {
+    mockUseNoticias.mockReturnValue({
+      feed: mockFeed,
+      loading: false,
+      error: null,
+    });
+    render(<Noticias colSpan={4} rowSpan={6} />);
+
+    const widget = screen.getByTestId("noticias-widget");
+    expect(widget).toHaveAttribute("data-variant", "4x6");
+    expect(widget.className).toContain("col-span-4");
+    expect(widget.className).toContain("row-span-6");
+  });
 });

@@ -66,7 +66,11 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Noticias,
     colSpan: 4,
     rowSpan: 2,
-    variants: [{ colSpan: 4, rowSpan: 2 }],
+    variants: [
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 4, rowSpan: 4 },
+      { colSpan: 4, rowSpan: 6 },
+    ],
     color: "from-purple-100 to-purple-200",
   },
   novedades: {
@@ -75,7 +79,11 @@ export const WIDGET_REGISTRY: Record<WidgetType, WidgetDefinition> = {
     component: Novedades,
     colSpan: 4,
     rowSpan: 2,
-    variants: [{ colSpan: 4, rowSpan: 2 }],
+    variants: [
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 4, rowSpan: 4 },
+      { colSpan: 4, rowSpan: 6 },
+    ],
     color: "from-amber-100 to-amber-200",
   },
 };

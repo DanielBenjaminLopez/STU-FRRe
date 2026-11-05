@@ -232,4 +232,32 @@ describe("Novedades", () => {
     fireEvent.click(screen.getByText("Cerrar"));
     expect(screen.queryByTestId("novedades-full")).not.toBeInTheDocument();
   });
+
+  it("aplica la variante 4x4 cuando recibe colSpan=4 y rowSpan=4", () => {
+    mockUseNovedades.mockReturnValue({
+      feed: mockFeed,
+      loading: false,
+      error: null,
+    });
+    render(<Novedades colSpan={4} rowSpan={4} />);
+
+    const widget = screen.getByTestId("novedades-widget");
+    expect(widget).toHaveAttribute("data-variant", "4x4");
+    expect(widget.className).toContain("col-span-4");
+    expect(widget.className).toContain("row-span-4");
+  });
+
+  it("aplica la variante 4x6 cuando recibe colSpan=4 y rowSpan=6", () => {
+    mockUseNovedades.mockReturnValue({
+      feed: mockFeed,
+      loading: false,
+      error: null,
+    });
+    render(<Novedades colSpan={4} rowSpan={6} />);
+
+    const widget = screen.getByTestId("novedades-widget");
+    expect(widget).toHaveAttribute("data-variant", "4x6");
+    expect(widget.className).toContain("col-span-4");
+    expect(widget.className).toContain("row-span-6");
+  });
 });

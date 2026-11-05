@@ -16,7 +16,18 @@ function formatDate(dateStr: string): string {
 
 const AUTO_ROTATE_MS = 10000;
 
-export default function Noticias() {
+export interface NoticiasProps {
+  colSpan?: number;
+  rowSpan?: number;
+}
+
+export default function Noticias({ colSpan = 4, rowSpan = 2 }: NoticiasProps) {
+  const spanClass =
+    rowSpan === 6
+      ? "col-span-4 row-span-6"
+      : rowSpan === 4
+        ? "col-span-4 row-span-4"
+        : "col-span-4 row-span-2";
   const { feed, loading, error } = useNoticias({ filter: "scraping" });
   const [showFull, setShowFull] = useState(false);
   useOnTotemReset(() => setShowFull(false));
@@ -214,10 +225,16 @@ export default function Noticias() {
         )}
       </AnimatePresence>
 
-      {loading && <NoticiaCarouselSkeleton />}
+      {loading && (
+        <NoticiaCarouselSkeleton colSpan={colSpan} rowSpan={rowSpan} />
+      )}
 
       {!loading && error && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-6">
+        <div
+          data-testid="noticias-widget"
+          data-variant={`${colSpan}x${rowSpan}`}
+          className={`w-full h-full ${spanClass} bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-6`}
+        >
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Noticias</span>
           </div>
@@ -228,7 +245,11 @@ export default function Noticias() {
       )}
 
       {!loading && !error && feed.length === 0 && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-6">
+        <div
+          data-testid="noticias-widget"
+          data-variant={`${colSpan}x${rowSpan}`}
+          className={`w-full h-full ${spanClass} bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-6`}
+        >
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Noticias</span>
           </div>
@@ -242,7 +263,9 @@ export default function Noticias() {
 
       {!loading && !error && feed.length > 0 && (
         <div
-          className="relative w-full h-full col-span-4 row-span-2 rounded-4xl overflow-hidden group"
+          data-testid="noticias-widget"
+          data-variant={`${colSpan}x${rowSpan}`}
+          className={`relative w-full h-full ${spanClass} rounded-4xl overflow-hidden group`}
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => {
             setIsPaused(false);
