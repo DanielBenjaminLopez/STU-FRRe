@@ -43,8 +43,8 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vitest/browser-playwright": "^4.1.8",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/browser-playwright": "^4.1.12",
+    "@vitest/coverage-v8": "^4.1.12",
     "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
@@ -59,7 +59,7 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.12"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,html}": "eslint --fix",

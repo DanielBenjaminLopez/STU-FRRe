@@ -662,6 +662,14 @@ class NoticiasSyncAPITest(TestCase):
             }
         ]
         self.client = APIClient()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_noticias",
+            email="admin_noticias@test.com",
+            password="password123",
+        )
+        admin_group, _ = Group.objects.get_or_create(name="admin")
+        self.admin_user.groups.add(admin_group)
+        self.client.force_authenticate(user=self.admin_user)
 
     @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
     @patch("api.management.commands.scrape_noticias.scrape_noticias")
@@ -737,17 +745,75 @@ class NoticiasSyncAPITest(TestCase):
 
         mock_notify.assert_called_once_with("noticias")
 
-    @patch("api.management.commands.scrape_noticias.scrape_contenido_completo")
-    @patch("api.management.commands.scrape_noticias.scrape_noticias")
-    def test_el_endpoint_es_publico_mientras_siga_allowany(self, mock_scrape, mock_completo):
-        """Documenta que sync sigue con AllowAny, pendiente de cerrar."""
-        mock_scrape.return_value = self.scrapeado
-        mock_completo.return_value = "Cuerpo."
-
+    def test_el_endpoint_requiere_autenticacion_admin(self):
+        """Verifica que sync requiere autenticación de Admin o Secretaría."""
         anonimo = APIClient()
         response = anonimo.post("/api/noticias/sync/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+class PermisosYUploadSecurityTestCase(TestCase):
+    """Verifica permisos de lectura pública vs escritura admin y validación de imágenes."""
+
+    def setUp(self):
+        self.anon_client = APIClient()
+        self.admin_client = APIClient()
+        self.admin_user = User.objects.create_superuser(
+            username="admin_sec",
+            email="admin_sec@test.com",
+            password="password123",
+        )
+        admin_group, _ = Group.objects.get_or_create(name="admin")
+        self.admin_user.groups.add(admin_group)
+        self.admin_client.force_authenticate(user=self.admin_user)
+
+    def test_endpoints_lectura_publica_y_escritura_protegida(self):
+        for url in (
+            "/api/horarios/",
+            "/api/mesas-examen/",
+            "/api/eventos/",
+            "/api/noticias/",
+            "/api/noticias/latest/",
+            "/api/calendario/eventos/",
+        ):
+            res_get = self.anon_client.get(url)
+            self.assertEqual(res_get.status_code, status.HTTP_200_OK, url)
+
+        for method, url in (
+            ("delete", "/api/horarios/vaciar/"),
+            ("post", "/api/horarios/importar-csv/"),
+            ("delete", "/api/mesas-examen/vaciar/"),
+            ("post", "/api/mesas-examen/importar-csv/"),
+            ("post", "/api/eventos/"),
+            ("post", "/api/eventos/upload-imagen/"),
+            ("post", "/api/noticias/"),
+            ("post", "/api/calendario/eventos/"),
+        ):
+            res = getattr(self.anon_client, method)(url)
+            self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED, f"{method} {url}")
+
+    def test_upload_imagen_rechaza_svg_y_contenido_falso(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        svg_file = SimpleUploadedFile(
+            "xss.svg",
+            b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+            content_type="image/svg+xml",
+        )
+        res_svg = self.admin_client.post(
+            "/api/eventos/upload-imagen/", {"file": svg_file}, format="multipart"
+        )
+        self.assertEqual(res_svg.status_code, status.HTTP_400_BAD_REQUEST)
+
+        spoofed_png = SimpleUploadedFile(
+            "exploit.html",
+            b"<html><script>alert(1)</script></html>",
+            content_type="image/png",
+        )
+        res_spoof = self.admin_client.post(
+            "/api/eventos/upload-imagen/", {"file": spoofed_png}, format="multipart"
+        )
+        self.assertEqual(res_spoof.status_code, status.HTTP_400_BAD_REQUEST)
 
 
 class MateriaSimplificadaTestCase(TestCase):
