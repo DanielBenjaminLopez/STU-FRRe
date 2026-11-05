@@ -110,7 +110,7 @@ describe("checkCollision", () => {
     expect(WIDGET_REGISTRY.novedades.rowSpan).toBe(2);
   });
 
-  it("registra las variantes de tamaño para horarios, examenes, calendario y mapa", () => {
+  it("registra las variantes de tamaño para horarios, examenes, calendario, mapa, noticias y novedades", () => {
     expect(WIDGET_REGISTRY.horarios.variants).toEqual([
       { colSpan: 4, rowSpan: 2 },
       { colSpan: 2, rowSpan: 2 },
@@ -127,6 +127,16 @@ describe("checkCollision", () => {
     expect(WIDGET_REGISTRY.mapa.variants).toEqual([
       { colSpan: 2, rowSpan: 2 },
       { colSpan: 2, rowSpan: 1 },
+    ]);
+    expect(WIDGET_REGISTRY.noticias.variants).toEqual([
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 4, rowSpan: 4 },
+      { colSpan: 4, rowSpan: 6 },
+    ]);
+    expect(WIDGET_REGISTRY.novedades.variants).toEqual([
+      { colSpan: 4, rowSpan: 2 },
+      { colSpan: 4, rowSpan: 4 },
+      { colSpan: 4, rowSpan: 6 },
     ]);
   });
 });

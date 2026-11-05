@@ -215,9 +215,24 @@ export function NoticiaListSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-export function NoticiaCarouselSkeleton() {
+export function NoticiaCarouselSkeleton({
+  colSpan = 4,
+  rowSpan = 2,
+}: {
+  colSpan?: number;
+  rowSpan?: number;
+} = {}) {
+  const spanClass =
+    rowSpan === 6
+      ? "col-span-4 row-span-6"
+      : rowSpan === 4
+        ? "col-span-4 row-span-4"
+        : "col-span-4 row-span-2";
   return (
-    <div className="w-full h-full col-span-4 row-span-2 relative rounded-4xl overflow-hidden bg-linear-to-br from-purple-400 to-purple-600">
+    <div
+      data-variant={`${colSpan}x${rowSpan}`}
+      className={`w-full h-full ${spanClass} relative rounded-4xl overflow-hidden bg-linear-to-br from-purple-400 to-purple-600`}
+    >
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/70" />
       <div className="absolute bottom-4 left-0 right-0 z-10 p-6 flex flex-col gap-2">
         <div className="flex gap-2 items-center">
@@ -240,9 +255,24 @@ export function NoticiaCarouselSkeleton() {
   );
 }
 
-export function NovedadesCarouselSkeleton() {
+export function NovedadesCarouselSkeleton({
+  colSpan = 4,
+  rowSpan = 2,
+}: {
+  colSpan?: number;
+  rowSpan?: number;
+} = {}) {
+  const spanClass =
+    rowSpan === 6
+      ? "col-span-4 row-span-6"
+      : rowSpan === 4
+        ? "col-span-4 row-span-4"
+        : "col-span-4 row-span-2";
   return (
-    <div className="w-full h-full col-span-4 row-span-2 relative rounded-4xl overflow-hidden bg-linear-to-br from-amber-300 to-amber-500">
+    <div
+      data-variant={`${colSpan}x${rowSpan}`}
+      className={`w-full h-full ${spanClass} relative rounded-4xl overflow-hidden bg-linear-to-br from-amber-300 to-amber-500`}
+    >
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/70" />
       <div className="absolute bottom-4 left-0 right-0 z-10 p-6 flex flex-col gap-2">
         <div className="flex gap-2 items-center">

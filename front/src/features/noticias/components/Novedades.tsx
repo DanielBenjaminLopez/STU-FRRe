@@ -16,7 +16,21 @@ function formatDate(dateStr: string): string {
 
 const AUTO_ROTATE_MS = 10000;
 
-export default function Novedades() {
+export interface NovedadesProps {
+  colSpan?: number;
+  rowSpan?: number;
+}
+
+export default function Novedades({
+  colSpan = 4,
+  rowSpan = 2,
+}: NovedadesProps) {
+  const spanClass =
+    rowSpan === 6
+      ? "col-span-4 row-span-6"
+      : rowSpan === 4
+        ? "col-span-4 row-span-4"
+        : "col-span-4 row-span-2";
   const { feed, loading, error } = useNovedades();
   const [showFull, setShowFull] = useState(false);
   useOnTotemReset(() => setShowFull(false));
@@ -208,10 +222,16 @@ export default function Novedades() {
         {showFull && <NovedadesFull onClose={() => setShowFull(false)} />}
       </AnimatePresence>
 
-      {loading && <NovedadesCarouselSkeleton />}
+      {loading && (
+        <NovedadesCarouselSkeleton colSpan={colSpan} rowSpan={rowSpan} />
+      )}
 
       {!loading && error && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6">
+        <div
+          data-testid="novedades-widget"
+          data-variant={`${colSpan}x${rowSpan}`}
+          className={`w-full h-full ${spanClass} bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6`}
+        >
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Eventos</span>
           </div>
@@ -222,7 +242,11 @@ export default function Novedades() {
       )}
 
       {!loading && !error && feed.length === 0 && (
-        <div className="w-full h-full col-span-4 row-span-2 bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6">
+        <div
+          data-testid="novedades-widget"
+          data-variant={`${colSpan}x${rowSpan}`}
+          className={`w-full h-full ${spanClass} bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6`}
+        >
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Eventos</span>
           </div>
@@ -236,7 +260,9 @@ export default function Novedades() {
 
       {!loading && !error && feed.length > 0 && (
         <div
-          className="relative w-full h-full col-span-4 row-span-2 rounded-4xl overflow-hidden group"
+          data-testid="novedades-widget"
+          data-variant={`${colSpan}x${rowSpan}`}
+          className={`relative w-full h-full ${spanClass} rounded-4xl overflow-hidden group`}
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => {
             setIsPaused(false);

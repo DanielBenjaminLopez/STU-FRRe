@@ -144,9 +144,13 @@ describe("WidgetPalette", () => {
 
     const noticiasSection = screen.getByTestId("palette-section-noticias");
     expect(within(noticiasSection).getByText("4×2")).toBeInTheDocument();
+    expect(within(noticiasSection).getByText("4×4")).toBeInTheDocument();
+    expect(within(noticiasSection).getByText("4×6")).toBeInTheDocument();
 
     const novedadesSection = screen.getByTestId("palette-section-novedades");
     expect(within(novedadesSection).getByText("4×2")).toBeInTheDocument();
+    expect(within(novedadesSection).getByText("4×4")).toBeInTheDocument();
+    expect(within(novedadesSection).getByText("4×6")).toBeInTheDocument();
   });
 
   it("renderiza los componentes reales con el colSpan y rowSpan de cada variante", () => {
