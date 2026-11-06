@@ -2,28 +2,33 @@ version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/back"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
     directory: "/front"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/back"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "docker"
     directory: "/front"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
 
