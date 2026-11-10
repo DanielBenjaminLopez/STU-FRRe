@@ -232,8 +232,8 @@ export default function CalendarioAdminPage() {
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 flex gap-6">
-        <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3 items-center">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 overflow-auto lg:overflow-visible">
+        <div className="lg:flex-1 shrink-0 lg:shrink min-w-0 lg:min-h-0 flex flex-col gap-3 items-center">
           <EventTypeSelector
             selected={selectedTipo}
             onSelect={setSelectedTipo}
@@ -251,7 +251,7 @@ export default function CalendarioAdminPage() {
           )}
         </div>
 
-        <div className="w-56 shrink-0 flex flex-col">
+        <div className="order-first lg:order-last w-full lg:w-56 shrink-0 flex flex-col">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
             Eventos ({pending.length})
           </p>
