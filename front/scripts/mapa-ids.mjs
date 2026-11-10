@@ -31,7 +31,12 @@ export const FLOORS = [
 ];
 
 export function extractPolygonIds(svgRaw) {
-    const withoutComments = svgRaw.replace(/<!--[\s\S]*?-->/g, "");
+    let withoutComments = svgRaw;
+    let previous;
+    do {
+        previous = withoutComments;
+        withoutComments = withoutComments.replace(/<!--[\s\S]*?-->/g, "");
+    } while (withoutComments !== previous);
     const ids = [];
     const polygonTagRegex = /<polygon\b[^>]*>/gi;
     for (const [tag] of withoutComments.matchAll(polygonTagRegex)) {
