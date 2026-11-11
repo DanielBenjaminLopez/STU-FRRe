@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, act } from "@testing-library/react";
 import Examenes from "../components/Examenes";
 import type { Examen } from "../api/examenes";
 
@@ -36,7 +36,7 @@ describe("Examenes", () => {
     cleanup();
   });
 
-  it("muestra el título y los paneles actuales", () => {
+  it("muestra el título", () => {
     mockUseExamenes.mockReturnValue({
       ahora: [],
       siguiente: [],
@@ -45,8 +45,6 @@ describe("Examenes", () => {
     });
     render(<Examenes />);
     expect(screen.getByText("Exámenes")).toBeInTheDocument();
-    expect(screen.getByText("Cursando ahora")).toBeInTheDocument();
-    expect(screen.getByText("A continuación")).toBeInTheDocument();
   });
 
   it("muestra estado de carga", () => {
@@ -150,7 +148,7 @@ describe("Examenes", () => {
     expect(
       screen.getByRole("button", { name: /filtrar exámenes por carrera/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Todas")).toBeInTheDocument();
+    expect(screen.getAllByText("ISI").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renderiza correctamente un examen con nombre largo sin romper el diseño", () => {
@@ -179,7 +177,7 @@ describe("Examenes", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Curso 1")).toBeInTheDocument();
-    expect(screen.getByText("TUOMRE")).toBeInTheDocument();
+    expect(screen.getAllByText("TUOMRE").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Aula 12")).toBeInTheDocument();
   });
 
@@ -215,5 +213,69 @@ describe("Examenes", () => {
     expect(container).toHaveClass("grid-cols-1", "grid-rows-2");
     expect(screen.getByText("Cursando ahora")).toBeInTheDocument();
     expect(screen.getByText("A continuación")).toBeInTheDocument();
+  });
+
+  it("saltea en el ciclo automático las carreras sin exámenes cursando ni a continuación", () => {
+    vi.useFakeTimers();
+    try {
+      const mockExamenLAR: Examen = {
+        ...mockExamenSiguiente,
+        id: 3,
+        carrera_codigo: "LAR",
+        materia_nombre: "Administración Rural",
+      };
+
+      mockUseExamenes.mockReturnValue({
+        ahora: [mockExamenAhora], // ISI
+        siguiente: [mockExamenLAR], // LAR (IEM e IQ no tienen exámenes)
+        uniqueCarreras: ["IEM", "IQ", "ISI", "LAR"],
+        loading: false,
+        error: null,
+      });
+
+      render(<Examenes />);
+
+      const selectBtn = screen.getByRole("button", {
+        name: /filtrar exámenes por carrera/i,
+      });
+      expect(selectBtn).toHaveTextContent("ISI");
+      expect(
+        screen.getByText("Algoritmos y Estructuras de Datos"),
+      ).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      expect(selectBtn).toHaveTextContent("LAR");
+      expect(screen.getByText("Administración Rural")).toBeInTheDocument();
+
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      expect(selectBtn).toHaveTextContent("ISI");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("muestra mensaje central de marca de agua cuando ninguna carrera tiene exámenes cursando ni a continuación", () => {
+    mockUseExamenes.mockReturnValue({
+      ahora: [],
+      siguiente: [],
+      uniqueCarreras: ["IEM", "ISI", "LAR"],
+      loading: false,
+      error: null,
+    });
+
+    render(<Examenes />);
+
+    expect(screen.getByTestId("examenes-empty-watermark")).toBeInTheDocument();
+    expect(screen.getByText("No quedan exámenes hoy.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /filtrar exámenes por carrera/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("examenes-boxes-container"),
+    ).not.toBeInTheDocument();
   });
 });

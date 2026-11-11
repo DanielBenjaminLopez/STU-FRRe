@@ -54,6 +54,17 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
   const is1x1 = colSpan === 1 && rowSpan === 1;
   const is2x1 = colSpan === 2 && rowSpan === 1;
 
+  const eventosMes = eventos.filter((ev) => {
+    if (ev.formato === "puntual") {
+      const [, m] = ev.fecha.split("-").map(Number);
+      return m - 1 === mes;
+    }
+    const desde = new Date(ev.desde);
+    const hasta = new Date(ev.hasta);
+    const finMes = new Date(anio, mes + 1, 0);
+    return hasta >= new Date(anio, mes, 1) && desde <= finMes;
+  });
+
   return (
     <>
       <AnimatePresence>
@@ -172,18 +183,13 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
                 </span>
                 <MesGrilla anio={anio} mes={mes} eventos={eventos} />
               </div>
-              <LeyendaCalendario
-                eventos={eventos.filter((ev) => {
-                  if (ev.formato === "puntual") {
-                    const [, m] = ev.fecha.split("-").map(Number);
-                    return m - 1 === mes;
-                  }
-                  const desde = new Date(ev.desde);
-                  const hasta = new Date(ev.hasta);
-                  const finMes = new Date(anio, mes + 1, 0);
-                  return hasta >= new Date(anio, mes, 1) && desde <= finMes;
-                })}
-              />
+              {eventosMes.length > 0 ? (
+                <LeyendaCalendario eventos={eventosMes} />
+              ) : (
+                <span className="text-lg font-semibold opacity-20 text-center select-none">
+                  No hay eventos este mes
+                </span>
+              )}
             </div>
           )}
         </div>
