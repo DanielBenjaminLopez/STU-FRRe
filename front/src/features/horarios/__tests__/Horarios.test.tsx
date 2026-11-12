@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  act,
+  fireEvent,
+} from "@testing-library/react";
 import Horarios from "../components/Horarios";
 import type { Clase } from "../api/horarios";
 
@@ -298,5 +304,42 @@ describe("Horarios", () => {
     expect(
       screen.queryByTestId("horarios-boxes-container"),
     ).not.toBeInTheDocument();
+  });
+
+  it("abre HorariosFull directamente en la carrera, año y comisión al hacer click en la tarjeta de una materia", () => {
+    const otraClaseComision: Clase = {
+      id: 10,
+      carrera_codigo: "ISI",
+      carrera_nombre: "Ingeniería en Sistemas de Información",
+      materia: 10,
+      nivel: "primero",
+      comision: "K2.1",
+      materia_nombre: "Análisis Matemático I",
+      hora_inicio: "10:00",
+      hora_fin: "12:00",
+      dia_semana: "martes",
+      aula: "1.3",
+    };
+
+    mockUseHorarios.mockReturnValue({
+      ahora: [mockClaseAhora],
+      siguiente: [mockClaseSiguiente],
+      todas: [mockClaseAhora, mockClaseSiguiente, otraClaseComision],
+      uniqueCarreras: ["ISI", "IEM"],
+      loading: false,
+      error: null,
+    });
+
+    render(<Horarios />);
+
+    fireEvent.click(screen.getByText("Algoritmos y Estructuras de Datos"));
+
+    // Debe abrir directamente la grilla de horarios de esa comisión sin pasar por los pasos de selección
+    expect(screen.getByText("Horarios de cursado")).toBeInTheDocument();
+    expect(screen.getByText("Cambiar comisión")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Seleccioná una carrera"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Análisis Matemático I")).toBeInTheDocument();
   });
 });

@@ -36,7 +36,13 @@ const badgeBorderColors: Record<string, string> = {
 
 const defaultBadgeBorderColor = "border-gray-200";
 
-function ClaseRow({ clase }: { clase: Clase }) {
+function ClaseRow({
+  clase,
+  onSelect,
+}: {
+  clase: Clase;
+  onSelect?: (clase: Clase) => void;
+}) {
   const badgeColor = badgeColors[clase.carrera_codigo] ?? defaultBadgeColor;
   const badgeTextColor =
     badgeTextColors[clase.carrera_codigo] ?? defaultBadgeTextColor;
@@ -49,7 +55,11 @@ function ClaseRow({ clase }: { clase: Clase }) {
       : (clase.hora_inicio?.slice(0, 5) ?? "");
 
   return (
-    <div className="flex flex-col justify-between gap-1.5 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition">
+    <button
+      type="button"
+      onClick={() => onSelect?.(clase)}
+      className="flex flex-col justify-between gap-1.5 w-full min-w-0 max-w-full p-3 border border-gray-200 bg-white/50 rounded-2xl shadow-xs hover:bg-white/70 transition text-left cursor-pointer"
+    >
       {/* Fila 1: Header contextual (Carrera + Comisión y Horario) */}
       <div className="flex items-center justify-between gap-2 w-full min-w-0 text-xs">
         <div className="flex items-center gap-2 min-w-0">
@@ -94,16 +104,18 @@ function ClaseRow({ clase }: { clase: Clase }) {
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
 function ClaseList({
   clases,
   emptyMessage,
+  onSelectClase,
 }: {
   clases: Clase[];
   emptyMessage: string;
+  onSelectClase?: (clase: Clase) => void;
 }) {
   if (clases.length === 0) {
     return (
@@ -116,7 +128,7 @@ function ClaseList({
   return (
     <div className="w-full min-w-0 h-full flex flex-col gap-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
       {clases.map((clase) => (
-        <ClaseRow key={clase.id} clase={clase} />
+        <ClaseRow key={clase.id} clase={clase} onSelect={onSelectClase} />
       ))}
     </div>
   );
@@ -135,7 +147,11 @@ export default function Horarios({ colSpan = 4, rowSpan = 2 }: HorariosProps) {
   const { ahora, siguiente, todas, uniqueCarreras, loading, error } =
     useHorarios();
   const [showFull, setShowFull] = useState(false);
-  useOnTotemReset(() => setShowFull(false));
+  const [selectedClase, setSelectedClase] = useState<Clase | null>(null);
+  useOnTotemReset(() => {
+    setShowFull(false);
+    setSelectedClase(null);
+  });
   const [selectedCarrera, setSelectedCarrera] = useState<string | null>(null);
   const isAutoRotating = useRef(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -224,15 +240,26 @@ export default function Horarios({ colSpan = 4, rowSpan = 2 }: HorariosProps) {
     ? siguiente.filter((c) => c.carrera_codigo === effectiveCarrera)
     : siguiente;
 
+  function handleOpenClase(clase: Clase) {
+    setSelectedClase(clase);
+    setShowFull(true);
+  }
+
   return (
     <>
       <AnimatePresence>
         {showFull && (
           <HorariosFull
-            onClose={() => setShowFull(false)}
+            onClose={() => {
+              setShowFull(false);
+              setSelectedClase(null);
+            }}
             items={todas}
             loading={loading}
             error={error}
+            initialCarrera={selectedClase?.carrera_codigo}
+            initialNivel={selectedClase?.nivel}
+            initialComision={selectedClase?.comision}
           />
         )}
       </AnimatePresence>
@@ -262,7 +289,10 @@ export default function Horarios({ colSpan = 4, rowSpan = 2 }: HorariosProps) {
               />
             )}
             <VerButton
-              onClick={() => setShowFull(true)}
+              onClick={() => {
+                setSelectedClase(null);
+                setShowFull(true);
+              }}
               className={isCompact ? "px-4" : ""}
             />
           </div>
@@ -302,6 +332,7 @@ export default function Horarios({ colSpan = 4, rowSpan = 2 }: HorariosProps) {
                   <ClaseList
                     clases={ahoraFiltrado}
                     emptyMessage="No hay clases en este momento"
+                    onSelectClase={handleOpenClase}
                   />
                 )}
                 {!loading && error && (
@@ -319,6 +350,7 @@ export default function Horarios({ colSpan = 4, rowSpan = 2 }: HorariosProps) {
                   <ClaseList
                     clases={siguienteFiltrado}
                     emptyMessage="No hay más clases hoy"
+                    onSelectClase={handleOpenClase}
                   />
                 )}
                 {!loading && error && (
