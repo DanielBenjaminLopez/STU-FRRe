@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, act } from "@testing-library/react";
 import Horarios from "../components/Horarios";
 import type { Clase } from "../api/horarios";
 
@@ -231,5 +231,72 @@ describe("Horarios", () => {
     expect(container).toHaveClass("grid-cols-1", "grid-rows-2");
     expect(screen.getByText("Cursando ahora")).toBeInTheDocument();
     expect(screen.getByText("A continuación")).toBeInTheDocument();
+  });
+
+  it("saltea en el ciclo automático las carreras sin materias cursando ni a continuación", () => {
+    vi.useFakeTimers();
+    try {
+      const mockClaseLAR: Clase = {
+        ...mockClaseSiguiente,
+        id: 3,
+        carrera_codigo: "LAR",
+        materia_nombre: "Administración Rural",
+      };
+
+      mockUseHorarios.mockReturnValue({
+        ahora: [mockClaseAhora], // ISI
+        siguiente: [mockClaseLAR], // LAR (IEM e IQ no tienen materias)
+        uniqueCarreras: ["IEM", "IQ", "ISI", "LAR"],
+        loading: false,
+        error: null,
+      });
+
+      render(<Horarios />);
+
+      const selectBtn = screen.getByRole("button", {
+        name: /filtrar horarios por carrera/i,
+      });
+      // Debe iniciar directamente en ISI (salteando IEM e IQ)
+      expect(selectBtn).toHaveTextContent("ISI");
+      expect(
+        screen.getByText("Algoritmos y Estructuras de Datos"),
+      ).toBeInTheDocument();
+
+      // Al avanzar el temporizador, pasa a LAR
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      expect(selectBtn).toHaveTextContent("LAR");
+      expect(screen.getByText("Administración Rural")).toBeInTheDocument();
+
+      // Al volver a avanzar, regresa a ISI sin pasar por IEM ni IQ
+      act(() => {
+        vi.advanceTimersByTime(15_000);
+      });
+      expect(selectBtn).toHaveTextContent("ISI");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("muestra mensaje central de marca de agua cuando ninguna carrera tiene materias cursando ni a continuación", () => {
+    mockUseHorarios.mockReturnValue({
+      ahora: [],
+      siguiente: [],
+      uniqueCarreras: ["IEM", "ISI", "LAR"],
+      loading: false,
+      error: null,
+    });
+
+    render(<Horarios />);
+
+    expect(screen.getByTestId("horarios-empty-watermark")).toBeInTheDocument();
+    expect(screen.getByText("No quedan clases hoy.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /filtrar horarios por carrera/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("horarios-boxes-container"),
+    ).not.toBeInTheDocument();
   });
 });
