@@ -7,6 +7,9 @@ interface HorariosFullProps {
   items?: Clase[];
   loading?: boolean;
   error?: string | null;
+  initialCarrera?: string;
+  initialNivel?: string;
+  initialComision?: string;
 }
 
 export default function HorariosFull({
@@ -14,6 +17,9 @@ export default function HorariosFull({
   items,
   loading,
   error,
+  initialCarrera,
+  initialNivel,
+  initialComision,
 }: HorariosFullProps) {
   const fetched = useHorarios(items === undefined);
 
@@ -25,6 +31,9 @@ export default function HorariosFull({
       error={error !== undefined ? error : fetched.error}
       onClose={onClose}
       headerGradient="from-blue-300/50 to-blue-300/60"
+      initialCarrera={initialCarrera}
+      initialNivel={initialNivel}
+      initialComision={initialComision}
     />
   );
 }

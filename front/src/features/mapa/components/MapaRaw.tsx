@@ -722,6 +722,7 @@ export default function MapaRaw({
   onPinPlaced,
   externalFloor,
   refreshKey,
+  className,
 }: {
   initialFloor?: FloorKey;
   compact?: boolean;
@@ -735,6 +736,7 @@ export default function MapaRaw({
   externalFloor?: FloorKey;
   /** Incrementar para forzar recarga de ubicaciones desde un contenedor padre (ej. Admin). */
   refreshKey?: number;
+  className?: string;
 } = {}) {
   const [internalFloor, setFloor] = useState<FloorKey>(
     () => pinPosition?.floor ?? initialFloor,
@@ -1326,7 +1328,7 @@ export default function MapaRaw({
 
   return (
     <div
-      className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4 ${compact || onPinPlaced ? "" : "py-6"}`}
+      className={`flex w-full h-full flex-col items-center justify-center rounded-4xl overflow-visible gap-4 ${compact || onPinPlaced ? "" : "py-6"} ${className ?? ""}`}
     >
       {/* 1. Referencias */}
       {!compact && !onPinPlaced && (

@@ -84,14 +84,16 @@ export default function Mapa({
         )}
         <div
           data-testid="mapa-preview-container"
+          onClick={() => setShowFull(true)}
           className={`flex items-center justify-center ${
             isCompactRow ? "flex-1 min-w-0" : "w-full"
-          } h-full bg-white/50 rounded-3xl pointer-events-none border border-gray-200 overflow-hidden`}
+          } h-full bg-white/50 rounded-3xl border border-gray-200 overflow-hidden`}
         >
           <MapaRaw
             compact
             pinPosition={pinPosition}
             orientation={orientation}
+            className="pointer-events-none"
           />
         </div>
       </div>

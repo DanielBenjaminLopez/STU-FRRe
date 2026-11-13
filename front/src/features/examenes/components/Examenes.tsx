@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { useExamenes } from "../hooks/useExamenes";
 import type { Examen } from "../api/examenes";
@@ -122,6 +122,10 @@ function ExamenList({
   );
 }
 
+const AUTO_ROTATE_MS = 15_000;
+const INACTIVITY_MS = 30_000;
+const EMPTY_CARRERAS: string[] = [];
+
 export interface ExamenesProps {
   colSpan?: number;
   rowSpan?: number;
@@ -133,18 +137,91 @@ export default function Examenes({ colSpan = 4, rowSpan = 2 }: ExamenesProps) {
     ahora,
     siguiente,
     todas,
-    uniqueCarreras = [],
+    uniqueCarreras = EMPTY_CARRERAS,
     loading,
     error,
   } = useExamenes();
   const [showFull, setShowFull] = useState(false);
   useOnTotemReset(() => setShowFull(false));
-  const [selectedCarrera, setSelectedCarrera] = useState<string>("");
+  const [selectedCarrera, setSelectedCarrera] = useState<string | null>(null);
+  const isAutoRotating = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hayExamenesHoy = ahora.length > 0 || siguiente.length > 0;
+
+  // Carreras con exámenes cursando ahora o a continuación
+  const carrerasConExamenesKey = uniqueCarreras
+    .filter(
+      (codigo) =>
+        ahora.some((e) => e.carrera_codigo === codigo) ||
+        siguiente.some((e) => e.carrera_codigo === codigo),
+    )
+    .join(",");
+
+  const carrerasEnCiclo = useMemo(
+    () => (carrerasConExamenesKey ? carrerasConExamenesKey.split(",") : []),
+    [carrerasConExamenesKey],
+  );
+
+  // Helper: iniciar intervalo de auto-rotate desde un índice
+  const startAutoRotate = useCallback(
+    (fromIndex: number) => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (carrerasEnCiclo.length === 0) return;
+
+      const safeIndex =
+        fromIndex >= 0 && fromIndex < carrerasEnCiclo.length ? fromIndex : 0;
+      setSelectedCarrera(carrerasEnCiclo[safeIndex]);
+      isAutoRotating.current = true;
+
+      if (carrerasEnCiclo.length > 1) {
+        timerRef.current = setInterval(() => {
+          setSelectedCarrera((prev) => {
+            const currentIdx = carrerasEnCiclo.indexOf(prev ?? "");
+            const next = (currentIdx + 1) % carrerasEnCiclo.length;
+            return carrerasEnCiclo[next];
+          });
+        }, AUTO_ROTATE_MS);
+      }
+    },
+    [carrerasEnCiclo],
+  );
+
+  // Iniciar auto-rotate cuando hay carreras disponibles
+  useEffect(() => {
+    if (carrerasEnCiclo.length === 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      return;
+    }
+    if (!isAutoRotating.current) return;
+
+    startAutoRotate(0);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [carrerasEnCiclo, startAutoRotate]);
+
+  // Handler para selección manual
+  function handleSelect(codigo: string | null) {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    isAutoRotating.current = false;
+    setSelectedCarrera(codigo);
+
+    // Reactivar auto-rotate después de inactividad
+    inactivityTimerRef.current = setTimeout(() => {
+      const currentIndex = codigo ? carrerasEnCiclo.indexOf(codigo) : 0;
+      startAutoRotate(currentIndex >= 0 ? currentIndex : 0);
+    }, INACTIVITY_MS);
+  }
 
   const effectiveCarrera =
     selectedCarrera && uniqueCarreras.includes(selectedCarrera)
       ? selectedCarrera
-      : "";
+      : null;
 
   const ahoraFiltrado = effectiveCarrera
     ? ahora.filter((e) => e.carrera_codigo === effectiveCarrera)
@@ -168,19 +245,19 @@ export default function Examenes({ colSpan = 4, rowSpan = 2 }: ExamenesProps) {
       <div
         data-testid="examenes-widget"
         data-variant={`${colSpan}x${rowSpan}`}
-        className={`w-full h-full ${
+        className={`w-full h-full relative ${
           isCompact ? "col-span-2 row-span-2" : "col-span-4 row-span-2"
         } bg-linear-to-b from-green-300/50 to-green-300/60 rounded-4xl flex flex-col gap-4 items-center p-6 overflow-hidden`}
       >
         <div className="relative flex flex-row items-center justify-between w-full gap-2">
           <span className="text-xl font-semibold shrink-0">Exámenes</span>
           <div className="flex items-center gap-3 min-w-0">
-            {uniqueCarreras.length > 0 && (
+            {hayExamenesHoy && uniqueCarreras.length > 0 && (
               <Select
                 align="center"
                 colorVariant="green"
-                value={effectiveCarrera}
-                onChange={setSelectedCarrera}
+                value={effectiveCarrera ?? ""}
+                onChange={(val) => handleSelect(val ? val : null)}
                 options={[
                   { value: "", label: "Todas" },
                   ...uniqueCarreras.map((c) => ({ value: c, label: c })),
@@ -196,47 +273,62 @@ export default function Examenes({ colSpan = 4, rowSpan = 2 }: ExamenesProps) {
             />
           </div>
         </div>
-        <div
-          data-testid="examenes-boxes-container"
-          className={`grid ${
-            isCompact ? "grid-cols-1 grid-rows-2" : "grid-cols-2"
-          } gap-4 w-full h-full flex-1 min-h-0 min-w-0 overflow-hidden`}
-        >
-          <div className="flex flex-col w-full min-w-0 min-h-0 justify-center items-center gap-2 overflow-hidden">
-            <div className="w-full min-w-0 min-h-0 bg-white/50 border border-gray-200 rounded-3xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-              <span className="text-base font-normal flex flex-col shrink-0">
-                Cursando ahora
-              </span>
-              {loading && <ClaseListSkeleton count={isCompact ? 1 : 3} />}
-              {!loading && !error && (
-                <ExamenList
-                  examenes={ahoraFiltrado}
-                  emptyMessage="No hay examenes en este momento"
-                />
-              )}
-              {!loading && error && (
-                <span className="text-red-400 text-sm">{error}</span>
-              )}
+        {!loading && !error && !hayExamenesHoy ? (
+          <div
+            data-testid="examenes-empty-watermark"
+            className="flex absolute top-1/2 -translate-y-1/2 items-center justify-center min-h-0 select-none"
+          >
+            <span
+              className={`${
+                isCompact ? "text-2xl" : "text-5xl"
+              } font-semibold opacity-20 text-center`}
+            >
+              No quedan exámenes hoy.
+            </span>
+          </div>
+        ) : (
+          <div
+            data-testid="examenes-boxes-container"
+            className={`grid ${
+              isCompact ? "grid-cols-1 grid-rows-2" : "grid-cols-2"
+            } gap-4 w-full h-full flex-1 min-h-0 min-w-0 overflow-hidden`}
+          >
+            <div className="flex flex-col w-full min-w-0 min-h-0 justify-center items-center gap-2 overflow-hidden">
+              <div className="w-full min-w-0 min-h-0 bg-white/50 border border-gray-200 rounded-3xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+                <span className="text-base font-normal flex flex-col shrink-0">
+                  Cursando ahora
+                </span>
+                {loading && <ClaseListSkeleton count={isCompact ? 1 : 3} />}
+                {!loading && !error && (
+                  <ExamenList
+                    examenes={ahoraFiltrado}
+                    emptyMessage="No hay examenes en este momento"
+                  />
+                )}
+                {!loading && error && (
+                  <span className="text-red-400 text-sm">{error}</span>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col w-full min-w-0 min-h-0 justify-center items-center gap-2 overflow-hidden">
+              <div className="w-full min-w-0 min-h-0 bg-white/50 border border-gray-200 rounded-3xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
+                <span className="text-base font-normal flex flex-col shrink-0">
+                  A continuación
+                </span>
+                {loading && <ClaseListSkeleton count={isCompact ? 1 : 3} />}
+                {!loading && !error && (
+                  <ExamenList
+                    examenes={siguienteFiltrado}
+                    emptyMessage="No hay más examenes hoy"
+                  />
+                )}
+                {!loading && error && (
+                  <span className="text-red-400 text-sm">{error}</span>
+                )}
+              </div>
             </div>
           </div>
-          <div className="flex flex-col w-full min-w-0 min-h-0 justify-center items-center gap-2 overflow-hidden">
-            <div className="w-full min-w-0 min-h-0 bg-white/50 border border-gray-200 rounded-3xl flex flex-col gap-3 items-center p-4 h-full overflow-hidden">
-              <span className="text-base font-normal flex flex-col shrink-0">
-                A continuación
-              </span>
-              {loading && <ClaseListSkeleton count={isCompact ? 1 : 3} />}
-              {!loading && !error && (
-                <ExamenList
-                  examenes={siguienteFiltrado}
-                  emptyMessage="No hay más examenes hoy"
-                />
-              )}
-              {!loading && error && (
-                <span className="text-red-400 text-sm">{error}</span>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </>
   );
