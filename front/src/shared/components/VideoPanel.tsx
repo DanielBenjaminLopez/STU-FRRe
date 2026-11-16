@@ -26,9 +26,10 @@ export default function VideoPanel({ url, onEnded }: VideoPanelProps) {
     <div className="col-span-4 row-span-6 overflow-hidden rounded-4xl relative h-full w-full">
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain"
         playsInline
         muted
+	loop
         onEnded={onEnded}
         onError={onEnded}
       >

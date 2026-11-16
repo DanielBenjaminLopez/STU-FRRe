@@ -49,7 +49,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . /app
 
 # Permisos
-RUN chmod +x /app/entrypoint.sh && \
+# Permisos
+RUN mkdir -p /app/staticfiles /app/media && \
+    chmod +x /app/entrypoint.sh && \
     chown -R appuser:appgroup /app
 
 USER appuser

@@ -293,7 +293,7 @@ export default function Home() {
                               y: "95%",
                               scale: 1,
                               backgroundColor: "white",
-                              opacity: 1,
+                              opacity: 0,
                             }
                           : { y: 0, opacity: 1 }
                       }
@@ -341,7 +341,7 @@ export default function Home() {
                       </p>
                     </motion.div>
                   )}
-
+		{/*
                   <AnimatePresence>
                     {showVideo && (
                       <motion.div
@@ -391,7 +391,7 @@ export default function Home() {
                         </div>
                       </motion.div>
                     )}
-                  </AnimatePresence>
+                  </AnimatePresence> */}
                 </div>
               </div>
             </div>
