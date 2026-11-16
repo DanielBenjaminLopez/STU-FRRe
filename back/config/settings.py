@@ -23,20 +23,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = (
-    config("SECRET_KEY", default="").strip()
-    or "django-insecure-kw^*q8^vf@hs(&p))6)18=@ixwp646tmyn6y#j+8rw)py7-v^h"
-)
 
 # SECURITY WARNING: don't run with debug turned on in production!
+SECRET_KEY = config("SECRET_KEY").strip()
+
 DEBUG = config("DEBUG", default=False, cast=bool)
 
 _allowed_hosts_env = config("ALLOWED_HOSTS", default="").strip()
 if _allowed_hosts_env:
-    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+    ALLOWED_HOSTS = [
+        h.strip() for h in _allowed_hosts_env.split(",") if h.strip()
+    ]
 else:
     ALLOWED_HOSTS = ["*"] if DEBUG else ["localhost", "127.0.0.1", "backend"]
-
 
 # Application definition
 
@@ -163,20 +162,19 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB max request body
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "https://totem.frre.utn.edu.ar",
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "https://totem.frre.utn.edu.ar",
 ]
 
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
 CORS_ALLOW_CREDENTIALS = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = not DEBUG
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
