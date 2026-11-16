@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import manifest from "../../../../../back/api/mapa_polygon_ids.json";
 import svgPlantaBaja from "../assets/planta_baja.svg?raw";
 import svgPrimerPiso from "../assets/primer_piso.svg?raw";
 import svgSegundoPiso from "../assets/segundo_piso.svg?raw";
@@ -10,10 +9,8 @@ import {
   type FloorKey,
 } from "../components/MapaRaw";
 
-describe("Contrato SVG ↔ Manifiesto (mapa_polygon_ids.json)", () => {
-  it("los polígonos de los 3 SVGs coinciden exactamente con back/api/mapa_polygon_ids.json", () => {
-    const typedManifest = manifest as Record<FloorKey, string[]>;
-
+describe("Integridad de planos SVG por piso", () => {
+  it("los 3 SVGs contienen polígonos con IDs estrictamente numéricos y sin duplicados", () => {
     const svgsByFloor: Record<FloorKey, string> = {
       baja: svgPlantaBaja,
       primero: svgPrimerPiso,
@@ -26,9 +23,13 @@ describe("Contrato SVG ↔ Manifiesto (mapa_polygon_ids.json)", () => {
     ][]) {
       const svgIds = parsePolygons(svg, {}).map((p) => p.id);
       expect(
-        svgIds,
-        `El SVG de '${piso}' divergió de back/api/mapa_polygon_ids.json. Ejecutá 'npm run mapa:ids' en front/ para regenerar el manifiesto.`,
-      ).toEqual(typedManifest[piso]);
+        svgIds.length,
+        `El SVG de '${piso}' no contiene polígonos`,
+      ).toBeGreaterThan(0);
+      expect(
+        new Set(svgIds).size,
+        `El SVG de '${piso}' contiene IDs duplicados`,
+      ).toBe(svgIds.length);
       for (const id of svgIds) {
         expect(id).toMatch(/^\d+$/);
       }

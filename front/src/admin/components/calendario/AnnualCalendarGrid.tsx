@@ -144,7 +144,7 @@ export default function AnnualCalendarGrid({
 
   return (
     <div ref={gridRef} className="select-none">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-2">
         {MONTHS.map((m) => (
           <MonthMiniGrid
             key={m}

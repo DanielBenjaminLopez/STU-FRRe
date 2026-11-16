@@ -110,6 +110,16 @@ describe("Calendar", () => {
     expect(screen.getByText("Feriado")).toBeInTheDocument();
   });
 
+  it("muestra mensaje cuando no hay eventos en el mes actual", () => {
+    mockUseCalendario.mockReturnValue({
+      eventos: [],
+      loading: false,
+      error: null,
+    });
+    render(<Calendar />);
+    expect(screen.getByText("No hay eventos este mes")).toBeInTheDocument();
+  });
+
   it("muestra el botón 'Abrir calendario'", () => {
     mockUseCalendario.mockReturnValue({
       eventos: [],

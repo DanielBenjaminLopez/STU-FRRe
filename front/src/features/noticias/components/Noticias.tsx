@@ -248,13 +248,20 @@ export default function Noticias({ colSpan = 4, rowSpan = 2 }: NoticiasProps) {
         <div
           data-testid="noticias-widget"
           data-variant={`${colSpan}x${rowSpan}`}
-          className={`w-full h-full ${spanClass} bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-6`}
+          className={`w-full h-full relative ${spanClass} bg-linear-to-b from-purple-300/50 to-purple-300/60 rounded-4xl flex flex-col gap-4 items-center p-6 overflow-hidden`}
         >
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Noticias</span>
           </div>
-          <div className="flex items-center justify-center w-full h-full">
-            <span className="text-sm text-gray-500 font-medium">
+          <div
+            data-testid="noticias-empty-watermark"
+            className="flex absolute top-1/2 -translate-y-1/2 items-center justify-center min-h-0 select-none"
+          >
+            <span
+              className={`${
+                colSpan <= 2 ? "text-2xl" : "text-5xl"
+              } font-semibold opacity-20 text-center`}
+            >
               No hay noticias recientes
             </span>
           </div>
@@ -313,7 +320,7 @@ export default function Noticias({ colSpan = 4, rowSpan = 2 }: NoticiasProps) {
               return (
                 <div
                   key={key}
-                  className="relative w-full h-full shrink-0 snap-center snap-always rounded-4xl overflow-hidden"
+                  className="relative w-full h-full shrink-0 snap-center snap-always overflow-hidden"
                 >
                   {item.imagen_url ? (
                     <img

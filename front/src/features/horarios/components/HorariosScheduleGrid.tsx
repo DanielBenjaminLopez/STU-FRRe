@@ -16,6 +16,9 @@ interface HorariosScheduleGridProps {
   error: string | null;
   onClose: () => void;
   headerGradient?: string;
+  initialCarrera?: string;
+  initialNivel?: string;
+  initialComision?: string;
 }
 
 const DAYS = [
@@ -606,10 +609,13 @@ export default function HorariosScheduleGrid({
   error,
   onClose,
   headerGradient = "from-blue-300/50 to-blue-300/60",
+  initialCarrera = "",
+  initialNivel = "",
+  initialComision = "",
 }: HorariosScheduleGridProps) {
-  const [selectedCarrera, setSelectedCarrera] = useState("");
-  const [selectedNivel, setSelectedNivel] = useState("");
-  const [selectedComision, setSelectedComision] = useState("");
+  const [selectedCarrera, setSelectedCarrera] = useState(initialCarrera);
+  const [selectedNivel, setSelectedNivel] = useState(initialNivel);
+  const [selectedComision, setSelectedComision] = useState(initialComision);
 
   const carreras = useMemo(
     () => [...new Set(items.map((item) => item.carrera_codigo))].sort(),

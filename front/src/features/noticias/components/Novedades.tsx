@@ -245,13 +245,20 @@ export default function Novedades({
         <div
           data-testid="novedades-widget"
           data-variant={`${colSpan}x${rowSpan}`}
-          className={`w-full h-full ${spanClass} bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6`}
+          className={`w-full h-full relative ${spanClass} bg-linear-to-b from-amber-300/50 to-amber-300/60 rounded-4xl flex flex-col gap-4 items-center p-6 overflow-hidden`}
         >
           <div className="flex flex-col gap-2 w-full justify-between">
             <span className="text-xl font-semibold">Eventos</span>
           </div>
-          <div className="flex items-center justify-center w-full h-full">
-            <span className="text-sm text-gray-500 font-medium">
+          <div
+            data-testid="novedades-empty-watermark"
+            className="flex absolute top-1/2 -translate-y-1/2 items-center justify-center min-h-0 select-none"
+          >
+            <span
+              className={`${
+                colSpan <= 2 ? "text-2xl" : "text-5xl"
+              } font-semibold opacity-20 text-center`}
+            >
               No hay eventos recientes
             </span>
           </div>

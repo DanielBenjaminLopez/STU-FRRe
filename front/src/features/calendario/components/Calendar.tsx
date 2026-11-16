@@ -54,6 +54,17 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
   const is1x1 = colSpan === 1 && rowSpan === 1;
   const is2x1 = colSpan === 2 && rowSpan === 1;
 
+  const eventosMes = eventos.filter((ev) => {
+    if (ev.formato === "puntual") {
+      const [, m] = ev.fecha.split("-").map(Number);
+      return m - 1 === mes;
+    }
+    const desde = new Date(ev.desde);
+    const hasta = new Date(ev.hasta);
+    const finMes = new Date(anio, mes + 1, 0);
+    return hasta >= new Date(anio, mes, 1) && desde <= finMes;
+  });
+
   return (
     <>
       <AnimatePresence>
@@ -68,6 +79,7 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
         >
           <div
             data-testid="calendario-hoy-card"
+            onClick={() => setShowFull(true)}
             className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-1 rounded-3xl bg-white/50 border border-gray-200 p-3 text-center overflow-hidden"
           >
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -114,6 +126,7 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
 
           <div
             data-testid="calendario-preview-container"
+            onClick={() => setShowFull(true)}
             className="flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-3xl bg-white/50 border border-gray-200 p-3 overflow-hidden"
           >
             {loading && <CalendarSkeleton />}
@@ -165,25 +178,23 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
           )}
 
           {!loading && !error && (
-            <div className="w-full h-full flex flex-col justify-between items-center rounded-3xl bg-white/50 border border-gray-200 p-4">
+            <div
+              className="w-full h-full flex flex-col justify-between items-center rounded-3xl bg-white/50 border border-gray-200 p-4"
+              onClick={() => setShowFull(true)}
+            >
               <div className="flex flex-col gap-2 items-center">
                 <span className="text-base font-normal">
                   {MESES[mes]} {anio}
                 </span>
                 <MesGrilla anio={anio} mes={mes} eventos={eventos} />
               </div>
-              <LeyendaCalendario
-                eventos={eventos.filter((ev) => {
-                  if (ev.formato === "puntual") {
-                    const [, m] = ev.fecha.split("-").map(Number);
-                    return m - 1 === mes;
-                  }
-                  const desde = new Date(ev.desde);
-                  const hasta = new Date(ev.hasta);
-                  const finMes = new Date(anio, mes + 1, 0);
-                  return hasta >= new Date(anio, mes, 1) && desde <= finMes;
-                })}
-              />
+              {eventosMes.length > 0 ? (
+                <LeyendaCalendario eventos={eventosMes} />
+              ) : (
+                <span className="text-lg font-semibold opacity-20 text-center select-none">
+                  No hay eventos este mes
+                </span>
+              )}
             </div>
           )}
         </div>
