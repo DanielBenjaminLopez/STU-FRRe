@@ -320,7 +320,7 @@ export default function Noticias({ colSpan = 4, rowSpan = 2 }: NoticiasProps) {
               return (
                 <div
                   key={key}
-                  className="relative w-full h-full shrink-0 snap-center snap-always rounded-4xl overflow-hidden"
+                  className="relative w-full h-full shrink-0 snap-center snap-always overflow-hidden"
                 >
                   {item.imagen_url ? (
                     <img
