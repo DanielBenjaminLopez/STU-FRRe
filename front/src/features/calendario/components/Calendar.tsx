@@ -79,6 +79,7 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
         >
           <div
             data-testid="calendario-hoy-card"
+            onClick={() => setShowFull(true)}
             className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-1 rounded-3xl bg-white/50 border border-gray-200 p-3 text-center overflow-hidden"
           >
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">
@@ -125,6 +126,7 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
 
           <div
             data-testid="calendario-preview-container"
+            onClick={() => setShowFull(true)}
             className="flex flex-col items-center justify-center flex-1 min-w-0 h-full rounded-3xl bg-white/50 border border-gray-200 p-3 overflow-hidden"
           >
             {loading && <CalendarSkeleton />}
@@ -176,7 +178,10 @@ export default function Calendar({ colSpan = 2, rowSpan = 2 }: CalendarProps) {
           )}
 
           {!loading && !error && (
-            <div className="w-full h-full flex flex-col justify-between items-center rounded-3xl bg-white/50 border border-gray-200 p-4">
+            <div
+              className="w-full h-full flex flex-col justify-between items-center rounded-3xl bg-white/50 border border-gray-200 p-4"
+              onClick={() => setShowFull(true)}
+            >
               <div className="flex flex-col gap-2 items-center">
                 <span className="text-base font-normal">
                   {MESES[mes]} {anio}
