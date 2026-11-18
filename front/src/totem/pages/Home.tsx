@@ -392,6 +392,55 @@ export default function Home() {
                       </motion.div>
                     )}
                   </AnimatePresence> */}
+              <AnimatePresence>
+  {showVideo && (
+    <motion.div
+      key="screensaver-hint"
+      className="pointer-events-none absolute inset-x-0 bottom-10 z-20 flex justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        className="flex items-center gap-5 rounded-full border border-white/20 bg-black/45 px-12 py-6 text-white shadow-lg backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: [0, 1, 1, 0, 0],
+          y: [8, 0, 0, 8, 8],
+        }}
+        transition={{
+          duration: 10,
+          times: [0, 0.05, 0.23, 0.28, 1],
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 3,
+        }}
+      >
+        <svg
+          width="64"
+          height="64"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="shrink-0"
+        >
+          <path d="M9 11V5a2 2 0 0 1 4 0v7" />
+          <path d="M13 9a2 2 0 0 1 4 0v3" />
+          <path d="M17 11a2 2 0 0 1 4 0v5a6 6 0 0 1-6 6h-2a6 6 0 0 1-4.8-2.4L4 14a2 2 0 0 1 3-2.6l2 2.1" />
+        </svg>
+
+        <span className="whitespace-nowrap text-[44px] font-medium">
+          Tocá para comenzar
+        </span>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
                 </div>
               </div>
             </div>

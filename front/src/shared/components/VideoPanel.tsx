@@ -26,7 +26,7 @@ export default function VideoPanel({ url, onEnded }: VideoPanelProps) {
     <div className="col-span-4 row-span-6 overflow-hidden rounded-4xl relative h-full w-full">
       <video
         ref={videoRef}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-contain scale-[1.02]"
         playsInline
         muted
 	loop

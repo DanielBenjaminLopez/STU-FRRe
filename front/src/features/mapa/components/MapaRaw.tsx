@@ -764,9 +764,9 @@ export default function MapaRaw({
     realtimeEvent?.resource === "mapa" ? realtimeEvent : null;
 
   useEffect(() => {
-    if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent) {
-      return;
-    }
+    //if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent) {
+    //  return;
+    //}
     let mounted = true;
     fetchUbicacionesMapa()
       .then((ubicaciones) => {
@@ -800,7 +800,8 @@ export default function MapaRaw({
     return () => {
       mounted = false;
     };
-  }, [relevantEvent, realtimeEvent?.type, refreshKey]);
+  }, [relevantEvent, refreshKey]);  
+  //}, [relevantEvent, realtimeEvent?.type, refreshKey]);
 
   const floors = useMemo<Record<FloorKey, FloorConfig>>(
     () => ({
