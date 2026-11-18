@@ -410,7 +410,7 @@ export default function Home() {
           y: [8, 0, 0, 8, 8],
         }}
         transition={{
-          duration: 20,
+          duration: 10,
           times: [0, 0.05, 0.23, 0.28, 1],
           repeat: Infinity,
           ease: "easeInOut",
