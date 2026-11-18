@@ -15,8 +15,8 @@ export function useCalendario() {
     let mounted = true;
 
     async function load() {
-      if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
-        return;
+      //if (realtimeEvent?.type === "contenido_actualizado" && !relevantEvent)
+      //  return;
       try {
         setLoading(true);
         setError(null);
@@ -41,7 +41,8 @@ export function useCalendario() {
       mounted = false;
       clearInterval(fetchInterval);
     };
-  }, [relevantEvent, realtimeEvent?.type]);
+  }, [relevantEvent]);
+  //}, [relevantEvent, realtimeEvent?.type]);
 
   return { eventos, loading, error };
 }
